@@ -27,3 +27,11 @@
 *.exe
 *.out
 *.app
+
+# Mercurial Files
+.hg/
+.hgignore
+
+# SlickEdit files
+*.vpj
+
