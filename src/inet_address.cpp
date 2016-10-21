@@ -35,7 +35,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/inet_addr.h"
+#include "sockpp/inet_address.h"
 
 using namespace std;
 
@@ -43,11 +43,11 @@ namespace sockpp {
 
 // --------------------------------------------------------------------------
 
-bool inet_addr::is_set() const
+bool inet_address::is_set() const
 {
 	const uint8_t* b = reinterpret_cast<const uint8_t*>(this);
 
-	for (size_t i=0; i<sizeof(inet_addr); ++i) {
+	for (size_t i=0; i<sizeof(inet_address); ++i) {
 		if (b[i] != 0)
 			return true;
 	}
@@ -56,25 +56,25 @@ bool inet_addr::is_set() const
 
 // --------------------------------------------------------------------------
 
-in_addr_t inet_addr::resolve_name(const char *saddr)
+in_addr_t inet_address::resolve_name(const std::string& saddr)
 {
 	#if defined(NET_LWIP)
 		return in_addr_t(0);
 	#else
 		#if !defined(WIN32)
 			in_addr ia;
-			if (::inet_aton(saddr, &ia))
+			if (::inet_aton(saddr.c_str(), &ia))
 				return ia.s_addr;
 		#endif
 
-		hostent *host = ::gethostbyname(saddr);
+		hostent *host = ::gethostbyname(saddr.c_str());
 		return (host) ? *((in_addr_t*) host->h_addr_list[0]) : 0;
 	#endif
 }
 
 // --------------------------------------------------------------------------
 
-void inet_addr::create(uint32_t addr, in_port_t port)
+void inet_address::create(uint32_t addr, in_port_t port)
 {
 	zero();
 	sin_family = AF_INET;
@@ -84,11 +84,11 @@ void inet_addr::create(uint32_t addr, in_port_t port)
 
 // --------------------------------------------------------------------------
 
-void inet_addr::create(const char *saddr, in_port_t port)
+void inet_address::create(const std::string& saddr, in_port_t port)
 {
 	zero(); 
 	sin_family = AF_INET;
-	sin_addr.s_addr = resolve_name(saddr);
+	sin_addr.s_addr = resolve_name(saddr.c_str());
 	sin_port = htons(port);
 }
 

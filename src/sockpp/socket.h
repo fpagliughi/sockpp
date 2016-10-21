@@ -1,12 +1,14 @@
-/// @file socket.h
-///
-/// Classes for TCP & UDP socket.
-///
-/// @author	Frank Pagliughi
-/// @author	SoRo Systems, Inc.
-///	@author www.sorosys.com
-///
-/// @date	December 2014
+/**
+ * @file socket.h
+ *
+ * Classes for TCP & UDP socket.
+ *
+ * @author Frank Pagliughi
+ * @author SoRo Systems, Inc.
+ * @author www.sorosys.com
+ *
+ * @date December 2014
+ */
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -45,7 +47,8 @@
 #ifndef __sockpp_socket_h
 #define __sockpp_socket_h
 
-#include "sockpp/inet_addr.h"
+#include "sockpp/inet_address.h"
+#include <chrono>
 #include <string>
 #include <algorithm>
 
@@ -198,13 +201,25 @@ public:
 	 * @param addr Gets the local address to which the socket is bound.
 	 * @return @em zero on success, @em -1 on error
 	 */
-	int addr(inet_addr& addr) const;
+	int address(inet_address& addr) const;
+	/**
+	 * Gets the local address to which the socket is bound.
+	 * @return The local address to which the socket is bound.
+	 * @throw sys_error on error
+	 */
+	inet_address address() const;
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @param The address of the remote peer, if this socket is connected.
 	 * @return @em zero on success, @em -1 on error
 	 */
-	int peer_addr(inet_addr& addr) const;
+	int peer_address(inet_address& addr) const;
+	/**
+	 * Gets the address of the remote peer, if this socket is connected.
+	 * @return The address of the remote peer, if this socket is connected.
+	 * @throw sys_error on error
+	 */
+	inet_address peer_address() const;
 	/**
 	 * Gets the code for the last errror.
 	 * This is typically the code from the underlying OS operation.
@@ -246,7 +261,7 @@ public:
 	 * Creates a UDP socket and binds it to the address.
 	 * @param addr The address to bind.
 	 */
-	udp_socket(const inet_addr& addr);
+	udp_socket(const inet_address& addr);
 	/**
 	 * Binds the socket to the local address.
 	 * UDP sockets can bind to a local address/adapter to filter which
@@ -254,7 +269,7 @@ public:
 	 * @param addr
 	 * @return int
 	 */
-	int bind(const inet_addr& addr) {
+	int bind(const inet_address& addr) {
 		return check_ret(::bind(handle(), addr.sockaddr_ptr(),
 								sizeof(sockaddr_in)));
 	}
@@ -267,7 +282,7 @@ public:
 	 * @param addr
 	 * @return int
 	 */
-	int connect(const inet_addr& addr) {
+	int connect(const inet_address& addr) {
 		return check_ret(::connect(handle(), addr.sockaddr_ptr(),
 								   sizeof(sockaddr_in)));
 	}
@@ -281,11 +296,11 @@ public:
 	 * @param addr The remote destination of the data.
 	 * @return @em zero on success, @em -1 on failure.
 	 */
-	int	sendto(const void* buf, size_t n, const inet_addr& addr) {
+	int	sendto(const void* buf, size_t n, const inet_address& addr) {
 		return check_ret(::sendto(handle(), buf, n, 0,
 								  addr.sockaddr_ptr(), addr.size()));
 	}
-	int sendto(const std::string& s, const inet_addr& addr) {
+	int sendto(const std::string& s, const inet_address& addr) {
 		return sendto(s.data(), s.length(), addr);
 	}
 	/**
@@ -296,11 +311,11 @@ public:
 	 * @param addr The remote destination of the data.
 	 * @return @em zero on success, @em -1 on failure.
 	 */
-	int	sendto(const void* buf, size_t n, int flags, const inet_addr& addr) {
+	int	sendto(const void* buf, size_t n, int flags, const inet_address& addr) {
 		return check_ret(::sendto(handle(), buf, n, flags,
 								  addr.sockaddr_ptr(), addr.size()));
 	}
-	int	sendto(const std::string& s, int flags, const inet_addr& addr) {
+	int	sendto(const std::string& s, int flags, const inet_address& addr) {
 		return sendto(s.data(), s.length(), flags, addr);
 	}
 	/**
@@ -324,7 +339,7 @@ public:
 	 * @param addr Gets the address of the peer that sent the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	int	recvfrom(void* buf, size_t n, int flags, inet_addr& addr);
+	int	recvfrom(void* buf, size_t n, int flags, inet_address& addr);
 	/**
 	 * Receives a UDP packet.
 	 * @sa recvfrom
@@ -333,7 +348,7 @@ public:
 	 * @param addr Gets the address of the peer that sent the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	int	recvfrom(void* buf, size_t n, inet_addr& addr) {
+	int	recvfrom(void* buf, size_t n, inet_address& addr) {
 		return recvfrom(buf, n, 0, addr);
 	}
 	/**
@@ -410,15 +425,25 @@ public:
 	 *  	   successful, the number of bytes read should always be 'n'.
 	 */
 	virtual int read_n(void *buf, size_t n);
-		/**
+	/**
      * Set a timeout for read operations.
      * Sets the timout that the device uses for read operations. Not all
      * devices support timouts, so the caller should prepare for failure.
-     * @param d The amount of time to wait for the operation to complete.
+     * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
 	 */
-	//virtual bool read_timeout(const Duration& d);
-
+	virtual bool read_timeout(const std::chrono::microseconds& to);
+	/**
+     * Set a timeout for read operations.
+     * Sets the timout that the device uses for read operations. Not all
+     * devices support timouts, so the caller should prepare for failure.
+     * @param to The amount of time to wait for the operation to complete.
+     * @return @em true on success, @em false on failure.
+	 */
+	template<class Rep, class Period>
+	bool read_timeout(const std::chrono::duration<Rep,Period>& to) {
+		return read_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
+	}
 	/**
 	 * Writes the buffer to the socket.
 	 * @param buf The buffer to write
@@ -448,10 +473,21 @@ public:
      * Set a timeout for write operations.
      * Sets the timout that the device uses for write operations. Not all
      * devices support timouts, so the caller should prepare for failure.
-     * @param d The amount of time to wait for the operation to complete.
+     * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
 	 */
-	//virtual bool write_timeout(const Duration& d);
+	virtual bool write_timeout(const std::chrono::microseconds& to);
+	/**
+     * Set a timeout for write operations.
+     * Sets the timout that the device uses for write operations. Not all
+     * devices support timouts, so the caller should prepare for failure.
+     * @param to The amount of time to wait for the operation to complete.
+     * @return @em true on success, @em false on failure.
+	 */
+	template<class Rep, class Period>
+	bool write_timeout(const std::chrono::duration<Rep,Period>& to) {
+		return write_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////

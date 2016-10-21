@@ -45,7 +45,7 @@
 #ifndef __sockpp_tcp_acceptor_h
 #define __sockpp_tcp_acceptor_h
 
-#include "sockpp/inet_addr.h"
+#include "sockpp/inet_address.h"
 #include "sockpp/socket.h"
 
 namespace sockpp {
@@ -68,13 +68,13 @@ class tcp_acceptor : public socket
 	/**
      * The local address to which the acceptor is bound.
 	 */
-	inet_addr addr_;
+	inet_address addr_;
 	/**
 	 * Binds the socket to the specified address.
      * @param addr The address to which we get bound.
      * @return @em 0 on success, @em -1 on error
 	 */
-	int bind(const inet_addr& addr) {
+	int bind(const inet_address& addr) {
 		return ::bind(handle(), addr.sockaddr_ptr(), sizeof(sockaddr_in));
 	}
 	/**
@@ -97,7 +97,7 @@ public:
      * @param addr The TCP address on which to listen.
      * @param queSize The listener queue size.
 	 */
-	tcp_acceptor(const inet_addr& addr, int queSize=DFLT_QUE_SIZE) : addr_(addr) {
+	tcp_acceptor(const inet_address& addr, int queSize=DFLT_QUE_SIZE) : addr_(addr) {
 		open(addr, queSize);
 	}
 	/**
@@ -119,14 +119,14 @@ public:
      * Gets the local address to which we are bound.
      * @return The local address to which we are bound.
 	 */
-	const inet_addr& addr() const { return addr_; }
+	const inet_address& addr() const { return addr_; }
 	/**
      * Opens the acceptor socket and binds it to the specified address.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
      * @return @em 0 on success, @em -1 on error
 	 */
-	virtual int	open(const inet_addr& addr, int queSize=DFLT_QUE_SIZE);
+	virtual int	open(const inet_address& addr, int queSize=DFLT_QUE_SIZE);
 	/**
      * Opens the acceptor socket.
      * This binds the socket to all adapters and starts it listening.
@@ -135,7 +135,7 @@ public:
      * @return @em 0 on success, @em -1 on error
 	 */
 	virtual int	open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
-		return open(inet_addr(port), queSize);
+		return open(inet_address(port), queSize);
 	}
     /**
      * Accepts an incoming TCP connection
@@ -148,7 +148,7 @@ public:
      *                   address of a client when it connects.
 	* @return A tcp_socket to the remote client.
 	 */
-	tcp_socket accept(inet_addr* clientAddr);
+	tcp_socket accept(inet_address* clientAddr);
 };
 
 /////////////////////////////////////////////////////////////////////////////

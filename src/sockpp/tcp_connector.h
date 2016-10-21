@@ -1,12 +1,14 @@
-/// @file tcp_connector.h
-/// Class for creating client-side TCP connections
-///
-/// @author	Frank Pagliughi
-/// @author SoRo Systems, Inc.
-/// @author www.sorosys.com
-///
-/// @date	December 2014
-///
+/**
+ * @file tcp_connector.h
+ *
+ * Class for creating client-side TCP connections
+ *
+ * @author	Frank Pagliughi
+ * @author	SoRo Systems, Inc.
+ *	@author www.sorosys.com
+ *
+ * @date	December 2014
+ */
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -60,6 +62,10 @@ class tcp_connector : public tcp_socket
 	/** Whether the socket is currently connected. */
 	bool connected_;
 
+	// Non-copyable
+	tcp_connector(const tcp_connector&) =delete;
+	tcp_connector& operator=(const tcp_connector&) =delete;
+
 public:
 	/**
 	 * Creates an unconnected connector.
@@ -70,12 +76,7 @@ public:
 	 * address.
 	 * @param addr The remote server address.
 	 */
-	tcp_connector(const inet_addr& addr);
-
-	// Non-copyable
-	tcp_connector(const tcp_connector&) =delete;
-	tcp_connector& operator=(const tcp_connector&) =delete;
-
+	tcp_connector(const inet_address& addr);
 	/**
 	 * Determines if the socket is currently connected to a remote host.
 	 * @return @em true If the socket is currently connected to a remote
@@ -89,7 +90,7 @@ public:
 	 * @param addr The remote server address.
 	 * @return @em zero on success, @em -1 on error
 	 */
-	int	connect(const inet_addr& addr);
+	int	connect(const inet_address& addr);
 };
 
 /////////////////////////////////////////////////////////////////////////////

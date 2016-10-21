@@ -1,12 +1,19 @@
-/**
+/** 
  * @file platform.h
+ *  
  * Platform-specific definitions for the sockpp library.
+ *
+ * @author	Frank Pagliughi
+ * @author	SoRo Systems, Inc.
+ *	@author www.sorosys.com
+ *
+ * @date	December 2014
  */
-
+  
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (C) 2014 Frank Pagliughi
+// Copyright (c) 2014-2016 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without

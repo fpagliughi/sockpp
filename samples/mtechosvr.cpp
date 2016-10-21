@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 		cerr << "Error creating the acceptor: " << acc.last_error() << endl;
 		return 1;
 	}
-	cout << "Awaiting connections on port " << port << flush;
+	cout << "Awaiting connections on port " << port << "..." << endl;
 
 	while (true) {
 		// Accept a new client connection

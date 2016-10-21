@@ -1,4 +1,4 @@
-// Socket.cpp
+// socket.cpp
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -35,7 +35,10 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/socket.h"
+#include "sockpp/exception.h"
 #include <algorithm>
+
+using namespace std::chrono;
 
 namespace sockpp {
 
@@ -47,25 +50,36 @@ int win32_closesocket(socket_t s)
 	::closesocket(s);
 	return 0;
 }
+#else
+timeval to_timeval(const microseconds& dur)
+{
+	const seconds sec = duration_cast<seconds>(dur);
+
+	timeval tv;
+    tv.tv_sec  = sec.count();
+    tv.tv_usec = duration_cast<microseconds>(dur - sec).count();
+	return tv;
+}
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
-//								Socket
+//								socket
 /////////////////////////////////////////////////////////////////////////////
 
 int socket::check_ret(int n) const
 {
-	if (n < 0)
-		lastErr_ = errno;
+	lastErr_ = (n < 0) ? errno : 0;
 	return n;
 }
+
+// --------------------------------------------------------------------------
 
 int socket::get_last_error() const
 {
 	#if defined(WIN32)
 		return lastErr_ = ::WSAGetLastError();
 	#else
-		return lastErr_ = errno;
+		return lastErr_;
 	#endif
 }
 
@@ -119,19 +133,43 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/)
 // --------------------------------------------------------------------------
 // Gets the local address to which the socket is bound.
 
-int socket::addr(inet_addr& addr) const
+int socket::address(inet_address& addr) const
 {
-	socklen_t len = sizeof(inet_addr);
+	socklen_t len = sizeof(inet_address);
 	return check_ret(::getsockname(handle_, addr.sockaddr_ptr(), &len));
+}
+
+// --------------------------------------------------------------------------
+// Gets the local address to which the socket is bound. Throw an exception
+// on error.
+
+inet_address socket::address() const
+{
+	inet_address addr;
+	if (address(addr) < 0)
+		throw sys_error(lastErr_);
+	return addr;
 }
 
 // --------------------------------------------------------------------------
 // Gets the address of the remote peer, if this socket is bound.
 
-int socket::peer_addr(inet_addr& addr) const
+int socket::peer_address(inet_address& addr) const
 {
-	socklen_t len = sizeof(inet_addr);
+	socklen_t len = sizeof(inet_address);
 	return check_ret(::getpeername(handle_, addr.sockaddr_ptr(), &len));
+}
+
+// --------------------------------------------------------------------------
+// Gets the address of the remote peer, if this socket is bound. Throw an
+// exception on error.
+
+inet_address socket::peer_address() const
+{
+	inet_address addr;
+	if (address(addr) < 0)
+		throw sys_error(lastErr_);
+	return addr;
 }
 
 // --------------------------------------------------------------------------
@@ -146,17 +184,17 @@ void socket::close()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-//								UdpSocket
+//								udp_socket
 /////////////////////////////////////////////////////////////////////////////
 
 #if !defined(WIN32)
 
 udp_socket::udp_socket(in_port_t port) : socket(create())
 {
-	bind(inet_addr(port));
+	bind(inet_address(port));
 }
 
-udp_socket::udp_socket(const inet_addr& addr) : socket(create())
+udp_socket::udp_socket(const inet_address& addr) : socket(create())
 {
 	bind(addr);
 }
@@ -174,10 +212,10 @@ int udp_socket::open()
 }
 */
 
-int udp_socket::recvfrom(void* buf, size_t n, int flags, inet_addr& addr)
+int udp_socket::recvfrom(void* buf, size_t n, int flags, inet_address& addr)
 {
 	sockaddr_in sa;
-	socklen_t alen = sizeof(inet_addr);
+	socklen_t alen = sizeof(inet_address);
 
 	int ret = ::recvfrom(handle(), buf, n, flags, (sockaddr*) &sa, &alen);
 
@@ -192,7 +230,7 @@ int udp_socket::recvfrom(void* buf, size_t n, int flags, inet_addr& addr)
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
-//								TcpSocket
+//								tcp_socket
 /////////////////////////////////////////////////////////////////////////////
 
 // Opens a TCP socket. If it was already open, it just succeeds without
@@ -238,18 +276,18 @@ int tcp_socket::read_n(void *buf, size_t n)
 }
 
 // --------------------------------------------------------------------------
-/*
-bool tcp_socket::read_timeout(const Duration& d)
+
+bool tcp_socket::read_timeout(const microseconds& to)
 {
-	#if defined(CFX_POSIX)
-		timeval tv = d.to_timeval();
-		return ::setsockopt(handle(), SOL_SOCKET, SO_RCVTIMEO,
-							&tv, sizeof(timeval)) == 0;
+	#if !defined(WIN32)
+		timeval tv = to_timeval(to);
+		return check_ret(::setsockopt(handle(), SOL_SOCKET, SO_RCVTIMEO,
+									  &tv, sizeof(timeval))) == 0;
 	#else
 		return false;
 	#endif
 }
-*/
+
 // --------------------------------------------------------------------------
 
 int tcp_socket::write(const void *buf, size_t n)
@@ -279,18 +317,17 @@ int tcp_socket::write_n(const void *buf, size_t n)
 }
 
 // --------------------------------------------------------------------------
-/*
-bool tcp_socket::write_timeout(const Duration& d)
+
+bool tcp_socket::write_timeout(const microseconds& to)
 {
-	#if defined(CFX_POSIX)
-		timeval tv = d.to_timeval();
-		return ::setsockopt(handle(), SOL_SOCKET, SO_SNDTIMEO,
-							&tv, sizeof(timeval)) == 0;
+	#if !defined(WIN32)
+		timeval tv = to_timeval(to);
+		return check_ret(::setsockopt(handle(), SOL_SOCKET, SO_SNDTIMEO,
+									  &tv, sizeof(timeval))) == 0;
 	#else
 		return false;
 	#endif
 }
-*/
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp

@@ -40,7 +40,7 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-tcp_connector::tcp_connector(const inet_addr& addr)
+tcp_connector::tcp_connector(const inet_address& addr)
 						: tcp_socket(tcp_socket::create())
 {
 	if (::connect(handle(), addr.sockaddr_ptr(), addr.size()) < 0)
@@ -49,7 +49,7 @@ tcp_connector::tcp_connector(const inet_addr& addr)
 
 // --------------------------------------------------------------------------
 
-int tcp_connector::connect(const inet_addr& addr)
+int tcp_connector::connect(const inet_address& addr)
 {
 	int ret = -1;
 	socket_t h = create();

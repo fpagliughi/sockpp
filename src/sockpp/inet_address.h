@@ -1,5 +1,5 @@
 /**
- * @file inet_addr.h
+ * @file inet_address.h
  *
  * Class for a TCP/IP socket address.
  *
@@ -8,7 +8,6 @@
  * @author www.sorosys.com
  *
  * @date February 2014
- *
  */
 
 // --------------------------------------------------------------------------
@@ -49,6 +48,7 @@
 #define __sockpp_inet_addr_h
 
 #include "sockpp/platform.h"
+#include <string>
 #include <cstring>
 
 namespace sockpp {
@@ -61,7 +61,7 @@ namespace sockpp {
  * This inherits from the IP-specific form of a socket address, @em
  * sockaddr_in.
  */
-class inet_addr : public sockaddr_in
+class inet_address : public sockaddr_in
 {
 	// NOTE: This class makes heavy use of the fact that it is completely
 	// binary compatible with a sockaddr/sockaddr_in, and the same size as
@@ -71,26 +71,26 @@ class inet_addr : public sockaddr_in
 	/**
 	 * Sets the contents of this object to all zero.
 	 */
-	void zero() { std::memset(this, 0, sizeof(inet_addr)); }
+	void zero() { std::memset(this, 0, sizeof(inet_address)); }
 
 public:
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	inet_addr() { zero(); }
+	inet_address() { zero(); }
 	/**
 	 * Constructs an address for the local host using the specified port.
 	 * @param port
 	 */
-	inet_addr(in_port_t port) { create(in_addr_t(INADDR_ANY), port); }
+	inet_address(in_port_t port) { create(in_addr_t(INADDR_ANY), port); }
 	/**
 	 * Constructs an address for the specified host using the specified
 	 * port.
 	 * @param addr
 	 * @param port
 	 */
-	inet_addr(uint32_t addr, in_port_t port) { create(addr, port); }
+	inet_address(uint32_t addr, in_port_t port) { create(addr, port); }
 	/**
 	 * Constructs an address using the name of the host and the specified
 	 * port. This attempts to resolve the host name to an address.
@@ -98,29 +98,29 @@ public:
 	 * @param saddr
 	 * @param port
 	 */
-	inet_addr(const char* saddr, in_port_t port) {
+	inet_address(const std::string& saddr, in_port_t port) {
 		create(saddr, port);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr
 	 */
-	inet_addr(const sockaddr& addr) {
+	inet_address(const sockaddr& addr) {
 		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr
 	 */
-	inet_addr(const sockaddr_in& addr) {
+	inet_address(const sockaddr_in& addr) {
 		std::memcpy(sockaddr_in_ptr(), &addr, sizeof(sockaddr_in));
 	}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr
 	 */
-	inet_addr(const inet_addr& addr) {
-		std::memcpy(this, &addr, sizeof(inet_addr));
+	inet_address(const inet_address& addr) {
+		std::memcpy(this, &addr, sizeof(inet_address));
 	}
 	/**
 	 * Checks if the address is set to some value.
@@ -129,23 +129,31 @@ public:
 	 * @return bool
 	 */
 	bool is_set() const;
-
-	/// Attempts to resolve the host name into a 32-bit internet address.
-	/// @return The internet address in network byte order.
-	static in_addr_t resolve_name(const char *saddr);
-
-	/// Creates the socket address using the specified host address and
-	/// port number.
+	/**
+	 * Attempts to resolve the host name into a 32-bit internet address.
+	 * @param saddr The string host name.
+	 * @return The internet address in network byte order.
+	 */
+	static in_addr_t resolve_name(const std::string& saddr);
+	/**
+	 * Creates the socket address using the specified host address and port
+	 * number.
+	 * @param addr The host address.
+	 * @param port The host port number.
+	 */
 	void create(in_addr_t addr, in_port_t port);
-
-	/// Creates the socket address using the specified host name and
-	/// port number.
-	void create(const char *saddr, in_port_t port);
-
-	/// Gets the 32-bit Internet Address.
-	/// @ return The Internet address in the local host's byte order.
+	/**
+	 * Creates the socket address using the specified host name and port
+	 * number.
+	 * @param saddr The string host name.
+	 * @param port The host port number.
+	 */
+	void create(const std::string& saddr, in_port_t port);
+	/**
+	 * Gets the 32-bit internet address.
+	 * @return The internet address in the local host's byte order.
+	 */
 	in_addr_t address() const { return ntohl(this->sin_addr.s_addr); }
-
 	/**
 	 * Gets a byte of the 32-bit Internet Address
 	 * @param i The byte to read (0-3)
@@ -160,14 +168,13 @@ public:
 	 * @return The port number in the local host's byte order.
 	 */
 	in_port_t port() const { return ntohs(this->sin_port); }
-
 	/**
 	 * Gets the size of this structure.
 	 * This is equivalent to sizeof(this) but more convenient in some
 	 * places.
 	 * @return The size of this structure.
 	 */
-	size_t size() const { return sizeof(inet_addr); }
+	size_t size() const { return sizeof(inet_address); }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
@@ -207,8 +214,8 @@ public:
  * @param rhs The second address to compare.
  * @return @em true if they are binary equivalent, @em false if not.
  */
-inline bool operator==(const inet_addr& lhs, const inet_addr& rhs) {
-	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(inet_addr)) == 0);
+inline bool operator==(const inet_address& lhs, const inet_address& rhs) {
+	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(inet_address)) == 0);
 }
 
 /**
@@ -219,7 +226,7 @@ inline bool operator==(const inet_addr& lhs, const inet_addr& rhs) {
  * @return @em true if they are binary different, @em false if they are
  *  	   equivalent.
  */
-inline bool operator!=(const inet_addr& lhs, const inet_addr& rhs) {
+inline bool operator!=(const inet_address& lhs, const inet_address& rhs) {
 	return !operator==(lhs, rhs);
 }
 

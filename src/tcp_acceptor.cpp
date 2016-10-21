@@ -50,7 +50,7 @@ namespace sockpp {
 // If the acceptor appears to already be opened, this will quietly succeed
 // without doing anything. 
 
-int tcp_acceptor::open(const inet_addr& addr, int queSize /*=DFLT_QUE_SIZE*/)
+int tcp_acceptor::open(const inet_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 {
 	// TODO: What to do if we are open but bound to a different address?
 	if (is_open())
@@ -94,8 +94,8 @@ int tcp_acceptor::open(const inet_addr& addr, int queSize /*=DFLT_QUE_SIZE*/)
 
 tcp_socket tcp_acceptor::accept()
 {
-	inet_addr	clientAddr;
-	socklen_t	len = sizeof(inet_addr);
+	inet_address	clientAddr;
+	socklen_t	len = sizeof(inet_address);
 
 	socket_t s = ::accept(handle(), clientAddr.sockaddr_ptr(), &len);
 	if (s < 0)
@@ -105,12 +105,12 @@ tcp_socket tcp_acceptor::accept()
 }
 // --------------------------------------------------------------------------
 
-tcp_socket tcp_acceptor::accept(inet_addr* clientAddr)
+tcp_socket tcp_acceptor::accept(inet_address* clientAddr)
 {
 	if (!clientAddr)
 		return accept();
 
-	socklen_t len = sizeof(inet_addr);
+	socklen_t len = sizeof(inet_address);
 	socket_t  s = ::accept(handle(), clientAddr->sockaddr_ptr(), &len);
 	if (s < 0)
 		get_last_error();
