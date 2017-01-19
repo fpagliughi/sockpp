@@ -1,4 +1,4 @@
-/** 
+/**
  * @file exception.h
  *
  * Exception classes for the sockpp library.
@@ -9,7 +9,7 @@
  *
  * @date	October 2016
  */
-  
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
@@ -54,18 +54,31 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * System error. 
- * These are errors that are resulted from system socket calls. The error 
- * codes are platform 'errno' values (or similar), and the messages are 
- * typically derived from the system. 
+ * System error.
+ * These are errors that are resulted from system socket calls. The error
+ * codes are platform 'errno' values (or similar), and the messages are
+ * typically derived from the system.
  */
 class sys_error : std::runtime_error
 {
+	/** The system error number (errno) */
 	int errno_;
 
 public:
+	/**
+	 * Creates an error using the current system 'errno' value.
+	 */
 	sys_error();
+	/**
+	 * Constructs an error with the specified system errno.
+	 * @param err The error number. This is the system errno value.
+	 */
 	explicit sys_error(int err);
+	/**
+	 * Get the error number.
+	 * @return The system error number.
+	 */
+	int error() const { return errno_; }
 };
 
 /////////////////////////////////////////////////////////////////////////////
