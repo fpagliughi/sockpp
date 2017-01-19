@@ -1,4 +1,4 @@
-language: generic
+language: cpp
 sudo: required
 dist: trusty
 os: linux
@@ -49,6 +49,6 @@ matrix:
       env: COMPILER=clang++-3.8
 
 
-script: make CXX=$COMPILER
+script: if [ "$COMPILER" == "" ]; then make; else make CXX=$COMPILER; fi
 
 
