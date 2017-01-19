@@ -1,10 +1,7 @@
-language: cpp
-
+language: generic
 sudo: required
 dist: trusty
-
-os:
-  - linux
+os: linux
 
 matrix:
   include:
