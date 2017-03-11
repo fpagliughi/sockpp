@@ -1,9 +1,9 @@
 // tcp_connector.cpp
-
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (C) 2014 Frank Pagliughi
+// Copyright (c) 2014-2017 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,29 +41,31 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 tcp_connector::tcp_connector(const inet_address& addr)
-						: tcp_socket(tcp_socket::create())
+						: tcp_socket(tcp_socket::create()), connected_(false)
 {
-	if (::connect(handle(), addr.sockaddr_ptr(), addr.size()) < 0)
-		get_last_error();
+	if (handle() == INVALID_SOCKET)
+		set_last_error();
+	else if (check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
+		connected_ = true;
 }
 
 // --------------------------------------------------------------------------
 
-int tcp_connector::connect(const inet_address& addr)
+bool tcp_connector::connect(const inet_address& addr)
 {
-	int ret = -1;
+	connected_ = false;
 	socket_t h = create();
 
 	if (h == INVALID_SOCKET)
-		get_last_error();
+		set_last_error();
 	else {
 		// This will close the old connection, if any.
 		reset(h);
-		if ((ret = ::connect(h, addr.sockaddr_ptr(), addr.size())) < 0)
-			get_last_error();
+		if (check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size())))
+			connected_ = true;
 	}
 
-	return ret;
+	return connected_;
 }
 
 /////////////////////////////////////////////////////////////////////////////

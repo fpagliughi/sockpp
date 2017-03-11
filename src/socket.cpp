@@ -1,9 +1,9 @@
 // socket.cpp
-
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (C) 2014 Frank Pagliughi
+// Copyright (c) 2014-2017 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -66,20 +66,13 @@ timeval to_timeval(const microseconds& dur)
 //								socket
 /////////////////////////////////////////////////////////////////////////////
 
-int socket::check_ret(int n) const
-{
-	lastErr_ = (n < 0) ? errno : 0;
-	return n;
-}
-
-// --------------------------------------------------------------------------
-
-int socket::get_last_error() const
+int socket::get_last_error()
 {
 	#if defined(WIN32)
-		return lastErr_ = ::WSAGetLastError();
+		return ::WSAGetLastError();
 	#else
-		return lastErr_;
+		int err = errno;
+		return err;
 	#endif
 }
 
@@ -133,10 +126,10 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/)
 // --------------------------------------------------------------------------
 // Gets the local address to which the socket is bound.
 
-int socket::address(inet_address& addr) const
+bool socket::address(inet_address& addr) const
 {
 	socklen_t len = sizeof(inet_address);
-	return check_ret(::getsockname(handle_, addr.sockaddr_ptr(), &len));
+	return check_ret_bool(::getsockname(handle_, addr.sockaddr_ptr(), &len));
 }
 
 // --------------------------------------------------------------------------
@@ -154,10 +147,10 @@ inet_address socket::address() const
 // --------------------------------------------------------------------------
 // Gets the address of the remote peer, if this socket is bound.
 
-int socket::peer_address(inet_address& addr) const
+bool socket::peer_address(inet_address& addr) const
 {
 	socklen_t len = sizeof(inet_address);
-	return check_ret(::getpeername(handle_, addr.sockaddr_ptr(), &len));
+	return check_ret_bool(::getpeername(handle_, addr.sockaddr_ptr(), &len));
 }
 
 // --------------------------------------------------------------------------
@@ -191,12 +184,14 @@ void socket::close()
 
 udp_socket::udp_socket(in_port_t port) : socket(create())
 {
-	bind(inet_address(port));
+	if (check_ret_bool(handle()))
+		bind(inet_address(port));
 }
 
 udp_socket::udp_socket(const inet_address& addr) : socket(create())
 {
-	bind(addr);
+	if (check_ret_bool(handle()))
+		bind(addr);
 }
 
 // Opens a UDP socket. If it was already open, it just succeeds without
@@ -217,12 +212,10 @@ int udp_socket::recvfrom(void* buf, size_t n, int flags, inet_address& addr)
 	sockaddr_in sa;
 	socklen_t alen = sizeof(inet_address);
 
-	int ret = ::recvfrom(handle(), buf, n, flags, (sockaddr*) &sa, &alen);
+	int ret = check_ret(::recvfrom(handle(), buf, n, flags, (sockaddr*) &sa, &alen));
 
 	if (ret >= 0)
 		addr = sa;
-	else
-		get_last_error();
 
 	return ret;
 }
@@ -236,21 +229,26 @@ int udp_socket::recvfrom(void* buf, size_t n, int flags, inet_address& addr)
 // Opens a TCP socket. If it was already open, it just succeeds without
 // doing anything.
 
-int tcp_socket::open()
+bool tcp_socket::open()
 {
-	if (!is_open())
-		reset(create());
+	if (!is_open()) {
+		socket_t h = create();
+		if (check_ret_bool(h))
+			reset(h);
+		else
+			set_last_error();
+	}
 
-	return is_open() ? 0 : -1;
+	return is_open();
 }
 
 // --------------------------------------------------------------------------
 // Reads from the socket. Note that we use ::recv() rather then ::read()
 // because many non-*nix operating systems make a distinction.
 
-int tcp_socket::read(void *buf, size_t n)
+ssize_t tcp_socket::read(void *buf, size_t n)
 {
-	return ::recv(handle(), (char*) buf, n, 0);
+	return check_ret(::recv(handle(), (char*) buf, n, 0));
 }
 
 // --------------------------------------------------------------------------
@@ -258,10 +256,10 @@ int tcp_socket::read(void *buf, size_t n)
 // read() until it has the data or an error occurs.
 //
 
-int tcp_socket::read_n(void *buf, size_t n)
+ssize_t tcp_socket::read_n(void *buf, size_t n)
 {
 	size_t	nr = 0;
-	int		nx = 0;
+	ssize_t	nx = 0;
 
 	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
 
@@ -272,7 +270,7 @@ int tcp_socket::read_n(void *buf, size_t n)
 		nr += nx;
 	}
 
-	return (nr == 0 && nx < 0) ? nx : int(nr);
+	return (nr == 0 && nx < 0) ? nx : ssize_t(nr);
 }
 
 // --------------------------------------------------------------------------
@@ -281,8 +279,8 @@ bool tcp_socket::read_timeout(const microseconds& to)
 {
 	#if !defined(WIN32)
 		timeval tv = to_timeval(to);
-		return check_ret(::setsockopt(handle(), SOL_SOCKET, SO_RCVTIMEO,
-									  &tv, sizeof(timeval))) == 0;
+		return check_ret_bool(::setsockopt(handle(), SOL_SOCKET, SO_RCVTIMEO,
+                                           &tv, sizeof(timeval))) == 0;
 	#else
 		return false;
 	#endif
@@ -290,19 +288,19 @@ bool tcp_socket::read_timeout(const microseconds& to)
 
 // --------------------------------------------------------------------------
 
-int tcp_socket::write(const void *buf, size_t n)
+ssize_t tcp_socket::write(const void *buf, size_t n)
 {
-	return ::send(handle(), (const char*) buf, n , 0);
+	return check_ret(::send(handle(), (const char*) buf, n , 0));
 }
 
 // --------------------------------------------------------------------------
 // Attempts to write the entire buffer by repeatedly calling write() until
 // either all of the data is sent or an error occurs.
 
-int tcp_socket::write_n(const void *buf, size_t n)
+ssize_t tcp_socket::write_n(const void *buf, size_t n)
 {
 	size_t	nw = 0;
-	int		nx = 0;
+	ssize_t	nx = 0;
 
 	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
 
@@ -313,7 +311,7 @@ int tcp_socket::write_n(const void *buf, size_t n)
 		nw += nx;
 	}
 
-	return (nw == 0 && nx < 0) ? nx : int(nw);
+	return (nw == 0 && nx < 0) ? nx : ssize_t(nw);
 }
 
 // --------------------------------------------------------------------------
@@ -322,8 +320,8 @@ bool tcp_socket::write_timeout(const microseconds& to)
 {
 	#if !defined(WIN32)
 		timeval tv = to_timeval(to);
-		return check_ret(::setsockopt(handle(), SOL_SOCKET, SO_SNDTIMEO,
-									  &tv, sizeof(timeval))) == 0;
+		return check_ret_bool(::setsockopt(handle(), SOL_SOCKET, SO_SNDTIMEO,
+                                           &tv, sizeof(timeval))) == 0;
 	#else
 		return false;
 	#endif

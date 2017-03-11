@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (C) 2014 Frank Pagliughi
+// Copyright (c) 2014-2017 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,8 +57,8 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 #if !defined(SOCKPP_SOCKET_T_DEFINED)
-	typedef int socket_t;		///< The OS socket handle
-	const socket_t INVALID_SOCKET = -1;
+	typedef int socket_t;				///< The OS socket handle
+	const socket_t INVALID_SOCKET = -1;	///< Invalid socket descriptor
 	#define SOCKPP_SOCKET_T_DEFINED
 #endif
 
@@ -77,7 +77,7 @@ class socket
 {
 	/** The OS integer socket handle */
 	socket_t handle_;
-	/** Cache of the last error */
+	/** Cache of the last error (errno) */
 	mutable int lastErr_;
 	/**
 	 * The OS-specific socket close function
@@ -85,19 +85,45 @@ class socket
 	 */
 	void close(socket_t h);
 
+	// Non-copyable.
+	socket(const socket&) =delete;
+	socket& operator=(const socket&) =delete;
+
 protected:
+	/**
+	 * OS-specific means to retrieve the last error from an operation.
+	 * This should be called after a failed system call to set the 
+	 * lastErr_ member variable. Normally this would be called from 
+	 * @ref check_ret. 
+	 */
+	static int get_last_error();
+	/**
+	 * Cache the last system error code into this object. 
+	 * This should be called after a failed system call to store the error 
+	 * value.
+	 */
+	void set_last_error() {
+		lastErr_ = get_last_error();
+	}
 	/**
 	 * Checks the value and if less than zero, sets last error.
 	 * @param ret The return value from a library or system call.
 	 * @return Return the value sent to it, ret.
 	 */
-	int check_ret(int ret) const;
+	int check_ret(int ret) const{
+		lastErr_ = (ret < 0) ? get_last_error() : 0;
+		return ret;
+	}
 	/**
-	 * OS-specific means to get the last error from an operation.
-	 * This sets the lastErr_ member variable.
-	 * @return The last error.
+	 * Checks the value and if less than zero, sets last error.
+	 * @param ret The return value from a library or system call.
+	 * @return @em true if the value is a typical system success value (>=0) 
+	 *  	   or @em false is is an error (<0)
 	 */
-	int get_last_error() const;
+	bool check_ret_bool(int ret) const{
+		lastErr_ = (ret < 0) ? get_last_error() : 0;
+		return ret >= 0;
+	}
 
 public:
 	/**
@@ -119,11 +145,6 @@ public:
 	socket(socket&& sock) : handle_(sock.handle_), lastErr_(0) {
 		sock.handle_ = INVALID_SOCKET;
 	}
-	/**
-	 * Non-copyable.
-	 */
-	socket(const socket&) =delete;
-	socket& operator=(const socket&) =delete;
 	/**
 	 * Destructor closes the socket.
 	 */
@@ -173,7 +194,7 @@ public:
 	void clear(int val=0) { lastErr_ = val; }
 	/**
 	 * Releases ownership of the underlying socket object.
-	 * @return The OS integer socket value.
+	 * @return The OS socket handle.
 	 */
 	socket_t release() {
 		socket_t h = handle_;
@@ -199,9 +220,9 @@ public:
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @param addr Gets the local address to which the socket is bound.
-	 * @return @em zero on success, @em -1 on error
+	 * @return @em true on success, @em false on error
 	 */
-	int address(inet_address& addr) const;
+	bool address(inet_address& addr) const;
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.
@@ -211,9 +232,9 @@ public:
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @param The address of the remote peer, if this socket is connected.
-	 * @return @em zero on success, @em -1 on error
+	 * @return @em true on success, @em false on error
 	 */
-	int peer_address(inet_address& addr) const;
+	bool peer_address(inet_address& addr) const;
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @return The address of the remote peer, if this socket is connected.
@@ -402,9 +423,9 @@ public:
 
 	/**
 	 * Open the socket.
-	 * @return @em zero on success, @em -1 on failure.
+	 * @return @em true on success, @em false on failure.
 	 */
-	int open();
+	bool open();
 
 	// ----- IDevice Interface -----
 
@@ -414,7 +435,7 @@ public:
 	 * @param n The number of bytes to try to read.
 	 * @return The number of bytes read on success, or @em -1 on error.
 	 */
-	virtual int read(void *buf, size_t n);
+	virtual ssize_t read(void *buf, size_t n);
 	/**
 	 * Best effort attempts to read the specified number of bytes.
 	 * This will make repeated read attempts until all the bytes are read in
@@ -424,21 +445,21 @@ public:
 	 * @return The number of bytes read on success, or @em -1 on error. If
 	 *  	   successful, the number of bytes read should always be 'n'.
 	 */
-	virtual int read_n(void *buf, size_t n);
+	virtual ssize_t read_n(void *buf, size_t n);
 	/**
-     * Set a timeout for read operations.
-     * Sets the timout that the device uses for read operations. Not all
-     * devices support timouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
+	 * Set a timeout for read operations.
+	 * Sets the timout that the device uses for read operations. Not all
+	 * devices support timouts, so the caller should prepare for failure.
+	 * @param to The amount of time to wait for the operation to complete.
+	 * @return @em true on success, @em false on failure.
 	 */
 	virtual bool read_timeout(const std::chrono::microseconds& to);
 	/**
-     * Set a timeout for read operations.
-     * Sets the timout that the device uses for read operations. Not all
-     * devices support timouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
+	 * Set a timeout for read operations.
+	 * Sets the timout that the device uses for read operations. Not all
+	 * devices support timouts, so the caller should prepare for failure.
+	 * @param to The amount of time to wait for the operation to complete.
+	 * @return @em true on success, @em false on failure.
 	 */
 	template<class Rep, class Period>
 	bool read_timeout(const std::chrono::duration<Rep,Period>& to) {
@@ -450,7 +471,7 @@ public:
 	 * @param n The number of bytes in the buffer.
 	 * @return The number of bytes written, or @em -1 on error.
 	 */
-	virtual int write(const void *buf, size_t n);
+	virtual ssize_t write(const void *buf, size_t n);
 	/**
 	 * Best effort attempt to write the whole buffer to the socket.
 	 * @param buf The buffer to write
@@ -458,7 +479,7 @@ public:
 	 * @return The number of bytes written, or @em -1 on error. If
 	 *  	   successful, the number of bytes written should always be 'n'.
 	 */
-	virtual int write_n(const void *buf, size_t n);
+	virtual ssize_t write_n(const void *buf, size_t n);
 	/**
 	 * Best effort attempt to write a string to the socket.
 	 * @param s The string to write.
@@ -467,22 +488,22 @@ public:
 	 *  	   the string.
 	 */
 	virtual int write(const std::string& s) {
-		return write(s.data(), s.size());
+		return write_n(s.data(), s.size());
 	}
 	/**
-     * Set a timeout for write operations.
-     * Sets the timout that the device uses for write operations. Not all
-     * devices support timouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
+	 * Set a timeout for write operations.
+	 * Sets the timout that the device uses for write operations. Not all
+	 * devices support timouts, so the caller should prepare for failure.
+	 * @param to The amount of time to wait for the operation to complete.
+	 * @return @em true on success, @em false on failure.
 	 */
 	virtual bool write_timeout(const std::chrono::microseconds& to);
 	/**
-     * Set a timeout for write operations.
-     * Sets the timout that the device uses for write operations. Not all
-     * devices support timouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
+	 * Set a timeout for write operations.
+	 * Sets the timout that the device uses for write operations. Not all
+	 * devices support timouts, so the caller should prepare for failure.
+	 * @param to The amount of time to wait for the operation to complete.
+	 * @return @em true on success, @em false on failure.
 	 */
 	template<class Rep, class Period>
 	bool write_timeout(const std::chrono::duration<Rep,Period>& to) {

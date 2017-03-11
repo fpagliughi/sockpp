@@ -1,4 +1,6 @@
-// inet_address.cpp
+// tcpecho.cpp
+//
+// Simple TCP echo client
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,65 +36,40 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/inet_address.h"
+#include <iostream>
+#include <string>
+#include "sockpp/tcp_connector.h"
 
 using namespace std;
 
-namespace sockpp {
-
-// --------------------------------------------------------------------------
-
-bool inet_address::is_set() const
+int main(int argc, char* argv[])
 {
-	const uint8_t* b = reinterpret_cast<const uint8_t*>(this);
+	string host = "localhost";
+	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
-	for (size_t i=0; i<sizeof(inet_address); ++i) {
-		if (b[i] != 0)
-			return true;
+	sockpp::tcp_connector conn(sockpp::inet_address("localhost", port));
+	if (!conn) {
+		cerr << "Error connecting to " << host << ":" << port << endl;
+		return 1;
 	}
-	return false;
-}
 
-// --------------------------------------------------------------------------
+	string s, sret;
+	while (getline(cin, s) && !s.empty()) {
+		if (conn.write(s) != (int) s.length()) {
+			cerr << "Error writing to the TCP stream" << endl;
+			break;
+		}
 
-in_addr_t inet_address::resolve_name(const std::string& saddr)
-{
-	#if defined(NET_LWIP)
-		return in_addr_t(0);
-	#endif
+		sret.resize(s.length());
+		int n = conn.read_n(&sret[0], s.length());
 
-	#if !defined(WIN32)
-		in_addr ia;
-		if (::inet_aton(saddr.c_str(), &ia) != 0)
-			return ia.s_addr;
-	#endif
+		if (n != (int) s.length()) {
+			cerr << "Error reading from TCP stream" << endl;
+			break;
+		}
 
-	// On error this sets h_error (not errno). Errors could be 
-	// HOST_NOT_FOUND, NO_ADDRESS, etc.
-	hostent *host = ::gethostbyname(saddr.c_str());
-	return (host) ? *((in_addr_t*) host->h_addr_list[0]) : in_addr_t(0);
-}
+		cout << sret << endl;
+	}
 
-// --------------------------------------------------------------------------
-
-void inet_address::create(uint32_t addr, in_port_t port)
-{
-	zero();
-	sin_family = AF_INET;
-	sin_addr.s_addr = htonl(addr);
-	sin_port = htons(port);
-}
-
-// --------------------------------------------------------------------------
-
-void inet_address::create(const std::string& saddr, in_port_t port)
-{
-	zero();
-	sin_family = AF_INET;
-	sin_addr.s_addr = resolve_name(saddr.c_str());
-	sin_port = htons(port);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
+	return (!conn) ? 1 : 0;
 }

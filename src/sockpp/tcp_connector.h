@@ -5,7 +5,7 @@
  *
  * @author	Frank Pagliughi
  * @author	SoRo Systems, Inc.
- *	@author www.sorosys.com
+ * @author  www.sorosys.com
  *
  * @date	December 2014
  */
@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (C) 2014 Frank Pagliughi
+// Copyright (c) 2014-2017 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -78,9 +78,12 @@ public:
 	 */
 	tcp_connector(const inet_address& addr);
 	/**
-	 * Determines if the socket is currently connected to a remote host.
-	 * @return @em true If the socket is currently connected to a remote
-	 *  	   host, @em false if not.
+	 * Determines if the socket connected to a remote host.
+	 * Note that this is not a reliable determination if the socket is
+	 * currently connected, but rather that an initial connection was
+	 * established.
+	 * @return @em true If the socket connected to a remote host,
+	 *  	   @em false if not.
 	 */
 	bool is_connected() const { return connected_; }
 	/**
@@ -88,9 +91,9 @@ public:
 	 * If the socket is currently connected, this will close the current
 	 * connection and open the new one.
 	 * @param addr The remote server address.
-	 * @return @em zero on success, @em -1 on error
+	 * @return @em true on success, @em false on error
 	 */
-	int	connect(const inet_address& addr);
+	bool connect(const inet_address& addr);
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -70,7 +70,15 @@ ifdef SRC_IGNORE
 endif
 
 OBJS := $(addprefix $(OBJ_DIR)/,$(SRCS:.cpp=.o))
+
+# ----- Dependencies created with .dep suffix in obj dir -----
+
 DEPS := $(OBJS:.o=.dep)
+
+DEPFLAGS = -MT $@ -MMD -MP -MF $(OBJ_DIR)/$*.Tdep
+COMPILE.cc = $(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+
+POST_COMPILE = mv -f $(OBJ_DIR)/$*.Tdep $(OBJ_DIR)/$*.dep
 
 # ----- Compiler flags, etc -----
 
@@ -82,6 +90,8 @@ ifneq ($(CROSS_COMPILE),)
 endif
 
 CPPFLAGS += -Wall -fPIC
+
+# We need at least C++11 support, though 14 or 17 should work fine.
 CXXFLAGS += -std=c++11
 
 ifdef DEBUG
@@ -102,9 +112,10 @@ LDFLAGS := -g -shared -Wl,-soname,$(LIB_MAJOR_LINK) -L$(LIB_DIR)
 
 # ----- Compiler directives -----
 
-$(OBJ_DIR)/%.o: %.cpp
+$(OBJ_DIR)/%.o: %.cpp $(OBJ_DIR)/%.dep
 	@echo $(CXX) $<
 	$(QUIET) $(COMPILE.cpp) $(OUTPUT_OPTION) $<
+	$(QUIET) $(POST_COMPILE)
 
 # ----- Build targets -----
 
@@ -171,14 +182,11 @@ uninstall:
 
 # ----- Header dependencies -----
 
+$(OBJ_DIR)/%.dep: ;
+.PRECIOUS: $(OBJ_DIR)/%.dep
+
 MKG := $(findstring $(MAKECMDGOALS),"clean distclean dump")
 ifeq "$(MKG)" ""
   -include $(DEPS)
 endif
-
-$(OBJ_DIR)/%.dep: %.cpp
-	@echo DEP $<
-	$(QUIET) $(CXX) -M $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,$$(OBJ_DIR)/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	$(RM) $@.$$$$
 

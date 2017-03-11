@@ -11,7 +11,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (C) 2014 Frank Pagliughi
+// Copyright (c) 2014-2017 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -66,26 +66,29 @@ class tcp_acceptor : public socket
 	 */
 	static const int DFLT_QUE_SIZE = 4;
 	/**
-     * The local address to which the acceptor is bound.
+	 * The local address to which the acceptor is bound.
 	 */
 	inet_address addr_;
 	/**
 	 * Binds the socket to the specified address.
-     * @param addr The address to which we get bound.
-     * @return @em 0 on success, @em -1 on error
+	 * @param addr The address to which we get bound.
+	 * @return @em true on success, @em false on error
 	 */
-	int bind(const inet_address& addr) {
-		return ::bind(handle(), addr.sockaddr_ptr(), sizeof(sockaddr_in));
+	bool bind(const inet_address& addr) {
+		return check_ret_bool(::bind(handle(), addr.sockaddr_ptr(), sizeof(sockaddr_in)));
 	}
 	/**
-     * Sets the socket listening on the address to which it is bound.
-     * @param queSize The listener queue size.
-     * @return @em 0 on success, @em -1 on error
+	 * Sets the socket listening on the address to which it is bound.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
 	 */
-	int	listen(int queSize) {
-		return ::listen(handle(), queSize);
+	bool listen(int queSize) {
+		return check_ret_bool(::listen(handle(), queSize));
 	};
 
+	// Non-copyable
+	tcp_acceptor(const tcp_acceptor&) =delete;
+	tcp_acceptor& operator=(const tcp_acceptor&) =delete;
 
 public:
 	/**
@@ -93,60 +96,56 @@ public:
 	 */
 	tcp_acceptor() {}
 	/**
-     * Creates a acceptor and starts it listening on the specified address.
-     * @param addr The TCP address on which to listen.
-     * @param queSize The listener queue size.
+	 * Creates a acceptor and starts it listening on the specified address.
+	 * @param addr The TCP address on which to listen.
+	 * @param queSize The listener queue size.
 	 */
 	tcp_acceptor(const inet_address& addr, int queSize=DFLT_QUE_SIZE) : addr_(addr) {
 		open(addr, queSize);
 	}
 	/**
-     * Creates a acceptor and starts it listening on the specified port.
-     * The acceptor binds to the specified port for any address on the local
-     * host.
-     * @param port The TCP port on which to listen.
-     * @param queSize The listener queue size.
+	 * Creates a acceptor and starts it listening on the specified port.
+	 * The acceptor binds to the specified port for any address on the local
+	 * host.
+	 * @param port The TCP port on which to listen.
+	 * @param queSize The listener queue size.
 	 */
 	tcp_acceptor(in_port_t port, int queSize=DFLT_QUE_SIZE) : addr_(port) {
 		open(port, queSize);
 	}
 
-	// Non-copyable
-	tcp_acceptor(const tcp_acceptor&) =delete;
-	tcp_acceptor& operator=(const tcp_acceptor&) =delete;
-
 	/**
-     * Gets the local address to which we are bound.
-     * @return The local address to which we are bound.
+	 * Gets the local address to which we are bound.
+	 * @return The local address to which we are bound.
 	 */
 	const inet_address& addr() const { return addr_; }
 	/**
-     * Opens the acceptor socket and binds it to the specified address.
-     * @param addr The address to which this server should be bound.
-     * @param queSize The listener queue size.
-     * @return @em 0 on success, @em -1 on error
+	 * Opens the acceptor socket and binds it to the specified address.
+	 * @param addr The address to which this server should be bound.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
 	 */
-	virtual int	open(const inet_address& addr, int queSize=DFLT_QUE_SIZE);
+	virtual bool open(const inet_address& addr, int queSize=DFLT_QUE_SIZE);
 	/**
-     * Opens the acceptor socket.
-     * This binds the socket to all adapters and starts it listening.
-     * @param port The TCP port on which to listen.
-     * @param queSize The listener queue size.
-     * @return @em 0 on success, @em -1 on error
+	 * Opens the acceptor socket.
+	 * This binds the socket to all adapters and starts it listening.
+	 * @param port The TCP port on which to listen.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
 	 */
-	virtual int	open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
+	virtual bool open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
 		return open(inet_address(port), queSize);
 	}
-    /**
-     * Accepts an incoming TCP connection
-     * @return A tcp_socket to the remote client.
+	/**
+	 * Accepts an incoming TCP connection
+	 * @return A tcp_socket to the remote client.
 	 */
 	tcp_socket accept();
 	/**
 	 * Accepts an incoming TCP connection and gets the address of the client.
-     * @param clientAddr Pointer to the variable that will get the
-     *                   address of a client when it connects.
-	* @return A tcp_socket to the remote client.
+	 * @param clientAddr Pointer to the variable that will get the
+	 *  				 address of a client when it connects.
+	 * @return A tcp_socket to the remote client.
 	 */
 	tcp_socket accept(inet_address* clientAddr);
 };
@@ -155,5 +154,5 @@ public:
 // end namespace sockpp
 };
 
-#endif		// __sockpp_TcpAcceptor_h
+#endif		// __sockpp_tcp_acceptor_h
 
