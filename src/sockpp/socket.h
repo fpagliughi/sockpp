@@ -288,11 +288,11 @@ public:
 	 * UDP sockets can bind to a local address/adapter to filter which
 	 * incoming packets to receive.
 	 * @param addr
-	 * @return int
+	 * @return @em true on success, @em false on failure
 	 */
-	int bind(const inet_address& addr) {
-		return check_ret(::bind(handle(), addr.sockaddr_ptr(),
-								sizeof(sockaddr_in)));
+	bool bind(const inet_address& addr) {
+		return check_ret_bool(::bind(handle(), addr.sockaddr_ptr(),
+									 sizeof(sockaddr_in)));
 	}
 	/**
 	 * Connects the socket to the remote address.
@@ -301,11 +301,11 @@ public:
 	 * sent by default, and the only address from which datagrams are
 	 * received.
 	 * @param addr
-	 * @return int
+	 * @return @em true on success, @em false on failure
 	 */
-	int connect(const inet_address& addr) {
-		return check_ret(::connect(handle(), addr.sockaddr_ptr(),
-								   sizeof(sockaddr_in)));
+	bool connect(const inet_address& addr) {
+		return check_ret_bool(::connect(handle(), addr.sockaddr_ptr(),
+										sizeof(sockaddr_in)));
 	}
 
 	// ----- I/O -----
@@ -315,7 +315,7 @@ public:
 	 * @param buf The date to send.
 	 * @param n The number of bytes in the data buffer.
 	 * @param addr The remote destination of the data.
-	 * @return @em zero on success, @em -1 on failure.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
 	 */
 	int	sendto(const void* buf, size_t n, const inet_address& addr) {
 		return check_ret(::sendto(handle(), buf, n, 0,
@@ -330,7 +330,7 @@ public:
 	 * @param n The number of bytes in the data buffer.
 	 * @param flags
 	 * @param addr The remote destination of the data.
-	 * @return @em zero on success, @em -1 on failure.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
 	 */
 	int	sendto(const void* buf, size_t n, int flags, const inet_address& addr) {
 		return check_ret(::sendto(handle(), buf, n, flags,

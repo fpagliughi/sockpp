@@ -39,7 +39,7 @@ int main()
 		return 1;
 	}
 
-	if (srvrSock.bind(port) < 0) {
+	if (!srvrSock.bind(port)) {
 		cerr << "Error binding to port: " << port << " [" 
 			<< srvrSock.last_error() << "]" << endl;
 		return 1;
@@ -53,9 +53,9 @@ int main()
 		return 1;
 	}
 
-	sockpp::inet_addr localAddr("localhost", port);
+	sockpp::inet_address localAddr("localhost", port);
 
-	if (cliSock.connect(localAddr) < 0) {
+	if (!cliSock.connect(localAddr)) {
 		cerr << "Error connecting to port: " << port << " [" 
 			<< cliSock.last_error() << "]" << endl;
 		return 1;
