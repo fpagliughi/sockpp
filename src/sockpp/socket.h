@@ -512,6 +512,25 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////
+
+/**
+ * RAII class to initialize and then shut down the library.
+ * A single object of this class can be declared before any other classes in
+ * the library are used. The lifetime of the object should span the use of
+ * the other classes in the library, so declaring an object at the top of
+ * main() is usually the best choice.
+ * This is only required on some platforms, particularly Windows, but is
+ * harmless on other platforms. On some, such as POSIX, the initializer sets
+ * optional parameters for the library, and the destructor does nothing.
+ */
+class socket_initializer
+{
+public:
+	socket_initializer() { socket::initialize(); }
+	~socket_initializer() { socket::destroy(); }
+};
+
+/////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 }
 

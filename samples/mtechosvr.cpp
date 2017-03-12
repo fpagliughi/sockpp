@@ -56,12 +56,10 @@ void run_echo(sockpp::tcp_socket sock)
 	int n;
 	char buf[512];
 
-	cout << "Received a new connection." << endl;
-
 	while ((n = sock.read(buf, sizeof(buf))) > 0)
 		sock.write_n(buf, n);
 
-	cout << "Connection closed." << endl;
+	cout << "Connection closed from " << sock.peer_address() << endl;
 }
 
 // --------------------------------------------------------------------------
@@ -73,20 +71,26 @@ int main(int argc, char* argv[])
 {
 	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
-	sockpp::tcp_acceptor acc(port);
+	sockpp::socket_initializer	sockInit;
+	sockpp::tcp_acceptor		acc(port);
 
 	if (!acc) {
-		cerr << "Error creating the acceptor: " << acc.last_error() << endl;
+		cerr << "Error creating the acceptor: " << ::strerror(acc.last_error()) << endl;
 		return 1;
 	}
 	cout << "Awaiting connections on port " << port << "..." << endl;
 
 	while (true) {
-		// Accept a new client connection
-		sockpp::tcp_socket sock = acc.accept();
+		sockpp::inet_address peer;
 
-		if (!sock)
-			cerr << "Error accepting incoming connection" << endl;
+		// Accept a new client connection
+		sockpp::tcp_socket sock = acc.accept(&peer);
+		cout << "Received a connection request from " << peer << endl;
+
+		if (!sock) {
+			cerr << "Error accepting incoming connection: " 
+				<< ::strerror(acc.last_error()) << endl;
+		}
 		else {
 			// Create a thread and transfer the new stream to it.
 			thread thr(run_echo, std::move(sock));

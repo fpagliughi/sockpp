@@ -48,6 +48,7 @@
 #define __sockpp_inet_addr_h
 
 #include "sockpp/platform.h"
+#include <iostream>
 #include <string>
 #include <cstring>
 
@@ -203,6 +204,17 @@ public:
 	sockaddr_in* sockaddr_in_ptr() {
 		return static_cast<sockaddr_in*>(this);
 	}
+	/**
+	 * Gets a printable string for the address.
+	 * This gets the simple dot notation of the address as returned from 
+	 * inet_ntoa(). It does not attempt a host lookup. 
+	 * @return A string representation of the address in the form 
+	 *  	   'address:port'
+	 */
+	std::string to_string() const {
+		return std::string(inet_ntoa(sockaddr_in_ptr()->sin_addr)) + ":" 
+			+ std::to_string(unsigned(port()));
+	}
 };
 
 // --------------------------------------------------------------------------
@@ -229,6 +241,16 @@ inline bool operator==(const inet_address& lhs, const inet_address& rhs) {
 inline bool operator!=(const inet_address& lhs, const inet_address& rhs) {
 	return !operator==(lhs, rhs);
 }
+
+/**
+ * Stream inserter for the address. 
+ * This uses the simple dot notation of the address as returned from 
+ * inet_ntoa(). It does not attempt a host lookup. 
+ * @param os The output stream
+ * @param addr The address
+ * @return A reference to the output stream.
+ */
+std::ostream& operator<<(std::ostream& os, const inet_address& addr);
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

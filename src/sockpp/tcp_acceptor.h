@@ -137,17 +137,12 @@ public:
 		return open(inet_address(port), queSize);
 	}
 	/**
-	 * Accepts an incoming TCP connection
-	 * @return A tcp_socket to the remote client.
-	 */
-	tcp_socket accept();
-	/**
 	 * Accepts an incoming TCP connection and gets the address of the client.
 	 * @param clientAddr Pointer to the variable that will get the
 	 *  				 address of a client when it connects.
 	 * @return A tcp_socket to the remote client.
 	 */
-	tcp_socket accept(inet_address* clientAddr);
+	tcp_socket accept(inet_address* clientAddr=nullptr);
 };
 
 /////////////////////////////////////////////////////////////////////////////

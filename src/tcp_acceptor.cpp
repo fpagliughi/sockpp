@@ -85,24 +85,11 @@ bool tcp_acceptor::open(const inet_address& addr, int queSize /*=DFLT_QUE_SIZE*/
 
 // --------------------------------------------------------------------------
 
-tcp_socket tcp_acceptor::accept()
+tcp_socket tcp_acceptor::accept(inet_address* clientAddr /*=nullptr*/)
 {
-	inet_address	clientAddr;
-	socklen_t		len = sizeof(inet_address);
-
-	socket_t s = check_ret(::accept(handle(), clientAddr.sockaddr_ptr(), &len));
-	return tcp_socket(s);
-}
-// --------------------------------------------------------------------------
-
-tcp_socket tcp_acceptor::accept(inet_address* clientAddr)
-{
-	if (!clientAddr)
-		return accept();
-
-	socklen_t len = sizeof(inet_address);
-	socket_t  s = check_ret(::accept(handle(), clientAddr->sockaddr_ptr(), &len));
-
+	sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
+	socklen_t len = cli ? sizeof(inet_address) : 0;
+	socket_t  s = check_ret(::accept(handle(), cli, &len));
 	return tcp_socket(s);
 }
 

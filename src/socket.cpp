@@ -160,7 +160,7 @@ bool socket::peer_address(inet_address& addr) const
 inet_address socket::peer_address() const
 {
 	inet_address addr;
-	if (!address(addr))
+	if (!peer_address(addr))
 		throw sys_error(lastErr_);
 	return addr;
 }

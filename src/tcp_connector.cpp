@@ -41,31 +41,29 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 tcp_connector::tcp_connector(const inet_address& addr)
-						: tcp_socket(tcp_socket::create()), connected_(false)
 {
-	if (handle() == INVALID_SOCKET)
-		set_last_error();
-	else if (check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
-		connected_ = true;
+	connect(addr);
 }
 
 // --------------------------------------------------------------------------
 
 bool tcp_connector::connect(const inet_address& addr)
 {
-	connected_ = false;
 	socket_t h = create();
 
-	if (h == INVALID_SOCKET)
+	if (h == INVALID_SOCKET) {
 		set_last_error();
-	else {
-		// This will close the old connection, if any.
-		reset(h);
-		if (check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size())))
-			connected_ = true;
+		return false;
 	}
 
-	return connected_;
+	// This will close the old connection, if any.
+	reset(h);
+	if (!check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size()))) {
+		close();
+		return false;
+	}
+
+	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////

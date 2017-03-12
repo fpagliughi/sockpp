@@ -59,9 +59,6 @@ namespace sockpp {
  */
 class tcp_connector : public tcp_socket
 {
-	/** Whether the socket is currently connected. */
-	bool connected_;
-
 	// Non-copyable
 	tcp_connector(const tcp_connector&) =delete;
 	tcp_connector& operator=(const tcp_connector&) =delete;
@@ -70,7 +67,7 @@ public:
 	/**
 	 * Creates an unconnected connector.
 	 */
-	tcp_connector() : connected_(false) {}
+	tcp_connector() {}
 	/**
 	 * Creates the connector and attempts to connect to the specified
 	 * address.
@@ -85,7 +82,7 @@ public:
 	 * @return @em true If the socket connected to a remote host,
 	 *  	   @em false if not.
 	 */
-	bool is_connected() const { return connected_; }
+	bool is_connected() const { return is_open(); }
 	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
