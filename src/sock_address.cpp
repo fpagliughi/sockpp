@@ -1,4 +1,4 @@
-// tcp_connector.cpp
+// sock_address.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,45 +34,35 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/tcp_connector.h"
+#include "sockpp/sock_address.h"
+#include <cstring>
+
+using namespace std;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-tcp_connector::tcp_connector(const inet_address& addr)
+sock_address::sock_address(const sockaddr* addr, socklen_t len)
+					: addr_(new uint8_t[len]), len_(len)
 {
-	connect(addr);
+	memcpy(addr_.get(), addr, len);
 }
 
-// --------------------------------------------------------------------------
 
-bool tcp_connector::connect(const sockaddr* addr, socklen_t len)
+sock_address::sock_address(const sock_address& addr) 
+					: addr_(new uint8_t[addr.len_]), len_(addr.len_)
 {
-	if (len < sizeof(sa_family_t)) {
-		// TODO: Set last error
-		return false;
-	}
+	memcpy(addr_.get(), addr.addr_.get(), len_);
+}
 
-	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
-	socket_t h = create(domain);
-
-	if (h == INVALID_SOCKET) {
-		set_last_error();
-		return false;
-	}
-
-	// This will close the old connection, if any.
-	reset(h);
-	if (!check_ret_bool(::connect(h, addr, len))) {
-		close();
-		return false;
-	}
-
-	return true;
+sa_family_t sock_address::address_family() const
+{
+	if (!addr_ || len_ < sizeof(sa_family_t))
+		return AF_UNSPEC;
+	return *reinterpret_cast<const sa_family_t*>(addr_.get());
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+// End namespace sockpp
 }
-

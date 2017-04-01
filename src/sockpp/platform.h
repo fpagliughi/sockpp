@@ -57,9 +57,7 @@
 	typedef uint16_t	in_port_t;
 	typedef uint32_t	in_addr_t;
 #else
-	//#include <fcntl.h>
 	#include <unistd.h>
-	//#include <sys/bsdtypes.h>
 	#include <sys/socket.h>
 	#include <arpa/inet.h>
 	#include <netdb.h>

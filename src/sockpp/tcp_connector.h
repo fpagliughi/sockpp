@@ -90,7 +90,18 @@ public:
 	 * @param addr The remote server address.
 	 * @return @em true on success, @em false on error
 	 */
-	bool connect(const inet_address& addr);
+	bool connect(const sockaddr* addr, socklen_t len);
+	/**
+	 * Attempts to connects to the specified server.
+	 * If the socket is currently connected, this will close the current
+	 * connection and open the new one.
+	 * @param addr The remote server address.
+	 * @return @em true on success, @em false on error
+	 */
+	template <typename ADDR>
+	bool connect(const ADDR& addr) {
+		return connect(addr.sockaddr_ptr(), addr.size());
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////

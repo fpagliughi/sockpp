@@ -1,5 +1,5 @@
 /**
- * @file inet_address.h
+ * @file unix_address.h
  *
  * Class for a TCP/IP socket address.
  *
@@ -44,84 +44,75 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_inet_addr_h
-#define __sockpp_inet_addr_h
+#ifndef __sockpp_unix_addr_h
+#define __sockpp_unix_addr_h
 
 #include "sockpp/platform.h"
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <sys/un.h>
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-
 /**
- * Class that represents an internet (IPv4) address.
- * This inherits from the IP-specific form of a socket address, @em
- * sockaddr_in.
+ * Class that represents a UNUX domain address.
+ * This inherits from the UNIX form of a socket address, @em
+ * sockaddr_un.
  */
-class inet_address : public sockaddr_in
+class unix_address : public sockaddr_un
 {
+	static constexpr sa_family_t ADDRESS_FAMILY = AF_UNIX;
+	// TODO: This only applies to Linux
+	static constexpr size_t MAX_PATH_NAME = 108;
+
 	// NOTE: This class makes heavy use of the fact that it is completely
-	// binary compatible with a sockaddr/sockaddr_in, and the same size as
-	// one of those structures. Do not add any other member variables,
-	// without going through the whole of the class to fixup!
+	// binary compatible with a sockaddr/sockaddr_un, and the same size as 
+	// one of those structures. Do not add any other member variables, 
+	// without going through the whole of the class to fixup! 
 
 	/**
 	 * Sets the contents of this object to all zero.
 	 */
-	void zero() { std::memset(this, 0, sizeof(inet_address)); }
+	void zero() { 
+		std::memset(this, 0, sizeof(unix_address));
+		sun_family = ADDRESS_FAMILY;
+	}
 
 public:
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	inet_address() { zero(); }
+	unix_address() { zero(); }
 	/**
-	 * Constructs an address for the local host using the specified port.
-	 * @param port
+	 * Constructs an address for the specified path.
+	 * @param path The 
 	 */
-	inet_address(in_port_t port) { create(in_addr_t(INADDR_ANY), port); }
-	/**
-	 * Constructs an address for the specified host using the specified
-	 * port.
-	 * @param addr
-	 * @param port
-	 */
-	inet_address(uint32_t addr, in_port_t port) { create(addr, port); }
-	/**
-	 * Constructs an address using the name of the host and the specified
-	 * port. This attempts to resolve the host name to an address.
-	 *
-	 * @param saddr
-	 * @param port
-	 */
-	inet_address(const std::string& saddr, in_port_t port) {
-		create(saddr, port);
-	}
+	unix_address(const std::string& path);
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr
 	 */
-	inet_address(const sockaddr& addr) {
+	unix_address(const sockaddr& addr) {
+		// TODO: Check the address family for a compatible address.
 		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr
 	 */
-	inet_address(const sockaddr_in& addr) {
-		std::memcpy(sockaddr_in_ptr(), &addr, sizeof(sockaddr_in));
+	unix_address(const sockaddr_un& addr) {
+		std::memcpy(sockaddr_un_ptr(), &addr, sizeof(sockaddr_un));
 	}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr
 	 */
-	inet_address(const inet_address& addr) {
-		std::memcpy(this, &addr, sizeof(inet_address));
+	unix_address(const unix_address& addr) {
+		std::memcpy(this, &addr, sizeof(unix_address));
 	}
 	/**
 	 * Checks if the address is set to some value.
@@ -129,53 +120,21 @@ public:
 	 * that it's not all zero.
 	 * @return bool
 	 */
-	bool is_set() const;
+	bool is_set() const { return sun_path[0] != '\0'; }
 	/**
-	 * Attempts to resolve the host name into a 32-bit internet address.
-	 * @param saddr The string host name.
-	 * @return The internet address in network byte order.
+	 * Gets the path to which this address refers.
+	 * @return The path to which this address refers.
 	 */
-	static in_addr_t resolve_name(const std::string& saddr);
+	std::string path() const { return std::string(sun_path); }
 	/**
-	 * Creates the socket address using the specified host address and port
-	 * number.
-	 * @param addr The host address.
-	 * @param port The host port number.
+	 * Gets the size of the address structure. 
+	 * Note: In this implementation, this should return sizeof(this) but 
+	 * more convenient in some places, and the implementation might change 
+	 * in the future, so it might be more compatible with future revisions 
+	 * to use this call. 
+	 * @return The size of the address structure.
 	 */
-	void create(in_addr_t addr, in_port_t port);
-	/**
-	 * Creates the socket address using the specified host name and port
-	 * number.
-	 * @param saddr The string host name.
-	 * @param port The host port number.
-	 */
-	void create(const std::string& saddr, in_port_t port);
-	/**
-	 * Gets the 32-bit internet address.
-	 * @return The internet address in the local host's byte order.
-	 */
-	in_addr_t address() const { return ntohl(this->sin_addr.s_addr); }
-	/**
-	 * Gets a byte of the 32-bit Internet Address
-	 * @param i The byte to read (0-3)
-	 * @return The specified byte in the 32-bit Internet Address
-	 */
-	uint8_t operator[](int i) const {
-		in_addr_t addr = address();
-		return ((const uint8_t*)&addr)[i];
-	}
-	/**
-	 * Gets the port number.
-	 * @return The port number in the local host's byte order.
-	 */
-	in_port_t port() const { return ntohs(this->sin_port); }
-	/**
-	 * Gets the size of this structure.
-	 * This is equivalent to sizeof(this) but more convenient in some
-	 * places.
-	 * @return The size of this structure.
-	 */
-	socklen_t size() const { return (socklen_t) sizeof(sockaddr_in); }
+	socklen_t size() const { return (socklen_t) sizeof(sockaddr_un); }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
@@ -194,26 +153,23 @@ public:
 	 * Gets a const pointer to this object cast to a @em sockaddr_in.
 	 * @return const sockaddr_in pointer to this object.
 	 */
-	const sockaddr_in* sockaddr_in_ptr() const {
-		return static_cast<const sockaddr_in*>(this);
+	const sockaddr_un* sockaddr_un_ptr() const {
+		return static_cast<const sockaddr_un*>(this);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr_in.
 	 * @return sockaddr_in pointer to this object.
 	 */
-	sockaddr_in* sockaddr_in_ptr() {
-		return static_cast<sockaddr_in*>(this);
+	sockaddr_un* sockaddr_un_ptr() {
+		return static_cast<sockaddr_un*>(this);
 	}
 	/**
 	 * Gets a printable string for the address.
-	 * This gets the simple dot notation of the address as returned from 
-	 * inet_ntoa(). It does not attempt a host lookup. 
 	 * @return A string representation of the address in the form 
 	 *  	   'address:port'
 	 */
 	std::string to_string() const {
-		return std::string(inet_ntoa(sockaddr_in_ptr()->sin_addr)) + ":" 
-			+ std::to_string(unsigned(port()));
+		return std::string("unix:") + std::string(sun_path);
 	}
 };
 
@@ -226,8 +182,8 @@ public:
  * @param rhs The second address to compare.
  * @return @em true if they are binary equivalent, @em false if not.
  */
-inline bool operator==(const inet_address& lhs, const inet_address& rhs) {
-	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(inet_address)) == 0);
+inline bool operator==(const unix_address& lhs, const unix_address& rhs) {
+	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(unix_address)) == 0);
 }
 
 /**
@@ -238,23 +194,21 @@ inline bool operator==(const inet_address& lhs, const inet_address& rhs) {
  * @return @em true if they are binary different, @em false if they are
  *  	   equivalent.
  */
-inline bool operator!=(const inet_address& lhs, const inet_address& rhs) {
+inline bool operator!=(const unix_address& lhs, const unix_address& rhs) {
 	return !operator==(lhs, rhs);
 }
 
 /**
  * Stream inserter for the address. 
- * This uses the simple dot notation of the address as returned from 
- * inet_ntoa(). It does not attempt a host lookup. 
  * @param os The output stream
  * @param addr The address
  * @return A reference to the output stream.
  */
-std::ostream& operator<<(std::ostream& os, const inet_address& addr);
+std::ostream& operator<<(std::ostream& os, const unix_address& addr);
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 };
 
-#endif		// __sockpp_inet_addr_h
+#endif		// __sockpp_unix_addr_h
 

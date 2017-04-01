@@ -1,4 +1,6 @@
-// tcp_connector.cpp
+// tcpecho.cpp
+//
+// Simple TCP echo client
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,45 +36,53 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <iostream>
+#include <string>
+#include "sockpp/unix_address.h"
+#include "sockpp/inet_address.h"
 #include "sockpp/tcp_connector.h"
 
-namespace sockpp {
+using namespace std;
 
-/////////////////////////////////////////////////////////////////////////////
-
-tcp_connector::tcp_connector(const inet_address& addr)
+int main(int argc, char* argv[])
 {
-	connect(addr);
-}
+	string host = (argc > 1) ? argv[1] : "localhost";
+	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
-// --------------------------------------------------------------------------
+	sockpp::socket_initializer	sockInit;
+	sockpp::tcp_connector		conn;
+	bool						ok = false;
 
-bool tcp_connector::connect(const sockaddr* addr, socklen_t len)
-{
-	if (len < sizeof(sa_family_t)) {
-		// TODO: Set last error
-		return false;
+	if (host[0] == '/')
+		ok = conn.connect(sockpp::unix_address(host));
+	else
+		ok = conn.connect(sockpp::inet_address(host, port));
+
+	if (!ok) {
+		cerr << "Error connecting to server at " << host
+			<< "\n\t" << ::strerror(conn.last_error()) << endl;
+		return 1;
 	}
 
-	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
-	socket_t h = create(domain);
+	cout << "Created a connection from " << conn.address() << endl;
 
-	if (h == INVALID_SOCKET) {
-		set_last_error();
-		return false;
+	string s, sret;
+	while (getline(cin, s) && !s.empty()) {
+		if (conn.write(s) != (int) s.length()) {
+			cerr << "Error writing to the TCP stream" << endl;
+			break;
+		}
+
+		sret.resize(s.length());
+		int n = conn.read_n(&sret[0], s.length());
+
+		if (n != (int) s.length()) {
+			cerr << "Error reading from TCP stream" << endl;
+			break;
+		}
+
+		cout << sret << endl;
 	}
 
-	// This will close the old connection, if any.
-	reset(h);
-	if (!check_ret_bool(::connect(h, addr, len))) {
-		close();
-		return false;
-	}
-
-	return true;
+	return (!conn) ? 1 : 0;
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
-

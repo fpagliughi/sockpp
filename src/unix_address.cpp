@@ -1,4 +1,4 @@
-// tcp_connector.cpp
+// unix_address.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,45 +34,32 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/tcp_connector.h"
+#include "sockpp/unix_address.h"
+#include <cstring>
+
+using namespace std;
 
 namespace sockpp {
 
+constexpr sa_family_t unix_address::ADDRESS_FAMILY;
+constexpr size_t unix_address::MAX_PATH_NAME;
+
 /////////////////////////////////////////////////////////////////////////////
 
-tcp_connector::tcp_connector(const inet_address& addr)
+unix_address::unix_address(const string& path)
 {
-	connect(addr);
+	sun_family = ADDRESS_FAMILY;
+	::strncpy(sun_path, path.c_str(), MAX_PATH_NAME);
 }
 
 // --------------------------------------------------------------------------
 
-bool tcp_connector::connect(const sockaddr* addr, socklen_t len)
+ostream& operator<<(ostream& os, const unix_address& addr)
 {
-	if (len < sizeof(sa_family_t)) {
-		// TODO: Set last error
-		return false;
-	}
-
-	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
-	socket_t h = create(domain);
-
-	if (h == INVALID_SOCKET) {
-		set_last_error();
-		return false;
-	}
-
-	// This will close the old connection, if any.
-	reset(h);
-	if (!check_ret_bool(::connect(h, addr, len))) {
-		close();
-		return false;
-	}
-
-	return true;
+	os << "unix:" << addr.sun_path;
+	return os;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+// End namespace sockpp
 }
-

@@ -68,14 +68,15 @@ class tcp_acceptor : public socket
 	/**
 	 * The local address to which the acceptor is bound.
 	 */
-	inet_address addr_;
+	// TODO: We need a generic address type
+	//inet_address addr_;
 	/**
 	 * Binds the socket to the specified address.
 	 * @param addr The address to which we get bound.
 	 * @return @em true on success, @em false on error
 	 */
-	bool bind(const inet_address& addr) {
-		return check_ret_bool(::bind(handle(), addr.sockaddr_ptr(), sizeof(sockaddr_in)));
+	bool bind(const sockaddr* addr, socklen_t len) {
+		return check_ret_bool(::bind(handle(), addr, len));
 	}
 	/**
 	 * Sets the socket listening on the address to which it is bound.
@@ -100,7 +101,7 @@ public:
 	 * @param addr The TCP address on which to listen.
 	 * @param queSize The listener queue size.
 	 */
-	tcp_acceptor(const inet_address& addr, int queSize=DFLT_QUE_SIZE) : addr_(addr) {
+	tcp_acceptor(const inet_address& addr, int queSize=DFLT_QUE_SIZE) /*: addr_(addr)*/ {
 		open(addr, queSize);
 	}
 	/**
@@ -110,7 +111,7 @@ public:
 	 * @param port The TCP port on which to listen.
 	 * @param queSize The listener queue size.
 	 */
-	tcp_acceptor(in_port_t port, int queSize=DFLT_QUE_SIZE) : addr_(port) {
+	tcp_acceptor(in_port_t port, int queSize=DFLT_QUE_SIZE) /*: addr_(port)*/ {
 		open(port, queSize);
 	}
 
@@ -118,14 +119,24 @@ public:
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
 	 */
-	const inet_address& addr() const { return addr_; }
+	//const inet_address& addr() const { return addr_; }
 	/**
 	 * Opens the acceptor socket and binds it to the specified address.
 	 * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
 	 */
-	virtual bool open(const inet_address& addr, int queSize=DFLT_QUE_SIZE);
+	virtual bool open(const sockaddr* addr, socklen_t len, int queSize=DFLT_QUE_SIZE);
+	/**
+	 * Opens the acceptor socket and binds it to the specified address.
+	 * @param addr The address to which this server should be bound.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
+	 */
+	template <typename ADDR>
+	bool open(const ADDR& addr, int queSize=DFLT_QUE_SIZE) {
+		return open(addr.sockaddr_ptr(), addr.size(), queSize);
+	}
 	/**
 	 * Opens the acceptor socket.
 	 * This binds the socket to all adapters and starts it listening.

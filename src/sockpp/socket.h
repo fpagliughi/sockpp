@@ -92,14 +92,14 @@ class socket
 protected:
 	/**
 	 * OS-specific means to retrieve the last error from an operation.
-	 * This should be called after a failed system call to set the 
-	 * lastErr_ member variable. Normally this would be called from 
-	 * @ref check_ret. 
+	 * This should be called after a failed system call to set the
+	 * lastErr_ member variable. Normally this would be called from
+	 * @ref check_ret.
 	 */
 	static int get_last_error();
 	/**
-	 * Cache the last system error code into this object. 
-	 * This should be called after a failed system call to store the error 
+	 * Cache the last system error code into this object.
+	 * This should be called after a failed system call to store the error
 	 * value.
 	 */
 	void set_last_error() {
@@ -117,7 +117,7 @@ protected:
 	/**
 	 * Checks the value and if less than zero, sets last error.
 	 * @param ret The return value from a library or system call.
-	 * @return @em true if the value is a typical system success value (>=0) 
+	 * @return @em true if the value is a typical system success value (>=0)
 	 *  	   or @em false is is an error (<0)
 	 */
 	bool check_ret_bool(int ret) const{
@@ -150,7 +150,7 @@ public:
 	 */
 	virtual ~socket() { close(); }
 	/**
-	 * Initializes the Socket library.
+	 * Initializes the socket (sockpp) library.
 	 * This is only required for Win32. On platforms that use a standard
 	 * socket implementation this is an empty call.
 	 */
@@ -188,6 +188,18 @@ public:
 	 */
 	socket_t handle() const { return handle_; }
 	/**
+	 * Creates a new socket that refers to this one.
+	 * This creates a new object with an independent lifetime, but refers
+	 * back to this same socket. On most systems, this duplicates the file
+	 * handle using the dup() call.
+	 * A typical use of this is to have separate threads for reading and
+	 * writing the socket. One thread would get the original socket and the
+	 * other would get the cloned one.
+	 * @return A new socket object that refers to the same socket as this
+	 *  	   one.
+	 */
+	socket clone() { return socket(::dup(handle_)); }
+	/**
 	 * Clears the error flag for the object.
 	 * @param val The value to set the flag, normally zero.
 	 */
@@ -213,8 +225,8 @@ public:
 	 * @return A reference to this object.
 	 */
 	socket& operator=(socket&& sock) {
-		handle_ = sock.handle_;
-		sock.handle_ = INVALID_SOCKET;
+		// Give our handle to the other to close.
+		std::swap(handle_, sock.handle_);
 		return *this;
 	}
 	/**
@@ -263,8 +275,8 @@ public:
 class udp_socket : public socket
 {
 protected:
-	static socket_t create() {
-		return (socket_t) ::socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	static socket_t create(int domain=AF_INET) {
+		return (socket_t) ::socket(domain, SOCK_DGRAM, 0 /*IPPROTO_UDP*/);
 	}
 
 public:
@@ -400,8 +412,8 @@ protected:
 	 * Creates a TCP socket.
 	 * @return An OS handle to a TCP socket.
 	 */
-	static socket_t create() {
-		return (socket_t) ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	static socket_t create(int domain=AF_INET) {
+		return (socket_t) ::socket(domain, SOCK_STREAM, 0 /*IPPROTO_TCP*/);
 	}
 
 public:

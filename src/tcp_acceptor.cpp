@@ -49,37 +49,42 @@ namespace sockpp {
 // If the acceptor appears to already be opened, this will quietly succeed
 // without doing anything.
 
-bool tcp_acceptor::open(const inet_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
+bool tcp_acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE_SIZE*/)
 {
 	// TODO: What to do if we are open but bound to a different address?
 	if (is_open())
 		return true;
 
-	// TODO: Set errno?
-	if (!addr.is_set())
+	sa_family_t domain;
+	if (!addr || len < sizeof(sa_family_t)
+			|| 	(domain = *(reinterpret_cast<const sa_family_t*>(addr))) == AF_UNSPEC) {
+		// TODO: Set last error for "address unspecified"
 		return false;
+	}
 
-	socket_t h = tcp_socket::create();
+	socket_t h = tcp_socket::create(domain);
 	if (!check_ret_bool(h))
 		return false;
 
 	reset(h);
 
 	#if !defined(WIN32)
-		int reuse = 1;
-		if (!check_ret_bool(::setsockopt(h, SOL_SOCKET, SO_REUSEADDR,
-                                         &reuse, sizeof(int)))) {
-			close();
-			return false;
+		if (domain == AF_INET) {
+			int reuse = 1;
+			if (!check_ret_bool(::setsockopt(h, SOL_SOCKET, SO_REUSEADDR,
+											 &reuse, sizeof(int)))) {
+				close();
+				return false;
+			}
 		}
 	#endif
 
-	if (!bind(addr) || !listen(queSize)) {
+	if (!bind(addr, len) || !listen(queSize)) {
 		close();
 		return false;
 	}
 
-	addr_ = addr;
+	//addr_ = addr;
 	return true;
 }
 

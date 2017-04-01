@@ -43,14 +43,9 @@ using namespace std::chrono;
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
+// Some platform-specific functions
 
-#if defined(WIN32)
-int win32_closesocket(socket_t s)
-{
-	::closesocket(s);
-	return 0;
-}
-#else
+#if !defined(WIN32)
 timeval to_timeval(const microseconds& dur)
 {
 	const seconds sec = duration_cast<seconds>(dur);
@@ -84,8 +79,6 @@ void socket::close(socket_t h)
 		::closesocket(h);
 	#else
 		::close(h);
-	//#elif defined(NET_LWIP)
-	//	lwip_close(s);
 	#endif
 }
 
@@ -99,8 +92,6 @@ void socket::initialize()
 	#else
 		// Don't signal on socket write errors.
 		::signal(SIGPIPE, SIG_IGN);
-	//#elif defined(NET_LWIP)
-	//	lwip_init();
 	#endif
 }
 
