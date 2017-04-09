@@ -51,7 +51,7 @@ endif
 
 LIB_BASE  ?= $(MODULE)
 LIB_MAJOR ?= 0
-LIB_MINOR ?= 2
+LIB_MINOR ?= 3-pre
 
 LIB_LINK = lib$(LIB_BASE).so
 LIB_MAJOR_LINK = $(LIB_LINK).$(LIB_MAJOR)

@@ -1,3 +1,7 @@
+# Directories for temporaries & build targets
+obj/
+lib/
+
 # Compiled Object files
 *.slo
 *.lo
