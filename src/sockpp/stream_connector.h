@@ -1,5 +1,5 @@
 /**
- * @file tcp_connector.h
+ * @file stream_connector.h
  *
  * Class for creating client-side TCP connections
  *
@@ -44,43 +44,61 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#ifndef __sockpp_stream_connector_h
+#define __sockpp_stream_connector_h
 
-#ifndef __sockpp_tcp_connector_h
-#define __sockpp_tcp_connector_h
-
-#include "sockpp/stream_connector.h"
-#include "sockpp/inet_address.h"
+#include "sockpp/stream_socket.h"
+#include "sockpp/sock_address.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class to create a client TCP connection.
+ * Class to create a client stream connection.
  */
-class tcp_connector : public stream_connector
+class stream_connector : public stream_socket
 {
-	using base = stream_connector;
-
 	// Non-copyable
-	tcp_connector(const tcp_connector&) =delete;
-	tcp_connector& operator=(const tcp_connector&) =delete;
+	stream_connector(const stream_connector&) =delete;
+	stream_connector& operator=(const stream_connector&) =delete;
 
 public:
 	/**
 	 * Creates an unconnected connector.
 	 */
-	tcp_connector() {}
+	stream_connector() {}
 	/**
 	 * Creates the connector and attempts to connect to the specified
 	 * address.
-	 * @param addr The remote server address.
+	 * @param addr The remote server address. 
+	 * @param len The length of the address structure. 
 	 */
-	tcp_connector(const inet_address& addr);
+	stream_connector(const sockaddr* addr, socklen_t len);
 	/**
-	 * Base connect choices also work.
+	 * Creates the connector and attempts to connect to the specified
+	 * address.
+	 * @param addr The remote server address. 
 	 */
-	using base::connect;
+	stream_connector(const sock_address& a) : stream_connector(a.addr, a.len) {}
+	/**
+	 * Determines if the socket connected to a remote host.
+	 * Note that this is not a reliable determination if the socket is
+	 * currently connected, but rather that an initial connection was
+	 * established.
+	 * @return @em true If the socket connected to a remote host,
+	 *  	   @em false if not.
+	 */
+	bool is_connected() const { return is_open(); }
+	/**
+	 * Attempts to connects to the specified server.
+	 * If the socket is currently connected, this will close the current
+	 * connection and open the new one.
+	 * @param addr The remote server address. 
+	 * @param len The length of the address structure in bytes 
+	 * @return @em true on success, @em false on error
+	 */
+	bool connect(const sockaddr* addr, socklen_t len);
 	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
@@ -88,13 +106,26 @@ public:
 	 * @param addr The remote server address.
 	 * @return @em true on success, @em false on error
 	 */
-	bool connect(const inet_address& addr) {
-		return base::connect(addr.to_sock_address());
+	bool connect(const sock_address& addr) {
+		return connect(addr.addr, addr.len);
 	}
+	#if 0
+	/**
+	 * Attempts to connects to the specified server.
+	 * If the socket is currently connected, this will close the current
+	 * connection and open the new one.
+	 * @param addr The remote server address.
+	 * @return @em true on success, @em false on error
+	 */
+	template <typename ADDR>
+	bool connect(const ADDR& addr) {
+		return connect(addr.sockaddr_ptr(), addr.size());
+	}
+	#endif
 };
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 };
 
-#endif		// __sockpp_tcp_connector_h
+#endif		// __sockpp_stream_connector_h

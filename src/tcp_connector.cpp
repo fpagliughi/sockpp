@@ -45,33 +45,6 @@ tcp_connector::tcp_connector(const inet_address& addr)
 	connect(addr);
 }
 
-// --------------------------------------------------------------------------
-
-bool tcp_connector::connect(const sockaddr* addr, socklen_t len)
-{
-	if (len < sizeof(sa_family_t)) {
-		// TODO: Set last error
-		return false;
-	}
-
-	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
-	socket_t h = create(domain);
-
-	if (h == INVALID_SOCKET) {
-		set_last_error();
-		return false;
-	}
-
-	// This will close the old connection, if any.
-	reset(h);
-	if (!check_ret_bool(::connect(h, addr, len))) {
-		close();
-		return false;
-	}
-
-	return true;
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 }

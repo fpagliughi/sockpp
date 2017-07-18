@@ -1,13 +1,13 @@
 /**
- * @file sock_address.h
+ * @file address.h
  *
- * Class for a TCP/IP socket address.
+ * Generic address class for sockpp.
  *
- * @author Frank Pagliughi
- * @author SoRo Systems, Inc.
- * @author www.sorosys.com
+ * @author	Frank Pagliughi
+ * @author	SoRo Systems, Inc.
+ * @author  www.sorosys.com
  *
- * @date February 2014
+ * @date	June 2017
  */
 
 // --------------------------------------------------------------------------
@@ -48,126 +48,37 @@
 #define __sockpp_sock_address_h
 
 #include "sockpp/platform.h"
-#include <memory>
-#include <string>
-#include <cstring>
-#include <sys/un.h>
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class that represents a generic socket address.
+ * Generic socket address.
+ * This is a non-owning reference.
  */
-class sock_address : public sockaddr_un
+struct sock_address
 {
-	// NOTE: This class makes heavy use of the fact that it is completely
-	// binary compatible with a sockaddr/sockaddr_un, and the same size as 
-	// one of those structures. Do not add any other member variables, 
-	// without going through the whole of the class to fixup! 
+	/** Pointer to the address */
+	const sockaddr* addr;
+	/** Length of the address (in bytes) */
+	socklen_t len;
 
-	/** Smart pointer hold address data */
-	std::unique_ptr<uint8_t[]> addr_;
-	/** The number of bytes of data */
-	socklen_t len_;
-
-public:
 	/**
 	 * Constructs an empty address.
+	 * The address is initialized to all zeroes.
 	 */
-	sock_address() : len_(0) {}
+	sock_address() : addr(nullptr), len(0) {}
 	/**
-	 * Constructs the address by copying the specified structure.
-	 * @param addr Pointer to a sockaddr structure. 
-	 * @param len The number of bytes in the sockaddr structure.
+	 * Constructs an empty address.
+	 * The address is initialized to all zeroes.
 	 */
-	sock_address(const sockaddr* addr, socklen_t len);
-	/**
-	 * Constructs the address by copying the specified address.
-	 * @param addr
-	 */
-	sock_address(const sock_address& addr);
-	/**
-	 * Checks if the address is set to some value.
-	 * This doesn't attempt to determine if the address is valid, simply
-	 * that it's not all zero.
-	 * @return bool
-	 */
-	bool is_set() const {
-		return address_family() != AF_UNSPEC;
-	}
-	/**
-	 * Gets the size of the address structure. 
-	 */
-	socklen_t size() const { return len_; }
-	/**
-	 * Gets the address family (socket domain) of this address. 
-	 * @return The address family (socket domain) of this address. If no 
-	 *  	   address has been assigned, this returns AF_UNSPEC (0).
-	 */
-	sa_family_t address_family() const;
-	/**
-	 * Gets a pointer to this object cast to a @em sockaddr.
-	 * @return A pointer to this object cast to a @em sockaddr.
-	 */
-	const sockaddr* sockaddr_ptr() const {
-		return reinterpret_cast<const sockaddr*>(addr_.get());
-	}
-	/**
-	 * Gets a pointer to this object cast to a @em sockaddr.
-	 * @return A pointer to this object cast to a @em sockaddr.
-	 */
-	sockaddr* sockaddr_ptr() {
-		return reinterpret_cast<sockaddr*>(addr_.get());
-	}
-	/**
-	 * Gets a printable string for the address.
-	 * @return A string representation of the address in the form 
-	 *  	   'address:port'
-	 */
-	std::string to_string() const {
-		// TODO: Does anything here make sense?
-		return std::string();
-	}
+	sock_address(const sockaddr* a, socklen_t ln) : addr(a), len(ln) {}
 };
-
-// --------------------------------------------------------------------------
-
-/**
- * Equality comparator.
- * This does a bitwise comparison.
- * @param lhs The first address to compare.
- * @param rhs The second address to compare.
- * @return @em true if they are binary equivalent, @em false if not.
- */
-inline bool operator==(const sock_address& lhs, const sock_address& rhs) {
-	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(sock_address)) == 0);
-}
-
-/**
- * Inequality comparator.
- * This does a bitwise comparison.
- * @param lhs The first address to compare.
- * @param rhs The second address to compare.
- * @return @em true if they are binary different, @em false if they are
- *  	   equivalent.
- */
-inline bool operator!=(const sock_address& lhs, const sock_address& rhs) {
-	return !operator==(lhs, rhs);
-}
-
-/**
- * Stream inserter for the address. 
- * @param os The output stream
- * @param addr The address
- * @return A reference to the output stream.
- */
-std::ostream& operator<<(std::ostream& os, const sock_address& addr);
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-};
+// end namespace 'sockpp'
+}
 
 #endif		// __sockpp_sock_address_h
 

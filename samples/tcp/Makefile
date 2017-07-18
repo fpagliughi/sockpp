@@ -29,9 +29,12 @@ LDLIBS += -lsockpp
 .PHONY: all
 all: $(EXES)
 
-.PHONY: clean
+.PHONY: clean distclean
 clean:
 	rm -f $(EXES)
+
+distclean: clean
+
 
 .PHONY: dump
 dump:

@@ -26,6 +26,10 @@ SRC_DIR ?= src
 INC_DIR ?= src
 HDR_DIR ?= $(INC_DIR)/$(MODULE)
 
+SAMPLES_DIR ?= samples
+TESTS_DIR ?= tests
+UNITS_DIR ?= tests/units
+
 LIB_DIR ?= $(CROSS_COMPILE)lib
 OBJ_DIR ?= $(CROSS_COMPILE)obj
 
@@ -120,7 +124,10 @@ $(OBJ_DIR)/%.o: %.cpp $(OBJ_DIR)/%.dep
 # ----- Build targets -----
 
 .PHONY: all
-all: $(TGT) $(LIB_DIR)/$(LIB_LINK) $(LIB_DIR)/$(LIB_MAJOR_LINK)
+all: lib
+
+.PHONY: lib
+lib: $(TGT) $(LIB_DIR)/$(LIB_LINK) $(LIB_DIR)/$(LIB_MAJOR_LINK)
 
 $(TGT): $(OBJS)
 	@echo Creating library: $@
@@ -158,8 +165,14 @@ clean:
 distclean: clean
 	$(QUIET) rm -rf $(OBJ_DIR) $(LIB_DIR)
 
-.PHONY: samples
-samples: $(SRC_DIR)/samples
+.PHONY: samples samples_tcp samples_unix
+
+samples: samples_tcp samples_unix
+
+samples_tcp: $(SAMPLES_DIR)/tcp lib
+	$(MAKE) -C $<
+
+samples_unix: $(SAMPLES_DIR)/unix lib
 	$(MAKE) -C $<
 
 # ----- Installation targets -----
