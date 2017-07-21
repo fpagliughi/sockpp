@@ -46,7 +46,7 @@
 #define __sockpp_tcp_acceptor_h
 
 #include "sockpp/inet_address.h"
-#include "sockpp/socket.h"
+#include "sockpp/stream_socket.h"
 
 namespace sockpp {
 

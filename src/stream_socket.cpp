@@ -34,7 +34,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/socket.h"
+#include "sockpp/stream_socket.h"
 #include "sockpp/exception.h"
 #include <algorithm>
 
@@ -43,143 +43,108 @@ using namespace std::chrono;
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-// Some platform-specific functions
-
-#if !defined(WIN32)
-timeval to_timeval(const microseconds& dur)
-{
-	const seconds sec = duration_cast<seconds>(dur);
-
-	timeval tv;
-    tv.tv_sec  = sec.count();
-    tv.tv_usec = duration_cast<microseconds>(dur - sec).count();
-	return tv;
-}
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
-//								socket
+//								stream_socket
 /////////////////////////////////////////////////////////////////////////////
 
-int socket::get_last_error()
+// Opens a TCP socket. If it was already open, it just succeeds without
+// doing anything.
+
+bool stream_socket::open()
 {
-	#if defined(WIN32)
-		return ::WSAGetLastError();
-	#else
-		int err = errno;
-		return err;
-	#endif
-}
-
-// --------------------------------------------------------------------------
-
-void socket::close(socket_t h)
-{
-	#if defined(WIN32)
-		::closesocket(h);
-	#else
-		::close(h);
-	#endif
-}
-
-// --------------------------------------------------------------------------
-
-void socket::initialize()
-{
-	#if defined(WIN32)
-		WSADATA wsadata;
-		::WSAStartup(MAKEWORD(2, 0), &wsadata);
-	#else
-		// Don't signal on socket write errors.
-		::signal(SIGPIPE, SIG_IGN);
-	#endif
-}
-
-// --------------------------------------------------------------------------
-
-void socket::destroy()
-{
-	#if defined(WIN32)
-		::WSACleanup();
-	#endif
-}
-
-// --------------------------------------------------------------------------
-
-socket socket::clone() 
-{
-	socket_t h = INVALID_SOCKET;
-	#if defined(WIN32)
-		WSAPROTOCOL_INFO protInfo;
-		if (::WSADuplicateSocket(handle_, ::GetCurrentProcessId(), &protInfo) != 0)
-			h = ::WSASocket(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED);
-	#else
-		h = ::dup(handle_);
-	#endif
-
-	return socket(h); 
-}
-// --------------------------------------------------------------------------
-
-void socket::reset(socket_t h /*=INVALID_SOCKET*/)
-{
-	socket_t oh = handle_;
-	handle_ = h;
-	if (oh != INVALID_SOCKET)
-		close(oh);
-}
-
-// --------------------------------------------------------------------------
-// Gets the local address to which the socket is bound.
-
-bool socket::address(inet_address& addr) const
-{
-	socklen_t len = sizeof(inet_address);
-	return check_ret_bool(::getsockname(handle_, addr.sockaddr_ptr(), &len));
-}
-
-// --------------------------------------------------------------------------
-// Gets the local address to which the socket is bound. Throw an exception
-// on error.
-
-inet_address socket::address() const
-{
-	inet_address addr;
-	if (!address(addr))
-		throw sys_error(lastErr_);
-	return addr;
-}
-
-// --------------------------------------------------------------------------
-// Gets the address of the remote peer, if this socket is bound.
-
-bool socket::peer_address(inet_address& addr) const
-{
-	socklen_t len = sizeof(inet_address);
-	return check_ret_bool(::getpeername(handle_, addr.sockaddr_ptr(), &len));
-}
-
-// --------------------------------------------------------------------------
-// Gets the address of the remote peer, if this socket is bound. Throw an
-// exception on error.
-
-inet_address socket::peer_address() const
-{
-	inet_address addr;
-	if (!peer_address(addr))
-		throw sys_error(lastErr_);
-	return addr;
-}
-
-// --------------------------------------------------------------------------
-// Closes the socket
-
-void socket::close()
-{
-	if (handle_ != INVALID_SOCKET) {
-		socket_t h = release();
-		close(h);
+	if (!is_open()) {
+		socket_t h = create();
+		if (check_ret_bool(h))
+			reset(h);
+		else
+			set_last_error();
 	}
+
+	return is_open();
+}
+
+// --------------------------------------------------------------------------
+// Reads from the socket. Note that we use ::recv() rather then ::read()
+// because many non-*nix operating systems make a distinction.
+
+ssize_t stream_socket::read(void *buf, size_t n)
+{
+	return check_ret(::recv(handle(), (char*) buf, n, 0));
+}
+
+// --------------------------------------------------------------------------
+// Attempts to read the requested number of bytes by repeatedly calling
+// read() until it has the data or an error occurs.
+//
+
+ssize_t tcp_socket::read_n(void *buf, size_t n)
+{
+	size_t	nr = 0;
+	ssize_t	nx = 0;
+
+	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
+
+	while (nr < n) {
+		if ((nx = read(b+nr, n-nr)) <= 0)
+			break;
+
+		nr += nx;
+	}
+
+	return (nr == 0 && nx < 0) ? nx : ssize_t(nr);
+}
+
+// --------------------------------------------------------------------------
+
+bool stream_socket::read_timeout(const microseconds& to)
+{
+	#if !defined(WIN32)
+		timeval tv = to_timeval(to);
+		return check_ret_bool(::setsockopt(handle(), SOL_SOCKET, SO_RCVTIMEO,
+                                           &tv, sizeof(timeval))) == 0;
+	#else
+		return false;
+	#endif
+}
+
+// --------------------------------------------------------------------------
+
+ssize_t stream_socket::write(const void *buf, size_t n)
+{
+	return check_ret(::send(handle(), (const char*) buf, n , 0));
+}
+
+// --------------------------------------------------------------------------
+// Attempts to write the entire buffer by repeatedly calling write() until
+// either all of the data is sent or an error occurs.
+
+ssize_t stream_socket::write_n(const void *buf, size_t n)
+{
+	size_t	nw = 0;
+	ssize_t	nx = 0;
+
+	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
+
+	while (nw < n) {
+		if ((nx = write(b+nw, n-nw)) <= 0)
+			break;
+
+		nw += nx;
+	}
+
+	return (nw == 0 && nx < 0) ? nx : ssize_t(nw);
+}
+
+// --------------------------------------------------------------------------
+
+bool stream_socket::write_timeout(const microseconds& to)
+{
+	#if !defined(WIN32)
+		timeval tv = to_timeval(to);
+		return check_ret_bool(::setsockopt(handle(), SOL_SOCKET, SO_SNDTIMEO,
+                                           &tv, sizeof(timeval))) == 0;
+	#else
+		return false;
+	#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////

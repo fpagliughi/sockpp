@@ -1,15 +1,5 @@
-/**
- * @file platform.h
- *
- * Platform-specific definitions for the sockpp library.
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	December 2014
- */
-
+// stream_connector.cpp
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
@@ -44,55 +34,38 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_platform_h
-#define __sockpp_platform_h
+#include "sockpp/stream_connector.h"
 
-#include <cstdint>
+namespace sockpp {
 
-#if defined(WIN32)
-	//#pragma warning(4 : 4996)	// Deprecated functions (CRT & all)
-	//#pragma warning(4 : 4250)	// Inheritance via dominance
+/////////////////////////////////////////////////////////////////////////////
 
-	#if !defined(WIN32_LEAN_AND_MEAN)
-		#define WIN32_LEAN_AND_MEAN
-	#endif
+bool stream_connector::connect(const sockaddr* addr, socklen_t len)
+{
+	if (len < sizeof(sa_family_t)) {
+		// TODO: Set last error
+		return false;
+	}
 
-	#if !defined(_CRT_SECURE_NO_DEPRECATE)
-		#define _CRT_SECURE_NO_DEPRECATE
-	#endif
+	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
+	socket_t h = create(domain);
 
-	//#include <cstddef>
-	//#include <windows.h>
-	#include <winsock2.h>
-	#include <ws2tcpip.h>
+	if (h == INVALID_SOCKET) {
+		set_last_error();
+		return false;
+	}
 
-	#define SOCKPP_SOCKET_T_DEFINED
-	using socket_t = SOCKET;
+	// This will close the old connection, if any.
+	reset(h);
+	if (!check_ret_bool(::connect(h, addr, len))) {
+		close();
+		return false;
+	}
 
-	using socklen_t = int;
-	using in_port_t = uint16_t;
-	using in_addr_t = uint32_t;
+	return true;
+}
 
-	using sa_family_t = u_short;
-
-	#ifndef _SSIZE_T_DEFINED 
-		#define _SSIZE_T_DEFINED 
-		#undef ssize_t
-		#ifdef _WIN64 
-			using ssize_t = int64_t;
-		#else 
-			using ssize_t = int;
-		#endif // _WIN64 
-	#endif // _SSIZE_T_DEFINED
-
-#else
-	#include <unistd.h>
-	#include <sys/socket.h>
-	#include <arpa/inet.h>
-	#include <netdb.h>
-	#include <signal.h>
-	#include <errno.h>
-#endif
-
-#endif
+/////////////////////////////////////////////////////////////////////////////
+// end namespace sockpp
+}
 

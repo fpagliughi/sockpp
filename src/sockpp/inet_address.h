@@ -48,6 +48,7 @@
 #define __sockpp_inet_addr_h
 
 #include "sockpp/platform.h"
+#include "sockpp/sock_address.h"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -189,6 +190,13 @@ public:
 	 */
 	sockaddr* sockaddr_ptr() {
 		return reinterpret_cast<sockaddr*>(this);
+	}
+	/**
+	 * Gets this address as a sock_address. 
+	 * @return This address as a sock_address. 
+	 */
+	sock_address to_sock_address() const {
+		return sock_address(sockaddr_ptr(), size());
 	}
 	/**
 	 * Gets a const pointer to this object cast to a @em sockaddr_in.
