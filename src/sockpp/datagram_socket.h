@@ -122,7 +122,7 @@ public:
 	}
 	/**
 	 * Sends a UDP packet to the specified internet address.
-	 * @param buf The date to send.
+	 * @param buf The data to send.
 	 * @param n The number of bytes in the data buffer.
 	 * @param flags
 	 * @param addr The remote destination of the data.
@@ -138,7 +138,7 @@ public:
 	/**
 	 * Sends a UDP packet to the default address.
 	 * The socket should be connected before calling this
-	 * @param buf The date to send.
+	 * @param buf The data to send.
 	 * @param n The number of bytes in the data buffer.
 	 * @param addr The remote destination of the data.
 	 * @return @em zero on success, @em -1 on failure.
