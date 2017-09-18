@@ -102,14 +102,14 @@ public:
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
-	 * @param addr
+	 * @param addr The other address
 	 */
 	unix_address(const sockaddr_un& addr) {
 		std::memcpy(sockaddr_un_ptr(), &addr, sizeof(sockaddr_un));
 	}
 	/**
 	 * Constructs the address by copying the specified address.
-	 * @param addr
+	 * @param addr The other address
 	 */
 	unix_address(const unix_address& addr) {
 		std::memcpy(this, &addr, sizeof(unix_address));
@@ -118,7 +118,7 @@ public:
 	 * Checks if the address is set to some value.
 	 * This doesn't attempt to determine if the address is valid, simply
 	 * that it's not all zero.
-	 * @return bool
+	 * @return @em true if the address has been set, @em false otherwise.
 	 */
 	bool is_set() const { return sun_path[0] != '\0'; }
 	/**
