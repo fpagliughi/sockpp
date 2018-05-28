@@ -100,7 +100,6 @@ elseif(UNIX)
     set(LIBS_SYSTEM c stdc++)
 endif()
 
-
 ## --- create the shared library ---
 
 if(SOCKPP_BUILD_SHARED)

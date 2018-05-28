@@ -50,7 +50,6 @@
 #include "sockpp/inet_address.h"
 #include <chrono>
 #include <string>
-#include <algorithm>
 
 namespace sockpp {
 
@@ -146,7 +145,7 @@ public:
 	 * This takes ownership of the underlying handle in sock.
 	 * @param An rvalue reference to a socket object.
 	 */
-	socket(socket&& sock) : handle_(sock.handle_), lastErr_(0) {
+	socket(socket&& sock) noexcept : handle_(sock.handle_), lastErr_(0) {
 		sock.handle_ = INVALID_SOCKET;
 	}
 	/**
@@ -202,7 +201,7 @@ public:
 	 * @return A new socket object that refers to the same socket as this
 	 *  	   one.
 	 */
-	socket clone();	// { return socket(::dup(handle_)); }
+	socket clone();
 	/**
 	 * Clears the error flag for the object.
 	 * @param val The value to set the flag, normally zero.
@@ -228,7 +227,7 @@ public:
 	 * one.
 	 * @return A reference to this object.
 	 */
-	socket& operator=(socket&& sock) {
+	socket& operator=(socket&& sock) noexcept {
 		// Give our handle to the other to close.
 		std::swap(handle_, sock.handle_);
 		return *this;
@@ -263,6 +262,13 @@ public:
 	 * @return The code for the last errror.
 	 */
 	int last_error() const { return lastErr_; }
+	/**
+	 * Gets a string describing the last errror.
+	 * This is typically the returned message from the system strerror()
+	 * call.
+	 * @return A string describing the last errror.
+	 */
+	std::string last_error_str() const;
 	/**
 	 * Closes the socket.
 	 * After closing the socket, the handle is @em invalid, and can not be

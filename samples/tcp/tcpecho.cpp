@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
 	if (!conn.connect(sockpp::inet_address(host, port))) {
 		cerr << "Error connecting to server at " << host << ":" << port 
-			<< "\n\t" << ::strerror(conn.last_error()) << endl;
+			<< "\n\t" << conn.last_error_str() << endl;
 		return 1;
 	}
 
@@ -61,7 +61,8 @@ int main(int argc, char* argv[])
 	string s, sret;
 	while (getline(cin, s) && !s.empty()) {
 		if (conn.write(s) != (int) s.length()) {
-			cerr << "Error writing to the TCP stream" << endl;
+			cerr << "Error writing to the TCP stream: "
+				<< conn.last_error_str() << endl;
 			break;
 		}
 
@@ -69,7 +70,8 @@ int main(int argc, char* argv[])
 		int n = conn.read_n(&sret[0], s.length());
 
 		if (n != (int) s.length()) {
-			cerr << "Error reading from TCP stream" << endl;
+			cerr << "Error reading from TCP stream: "
+				<< conn.last_error_str() << endl;
 			break;
 		}
 

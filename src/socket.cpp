@@ -37,6 +37,10 @@
 #include "sockpp/socket.h"
 #include "sockpp/exception.h"
 #include <algorithm>
+#include <cstring>
+
+// Used to explicitly ignore the returned value of a function call.
+#define ignore_result(x) if (x) {}
 
 using namespace std::chrono;
 
@@ -169,6 +173,25 @@ inet_address socket::peer_address() const
 	if (!peer_address(addr))
 		throw sys_error(lastErr_);
 	return addr;
+}
+
+// --------------------------------------------------------------------------
+// Gets a description of the last error encountered.
+
+std::string socket::last_error_str() const
+{
+	if (lastErr_ == 0)
+		return std::string();
+
+	char buf[512];
+	buf[0] = '\x0';
+
+	#ifdef _GNU_SOURCE
+		return std::string(strerror_r(lastErr_, buf, sizeof(buf)));
+	#else
+		ignore_result(strerror_r(lastErr_, buf, sizeof(buf)));
+		return std::string(buf);
+	#endif
 }
 
 // --------------------------------------------------------------------------
