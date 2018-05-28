@@ -56,6 +56,7 @@ namespace sockpp {
 
 /**
  * Class to create a client stream connection.
+ * This is a streaming socket, like a TCP socket.
  */
 class stream_connector : public stream_socket
 {

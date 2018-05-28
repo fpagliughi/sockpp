@@ -62,26 +62,23 @@ set(CPACK_PACKAGE_VERSION_PATCH ${SOCKPP_VERSION_PATCH})
 # --- build options ---
 
 if(WIN32)
-  set(SOCKPP_BUILD_STATIC TRUE  CACHE BOOL "Build static library")
-  set(SOCKPP_BUILD_SHARED FALSE CACHE BOOL "Build shared library (DLL)")
+  option(SOCKPP_BUILD_STATIC "Build static library" TRUE)
+  option(SOCKPP_BUILD_SHARED "Build shared library (DLL)" FALSE)
 else()
-  set(SOCKPP_BUILD_STATIC FALSE  CACHE BOOL "Build static library")
-  set(SOCKPP_BUILD_SHARED TRUE CACHE BOOL "Build shared library")
+  option(SOCKPP_BUILD_STATIC "Build static library" FALSE)
+  option(SOCKPP_BUILD_SHARED "Build shared library" TRUE)
 endif()
 
-set(SOCKPP_BUILD_SAMPLES FALSE CACHE BOOL "Build sample programs")
-set(SOCKPP_BUILD_DOCUMENTATION FALSE CACHE BOOL "Create Doxygen reference documentation")
+set(SOCKPP_BUILD_SAMPLES "Build sample programs" FALSE)
+set(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" FALSE)
 
-# --- C++11 build flags ---
+# --- C++14 build flags ---
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # --- Library sources ---
-
-#Bring the headers into the project
-include_directories(src)
 
 # Compile all the C++ files in the src/ dir into the library
 file(GLOB SOURCES "src/*.cpp")
@@ -90,55 +87,54 @@ if(WIN32)
     list( REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/unix_address.cpp )
 endif()
 
+# Uncomment for some CMake debug info
 #message(STATUS "SOURCES: " ${SOURCES})
 
-add_library(OBJS OBJECT ${SOURCES})
-
 # --- System libraries ---
+
+include(GNUInstallDirs)
 
 if(WIN32)
     set(LIBS_SYSTEM ws2_32)
 elseif(UNIX)
-    set(LIBS_SYSTEM c stdc++ pthread)
+    set(LIBS_SYSTEM c stdc++)
 endif()
 
 
 ## --- create the shared library ---
 
 if(SOCKPP_BUILD_SHARED)
-    ## set position independent flag (-fPIC on Linux)
-    set_property(TARGET OBJS PROPERTY POSITION_INDEPENDENT_CODE ON)
+    add_library(${SOCKPP} SHARED ${SOURCES})
 
-    add_library(${SOCKPP} SHARED $<TARGET_OBJECTS:OBJS>)
-
-    ## add dependencies to the shared library
-    target_link_libraries(${SOCKPP} ${LIBS_SYSTEM})
-
-    ## set the shared library soname
     set_target_properties(${SOCKPP} PROPERTIES
         VERSION ${CLIENT_VERSION}
         SOVERSION ${SOCKPP_VERSION_MAJOR})
 
     install(TARGETS ${SOCKPP}
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 # --- Create the static library ---
 
 if(SOCKPP_BUILD_STATIC)
-    add_library(${SOCKPP_STATIC} STATIC $<TARGET_OBJECTS:OBJS>)
-
-    ## add dependencies to the static library
-    target_link_libraries(${SOCKPP_STATIC} ${LIBS_SYSTEM})
+    add_library(${SOCKPP_STATIC} STATIC ${SOURCES})
 
     install(TARGETS ${SOCKPP}-static
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-    set_target_properties(${SOCKPP_STATIC} PROPERTIES OUTPUT_NAME ${SOCKPP})
+		# Let the archive use the same name as the shared library
+		if(UNIX)
+        set_target_properties(${SOCKPP_STATIC} PROPERTIES OUTPUT_NAME ${SOCKPP})
+		endif()
 endif()
+
+# ----- Specify the header location -----
+
+target_include_directories(${SOCKPP}
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # --- Install the library ---
 

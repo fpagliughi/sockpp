@@ -37,6 +37,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # --------------------------------------------------------------------------
 
+# --- For apps that use threads ---
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 # --- Executables ---
 
@@ -45,7 +49,7 @@ add_executable(tcpecho tcpecho.cpp)
 
 # --- Link for executables ---
 
-target_link_libraries(mtechosvr ${SOCKPP_LIB})
+target_link_libraries(mtechosvr ${SOCKPP_LIB} Threads::Threads)
 target_link_libraries(tcpecho ${SOCKPP_LIB})
 
 # --- Install ---
