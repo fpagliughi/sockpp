@@ -62,15 +62,15 @@ set(CPACK_PACKAGE_VERSION_PATCH ${SOCKPP_VERSION_PATCH})
 # --- build options ---
 
 if(WIN32)
-  option(SOCKPP_BUILD_STATIC "Build static library" TRUE)
-  option(SOCKPP_BUILD_SHARED "Build shared library (DLL)" FALSE)
+  option(SOCKPP_BUILD_STATIC "Build static library" ON)
+  option(SOCKPP_BUILD_SHARED "Build shared library (DLL)" OFF)
 else()
-  option(SOCKPP_BUILD_STATIC "Build static library" FALSE)
-  option(SOCKPP_BUILD_SHARED "Build shared library" TRUE)
+  option(SOCKPP_BUILD_STATIC "Build static library" OFF)
+  option(SOCKPP_BUILD_SHARED "Build shared library" ON)
 endif()
 
-set(SOCKPP_BUILD_SAMPLES "Build sample programs" FALSE)
-set(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" FALSE)
+option(SOCKPP_BUILD_SAMPLES "Build sample programs" OFF)
+option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 
 # --- C++14 build flags ---
 
