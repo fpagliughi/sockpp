@@ -69,7 +69,7 @@ else()
 	option(SOCKPP_BUILD_SHARED "Build shared library" ON)
 endif()
 
-option(SOCKPP_BUILD_SAMPLES "Build sample programs" OFF)
+option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 
 # --- C++14 build flags ---
@@ -84,10 +84,13 @@ add_subdirectory(src)
 
 # --- Header Locations ---
 
-target_include_directories(sockpp-objs PUBLIC
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-	$<INSTALL_INTERFACE:include>
-	PRIVATE src)
+target_include_directories(sockpp-objs 
+	PUBLIC
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+		$<INSTALL_INTERFACE:include>
+	PRIVATE 
+		src
+)
 
 # --- System libraries ---
 
@@ -151,16 +154,16 @@ install(DIRECTORY include/${SOCKPP}/
 
 # --- Examples Applications ---
 
-if(SOCKPP_BUILD_SAMPLES)
+if(SOCKPP_BUILD_EXAMPLES)
 	if(SOCKPP_BUILD_SHARED)
 		set(SOCKPP_LIB ${SOCKPP})
 	else()
 		set(SOCKPP_LIB ${SOCKPP_STATIC})
 	endif()
 
-	add_subdirectory(samples/tcp)
+	add_subdirectory(examples/tcp)
 	if(UNIX)
-		add_subdirectory(samples/unix)
+		add_subdirectory(examples/unix)
 	endif()
 endif()
 

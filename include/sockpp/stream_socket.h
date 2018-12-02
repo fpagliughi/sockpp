@@ -54,9 +54,9 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class for TCP sockets.
- * This is the streaming connection between two TCP peers. It looks like a
- * readable/writeable device.
+ * Base class for streaming sockets, such as TCP.
+ * This is the streaming connection between two streaming peers. It looks
+ * like a readable/writeable device.
  */
 class stream_socket : public socket
 {
@@ -64,7 +64,7 @@ protected:
 	friend class stream_acceptor;
 	friend class tcp_acceptor;
 	/**
-	 * Creates a TCP socket.
+	 * Creates a streaming socket.
 	 * @return An OS handle to a TCP socket.
 	 */
 	static socket_t create(int domain=AF_INET) {
@@ -77,9 +77,9 @@ public:
 	 */
 	stream_socket() {}
 	/**
-	 * Creates a TCP socket from an existing OS socket handle and claims
-	 * ownership of the handle.
-	 * @param sock
+     * Creates a streaming socket from an existing OS socket handle and
+     * claims ownership of the handle.
+	 * @param sock A socket handle from the operating system.
 	 */
 	explicit stream_socket(socket_t sock) : socket(sock) {}
 	/**
@@ -93,8 +93,6 @@ public:
 	 * @return @em true on success, @em false on failure.
 	 */
 	bool open();
-
-	// ----- IDevice Interface -----
 
 	/**
 	 * Reads from the port
@@ -115,8 +113,8 @@ public:
 	virtual ssize_t read_n(void *buf, size_t n);
 	/**
 	 * Set a timeout for read operations.
-	 * Sets the timout that the device uses for read operations. Not all
-	 * devices support timouts, so the caller should prepare for failure.
+	 * Sets the timeout that the device uses for read operations. Not all
+	 * devices support timeouts, so the caller should prepare for failure.
 	 * @param to The amount of time to wait for the operation to complete.
 	 * @return @em true on success, @em false on failure.
 	 */

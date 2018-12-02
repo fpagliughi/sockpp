@@ -1,6 +1,6 @@
 # CMakeLists.txt
 #
-# CMake file for the TCP v4 socket sample applications
+# CMake file for the TCP v4 socket example applications
 # in the 'sockpp' library.
 #
 # ---------------------------------------------------------------------------
