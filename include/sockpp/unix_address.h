@@ -101,11 +101,12 @@ public:
 	explicit unix_address(const sockaddr& addr);
 	/**
 	 * Constructs the address by copying the specified structure.
-	 * @param addr The other address
+     * @param addr The other address
+     * @throws std::invalid_argument if the address is not properly
+     *            initialized as a UNIX-domain address (i.e. family is not
+     *            AF_UNIX)
 	 */
-	unix_address(const sockaddr_un& addr) {
-		std::memcpy(sockaddr_un_ptr(), &addr, sizeof(sockaddr_un));
-	}
+	unix_address(const sockaddr_un& addr);
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
@@ -134,7 +135,12 @@ public:
 	 * @return The size of the address structure.
 	 */
 	socklen_t size() const { return (socklen_t) sizeof(sockaddr_un); }
-	/**
+
+    // TODO: Do we need a:
+    //   create(path)
+    // to mimic the inet_address behavior?
+
+    /**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */

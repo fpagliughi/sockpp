@@ -60,8 +60,8 @@ namespace sockpp {
 
 /**
  * Class that represents an internet (IPv4) address.
- * This inherits from the IP-specific form of a socket address, @em
- * sockaddr_in.
+ * This inherits from the IP-specific form of a socket address,
+ * @em sockaddr_in.
  */
 class inet_address : public sockaddr_in
 {
@@ -82,44 +82,46 @@ public:
 	 */
 	inet_address() { zero(); }
 	/**
-	 * Constructs an address for the local host using the specified port.
-	 * @param port
+     * Constructs an address for any iface using the specified port.
+     * This is a convenient way for a server to specify an address that will
+     * bind to all interfaces.
+	 * @param port The port number in native/host byte order.
 	 */
 	inet_address(in_port_t port) { create(in_addr_t(INADDR_ANY), port); }
 	/**
 	 * Constructs an address for the specified host using the specified
 	 * port.
-	 * @param addr
-	 * @param port
+	 * @param addr The 32-bit host address in native/host byte order.
+	 * @param port The port number in native/host byte order.
 	 */
 	inet_address(uint32_t addr, in_port_t port) { create(addr, port); }
 	/**
 	 * Constructs an address using the name of the host and the specified
 	 * port. This attempts to resolve the host name to an address.
 	 *
-	 * @param saddr
-	 * @param port
+	 * @param saddr The name of the host.
+	 * @param port The port number in native/host byte order.
 	 */
 	inet_address(const std::string& saddr, in_port_t port) {
 		create(saddr, port);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
-	 * @param addr
+	 * @param addr The other address
 	 */
 	inet_address(const sockaddr& addr) {
 		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
-	 * @param addr
+	 * @param addr The other address
 	 */
 	inet_address(const sockaddr_in& addr) {
 		std::memcpy(sockaddr_in_ptr(), &addr, sizeof(sockaddr_in));
 	}
 	/**
 	 * Constructs the address by copying the specified address.
-	 * @param addr
+	 * @param addr The other address
 	 */
 	inet_address(const inet_address& addr) {
 		std::memcpy(this, &addr, sizeof(inet_address));
@@ -148,7 +150,7 @@ public:
 	 * Creates the socket address using the specified host name and port
 	 * number.
 	 * @param saddr The string host name.
-	 * @param port The host port number.
+	 * @param port The port number in native/host byte order.
 	 */
 	void create(const std::string& saddr, in_port_t port);
 	/**
@@ -167,7 +169,7 @@ public:
 	}
 	/**
 	 * Gets the port number.
-	 * @return The port number in the local host's byte order.
+	 * @return The port number in native/host byte order.
 	 */
 	in_port_t port() const { return ntohs(this->sin_port); }
 	/**

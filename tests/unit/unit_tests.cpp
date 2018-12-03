@@ -1,19 +1,12 @@
-/**
- * @file address.h
- *
- * Generic address class for sockpp.
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	June 2017
- */
+// unit_tests.cpp
+//
+// Main for unit tests.
+//
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2018 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,49 +36,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
-#ifndef __sockpp_sock_address_h
-#define __sockpp_sock_address_h
-
-#include "sockpp/platform.h"
-
-namespace sockpp {
-
-/////////////////////////////////////////////////////////////////////////////
-
-// TODO: In retrospect, doing a non-owning reference class was probably
-// a dumb idea. An address isn't that large (16-bytes?), and can be copied
-// in it's entirety efficiently enough. That would make a true copy and
-// avoid the risk of a dangling pointer.
-// But if we make a copy class, maybe keep this one, but make it obvious
-// that it's a reference class by naming it `sock_addr_ref` or similar.
-
-/**
- * Generic socket address.
- * This is a non-owning reference.
- */
-struct sock_address
-{
-	/** Pointer to the address */
-	const sockaddr* addr;
-	/** Length of the address (in bytes) */
-	socklen_t len;
-
-	/**
-	 * Constructs an empty address.
-	 * The address is initialized to all zeroes.
-	 */
-	sock_address() : addr(nullptr), len(0) {}
-	/**
-	 * Constructs an empty address.
-	 * The address is initialized to all zeroes.
-	 */
-	sock_address(const sockaddr* a, socklen_t n) : addr(a), len(n) {}
-};
-
-/////////////////////////////////////////////////////////////////////////////
-// end namespace 'sockpp'
-}
-
-#endif		// __sockpp_sock_address_h
+// This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_MAIN
+#include "catch2/catch.hpp"
 

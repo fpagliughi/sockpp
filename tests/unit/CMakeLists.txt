@@ -40,20 +40,28 @@ find_package(Catch2 REQUIRED)
 
 # --- For apps that use threads ---
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
+#set(THREADS_PREFER_PTHREAD_FLAG ON)
+#find_package(Threads REQUIRED)
 
 # --- Executables ---
 
-add_executable(test_inet_address test_inet_address.cpp)
+add_executable(unit_tests unit_tests.cpp
+	test_inet_address.cpp
+)
 
+if(UNIX)
+	target_sources(unit_tests PUBLIC
+		test_unix_address.cpp
+	)
+endif()
 # --- Link for executables ---
 
 message(STATUS "Using library for unit tests: ${SOCKPP_LIB}")
 
-#target_link_libraries(mtechosvr ${SOCKPP_LIB} Threads::Threads)
-target_link_libraries(test_inet_address ${SOCKPP_LIB} Catch2::Catch2)
+# .. Threads::Threads)
+target_link_libraries(unit_tests ${SOCKPP_LIB} Catch2::Catch2)
 
 include(CTest)
 include(Catch)
-catch_discover_tests(test_inet_address)
+
+catch_discover_tests(unit_tests)

@@ -61,7 +61,19 @@ unix_address::unix_address(const sockaddr& addr)
     if (domain != AF_UNIX)
         throw std::invalid_argument("Not a UNIX-domain address");
 
+    // TODO: We should check the path, or at least see that it has
+    // proper NUL termination.
     std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
+}
+
+unix_address::unix_address(const sockaddr_un& addr)
+{
+    if (addr.sun_family != AF_UNIX)
+        throw std::invalid_argument("Not initialized as a UNIX-domain address");
+
+    // TODO: We should check the path, or at least see that it has
+    // proper NUL termination.
+    std::memcpy(sockaddr_un_ptr(), &addr, sizeof(sockaddr_un));
 }
 
 // --------------------------------------------------------------------------
