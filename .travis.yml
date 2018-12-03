@@ -1,6 +1,6 @@
 language: cpp
 sudo: required
-dist: trusty
+dist: xenial
 os: linux
 
 matrix:
@@ -51,6 +51,5 @@ matrix:
     - compiler: gcc
 
 
-script: if [ "$COMPILER" == "" ]; then make; else make CXX=$COMPILER; fi
-
+script: if [ "$COMPILER" == "" ]; then CXX=g++ ./travis_build.sh; else CXX=$COMPILER ./travis_build.sh; fi
 
