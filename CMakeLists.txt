@@ -51,7 +51,7 @@ set(CMAKE_BUILD_TYPE Release)
 # --- Project/build settings ---
 
 set(SOCKPP_VERSION_MAJOR 0)
-set(SOCKPP_VERSION_MINOR 3)
+set(SOCKPP_VERSION_MINOR 4)
 set(SOCKPP_VERSION_PATCH 0)
 
 set(CLIENT_VERSION ${SOCKPP_VERSION_MAJOR}.${SOCKPP_VERSION_MINOR}.${SOCKPP_VERSION_PATCH})
@@ -70,6 +70,7 @@ else()
 endif()
 
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
+option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 
 # --- C++14 build flags ---
@@ -158,18 +159,26 @@ if(SOCKPP_BUILD_DOCUMENTATION)
 	add_subdirectory(doc)
 endif()
 
+# --- Default library for examples and unit tests ---
+
+if(SOCKPP_BUILD_SHARED)
+	set(SOCKPP_LIB ${SOCKPP})
+else()
+	set(SOCKPP_LIB ${SOCKPP_STATIC})
+endif()
+
 # --- Examples Applications ---
 
 if(SOCKPP_BUILD_EXAMPLES)
-	if(SOCKPP_BUILD_SHARED)
-		set(SOCKPP_LIB ${SOCKPP})
-	else()
-		set(SOCKPP_LIB ${SOCKPP_STATIC})
-	endif()
-
 	add_subdirectory(examples/tcp)
 	if(UNIX)
 		add_subdirectory(examples/unix)
 	endif()
+endif()
+
+# --- Unit Tests ---
+
+if(SOCKPP_BUILD_TESTS)
+	add_subdirectory(tests/unit)
 endif()
 
