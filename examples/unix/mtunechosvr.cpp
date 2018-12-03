@@ -1,6 +1,10 @@
-// tcpecho.cpp
+// mtunechosvr.cpp
 //
-// Simple TCP echo client
+// A multi-threaded UNIX-domain echo server for sockpp library.
+// This is a simple thread-per-connection UNIX server.
+//
+// USAGE:
+//  	mtunechosvr [path]
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -37,52 +41,70 @@
 // --------------------------------------------------------------------------
 
 #include <iostream>
-#include <string>
+#include <thread>
 #include "sockpp/unix_address.h"
-#include "sockpp/inet_address.h"
-#include "sockpp/tcp_connector.h"
+#include "sockpp/unix_acceptor.h"
 
 using namespace std;
 
+// --------------------------------------------------------------------------
+// The thread function. This is run in a separate thread for each socket.
+// Ownership of the socket object is transferred to the thread, so when this
+// function exits, the socket is automatically closed.
+
+void run_echo(sockpp::unix_socket sock)
+{
+	int n;
+	char buf[512];
+
+	while ((n = sock.read(buf, sizeof(buf))) > 0)
+		sock.write_n(buf, n);
+
+	cout << "Connection closed" << endl;
+}
+
+// --------------------------------------------------------------------------
+// The main thread runs the UNIX acceptor.
+// Each time a connection is made, a new thread is spawned to handle it,
+// leaving this main thread to immediately wait for the next connection.
+
 int main(int argc, char* argv[])
 {
-	string host = (argc > 1) ? argv[1] : "localhost";
-	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+	string path = "/tmp/sock";
 
-	sockpp::socket_initializer	sockInit;
-	sockpp::tcp_connector		conn;
-	bool						ok = false;
+	if (argc > 1) {
+        path = argv[1];
+	}
 
-	if (host[0] == '/')
-		ok = conn.connect(sockpp::unix_address(host));
-	else
-		ok = conn.connect(sockpp::inet_address(host, port));
+	sockpp::socket_initializer sockInit;
+	sockpp::unix_acceptor acc;
+
+	bool ok = acc.open(sockpp::unix_address(path));
 
 	if (!ok) {
-		cerr << "Error connecting to server at " << host
-			<< "\n\t" << ::strerror(conn.last_error()) << endl;
+		cerr << "Error creating the acceptor: " << ::strerror(acc.last_error()) << endl;
 		return 1;
 	}
+	cout << "Awaiting UNIX-domain connections on " << path << "..." << endl;
 
-	cout << "Created a connection from " << conn.address() << endl;
+	while (true) {
+		// Accept a new client connection
+		sockpp::unix_socket sock = acc.accept();
+		cout << "Received a connection" << endl;
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != (int) s.length()) {
-			cerr << "Error writing to the TCP stream" << endl;
-			break;
+		if (!sock) {
+			cerr << "Error accepting incoming connection: " 
+				<< ::strerror(acc.last_error()) << endl;
 		}
-
-		sret.resize(s.length());
-		int n = conn.read_n(&sret[0], s.length());
-
-		if (n != (int) s.length()) {
-			cerr << "Error reading from TCP stream" << endl;
-			break;
+		else {
+			// Create a thread and transfer the new stream to it.
+			thread thr(run_echo, std::move(sock));
+			thr.detach();
 		}
-
-		cout << sret << endl;
 	}
 
-	return (!conn) ? 1 : 0;
+	return 0;
 }
+
+
+

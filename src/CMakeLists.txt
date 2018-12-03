@@ -50,7 +50,9 @@ add_library(sockpp-objs OBJECT
 
 if(UNIX)
 	target_sources(sockpp-objs PUBLIC
-		unix/unix_address.cpp 
+		unix/unix_address.cpp
+		unix/unix_acceptor.cpp
+		unix/unix_connector.cpp 
 	)
 endif()
 

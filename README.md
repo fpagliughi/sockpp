@@ -3,12 +3,50 @@ Simple, modern, C++ socket library.
 
 This is a fairly low-level C++ wrapper around the Berkley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
-Currently the library only supports IPv4, but soon UNIX socks will be supported, and eventually IPv6.
-
 The base `socket` wraps a system integer socket handle, and maintains its lifetime. When the object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope (or thread) to another using `std::move()`.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
+## What's new in the v0.5 pre-release
+
+The upcoming v0.5 will bring several new features:
+
+ - Socket class hierarcy now splits out for streaming and datagram sockets.
+ - Support for UNIX-domain sockets.
+ - New modern CMake build system.
+ - GNU Make system marked for deprecation.
+ 
+## Building the Library
+
+CMake is now the supported build system. 
+
+### Requirements:
+
+ - CMake v3.5 or newer.
+ - Doxygen (optional) to generate API docs.
+
+Build like this on Linux:
+
+```
+$ cd sockpp
+$ mkdir build ; cd build
+$ cmake ..
+$ make
+$ sudo make install
+```
+
+### Build Options
+
+The library has several build options via CMake to choose between creating a static or shared (dynamic) library - or both. It also allows you to build the example options, and if Doxygen is
+
+Variable | Default Value | Description
+------------ | ------------- | -------------
+SOCKPP_BUILD_SHARED | ON | Whether to build the shared library
+SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
+SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires Doxygen)
+SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
+
+ 
 ## TCP Sockets
 
 TCP applications are usually set up as either servers or clients. The `tcp_acceptor` is used to create a TCP server. It binds an address and listens on a known port to accept incoming connections. When a connection is accepted, a new, streaming `tcp_socket` is created. That new socket can be handled directly or moved to a thread (or thread pool) for processing.

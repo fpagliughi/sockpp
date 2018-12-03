@@ -1,7 +1,7 @@
 /**
  * @file unix_address.h
  *
- * Class for a TCP/IP socket address.
+ * Class for a UNIX-domain socket address.
  *
  * @author Frank Pagliughi
  * @author SoRo Systems, Inc.
@@ -48,6 +48,7 @@
 #define __sockpp_unix_addr_h
 
 #include "sockpp/platform.h"
+#include "sockpp/sock_address.h"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -58,9 +59,8 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class that represents a UNUX domain address.
- * This inherits from the UNIX form of a socket address, @em
- * sockaddr_un.
+ * Class that represents a UNIX domain address.
+ * This inherits from the UNIX form of a socket address, @em sockaddr_un.
  */
 class unix_address : public sockaddr_un
 {
@@ -94,12 +94,11 @@ public:
 	unix_address(const std::string& path);
 	/**
 	 * Constructs the address by copying the specified structure.
-	 * @param addr
+     * @param addr The generic address
+     * @throws std::invalid_argument if the address is not a UNIX-domain
+     *            address (i.e. family is not AF_UNIX)
 	 */
-	unix_address(const sockaddr& addr) {
-		// TODO: Check the address family for a compatible address.
-		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
-	}
+	explicit unix_address(const sockaddr& addr);
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
@@ -148,6 +147,13 @@ public:
 	 */
 	sockaddr* sockaddr_ptr() {
 		return reinterpret_cast<sockaddr*>(this);
+	}
+	/**
+	 * Gets this address as a sock_address.
+	 * @return This address as a sock_address.
+	 */
+	sock_address to_sock_address() const {
+		return sock_address(sockaddr_ptr(), size());
 	}
 	/**
 	 * Gets a const pointer to this object cast to a @em sockaddr_in.

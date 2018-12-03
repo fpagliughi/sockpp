@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017 Frank Pagliughi
+# Copyright (c) 2018 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,4 +37,32 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
+# --- For apps that use threads ---
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+# --- Executables ---
+
+add_executable(mtunechosvr mtunechosvr.cpp)
+add_executable(unecho unecho.cpp)
+
+# --- Link for executables ---
+
+message(STATUS "Using library for unix samples: ${SOCKPP_LIB}")
+
+target_link_libraries(mtunechosvr ${SOCKPP_LIB} Threads::Threads)
+target_link_libraries(unecho ${SOCKPP_LIB})
+
+# --- Install ---
+
+set(INSTALL_TARGETS
+	mtunechosvr
+	unecho
+)
+
+install(TARGETS ${INSTALL_TARGETS}
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+)
 

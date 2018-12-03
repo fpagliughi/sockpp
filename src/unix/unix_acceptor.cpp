@@ -1,4 +1,4 @@
-// unix_address.cpp
+// unix_acceptor.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,9 +34,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/unix_address.h"
 #include <cstring>
-#include <stdexcept>
+#include "sockpp/unix_acceptor.h"
 
 using namespace std;
 
@@ -44,34 +43,62 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-constexpr sa_family_t unix_address::ADDRESS_FAMILY;
-constexpr size_t unix_address::MAX_PATH_NAME;
+// This attempts to open the acceptor, bind to the requested address, and
+// start listening. On any error it will be sure to leave the underlying
+// socket in an unopened/invalid state.
+// If the acceptor appears to already be opened, this will quietly succeed
+// without doing anything.
+
+bool unix_acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE_SIZE*/)
+{
+	// TODO: What to do if we are open but bound to a different address?
+	if (is_open())
+		return true;
+
+	sa_family_t domain;
+	if (!addr || len < sizeof(sa_family_t)
+			|| 	(domain = *(reinterpret_cast<const sa_family_t*>(addr))) == AF_UNSPEC) {
+		// TODO: Set last error for "address unspecified"
+		return false;
+	}
+
+	socket_t h = unix_socket::create(domain);
+	if (!check_ret_bool(h))
+		return false;
+
+	reset(h);
+
+	#if !defined(WIN32)
+		if (domain == AF_INET) {
+			int reuse = 1;
+			if (!check_ret_bool(::setsockopt(h, SOL_SOCKET, SO_REUSEADDR,
+											 &reuse, sizeof(int)))) {
+				close();
+				return false;
+			}
+		}
+	#endif
+
+	if (!bind(addr, len) || !listen(queSize)) {
+		close();
+		return false;
+	}
+
+	//addr_ = addr;
+	return true;
+}
 
 // --------------------------------------------------------------------------
 
-unix_address::unix_address(const string& path)
+unix_socket unix_acceptor::accept()
 {
-	sun_family = ADDRESS_FAMILY;
-	::strncpy(sun_path, path.c_str(), MAX_PATH_NAME);
-}
-
-unix_address::unix_address(const sockaddr& addr)
-{
-    sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(&addr));
-    if (domain != AF_UNIX)
-        throw std::invalid_argument("Not a UNIX-domain address");
-
-    std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
-}
-
-// --------------------------------------------------------------------------
-
-ostream& operator<<(ostream& os, const unix_address& addr)
-{
-	os << "unix:" << addr.sun_path;
-	return os;
+	//sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
+	//socklen_t len = cli ? sizeof(inet_address) : 0;
+	socket_t  s = check_ret(::accept(handle(), nullptr, 0)); //cli, &len));
+	return unix_socket(s);
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
+// end namespace sockpp
 }
+

@@ -1,13 +1,13 @@
 /**
- * @file stream_connector.h
+ * @file unix_connector.h
  *
- * Class for creating client-side streaming connections
+ * Class for creating client-side UNIX-domain socket connections.
  *
  * @author	Frank Pagliughi
  * @author	SoRo Systems, Inc.
  * @author  www.sorosys.com
  *
- * @date	December 2014
+ * @date	December 2018
  */
 
 // --------------------------------------------------------------------------
@@ -44,89 +44,56 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_stream_connector_h
-#define __sockpp_stream_connector_h
+#ifndef __sockpp_unix_connector_h
+#define __sockpp_unix_connector_h
 
-#include "sockpp/stream_socket.h"
-#include "sockpp/sock_address.h"
+#include "sockpp/stream_connector.h"
+#include "sockpp/unix_address.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class to create a client stream connection.
- * This is a streaming socket, like a TCP socket.
+ * Class to create a client UNIX-domain connection.
  */
-class stream_connector : public stream_socket
+class unix_connector : public stream_connector
 {
+	using base = stream_connector;
+
 	// Non-copyable
-	stream_connector(const stream_connector&) =delete;
-	stream_connector& operator=(const stream_connector&) =delete;
+	unix_connector(const unix_connector&) =delete;
+	unix_connector& operator=(const unix_connector&) =delete;
 
 public:
 	/**
 	 * Creates an unconnected connector.
 	 */
-	stream_connector() {}
+	unix_connector() {}
 	/**
 	 * Creates the connector and attempts to connect to the specified
 	 * address.
-	 * @param addr The remote server address. 
-	 * @param len The length of the address structure. 
-	 */
-	stream_connector(const sockaddr* addr, socklen_t len);
-	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address. 
-	 */
-	stream_connector(const sock_address& a) : stream_connector(a.addr, a.len) {}
-	/**
-	 * Determines if the socket connected to a remote host.
-	 * Note that this is not a reliable determination if the socket is
-	 * currently connected, but rather that an initial connection was
-	 * established.
-	 * @return @em true If the socket connected to a remote host,
-	 *  	   @em false if not.
-	 */
-	bool is_connected() const { return is_open(); }
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address. 
-	 * @param len The length of the address structure in bytes 
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const sockaddr* addr, socklen_t len);
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
 	 * @param addr The remote server address.
-	 * @return @em true on success, @em false on error
 	 */
-	bool connect(const sock_address& addr) {
-		return connect(addr.addr, addr.len);
-	}
-	#if 0
+	unix_connector(const unix_address& addr);
+	/**
+	 * Base connect choices also work.
+	 */
+	using base::connect;
 	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
 	 * connection and open the new one.
-	 * @param addr The remote server address.
+	 * @param addr The  address.
 	 * @return @em true on success, @em false on error
 	 */
-	template <typename ADDR>
-	bool connect(const ADDR& addr) {
-		return connect(addr.sockaddr_ptr(), addr.size());
+	bool connect(const unix_address& addr) {
+		return base::connect(addr.to_sock_address());
 	}
-	#endif
 };
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 };
 
-#endif		// __sockpp_stream_connector_h
+#endif		// __sockpp_unix_connector_h

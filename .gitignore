@@ -32,6 +32,9 @@ lib/
 *.out
 *.app
 
+# Preliminary Notes
+*.fodt
+
 # Mercurial Files
 .hg/
 .hgignore

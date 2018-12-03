@@ -1,4 +1,4 @@
-// unix_address.cpp
+// unix_connector.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,44 +34,18 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/unix_address.h"
-#include <cstring>
-#include <stdexcept>
-
-using namespace std;
+#include "sockpp/unix_connector.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-constexpr sa_family_t unix_address::ADDRESS_FAMILY;
-constexpr size_t unix_address::MAX_PATH_NAME;
-
-// --------------------------------------------------------------------------
-
-unix_address::unix_address(const string& path)
+unix_connector::unix_connector(const unix_address& addr)
 {
-	sun_family = ADDRESS_FAMILY;
-	::strncpy(sun_path, path.c_str(), MAX_PATH_NAME);
-}
-
-unix_address::unix_address(const sockaddr& addr)
-{
-    sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(&addr));
-    if (domain != AF_UNIX)
-        throw std::invalid_argument("Not a UNIX-domain address");
-
-    std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
-}
-
-// --------------------------------------------------------------------------
-
-ostream& operator<<(ostream& os, const unix_address& addr)
-{
-	os << "unix:" << addr.sun_path;
-	return os;
+	connect(addr);
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
+// end namespace sockpp
 }
+
