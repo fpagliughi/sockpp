@@ -11,7 +11,7 @@ rm -rf build
 mkdir build
 cd build
 echo "travis build dir $TRAVIS_BUILD_DIR pwd $PWD"
-cmake -DSOCKPP_BUILD_EXAMPLES=ON -DSOCKPP_BUILD_TESTS .. && \
+cmake -DSOCKPP_BUILD_EXAMPLES=ON -DSOCKPP_BUILD_TESTS=ON .. && \
   make && \
   ./tests/unit/unit_tests --success
 
