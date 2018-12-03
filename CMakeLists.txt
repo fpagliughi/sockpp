@@ -152,6 +152,12 @@ install(DIRECTORY include/${SOCKPP}/
 	DESTINATION include/${SOCKPP}
 	FILES_MATCHING PATTERN "*.h*")
 
+# --- Documentation ---
+
+if(SOCKPP_BUILD_DOCUMENTATION)
+	add_subdirectory(doc)
+endif()
+
 # --- Examples Applications ---
 
 if(SOCKPP_BUILD_EXAMPLES)
