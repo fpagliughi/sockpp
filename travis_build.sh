@@ -8,11 +8,14 @@
 set -e
 
 # Install Catch2 from sources
-wget https://github.com/catchorg/Catch2/archive/v2.5.0.tar.gz
-tar -xf v2.5.0.tar.gz
-cp -r Catch2-2.5.0/single_include/catch2 include
+#pushd /tmp
+#wget https://github.com/catchorg/Catch2/archive/v2.5.0.tar.gz
+#tar -xf v2.5.0.tar.gz
+#cd Catch2-2.5.0/
+#cmake -Bbuild -H. -DBUILD_TESTING=OFF
+#sudo cmake --build build/ --target install
+#popd
 
-# Build sockpp
 rm -rf build
 mkdir build
 cd build
