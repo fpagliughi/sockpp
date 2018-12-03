@@ -12,7 +12,7 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 ## What's new in the v0.5 pre-release
 
-The upcoming v0.5 will bring several new features:
+The upcoming v0.3 will bring several new features:
 
  - Socket class hierarcy now splits out for streaming and datagram sockets.
  - Support for UNIX-domain sockets.

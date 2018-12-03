@@ -23,17 +23,17 @@ INSTALL_DATA =  $(INSTALL) -m 644
 # ----- Directories -----
 
 SRC_DIR ?= src
-INC_DIR ?= src
+INC_DIR ?= include
 HDR_DIR ?= $(INC_DIR)/$(MODULE)
 
-SAMPLES_DIR ?= samples
+EXAMPLES_DIR ?= examples
 TESTS_DIR ?= tests
 UNITS_DIR ?= tests/units
 
 LIB_DIR ?= $(CROSS_COMPILE)lib
 OBJ_DIR ?= $(CROSS_COMPILE)obj
 
-vpath %.cpp $(SRC_DIR)
+vpath %.cpp $(SRC_DIR) $(SRC_DIR)/unix
 
 INC_DIRS += $(INC_DIR)
 
@@ -55,7 +55,7 @@ endif
 
 LIB_BASE  ?= $(MODULE)
 LIB_MAJOR ?= 0
-LIB_MINOR ?= 3-pre
+LIB_MINOR ?= 3
 
 LIB_LINK = lib$(LIB_BASE).so
 LIB_MAJOR_LINK = $(LIB_LINK).$(LIB_MAJOR)
@@ -67,6 +67,7 @@ TGT = $(LIB_DIR)/$(LIB)
 # ----- Sources -----
 
 SRCS += $(notdir $(wildcard $(SRC_DIR)/*.cpp))
+SRCS += $(notdir $(wildcard $(SRC_DIR)/unix/*.cpp))
 HDRS += $(notdir $(wildcard $(HDR_DIR)/*.h))
 
 ifdef SRC_IGNORE
@@ -95,8 +96,8 @@ endif
 
 CPPFLAGS += -Wall -fPIC
 
-# We need at least C++11 support, though 14 or 17 should work fine.
-CXXFLAGS += -std=c++11
+# We need at least C++14 support, though newer should work fine.
+CXXFLAGS += -std=c++14
 
 ifdef DEBUG
   DEFS += DEBUG
@@ -165,14 +166,14 @@ clean:
 distclean: clean
 	$(QUIET) rm -rf $(OBJ_DIR) $(LIB_DIR)
 
-.PHONY: samples samples_tcp samples_unix
+.PHONY: examples examples_tcp examples_unix
 
-samples: samples_tcp samples_unix
+examples: examples_tcp examples_unix
 
-samples_tcp: $(SAMPLES_DIR)/tcp lib
+examples_tcp: $(EXAMPLES_DIR)/tcp lib
 	$(MAKE) -C $<
 
-samples_unix: $(SAMPLES_DIR)/unix lib
+examples_unix: $(EXAMPLES_DIR)/unix lib
 	$(MAKE) -C $<
 
 # ----- Installation targets -----
