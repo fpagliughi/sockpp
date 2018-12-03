@@ -7,6 +7,13 @@
 
 set -e
 
+# Install Catch2 from sources
+pushd /tmp
+curl https://github.com/catchorg/Catch2/archive/v2.5.0.tar.gz
+cmake -Bbuild -H. -DBUILD_TESTING=OFF
+sudo cmake --build build/ --target install
+popd
+
 rm -rf build
 mkdir build
 cd build
