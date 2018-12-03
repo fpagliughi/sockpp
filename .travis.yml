@@ -4,6 +4,7 @@ dist: xenial
 os: linux
 
 before_install:
+  - cmake --version
   - wget https://github.com/catchorg/Catch2/archive/v2.5.0.tar.gz && tar -xf v2.5.0.tar.gz && cd Catch2-2.5.0 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && sudo cmake --build build/ --target install
 
 matrix:
