@@ -10,7 +10,7 @@ The base `socket` wraps a system integer socket handle, and maintains its lifeti
 
 All code in the library lives within the `sockpp` C++ namespace.
 
-## What's new in the v0.5 pre-release
+## What's new in the v0.3 pre-release
 
 The upcoming v0.3 will bring several new features:
 
