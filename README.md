@@ -10,9 +10,9 @@ The base `socket` wraps a system integer socket handle, and maintains its lifeti
 
 All code in the library lives within the `sockpp` C++ namespace.
 
-## What's new in the v0.3 pre-release
+## What's new in v0.3
 
-The upcoming v0.3 will bring several new features:
+Version 0.3 brings several new features:
 
  - Socket class hierarcy now splits out for streaming and datagram sockets.
  - Support for UNIX-domain sockets.
