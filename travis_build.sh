@@ -9,7 +9,9 @@ set -e
 
 # Install Catch2 from sources
 pushd /tmp
-curl https://github.com/catchorg/Catch2/archive/v2.5.0.tar.gz
+wget https://github.com/catchorg/Catch2/archive/v2.5.0.tar.gz
+tar -xf v2.5.0.tar.gz
+cd Catch2-2.5.0/
 cmake -Bbuild -H. -DBUILD_TESTING=OFF
 sudo cmake --build build/ --target install
 popd
