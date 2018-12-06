@@ -181,8 +181,8 @@ inet_address socket::peer_address() const
 std::string socket::error_str(int errNum)
 {
 	#if defined(WIN32)
-        char buf[RSIZE_MAX];
-        strerror_s(buf, RSIZE_MAX, errStr);
+        char buf[1024];
+        strerror_s(buf, sizeof(buf), errNum);
         return std::string(buf);
     #else
         char buf[512];

@@ -100,6 +100,9 @@ if(SOCKPP_BUILD_SHARED)
 
 	add_library(${SOCKPP} SHARED $<TARGET_OBJECTS:sockpp-objs>)
 
+    ## add dependencies to the shared library
+    target_link_libraries(${SOCKPP} ${LIBS_SYSTEM})
+
 	target_include_directories(${SOCKPP} PUBLIC 
 		$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>
 	)
@@ -121,6 +124,9 @@ if(SOCKPP_BUILD_STATIC)
 	message(STATUS "Creating static library: ${SOCKPP_STATIC}")
 
 	add_library(${SOCKPP_STATIC} STATIC $<TARGET_OBJECTS:sockpp-objs>)
+
+    ## add dependencies to the static library
+    target_link_libraries(${SOCKPP_STATIC} ${LIBS_SYSTEM})
 
 	target_include_directories(${SOCKPP_STATIC} PUBLIC 
 		$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>

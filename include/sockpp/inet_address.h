@@ -223,7 +223,7 @@ public:
 	 */
 	std::string to_string() const {
         char buf[INET_ADDRSTRLEN];
-        auto str = inet_ntop(AF_INET, &(sockaddr_in_ptr()->sin_addr), buf, INET_ADDRSTRLEN);
+        const char* str = inet_ntop(AF_INET, (void*) &(sockaddr_in_ptr()->sin_addr), buf, INET_ADDRSTRLEN);
 		return std::string(str ? str : "<unknown>")
             + ":" + std::to_string(unsigned(port()));
 	}
