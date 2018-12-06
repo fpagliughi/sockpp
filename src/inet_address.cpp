@@ -97,8 +97,9 @@ void inet_address::create(const std::string& saddr, in_port_t port)
 
 ostream& operator<<(ostream& os, const inet_address& addr)
 {
-	os << inet_ntoa(addr.sockaddr_in_ptr()->sin_addr)
-		<< ":" << unsigned(addr.port());
+    char buf[INET_ADDRSTRLEN];
+    auto str = inet_ntop(AF_INET, &(addr.sockaddr_in_ptr()->sin_addr), buf, INET_ADDRSTRLEN);
+	os << (str ? str : "<unknown>") << ":" << unsigned(addr.port());
 	return os;
 }
 

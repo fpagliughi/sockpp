@@ -178,20 +178,23 @@ inet_address socket::peer_address() const
 // --------------------------------------------------------------------------
 // Gets a description of the last error encountered.
 
-std::string socket::last_error_str() const
+std::string socket::error_str(int errNum)
 {
-	if (lastErr_ == 0)
-		return std::string();
+	#if defined(WIN32)
+        char buf[RSIZE_MAX];
+        strerror_s(buf, RSIZE_MAX, errStr);
+        return std::string(buf);
+    #else
+        char buf[512];
+        buf[0] = '\x0';
 
-	char buf[512];
-	buf[0] = '\x0';
-
-	#ifdef _GNU_SOURCE
-		return std::string(strerror_r(lastErr_, buf, sizeof(buf)));
-	#else
-		ignore_result(strerror_r(lastErr_, buf, sizeof(buf)));
-		return std::string(buf);
-	#endif
+    	#ifdef _GNU_SOURCE
+            return std::string(strerror_r(errNum, buf, sizeof(buf)));
+        #else
+            ignore_result(strerror_r(errNum, buf, sizeof(buf)));
+            return std::string(buf);
+        #endif
+    #endif
 }
 
 // --------------------------------------------------------------------------

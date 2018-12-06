@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 	bool ok = acc.open(sockpp::unix_address(path));
 
 	if (!ok) {
-		cerr << "Error creating the acceptor: " << ::strerror(acc.last_error()) << endl;
+		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
 	cout << "Awaiting UNIX-domain connections on " << path << "..." << endl;
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 
 		if (!sock) {
 			cerr << "Error accepting incoming connection: " 
-				<< ::strerror(acc.last_error()) << endl;
+				<< acc.last_error_str() << endl;
 		}
 		else {
 			// Create a thread and transfer the new stream to it.

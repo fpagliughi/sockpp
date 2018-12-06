@@ -256,6 +256,13 @@ public:
 	 * @throw sys_error on error
 	 */
 	inet_address peer_address() const;
+    /**
+     * Gets a string describing the specified error.
+     * This is typically the returned message from the system strerror().
+     * @param errNum The error number.
+     * @return A string describing the specified error.
+     */
+    static std::string error_str(int errNum);
 	/**
 	 * Gets the code for the last errror.
 	 * This is typically the code from the underlying OS operation.
@@ -264,11 +271,12 @@ public:
 	int last_error() const { return lastErr_; }
 	/**
 	 * Gets a string describing the last errror.
-	 * This is typically the returned message from the system strerror()
-	 * call.
+	 * This is typically the returned message from the system strerror().
 	 * @return A string describing the last errror.
 	 */
-	std::string last_error_str() const;
+	std::string last_error_str() const {
+        return error_str(lastErr_);
+    }
 	/**
 	 * Closes the socket.
 	 * After closing the socket, the handle is @em invalid, and can not be

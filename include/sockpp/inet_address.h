@@ -217,13 +217,15 @@ public:
 	/**
 	 * Gets a printable string for the address.
 	 * This gets the simple dot notation of the address as returned from 
-	 * inet_ntoa(). It does not attempt a host lookup. 
+	 * inet_ntop(). It does not attempt a host lookup.
 	 * @return A string representation of the address in the form 
 	 *  	   'address:port'
 	 */
 	std::string to_string() const {
-		return std::string(inet_ntoa(sockaddr_in_ptr()->sin_addr)) + ":" 
-			+ std::to_string(unsigned(port()));
+        char buf[INET_ADDRSTRLEN];
+        auto str = inet_ntop(AF_INET, &(sockaddr_in_ptr()->sin_addr), buf, INET_ADDRSTRLEN);
+		return std::string(str ? str : "<unknown>")
+            + ":" + std::to_string(unsigned(port()));
 	}
 };
 
@@ -255,7 +257,7 @@ inline bool operator!=(const inet_address& lhs, const inet_address& rhs) {
 /**
  * Stream inserter for the address. 
  * This uses the simple dot notation of the address as returned from 
- * inet_ntoa(). It does not attempt a host lookup. 
+ * inet_ntop(). It does not attempt a host lookup.
  * @param os The output stream
  * @param addr The address
  * @return A reference to the output stream.

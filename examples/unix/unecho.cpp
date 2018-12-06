@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 
 	if (!ok) {
 		cerr << "Error connecting to UNIX socket at " << path
-			<< "\n\t" << ::strerror(conn.last_error()) << endl;
+			<< "\n\t" << conn.last_error_str() << endl;
 		return 1;
 	}
 

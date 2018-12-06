@@ -49,6 +49,10 @@ sys_error::sys_error() : sys_error(errno)
 {
 }
 
+// TODO: Replace strerror() with a thread-safe call.
+// socket::error_str() would work, but should be moved to a common
+// place such as a utils.cpp
+
 sys_error::sys_error(int err) : runtime_error(strerror(err)), errno_(err)
 {
 }
