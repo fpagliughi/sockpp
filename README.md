@@ -86,7 +86,7 @@ The acceptor normally sits in a loop accepting new connections, and passes them 
         }
     }
 
-The hazards of a thread-pre-connection design is well documented, but the same technique can be used to pass the socket into a thread pool, if one is available.
+The hazards of a thread-per-connection design is well documented, but the same technique can be used to pass the socket into a thread pool, if one is available.
 
 ### TCP Client: `tcp_connector`
 

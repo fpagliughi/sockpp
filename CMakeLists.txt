@@ -166,6 +166,7 @@ endif()
 
 if(SOCKPP_BUILD_EXAMPLES)
 	add_subdirectory(examples/tcp)
+	add_subdirectory(examples/tcp6)
 	if(UNIX)
 		add_subdirectory(examples/unix)
 	endif()

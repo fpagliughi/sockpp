@@ -1,15 +1,7 @@
-/**
- * @file tcp_connector.h
- *
- * Class for creating client-side TCP connections
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	December 2014
- */
-
+// tcpecho.cpp
+//
+// Simple TCP echo client
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
@@ -44,59 +36,48 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <iostream>
+#include <string>
+#include "sockpp/tcp6_connector.h"
 
-#ifndef __sockpp_tcp_connector_h
-#define __sockpp_tcp_connector_h
+using namespace std;
 
-#include "sockpp/stream_connector.h"
-#include "sockpp/inet_address.h"
-
-namespace sockpp {
-
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * Class to create a client TCP connection.
- */
-class tcp_connector : public stream_connector
+int main(int argc, char* argv[])
 {
-	using base = stream_connector;
+	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
-	// Non-copyable
-	tcp_connector(const tcp_connector&) =delete;
-	tcp_connector& operator=(const tcp_connector&) =delete;
+	sockpp::socket_initializer	sockInit;
+	sockpp::tcp6_connector		conn;
 
-public:
-	/**
-	 * Creates an unconnected connector.
-	 */
-	tcp_connector() {}
-	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address.
-	 */
-	tcp_connector(const inet_address& addr) {
-        connect(addr);
-    }
-	/**
-	 * Base connect choices also work.
-	 */
-	using base::connect;
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address.
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const inet_address& addr) {
-		return base::connect(addr.to_sock_address());
+    auto addr = sockpp::inet6_address::loopback(port);
+
+	if (!conn.connect(addr)) {
+		cerr << "Error connecting to server at " << addr
+			<< "\n\t" << conn.last_error_str() << endl;
+		return 1;
 	}
-};
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-};
+	cout << "Created a connection from " << conn.address() << endl;
 
-#endif		// __sockpp_tcp_connector_h
+	string s, sret;
+	while (getline(cin, s) && !s.empty()) {
+		if (conn.write(s) != (int) s.length()) {
+			cerr << "Error writing to the TCP stream: "
+				<< conn.last_error_str() << endl;
+			break;
+		}
+
+		sret.resize(s.length());
+		int n = conn.read_n(&sret[0], s.length());
+
+		if (n != (int) s.length()) {
+			cerr << "Error reading from TCP stream: "
+				<< conn.last_error_str() << endl;
+			break;
+		}
+
+		cout << sret << endl;
+	}
+
+	return (!conn) ? 1 : 0;
+}

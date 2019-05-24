@@ -1,15 +1,5 @@
-/**
- * @file tcp_connector.h
- *
- * Class for creating client-side TCP connections
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	December 2014
- */
-
+// tcp_acceptor.cpp
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
@@ -44,59 +34,71 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <cstring>
+#include "sockpp/tcp6_acceptor.h"
 
-#ifndef __sockpp_tcp_connector_h
-#define __sockpp_tcp_connector_h
-
-#include "sockpp/stream_connector.h"
-#include "sockpp/inet_address.h"
+using namespace std;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Class to create a client TCP connection.
- */
-class tcp_connector : public stream_connector
+// This attempts to open the acceptor, bind to the requested address, and
+// start listening. On any error it will be sure to leave the underlying
+// socket in an unopened/invalid state.
+// If the acceptor appears to already be opened, this will quietly succeed
+// without doing anything.
+
+bool tcp6_acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE_SIZE*/)
 {
-	using base = stream_connector;
+	// TODO: What to do if we are open but bound to a different address?
+	if (is_open())
+		return true;
 
-	// Non-copyable
-	tcp_connector(const tcp_connector&) =delete;
-	tcp_connector& operator=(const tcp_connector&) =delete;
-
-public:
-	/**
-	 * Creates an unconnected connector.
-	 */
-	tcp_connector() {}
-	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address.
-	 */
-	tcp_connector(const inet_address& addr) {
-        connect(addr);
-    }
-	/**
-	 * Base connect choices also work.
-	 */
-	using base::connect;
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address.
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const inet_address& addr) {
-		return base::connect(addr.to_sock_address());
+	sa_family_t domain;
+	if (!addr || len < sizeof(sa_family_t)
+			|| 	(domain = *(reinterpret_cast<const sa_family_t*>(addr))) == AF_UNSPEC) {
+		// TODO: Set last error for "address unspecified"
+		return false;
 	}
-};
+
+	socket_t h = tcp6_socket::create(domain);
+	if (!check_ret_bool(h))
+		return false;
+
+	reset(h);
+
+	#if !defined(WIN32)
+		if (domain == AF_INET) {
+			int reuse = 1;
+			if (!check_ret_bool(::setsockopt(h, SOL_SOCKET, SO_REUSEADDR,
+											 &reuse, sizeof(int)))) {
+				close();
+				return false;
+			}
+		}
+	#endif
+
+	if (!bind(addr, len) || !listen(queSize)) {
+		close();
+		return false;
+	}
+
+	//addr_ = addr;
+	return true;
+}
+
+// --------------------------------------------------------------------------
+
+tcp_socket tcp6_acceptor::accept(inet6_address* clientAddr /*=nullptr*/)
+{
+	sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
+	socklen_t len = cli ? sizeof(inet6_address) : 0;
+	socket_t  s = check_ret(::accept(handle(), cli, &len));
+	return tcp_socket(s);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
-};
+}
 
-#endif		// __sockpp_tcp_connector_h

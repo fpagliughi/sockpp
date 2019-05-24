@@ -62,14 +62,15 @@ class stream_socket : public socket
 {
 protected:
 	friend class stream_acceptor;
-	friend class unix_acceptor;
 	friend class tcp_acceptor;
+	friend class tcp6_acceptor;
+	friend class unix_acceptor;
 	/**
 	 * Creates a streaming socket.
 	 * @return An OS handle to a TCP socket.
 	 */
 	static socket_t create(int domain=AF_INET) {
-		return (socket_t) ::socket(domain, SOCK_STREAM, 0 /*IPPROTO_TCP*/);
+		return (socket_t) ::socket(domain, SOCK_STREAM, 0);
 	}
 
 public:
@@ -178,9 +179,14 @@ public:
 };
 
 /**
- * Socket for IPv4 stream sockets.
+ * Socket for IPv4 stream.
  */
 using tcp_socket = stream_socket;
+
+/**
+ * Socket for IPv6 stream.
+ */
+using tcp6_socket = stream_socket;
 
 /**
  * Stream for Unix Sockets
