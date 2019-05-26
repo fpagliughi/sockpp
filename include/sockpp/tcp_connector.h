@@ -76,7 +76,9 @@ public:
 	 * address.
 	 * @param addr The remote server address.
 	 */
-	tcp_connector(const inet_address& addr);
+	tcp_connector(const inet_address& addr) {
+        connect(addr);
+    }
 	/**
 	 * Base connect choices also work.
 	 */

@@ -10,6 +10,14 @@ The base `socket` wraps a system integer socket handle, and maintains its lifeti
 
 All code in the library lives within the `sockpp` C++ namespace.
 
+## Unreleased Features (in this branch)
+
+The work in this branch is proceeding to add support for IPv6 and refactor the class hierarchies to better support the different address families without so much redundant code.
+
+ - IPv6 support: _inet6_address_, _tcp6_acceptor_, _tcp_connector_, etc.
+ - (Breaking change) The _sock_address_ class is now contains storage for any type of address and follows copy semantics. Previously it was a non-owning reference class. That reference class now exists as _sock_addresss_ref_.
+ - Generic base classses are being re-implemented to use _sock_address_ and _sock_address_ref_ as generic addresses.
+ 
 ## What's new in v0.3
 
 Version 0.3 brings several new features:
@@ -86,7 +94,7 @@ The acceptor normally sits in a loop accepting new connections, and passes them 
         }
     }
 
-The hazards of a thread-pre-connection design is well documented, but the same technique can be used to pass the socket into a thread pool, if one is available.
+The hazards of a thread-per-connection design is well documented, but the same technique can be used to pass the socket into a thread pool, if one is available.
 
 ### TCP Client: `tcp_connector`
 

@@ -43,58 +43,9 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// This attempts to open the acceptor, bind to the requested address, and
-// start listening. On any error it will be sure to leave the underlying
-// socket in an unopened/invalid state.
-// If the acceptor appears to already be opened, this will quietly succeed
-// without doing anything.
-
-bool unix_acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE_SIZE*/)
-{
-	// TODO: What to do if we are open but bound to a different address?
-	if (is_open())
-		return true;
-
-	sa_family_t domain;
-	if (!addr || len < sizeof(sa_family_t)
-			|| 	(domain = *(reinterpret_cast<const sa_family_t*>(addr))) == AF_UNSPEC) {
-		// TODO: Set last error for "address unspecified"
-		return false;
-	}
-
-	socket_t h = unix_socket::create(domain);
-	if (!check_ret_bool(h))
-		return false;
-
-	reset(h);
-
-	#if !defined(WIN32)
-		if (domain == AF_INET) {
-			int reuse = 1;
-			if (!check_ret_bool(::setsockopt(h, SOL_SOCKET, SO_REUSEADDR,
-											 &reuse, sizeof(int)))) {
-				close();
-				return false;
-			}
-		}
-	#endif
-
-	if (!bind(addr, len) || !listen(queSize)) {
-		close();
-		return false;
-	}
-
-	//addr_ = addr;
-	return true;
-}
-
-// --------------------------------------------------------------------------
-
 unix_socket unix_acceptor::accept()
 {
-	//sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
-	//socklen_t len = cli ? sizeof(inet_address) : 0;
-	socket_t  s = check_ret(::accept(handle(), nullptr, 0)); //cli, &len));
+	socket_t s = check_ret(::accept(handle(), nullptr, 0));
 	return unix_socket(s);
 }
 

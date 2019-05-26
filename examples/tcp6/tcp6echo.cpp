@@ -1,4 +1,6 @@
-// tcp_acceptor.cpp
+// tcpecho.cpp
+//
+// Simple TCP echo client
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,24 +36,48 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <cstring>
-#include "sockpp/tcp_acceptor.h"
+#include <iostream>
+#include <string>
+#include "sockpp/tcp6_connector.h"
 
 using namespace std;
 
-namespace sockpp {
-
-/////////////////////////////////////////////////////////////////////////////
-
-tcp_socket tcp_acceptor::accept(inet_address* clientAddr /*=nullptr*/)
+int main(int argc, char* argv[])
 {
-	sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
-	socklen_t len = cli ? sizeof(inet_address) : 0;
-	socket_t  s = check_ret(::accept(handle(), cli, &len));
-	return tcp_socket(s);
-}
+	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+	sockpp::socket_initializer	sockInit;
+	sockpp::tcp6_connector		conn;
 
+    auto addr = sockpp::inet6_address::loopback(port);
+
+	if (!conn.connect(addr)) {
+		cerr << "Error connecting to server at " << addr
+			<< "\n\t" << conn.last_error_str() << endl;
+		return 1;
+	}
+
+	cout << "Created a connection from " << conn.address() << endl;
+
+	string s, sret;
+	while (getline(cin, s) && !s.empty()) {
+		if (conn.write(s) != (int) s.length()) {
+			cerr << "Error writing to the TCP stream: "
+				<< conn.last_error_str() << endl;
+			break;
+		}
+
+		sret.resize(s.length());
+		int n = conn.read_n(&sret[0], s.length());
+
+		if (n != (int) s.length()) {
+			cerr << "Error reading from TCP stream: "
+				<< conn.last_error_str() << endl;
+			break;
+		}
+
+		cout << sret << endl;
+	}
+
+	return (!conn) ? 1 : 0;
+}

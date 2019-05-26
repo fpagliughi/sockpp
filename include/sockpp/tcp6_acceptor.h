@@ -1,17 +1,17 @@
-/// @file unix_acceptor.h
+/// @file tcp6_acceptor.h
 ///
-/// Class for a TCP server to accept incoming connections.
+/// Class for a TCP v6 server to accept incoming connections.
 ///
 /// @author	Frank Pagliughi
 ///	@author	SoRo Systems, Inc.
 ///	@author	www.sorosys.com
 ///
-/// @date	December 2014
+/// @date	May 2019
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,10 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_unix_acceptor_h
-#define __sockpp_unix_acceptor_h
+#ifndef __sockpp_tcp6_acceptor_h
+#define __sockpp_tcp6_acceptor_h
 
-#include "sockpp/unix_address.h"
+#include "sockpp/inet6_address.h"
 #include "sockpp/stream_socket.h"
 #include "sockpp/acceptor.h"
 
@@ -53,34 +53,45 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/// Class for creating a Unix-domain server.
+/// Class for creating a TCP v6 server.
 /// Objects of this class bind and listen on TCP ports for incoming
 /// connections. Normally, a server thread creates one of these and blocks
 /// on the call to accept incoming connections. The call to accept creates
-/// and returns a @ref unix_socket which can then be used for the actual
+/// and returns a @ref tcp6_socket which can then be used for the actual
 /// communications.
 
-class unix_acceptor : public acceptor
+class tcp6_acceptor : public acceptor
 {
     using base = acceptor;
 
 	// Non-copyable
-	unix_acceptor(const unix_acceptor&) =delete;
-	unix_acceptor& operator=(const unix_acceptor&) =delete;
+	tcp6_acceptor(const tcp6_acceptor&) =delete;
+	tcp6_acceptor& operator=(const tcp6_acceptor&) =delete;
 
 public:
 	/**
 	 * Creates an unconnected acceptor.
 	 */
-	unix_acceptor() {}
+	tcp6_acceptor() {}
 	/**
 	 * Creates a acceptor and starts it listening on the specified address.
 	 * @param addr The TCP address on which to listen.
 	 * @param queSize The listener queue size.
 	 */
-	unix_acceptor(const unix_address& addr, int queSize=DFLT_QUE_SIZE) /*: addr_(addr)*/ {
+	tcp6_acceptor(const inet6_address& addr, int queSize=DFLT_QUE_SIZE) {
 		open(addr, queSize);
 	}
+	/**
+	 * Creates a acceptor and starts it listening on the specified port.
+	 * The acceptor binds to the specified port for any address on the local
+	 * host.
+	 * @param port The TCP port on which to listen.
+	 * @param queSize The listener queue size.
+	 */
+	tcp6_acceptor(in_port_t port, int queSize=DFLT_QUE_SIZE) {
+		open(port, queSize);
+	}
+
 	/**
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
@@ -96,20 +107,31 @@ public:
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
 	 */
-	bool open(const unix_address& addr, int queSize=DFLT_QUE_SIZE) {
+	bool open(const inet6_address& addr, int queSize=DFLT_QUE_SIZE) {
 		return open(addr.sockaddr_ptr(), addr.size(), queSize);
 	}
 	/**
-     * Accepts an incoming UNIX connection and gets the address of the
-     * client.
-	 * @return A unix_socket to the client.
+	 * Opens the acceptor socket.
+	 * This binds the socket to all adapters and starts it listening.
+	 * @param port The TCP port on which to listen.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
 	 */
-	unix_socket accept();
+	virtual bool open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
+		return open(inet6_address(port), queSize);
+	}
+	/**
+	 * Accepts an incoming TCP connection and gets the address of the client.
+	 * @param clientAddr Pointer to the variable that will get the
+	 *  				 address of a client when it connects.
+	 * @return A tcp_socket to the remote client.
+	 */
+	tcp_socket accept(inet6_address* clientAddr=nullptr);
 };
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 };
 
-#endif		// __sockpp_unix_acceptor_h
+#endif		// __sockpp_tcp_acceptor_h
 

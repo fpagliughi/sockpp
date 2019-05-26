@@ -1,9 +1,9 @@
-// tcp_acceptor.cpp
+// tcp6_acceptor.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include <cstring>
-#include "sockpp/tcp_acceptor.h"
+#include "sockpp/tcp6_acceptor.h"
 
 using namespace std;
 
@@ -43,12 +43,12 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-tcp_socket tcp_acceptor::accept(inet_address* clientAddr /*=nullptr*/)
+tcp6_socket tcp6_acceptor::accept(inet6_address* clientAddr /*=nullptr*/)
 {
 	sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
-	socklen_t len = cli ? sizeof(inet_address) : 0;
+	socklen_t len = cli ? sizeof(inet6_address) : 0;
 	socket_t  s = check_ret(::accept(handle(), cli, &len));
-	return tcp_socket(s);
+	return tcp6_socket(s);
 }
 
 /////////////////////////////////////////////////////////////////////////////

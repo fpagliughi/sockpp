@@ -81,7 +81,8 @@ public:
 	 * address.
 	 * @param addr The remote server address. 
 	 */
-	stream_connector(const sock_address& a) : stream_connector(a.addr, a.len) {}
+	stream_connector(const sock_address& a) 
+        : stream_connector(a.sockaddr_ptr(), a.size()) {}
 	/**
 	 * Determines if the socket connected to a remote host.
 	 * Note that this is not a reliable determination if the socket is
@@ -108,7 +109,7 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool connect(const sock_address& addr) {
-		return connect(addr.addr, addr.len);
+		return connect(addr.sockaddr_ptr(), addr.size());
 	}
 	#if 0
 	/**
