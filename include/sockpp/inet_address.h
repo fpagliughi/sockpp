@@ -109,7 +109,14 @@ public:
 	 * @param addr The other address
 	 */
 	inet_address(const sockaddr& addr) {
-		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr));
+		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr_in));
+	}
+	/**
+	 * Constructs the address by copying the specified structure.
+	 * @param addr The other address
+	 */
+	inet_address(const sock_address& addr) {
+		std::memcpy(sockaddr_ptr(), addr.sockaddr_ptr(), sizeof(sockaddr_in));
 	}
 	/**
 	 * Constructs the address by copying the specified structure.

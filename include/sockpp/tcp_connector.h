@@ -48,7 +48,7 @@
 #ifndef __sockpp_tcp_connector_h
 #define __sockpp_tcp_connector_h
 
-#include "sockpp/stream_connector.h"
+#include "sockpp/connector.h"
 #include "sockpp/inet_address.h"
 
 namespace sockpp {
@@ -58,9 +58,9 @@ namespace sockpp {
 /**
  * Class to create a client TCP connection.
  */
-class tcp_connector : public stream_connector
+class tcp_connector : public connector
 {
-	using base = stream_connector;
+	using base = connector;
 
 	// Non-copyable
 	tcp_connector(const tcp_connector&) =delete;
@@ -78,6 +78,22 @@ public:
 	 */
 	tcp_connector(const inet_address& addr) {
         connect(addr);
+    }
+	/**
+	 * Gets the local address to which the socket is bound.
+	 * @return The local address to which the socket is bound.
+	 * @throw sys_error on error
+	 */
+	inet_address address() const {
+        return inet_address(socket::address());
+    }
+	/**
+	 * Gets the address of the remote peer, if this socket is connected.
+	 * @return The address of the remote peer, if this socket is connected.
+	 * @throw sys_error on error
+	 */
+	inet_address peer_address() const {
+        return inet_address(socket::peer_address());
     }
 	/**
 	 * Base connect choices also work.

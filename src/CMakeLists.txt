@@ -37,14 +37,14 @@
 # ---------------------------------------------------------------------------
 
 add_library(sockpp-objs OBJECT
-    acceptor.cpp
+  acceptor.cpp
+	connector.cpp
 	datagram_socket.cpp
 	exception.cpp
 	inet_address.cpp
 	inet6_address.cpp
 	sock_address.cpp
 	socket.cpp
-	stream_connector.cpp
 	stream_socket.cpp
 	tcp_acceptor.cpp
 	tcp6_acceptor.cpp

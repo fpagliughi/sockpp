@@ -119,6 +119,13 @@ public:
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
+	inet6_address(const sock_address& addr) {
+		std::memcpy(sockaddr_ptr(), addr.sockaddr_ptr(), sizeof(sockaddr_in));
+	}
+	/**
+	 * Constructs the address by copying the specified structure.
+	 * @param addr The other address
+	 */
 	inet6_address(const sockaddr_in6& addr) {
 		std::memcpy(sockaddr_in6_ptr(), &addr, sizeof(sockaddr_in6));
 	}

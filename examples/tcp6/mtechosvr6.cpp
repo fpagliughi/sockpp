@@ -51,7 +51,7 @@ using namespace std;
 // Ownership of the socket object is transferred to the thread, so when this
 // function exits, the socket is automatically closed.
 
-void run_echo(sockpp::tcp_socket sock)
+void run_echo(sockpp::tcp6_socket sock)
 {
 	int n;
 	char buf[512];
@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
 		sockpp::inet6_address peer;
 
 		// Accept a new client connection
-		sockpp::tcp_socket sock = acc.accept(&peer);
+		sockpp::tcp6_socket sock = acc.accept(&peer);
 		cout << "Received a connection request from " << peer << endl;
 
 		if (!sock) {

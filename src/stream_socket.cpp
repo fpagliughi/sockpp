@@ -76,7 +76,7 @@ ssize_t stream_socket::read(void *buf, size_t n)
 // read() until it has the data or an error occurs.
 //
 
-ssize_t tcp_socket::read_n(void *buf, size_t n)
+ssize_t stream_socket::read_n(void *buf, size_t n)
 {
 	size_t	nr = 0;
 	ssize_t	nx = 0;

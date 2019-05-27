@@ -125,10 +125,10 @@ public:
 	/**
      * Constructs a address.
 	 */
-	//sock_address(const sockaddr* addr, socklen_t n) {
-    //    // TODO: Check size of n n?
-    //    memcpy(addr_, addr, sz_ = n);
-    //}
+	sock_address(const sockaddr_storage& addr, socklen_t n) {
+        // TODO: Check size of n n?
+        memcpy(&addr_, &addr, sz_ = n);
+    }
 	/**
 	 * Gets the size of this structure.
 	 * This is equivalent to sizeof(this) but more convenient in some

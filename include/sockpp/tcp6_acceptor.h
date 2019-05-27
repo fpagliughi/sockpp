@@ -126,7 +126,7 @@ public:
 	 *  				 address of a client when it connects.
 	 * @return A tcp_socket to the remote client.
 	 */
-	tcp_socket accept(inet6_address* clientAddr=nullptr);
+	tcp6_socket accept(inet6_address* clientAddr=nullptr);
 };
 
 /////////////////////////////////////////////////////////////////////////////

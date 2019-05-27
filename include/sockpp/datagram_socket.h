@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@ class datagram_socket : public socket
 {
 protected:
 	static socket_t create(int domain=AF_INET) {
-		return (socket_t) ::socket(domain, SOCK_DGRAM, 0 /*IPPROTO_UDP*/);
+		return (socket_t) ::socket(domain, SOCK_DGRAM, 0);
 	}
 
 public:
@@ -73,12 +73,12 @@ public:
 	 * Creates a UDP socket and binds it to the specified port.
 	 * @param port The port to bind.
 	 */
-	datagram_socket(in_port_t port);
+	//datagram_socket(in_port_t port);
 	/**
 	 * Creates a UDP socket and binds it to the address.
 	 * @param addr The address to bind.
 	 */
-	datagram_socket(const inet_address& addr);
+	datagram_socket(const sock_address& addr);
 	/**
 	 * Binds the socket to the local address.
 	 * UDP sockets can bind to a local address/adapter to filter which
@@ -86,9 +86,9 @@ public:
 	 * @param addr
 	 * @return @em true on success, @em false on failure
 	 */
-	bool bind(const inet_address& addr) {
+	bool bind(const sock_address& addr) {
 		return check_ret_bool(::bind(handle(), addr.sockaddr_ptr(),
-									 sizeof(sockaddr_in)));
+                                     addr.size()));
 	}
 	/**
 	 * Connects the socket to the remote address.
@@ -99,9 +99,9 @@ public:
 	 * @param addr
 	 * @return @em true on success, @em false on failure
 	 */
-	bool connect(const inet_address& addr) {
+	bool connect(const sock_address& addr) {
 		return check_ret_bool(::connect(handle(), addr.sockaddr_ptr(),
-										sizeof(sockaddr_in)));
+										addr.size()));
 	}
 
 	// ----- I/O -----
@@ -113,11 +113,11 @@ public:
 	 * @param addr The remote destination of the data.
 	 * @return the number of bytes sent on success or, @em -1 on failure.
 	 */
-	int	sendto(const void* buf, size_t n, const inet_address& addr) {
+	int	sendto(const void* buf, size_t n, const sock_address& addr) {
 		return check_ret(::sendto(handle(), buf, n, 0,
 								  addr.sockaddr_ptr(), addr.size()));
 	}
-	int sendto(const std::string& s, const inet_address& addr) {
+	int sendto(const std::string& s, const sock_address& addr) {
 		return sendto(s.data(), s.length(), addr);
 	}
 	/**
@@ -128,11 +128,11 @@ public:
 	 * @param addr The remote destination of the data.
 	 * @return the number of bytes sent on success or, @em -1 on failure.
 	 */
-	int	sendto(const void* buf, size_t n, int flags, const inet_address& addr) {
+	int	sendto(const void* buf, size_t n, int flags, const sock_address& addr) {
 		return check_ret(::sendto(handle(), buf, n, flags,
 								  addr.sockaddr_ptr(), addr.size()));
 	}
-	int	sendto(const std::string& s, int flags, const inet_address& addr) {
+	int	sendto(const std::string& s, int flags, const sock_address& addr) {
 		return sendto(s.data(), s.length(), flags, addr);
 	}
 	/**
@@ -156,7 +156,7 @@ public:
 	 * @param addr Gets the address of the peer that sent the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	int	recvfrom(void* buf, size_t n, int flags, inet_address& addr);
+	int	recvfrom(void* buf, size_t n, int flags, sock_address& addr);
 	/**
 	 * Receives a UDP packet.
 	 * @sa recvfrom
@@ -165,7 +165,7 @@ public:
 	 * @param addr Gets the address of the peer that sent the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	int	recvfrom(void* buf, size_t n, inet_address& addr) {
+	int	recvfrom(void* buf, size_t n, sock_address& addr) {
 		return recvfrom(buf, n, 0, addr);
 	}
 	/**

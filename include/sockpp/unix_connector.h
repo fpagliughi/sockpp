@@ -47,7 +47,7 @@
 #ifndef __sockpp_unix_connector_h
 #define __sockpp_unix_connector_h
 
-#include "sockpp/stream_connector.h"
+#include "sockpp/connector.h"
 #include "sockpp/unix_address.h"
 
 namespace sockpp {
@@ -57,9 +57,9 @@ namespace sockpp {
 /**
  * Class to create a client UNIX-domain connection.
  */
-class unix_connector : public stream_connector
+class unix_connector : public connector
 {
-	using base = stream_connector;
+	using base = connector;
 
 	// Non-copyable
 	unix_connector(const unix_connector&) =delete;
