@@ -25,7 +25,7 @@ The work in this branch is proceeding to add support for IPv6 and refactor the c
  - IPv6 support: `inet6_address`, `tcp6_acceptor`, `tcp_connector`, etc.
  - (Breaking change) The `sock_address` class is now contains storage for any type of address and follows copy semantics. Previously it was a non-owning reference class. That reference class now exists as `sock_addresss_ref`.
  - Generic base classses are being re-implemented to use _sock_address_ and _sock_address_ref_ as generic addresses.
- - (Breaking change) In the `socket` class(es)he `bool address(address&)` and `bool peer_address(addr&)` forms of getting the socket addresses have been removed in favor of the ones that simply return the address.
+ - (Breaking change) In the `socket` class(es) the `bool address(address&)` and `bool peer_address(addr&)` forms of getting the socket addresses have been removed in favor of the ones that simply return the address.
  
  ## Coming Soon
  
@@ -33,7 +33,7 @@ The work in this branch is proceeding to add support for IPv6 and refactor the c
  
   - **Proper UDP support.** The existing `datagram_socket` will serve as a base for UDP socket classes for all the families supported (IPv4, v6, and Unix-Domain).
   
-  - **Better use of templates and generics.** Currently there is a lot of redundant code in the implementations for the different familys. This can likely be replaced with some template classes, while keeping the public API compatible.
+  - **Better use of templates and generics.** Currently there is a lot of redundant code in the implementations for the different familiess. This can likely be replaced with some template classes, while keeping the public API compatible.
   
   - **SSL Sockets.** It might be nice to add optional support for secure sockets.
  
