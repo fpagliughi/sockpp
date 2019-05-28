@@ -48,13 +48,15 @@ namespace sockpp {
 
 #if !defined(WIN32)
 
+/*
 datagram_socket::datagram_socket(in_port_t port) : socket(create())
 {
 	if (check_ret_bool(handle()))
-		bind(inet_address(port));
+		bind(sock_address(port));
 }
+*/
 
-datagram_socket::datagram_socket(const inet_address& addr) : socket(create())
+datagram_socket::datagram_socket(const sock_address& addr) : socket(create())
 {
 	if (check_ret_bool(handle()))
 		bind(addr);
@@ -73,15 +75,16 @@ int datagram_socket::open()
 }
 #endif
 
-int datagram_socket::recvfrom(void* buf, size_t n, int flags, inet_address& addr)
+int datagram_socket::recvfrom(void* buf, size_t n, int flags, sock_address& addr)
 {
-	sockaddr_in sa;
-	socklen_t alen = sizeof(inet_address);
+	sockaddr_storage addrStore;
+	socklen_t len = sizeof(sockaddr_storage);
 
-	int ret = check_ret(::recvfrom(handle(), buf, n, flags, (sockaddr*) &sa, &alen));
+	int ret = check_ret(::recvfrom(handle(), buf, n, flags,
+                                   reinterpret_cast<sockaddr*>(&addrStore), &len));
 
 	if (ret >= 0)
-		addr = sa;
+		addr = sock_address(addrStore, len);
 
 	return ret;
 }

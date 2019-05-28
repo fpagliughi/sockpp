@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Test the build with a few compilers.
 #
 
-for COMPILER in g++-4.9 g++-5 g++-6 g++-7 g++-8 clang++-3.8 clang++-4.0 clang++-5.0 clang++-6.0
+for COMPILER in g++-5 g++-6 g++-7 g++-8 g++-9 clang++-4.0 clang++-5.0 clang++-6.0
 do
   if [ -z "$(which ${COMPILER})" ]; then
     printf "Compiler not found: %s\n" "${COMPILER}"

@@ -135,44 +135,29 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/)
 
 // --------------------------------------------------------------------------
 // Gets the local address to which the socket is bound.
+// Throw an exception on error.
 
-bool socket::address(inet_address& addr) const
+sock_address socket::address() const
 {
-	socklen_t len = sizeof(inet_address);
-	return check_ret_bool(::getsockname(handle_, addr.sockaddr_ptr(), &len));
-}
-
-// --------------------------------------------------------------------------
-// Gets the local address to which the socket is bound. Throw an exception
-// on error.
-
-inet_address socket::address() const
-{
-	inet_address addr;
-	if (!address(addr))
-		throw sys_error(lastErr_);
-	return addr;
-}
-
-// --------------------------------------------------------------------------
-// Gets the address of the remote peer, if this socket is bound.
-
-bool socket::peer_address(inet_address& addr) const
-{
-	socklen_t len = sizeof(inet_address);
-	return check_ret_bool(::getpeername(handle_, addr.sockaddr_ptr(), &len));
+    sockaddr_storage addrStore;
+	socklen_t len = sizeof(sockaddr_storage);
+	check_ret(::getsockname(handle_,
+        reinterpret_cast<sockaddr*>(&addrStore), &len));
+    return sock_address(addrStore, len);
 }
 
 // --------------------------------------------------------------------------
 // Gets the address of the remote peer, if this socket is bound. Throw an
 // exception on error.
 
-inet_address socket::peer_address() const
+sock_address socket::peer_address() const
 {
-	inet_address addr;
-	if (!peer_address(addr))
-		throw sys_error(lastErr_);
-	return addr;
+    sockaddr_storage addrStore;
+	socklen_t len = sizeof(sockaddr_storage);
+	check_ret(::getpeername(handle_,
+        reinterpret_cast<sockaddr*>(&addrStore), &len));
+    return sock_address(addrStore, len);
+
 }
 
 // --------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /**
- * @file stream_connector.h
+ * @file tcp6_connector.h
  *
- * Class for creating client-side streaming connections
+ * Class for creating client-side TCP connections
  *
  * @author	Frank Pagliughi
  * @author	SoRo Systems, Inc.
@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,62 +44,57 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_stream_connector_h
-#define __sockpp_stream_connector_h
 
-#include "sockpp/stream_socket.h"
-#include "sockpp/sock_address.h"
+#ifndef __sockpp_tcp6_connector_h
+#define __sockpp_tcp6_connector_h
+
+#include "sockpp/connector.h"
+#include "sockpp/inet6_address.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class to create a client stream connection.
- * This is a streaming socket, like a TCP socket.
+ * Class to create a client TCP v6 connection.
  */
-class stream_connector : public stream_socket
+class tcp6_connector : public connector
 {
+	using base = connector;
+
 	// Non-copyable
-	stream_connector(const stream_connector&) =delete;
-	stream_connector& operator=(const stream_connector&) =delete;
+	tcp6_connector(const tcp6_connector&) =delete;
+	tcp6_connector& operator=(const tcp6_connector&) =delete;
 
 public:
 	/**
 	 * Creates an unconnected connector.
 	 */
-	stream_connector() {}
+	tcp6_connector() {}
 	/**
 	 * Creates the connector and attempts to connect to the specified
 	 * address.
-	 * @param addr The remote server address. 
-	 * @param len The length of the address structure. 
+	 * @param addr The remote server address.
 	 */
-	stream_connector(const sockaddr* addr, socklen_t len);
+	tcp6_connector(const inet6_address& addr) {
+        connect(addr);
+    }
 	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address. 
+	 * Gets the local address to which the socket is bound.
+	 * @return The local address to which the socket is bound.
+	 * @throw sys_error on error
 	 */
-	stream_connector(const sock_address& a) : stream_connector(a.addr, a.len) {}
+	inet6_address address() const {
+        return inet6_address(base::address());
+    }
 	/**
-	 * Determines if the socket connected to a remote host.
-	 * Note that this is not a reliable determination if the socket is
-	 * currently connected, but rather that an initial connection was
-	 * established.
-	 * @return @em true If the socket connected to a remote host,
-	 *  	   @em false if not.
+	 * Gets the address of the remote peer, if this socket is connected.
+	 * @return The address of the remote peer, if this socket is connected.
+	 * @throw sys_error on error
 	 */
-	bool is_connected() const { return is_open(); }
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address. 
-	 * @param len The length of the address structure in bytes 
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const sockaddr* addr, socklen_t len);
+	inet6_address peer_address() const {
+        return inet6_address(base::peer_address());
+    }
 	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
@@ -107,26 +102,14 @@ public:
 	 * @param addr The remote server address.
 	 * @return @em true on success, @em false on error
 	 */
-	bool connect(const sock_address& addr) {
-		return connect(addr.addr, addr.len);
+	bool connect(const inet6_address& addr) {
+		return base::connect(addr);
 	}
-	#if 0
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address.
-	 * @return @em true on success, @em false on error
-	 */
-	template <typename ADDR>
-	bool connect(const ADDR& addr) {
-		return connect(addr.sockaddr_ptr(), addr.size());
-	}
-	#endif
 };
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 };
 
-#endif		// __sockpp_stream_connector_h
+#endif		// __sockpp_tcp6_connector_h
+

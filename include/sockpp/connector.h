@@ -1,7 +1,7 @@
 /**
- * @file tcp_connector.h
+ * @file connector.h
  *
- * Class for creating client-side TCP connections
+ * Class for creating client-side streaming connections.
  *
  * @author	Frank Pagliughi
  * @author	SoRo Systems, Inc.
@@ -44,58 +44,70 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#ifndef __sockpp_connector_h
+#define __sockpp_connector_h
 
-#ifndef __sockpp_tcp_connector_h
-#define __sockpp_tcp_connector_h
-
-#include "sockpp/connector.h"
-#include "sockpp/inet_address.h"
+#include "sockpp/stream_socket.h"
+#include "sockpp/sock_address.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Class to create a client TCP connection.
+ * Class to create a client stream connection.
+ * This is a streaming socket, like a TCP socket.
  */
-class tcp_connector : public connector
+class connector : public stream_socket
 {
-    /** The base class */
-	using base = connector;
-
 	// Non-copyable
-	tcp_connector(const tcp_connector&) =delete;
-	tcp_connector& operator=(const tcp_connector&) =delete;
+	connector(const connector&) =delete;
+	connector& operator=(const connector&) =delete;
 
 public:
 	/**
 	 * Creates an unconnected connector.
 	 */
-	tcp_connector() {}
+	connector() {}
+	/**
+	 * Creates the connector and attempts to connect to the specified
+	 * address.
+	 * @param addr The remote server address. 
+	 * @param len The length of the address structure. 
+	 */
+	connector(const sockaddr* addr, socklen_t len);
+	/**
+	 * Creates the connector and attempts to connect to the specified
+	 * address.
+	 * @param addr The remote server address. 
+	 */
+	connector(const sock_address& addr)
+        : connector(addr.sockaddr_ptr(), addr.size()) {}
 	/**
 	 * Creates the connector and attempts to connect to the specified
 	 * address.
 	 * @param addr The remote server address.
 	 */
-	tcp_connector(const inet_address& addr) {
-        connect(addr);
-    }
+	connector(const sock_address_ref& addr)
+        : connector(addr.sockaddr_ptr(), addr.size()) {}
 	/**
-	 * Gets the local address to which the socket is bound.
-	 * @return The local address to which the socket is bound.
-	 * @throw sys_error on error
+	 * Determines if the socket connected to a remote host.
+	 * Note that this is not a reliable determination if the socket is
+	 * currently connected, but rather that an initial connection was
+	 * established.
+	 * @return @em true If the socket connected to a remote host,
+	 *  	   @em false if not.
 	 */
-	inet_address address() const {
-        return inet_address(base::address());
-    }
+	bool is_connected() const { return is_open(); }
 	/**
-	 * Gets the address of the remote peer, if this socket is connected.
-	 * @return The address of the remote peer, if this socket is connected.
-	 * @throw sys_error on error
+	 * Attempts to connects to the specified server.
+	 * If the socket is currently connected, this will close the current
+	 * connection and open the new one.
+	 * @param addr The remote server address. 
+	 * @param len The length of the address structure in bytes 
+	 * @return @em true on success, @em false on error
 	 */
-	inet_address peer_address() const {
-        return inet_address(socket::peer_address());
-    }
+	bool connect(const sockaddr* addr, socklen_t len);
 	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
@@ -103,8 +115,18 @@ public:
 	 * @param addr The remote server address.
 	 * @return @em true on success, @em false on error
 	 */
-	bool connect(const inet_address& addr) {
-		return base::connect(addr);
+	bool connect(const sock_address& addr) {
+		return connect(addr.sockaddr_ptr(), addr.size());
+	}
+	/**
+	 * Attempts to connects to the specified server.
+	 * If the socket is currently connected, this will close the current
+	 * connection and open the new one.
+	 * @param addr The remote server address.
+	 * @return @em true on success, @em false on error
+	 */
+	bool connect(const sock_address_ref& addr) {
+		return connect(addr.sockaddr_ptr(), addr.size());
 	}
 };
 
@@ -112,4 +134,5 @@ public:
 // end namespace sockpp
 };
 
-#endif		// __sockpp_tcp_connector_h
+#endif		// __sockpp_connector_h
+

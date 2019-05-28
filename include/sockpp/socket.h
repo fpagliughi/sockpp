@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,7 @@
 #ifndef __sockpp_socket_h
 #define __sockpp_socket_h
 
-#include "sockpp/inet_address.h"
+#include "sockpp/sock_address.h"
 #include <chrono>
 #include <string>
 
@@ -234,28 +234,16 @@ public:
 	}
 	/**
 	 * Gets the local address to which the socket is bound.
-	 * @param addr Gets the local address to which the socket is bound.
-	 * @return @em true on success, @em false on error
-	 */
-	bool address(inet_address& addr) const;
-	/**
-	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.
 	 * @throw sys_error on error
 	 */
-	inet_address address() const;
-	/**
-	 * Gets the address of the remote peer, if this socket is connected.
-	 * @param The address of the remote peer, if this socket is connected.
-	 * @return @em true on success, @em false on error
-	 */
-	bool peer_address(inet_address& addr) const;
+	sock_address address() const;
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @return The address of the remote peer, if this socket is connected.
 	 * @throw sys_error on error
 	 */
-	inet_address peer_address() const;
+	sock_address peer_address() const;
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().

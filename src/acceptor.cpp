@@ -1,4 +1,4 @@
-// unix_acceptor.cpp
+// acceptor.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -35,7 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include <cstring>
-#include "sockpp/unix_acceptor.h"
+#include "sockpp/acceptor.h"
 
 using namespace std;
 
@@ -43,13 +43,26 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+// Binds the socket to the specified address.
+
+bool acceptor::bind(const sockaddr* addr, socklen_t len)
+{
+    bool ok = check_ret_bool(::bind(handle(), addr, len));
+
+    if (ok)
+        addr_ = sock_address(addr, len);
+
+    return ok;
+}
+
+// --------------------------------------------------------------------------
 // This attempts to open the acceptor, bind to the requested address, and
 // start listening. On any error it will be sure to leave the underlying
 // socket in an unopened/invalid state.
 // If the acceptor appears to already be opened, this will quietly succeed
 // without doing anything.
 
-bool unix_acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE_SIZE*/)
+bool acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE_SIZE*/)
 {
 	// TODO: What to do if we are open but bound to a different address?
 	if (is_open())
@@ -62,7 +75,7 @@ bool unix_acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFL
 		return false;
 	}
 
-	socket_t h = unix_socket::create(domain);
+	socket_t h = stream_socket::create(domain);
 	if (!check_ret_bool(h))
 		return false;
 
@@ -84,18 +97,21 @@ bool unix_acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFL
 		return false;
 	}
 
-	//addr_ = addr;
 	return true;
 }
 
 // --------------------------------------------------------------------------
 
-unix_socket unix_acceptor::accept()
+stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
 {
-	//sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
-	//socklen_t len = cli ? sizeof(inet_address) : 0;
-	socket_t  s = check_ret(::accept(handle(), nullptr, 0)); //cli, &len));
-	return unix_socket(s);
+    sockaddr_storage addr;
+    socklen_t len;
+
+    auto paddr = reinterpret_cast <sockaddr*>(&addr);
+    socket_t s = check_ret(::accept(handle(), paddr, &len));
+    if (clientAddr)
+        *clientAddr = sock_address(paddr, len);
+	return stream_socket(s);
 }
 
 /////////////////////////////////////////////////////////////////////////////

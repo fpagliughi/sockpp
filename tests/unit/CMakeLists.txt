@@ -54,6 +54,7 @@ if(UNIX)
 		test_unix_address.cpp
 	)
 endif()
+
 # --- Link for executables ---
 
 message(STATUS "Using library for unit tests: ${SOCKPP_LIB}")
@@ -65,3 +66,4 @@ include(CTest)
 include(Catch)
 
 catch_discover_tests(unit_tests)
+

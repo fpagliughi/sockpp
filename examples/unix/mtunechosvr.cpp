@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	string path = "/tmp/sock";
 
 	if (argc > 1) {
-        path = argv[1];
+		path = argv[1];
 	}
 
 	sockpp::socket_initializer sockInit;
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
-	cout << "Awaiting UNIX-domain connections on " << path << "..." << endl;
+    cout << "Acceptor bound to address: '" << acc.address() << "'..." << endl;
 
 	while (true) {
 		// Accept a new client connection
@@ -105,6 +105,4 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
-
 

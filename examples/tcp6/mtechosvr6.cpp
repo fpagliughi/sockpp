@@ -1,15 +1,15 @@
-// mtechosvr.cpp
+// mtechosvr6.cpp
 //
-// A multi-threaded TCP echo server for sockpp library.
-// This is a simple thread-per-connection TCP server.
+// A multi-threaded TCP v6 echo server for sockpp library.
+// This is a simple thread-per-connection TCP server for IPv6.
 //
 // USAGE:
-//  	mtechosvr [port]
+//  	mtechosvr6 [port]
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 
 #include <iostream>
 #include <thread>
-#include "sockpp/tcp_acceptor.h"
+#include "sockpp/tcp6_acceptor.h"
 
 using namespace std;
 
@@ -51,7 +51,7 @@ using namespace std;
 // Ownership of the socket object is transferred to the thread, so when this
 // function exits, the socket is automatically closed.
 
-void run_echo(sockpp::tcp_socket sock)
+void run_echo(sockpp::tcp6_socket sock)
 {
 	int n;
 	char buf[512];
@@ -71,21 +71,20 @@ int main(int argc, char* argv[])
 {
 	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
-	sockpp::socket_initializer	sockInit;
-	sockpp::tcp_acceptor		acc(port);
+	sockpp::socket_initializer sockInit;
+	sockpp::tcp6_acceptor acc(port);
 
 	if (!acc) {
 		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
-    //cout << "Acceptor bound to address: " << acc.address() << endl;
-	cout << "Awaiting connections on TCP port " << port << "..." << endl;
+	cout << "Awaiting TCP v6 connections on port " << port << "..." << endl;
 
 	while (true) {
-		sockpp::inet_address peer;
+		sockpp::inet6_address peer;
 
 		// Accept a new client connection
-		sockpp::tcp_socket sock = acc.accept(&peer);
+		sockpp::tcp6_socket sock = acc.accept(&peer);
 		cout << "Received a connection request from " << peer << endl;
 
 		if (!sock) {

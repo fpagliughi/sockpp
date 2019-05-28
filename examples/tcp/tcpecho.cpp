@@ -44,8 +44,8 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	string host = "localhost";
-	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+	string host = (argc > 1) ? argv[1] : "localhost";
+	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
 	sockpp::socket_initializer	sockInit;
 	sockpp::tcp_connector		conn;

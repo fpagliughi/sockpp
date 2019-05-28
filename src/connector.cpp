@@ -34,13 +34,13 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/stream_connector.h"
+#include "sockpp/connector.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool stream_connector::connect(const sockaddr* addr, socklen_t len)
+bool connector::connect(const sockaddr* addr, socklen_t len)
 {
 	if (len < sizeof(sa_family_t)) {
 		// TODO: Set last error
