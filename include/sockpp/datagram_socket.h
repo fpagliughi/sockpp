@@ -185,5 +185,5 @@ public:
 // end namespace sockpp
 }
 
-#endif		// __sockpp_socket_h
+#endif		// __sockpp_datagram_socket_h
 

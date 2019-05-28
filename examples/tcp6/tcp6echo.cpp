@@ -44,12 +44,13 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+	std::string host = (argc > 1) ? argv[1] : "::1";
+	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
 	sockpp::socket_initializer	sockInit;
 	sockpp::tcp6_connector		conn;
 
-    auto addr = sockpp::inet6_address::loopback(port);
+    auto addr = sockpp::inet6_address(host, port);
 
 	if (!conn.connect(addr)) {
 		cerr << "Error connecting to server at " << addr

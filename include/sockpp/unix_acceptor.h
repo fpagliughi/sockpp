@@ -54,7 +54,7 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /// Class for creating a Unix-domain server.
-/// Objects of this class bind and listen on TCP ports for incoming
+/// Objects of this class bind and listen on Unix-domain ports for
 /// connections. Normally, a server thread creates one of these and blocks
 /// on the call to accept incoming connections. The call to accept creates
 /// and returns a @ref unix_socket which can then be used for the actual
@@ -62,6 +62,7 @@ namespace sockpp {
 
 class unix_acceptor : public acceptor
 {
+    /** The base class */
     using base = acceptor;
 
 	// Non-copyable
@@ -78,14 +79,17 @@ public:
 	 * @param addr The TCP address on which to listen.
 	 * @param queSize The listener queue size.
 	 */
-	unix_acceptor(const unix_address& addr, int queSize=DFLT_QUE_SIZE) /*: addr_(addr)*/ {
+	unix_acceptor(const unix_address& addr, int queSize=DFLT_QUE_SIZE) {
 		open(addr, queSize);
 	}
+
 	/**
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
 	 */
-	//const inet_address& addr() const { return addr_; }
+	unix_address address() const {
+        return unix_address(base::address());
+    }
     /**
      * Base open call also work.
      */
@@ -104,7 +108,10 @@ public:
      * client.
 	 * @return A unix_socket to the client.
 	 */
-	unix_socket accept();
+	unix_socket accept() {
+        socket_t s = check_ret(::accept(handle(), nullptr, 0));
+        return unix_socket(s);
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////

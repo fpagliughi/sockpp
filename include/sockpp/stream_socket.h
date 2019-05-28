@@ -56,9 +56,9 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Base class for streaming sockets, such as TCP.
- * This is the streaming connection between two streaming peers. It looks
- * like a readable/writeable device.
+ * Base class for streaming sockets, such as TCP and Unix Domain.
+ * This is the streaming connection between two peers. It looks like a
+ * readable/writeable device.
  */
 class stream_socket : public socket
 {
@@ -78,7 +78,7 @@ protected:
 
 public:
 	/**
-	 * Creates an unconnected TCP socket.
+	 * Creates an unconnected streaming socket.
 	 */
 	stream_socket() {}
 	/**

@@ -35,6 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/inet6_address.h"
+#include "sockpp/exception.h"
 
 using namespace std;
 
@@ -55,19 +56,25 @@ bool inet6_address::is_set() const
 
 // --------------------------------------------------------------------------
 
-in_addr_t inet6_address::resolve_name(const std::string& saddr)
+in6_addr inet6_address::resolve_name(const string& saddr)
 {
-
 	#if !defined(WIN32)
-		in_addr ia;
-		if (::inet_aton(saddr.c_str(), &ia) != 0)
-			return ia.s_addr;
+		in6_addr ia;
+		if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) != 0)
+			return ia;
 	#endif
 
-	// On error this sets h_error (not errno). Errors could be 
-	// HOST_NOT_FOUND, NO_ADDRESS, etc.
-	hostent *host = ::gethostbyname(saddr.c_str());
-	return (host) ? *((in_addr_t*) host->h_addr_list[0]) : in_addr_t(0);
+    addrinfo hints, *res;
+
+    memset(&hints, 0, sizeof(addrinfo));
+    hints.ai_family = ADDRESS_FAMILY;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (::getaddrinfo(saddr.c_str(), NULL, &hints, &res) != 0)
+        throw sys_error();
+
+    auto ipv6 = reinterpret_cast<sockaddr_in6*>(res->ai_addr);
+    return ipv6->sin6_addr;
 }
 
 // --------------------------------------------------------------------------
@@ -75,7 +82,6 @@ in_addr_t inet6_address::resolve_name(const std::string& saddr)
 void inet6_address::create(const in6_addr& addr, in_port_t port)
 {
 	zero();
-    //sin6_len = sizeof(sockaddr_in6);
     sin6_family = AF_INET6;
     sin6_flowinfo = 0;
     sin6_addr = addr;
@@ -84,15 +90,13 @@ void inet6_address::create(const in6_addr& addr, in_port_t port)
 
 // --------------------------------------------------------------------------
 
-void inet6_address::create(const std::string& saddr, in_port_t port)
+void inet6_address::create(const string& saddr, in_port_t port)
 {
 	zero();
-    /*
-    TODO: Do we need this?
-	sin_family = AF_INET;
-	sin_addr.s_addr = resolve_name(saddr.c_str());
-	sin_port = htons(port);
-    */
+	sin6_family = AF_INET6;
+    sin6_flowinfo = 0;
+	sin6_addr = resolve_name(saddr.c_str());
+	sin6_port = htons(port);
 }
 
 

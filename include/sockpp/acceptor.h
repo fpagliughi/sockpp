@@ -121,8 +121,16 @@ public:
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
 	 */
-	template <typename ADDR>
-	bool open(const ADDR& addr, int queSize=DFLT_QUE_SIZE) {
+	bool open(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
+		return open(addr.sockaddr_ptr(), addr.size(), queSize);
+	}
+	/**
+	 * Opens the acceptor socket and binds it to the specified address.
+	 * @param addr The address to which this server should be bound.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
+	 */
+	bool open(const sock_address_ref& addr, int queSize=DFLT_QUE_SIZE) {
 		return open(addr.sockaddr_ptr(), addr.size(), queSize);
 	}
 	/**

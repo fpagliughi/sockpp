@@ -43,7 +43,6 @@ add_library(sockpp-objs OBJECT
 	exception.cpp
 	inet_address.cpp
 	inet6_address.cpp
-	sock_address.cpp
 	socket.cpp
 	stream_socket.cpp
 	tcp_acceptor.cpp
@@ -53,8 +52,6 @@ add_library(sockpp-objs OBJECT
 if(UNIX)
 	target_sources(sockpp-objs PUBLIC
 		unix/unix_address.cpp
-		unix/unix_acceptor.cpp
-		unix/unix_connector.cpp 
 	)
 endif()
 

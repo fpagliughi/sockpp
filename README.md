@@ -10,13 +10,32 @@ The base `socket` wraps a system integer socket handle, and maintains its lifeti
 
 All code in the library lives within the `sockpp` C++ namespace.
 
+## Latest News
+
+Work is proceeding to add IPv6 support. After that, better UDP support will come next.
+
+To keep up with the latest announcements for this project, follow me at:
+
+**Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
+
 ## Unreleased Features (in this branch)
 
 The work in this branch is proceeding to add support for IPv6 and refactor the class hierarchies to better support the different address families without so much redundant code.
 
- - IPv6 support: _inet6_address_, _tcp6_acceptor_, _tcp_connector_, etc.
- - (Breaking change) The _sock_address_ class is now contains storage for any type of address and follows copy semantics. Previously it was a non-owning reference class. That reference class now exists as _sock_addresss_ref_.
+ - IPv6 support: `inet6_address`, `tcp6_acceptor`, `tcp_connector`, etc.
+ - (Breaking change) The `sock_address` class is now contains storage for any type of address and follows copy semantics. Previously it was a non-owning reference class. That reference class now exists as `sock_addresss_ref`.
  - Generic base classses are being re-implemented to use _sock_address_ and _sock_address_ref_ as generic addresses.
+ - (Breaking change) In the `socket` class(es)he `bool address(address&)` and `bool peer_address(addr&)` forms of getting the socket addresses have been removed in favor of the ones that simply return the address.
+ 
+ ## Coming Soon
+ 
+ The following improvements are soon to follow:
+ 
+  - **Proper UDP support.** The existing `datagram_socket` will serve as a base for UDP socket classes for all the families supported (IPv4, v6, and Unix-Domain).
+  
+  - **Better use of templates and generics.** Currently there is a lot of redundant code in the implementations for the different familys. This can likely be replaced with some template classes, while keeping the public API compatible.
+  
+  - **SSL Sockets.** It might be nice to add optional support for secure sockets.
  
 ## What's new in v0.3
 
@@ -56,13 +75,16 @@ SOCKPP_BUILD_SHARED | ON | Whether to build the shared library
 SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
 SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires Doxygen)
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
+SOCKPP_BUILD_TESTS | OFF | Build the unit tests
 
  
 ## TCP Sockets
 
-TCP applications are usually set up as either servers or clients. The `tcp_acceptor` is used to create a TCP server. It binds an address and listens on a known port to accept incoming connections. When a connection is accepted, a new, streaming `tcp_socket` is created. That new socket can be handled directly or moved to a thread (or thread pool) for processing.
+TCP and other "streaming" network applications are usually set up as either servers or clients. An acceptor is used to create a TCP/streaming server. It binds an address and listens on a known port to accept incoming connections. When a connection is accepted, a new, streaming socket is created. That new socket can be handled directly or moved to a thread (or thread pool) for processing.
 
-Conversely, to create a TCP client, a `tcp_connector` object is created and connected to a server at a known address (host and socket). When connected, the socket is a streaming one which can be used to read and write, directly.
+Conversely, to create a TCP client, a connector object is created and connected to a server at a known address (typically host and socket). When connected, the socket is a streaming one which can be used to read and write, directly.
+
+For IPv4 the `tcp_acceptor` and `tcp_connector` classes are used to create servers and clients, respectively. These use the `inet_address` class to specify endpoint addresses composed of a 32-bit host address and a 16-bit port number.
 
 ### TCP server: `tcp_acceptor`
 
@@ -72,7 +94,7 @@ The `tcp_acceptor` is used to set up a server and listen for incoming connection
     sockpp::tcp_acceptor acc(port);
 
     if (!acc)
-        report_error(strerror(acc.last_error()));
+        report_error(acc.last_error_str());
 
     // Accept a new client connection
     sockpp::tcp_socket sock = acc.accept();
@@ -85,7 +107,7 @@ The acceptor normally sits in a loop accepting new connections, and passes them 
 
         if (!sock) {
             cerr << "Error accepting incoming connection: " 
-                << ::strerror(acc.last_error()) << endl;
+                << acc.last_error_str() << endl;
         }
         else {
             // Create a thread and transfer the new stream to it.
@@ -104,10 +126,26 @@ The TCP client is somewhat simpler in that a `tcp_connector` object is created a
     int16_t port = 12345;
 
     if (!conn.connect(sockpp::inet_address("localhost", port)))
-        report_error(strerror(acc.last_error()));
+        report_error(acc.last_error_str());
 
     conn.write_n("Hello", 5);
 	
     char buf[5];
     int n = conn.read(buf, 5);
 
+### IPv6
+
+The same style of  connectors and acceptors can be used for TCP connections over IPv6 using the classes:
+
+    inet6_address
+    tcp6_connector
+    tcp6_acceptor
+    
+### Unix Domain Sockets
+
+The same us true for local connection on *nix systems that implement Unix Domain Sockets. For that use the classes:
+
+    unix_address
+    unix_connector
+    unix_acceptor
+    

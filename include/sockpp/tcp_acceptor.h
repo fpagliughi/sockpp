@@ -62,6 +62,7 @@ namespace sockpp {
 
 class tcp_acceptor : public acceptor
 {
+    /** The base class */
     using base = acceptor;
 
 	// Non-copyable
@@ -96,11 +97,9 @@ public:
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
 	 */
-	//const inet_address& addr() const { return addr_; }
-    /**
-     * Base open call also work.
-     */
-    using base::open;
+	inet_address address() const {
+        return inet_address(base::address());
+    }
 	/**
 	 * Opens the acceptor socket and binds it to the specified address.
 	 * @param addr The address to which this server should be bound.
@@ -108,7 +107,7 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool open(const inet_address& addr, int queSize=DFLT_QUE_SIZE) {
-		return open(addr.sockaddr_ptr(), addr.size(), queSize);
+		return base::open(addr.sockaddr_ptr(), addr.size(), queSize);
 	}
 	/**
 	 * Opens the acceptor socket.

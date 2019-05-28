@@ -97,7 +97,6 @@ bool acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE
 		return false;
 	}
 
-	//addr_ = addr;
 	return true;
 }
 

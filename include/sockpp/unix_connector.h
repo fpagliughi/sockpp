@@ -77,10 +77,6 @@ public:
 	 */
 	unix_connector(const unix_address& addr);
 	/**
-	 * Base connect choices also work.
-	 */
-	using base::connect;
-	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
 	 * connection and open the new one.
@@ -88,7 +84,7 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool connect(const unix_address& addr) {
-		return base::connect(addr.to_sock_address());
+		return base::connect(addr);
 	}
 };
 

@@ -78,7 +78,8 @@ int main(int argc, char* argv[])
 		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
-	cout << "Awaiting connections on port " << port << "..." << endl;
+    //cout << "Acceptor bound to address: " << acc.address() << endl;
+	cout << "Awaiting connections on TCP port " << port << "..." << endl;
 
 	while (true) {
 		sockpp::inet_address peer;

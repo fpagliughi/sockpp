@@ -1,4 +1,4 @@
-// unix_connector.cpp
+// stream_connector.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,15 +34,35 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/unix_connector.h"
+#include "sockpp/connector.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-unix_connector::unix_connector(const unix_address& addr)
+bool connector::connect(const sockaddr* addr, socklen_t len)
 {
-	connect(addr);
+	if (len < sizeof(sa_family_t)) {
+		// TODO: Set last error
+		return false;
+	}
+
+	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
+	socket_t h = create(domain);
+
+	if (h == INVALID_SOCKET) {
+		set_last_error();
+		return false;
+	}
+
+	// This will close the old connection, if any.
+	reset(h);
+	if (!check_ret_bool(::connect(h, addr, len))) {
+		close();
+		return false;
+	}
+
+	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////

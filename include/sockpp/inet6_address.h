@@ -63,6 +63,7 @@ namespace sockpp {
  */
 class inet6_address : public sockaddr_in6
 {
+	static constexpr sa_family_t ADDRESS_FAMILY = AF_INET6;
 	// NOTE: This class makes heavy use of the fact that it is completely
 	// binary compatible with a sockaddr/sockaddr_in6.
 	// Do not add any other member variables, without going through the
@@ -159,7 +160,7 @@ public:
 	 * @param saddr The string host name.
 	 * @return The internet address in network byte order.
 	 */
-	static in_addr_t resolve_name(const std::string& saddr);
+	static in6_addr resolve_name(const std::string& saddr);
 	/**
 	 * Creates the socket address using the specified host address and port
 	 * number.
@@ -238,6 +239,14 @@ public:
 	sockaddr_in6* sockaddr_in6_ptr() {
 		return static_cast<sockaddr_in6*>(this);
 	}
+    /**
+     * Implicit conversion to an address reference.
+     * @return Reference to the address.
+     */
+    operator sock_address_ref() const {
+        return sock_address_ref(reinterpret_cast<const sockaddr*>(this),
+                                sizeof(sockaddr_in6));
+    }
 	/**
 	 * Gets a printable string for the address.
      * This gets the address in the printable form "[addr]:port"

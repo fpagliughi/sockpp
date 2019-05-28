@@ -120,14 +120,14 @@ public:
 	 */
 	sock_address(const sockaddr* addr, socklen_t n) {
         // TODO: Check size of n n?
-        memcpy(&addr_, addr, sz_ = n);
+        std::memcpy(&addr_, addr, sz_ = n);
     }
 	/**
      * Constructs a address.
 	 */
 	sock_address(const sockaddr_storage& addr, socklen_t n) {
         // TODO: Check size of n n?
-        memcpy(&addr_, &addr, sz_ = n);
+        std::memcpy(&addr_, &addr, sz_ = n);
     }
 	/**
 	 * Gets the size of this structure.
@@ -151,7 +151,7 @@ public:
 		return reinterpret_cast<sockaddr*>(&addr_);
 	}
     /**
-     * Implicit conversion to a reference.
+     * Implicit conversion to an address reference.
      * @return Reference to the address.
      */
     operator sock_address_ref() const {
@@ -161,7 +161,7 @@ public:
 
 inline bool operator==(const sock_address& lhs, const sock_address& rhs) {
     return lhs.size() == rhs.size() &&
-        memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), lhs.size()) == 0;
+        std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), lhs.size()) == 0;
 }
 
 inline bool operator!=(const sock_address& lhs, const sock_address& rhs) {

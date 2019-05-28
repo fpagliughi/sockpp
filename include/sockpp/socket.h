@@ -234,22 +234,10 @@ public:
 	}
 	/**
 	 * Gets the local address to which the socket is bound.
-	 * @param addr Gets the local address to which the socket is bound.
-	 * @return @em true on success, @em false on error
-	 */
-	//bool address(sock_address& addr) const;
-	/**
-	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.
 	 * @throw sys_error on error
 	 */
 	sock_address address() const;
-	/**
-	 * Gets the address of the remote peer, if this socket is connected.
-	 * @param The address of the remote peer, if this socket is connected.
-	 * @return @em true on success, @em false on error
-	 */
-	//bool peer_address(sock_address& addr) const;
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @return The address of the remote peer, if this socket is connected.

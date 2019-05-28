@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
-	cout << "Awaiting IPv6 connections on port " << port << "..." << endl;
+	cout << "Awaiting TCP v6 connections on port " << port << "..." << endl;
 
 	while (true) {
 		sockpp::inet6_address peer;

@@ -101,6 +101,14 @@ public:
 	explicit unix_address(const sockaddr& addr);
 	/**
 	 * Constructs the address by copying the specified structure.
+	 * @param addr The other address
+	 */
+	unix_address(const sock_address& addr) {
+        // TODO: Maybe throw EINVAL if wrong size
+		std::memcpy(sockaddr_ptr(), addr.sockaddr_ptr(), sizeof(sockaddr_un));
+	}
+	/**
+	 * Constructs the address by copying the specified structure.
      * @param addr The other address
      * @throws std::invalid_argument if the address is not properly
      *            initialized as a UNIX-domain address (i.e. family is not
@@ -141,8 +149,8 @@ public:
     // to mimic the inet_address behavior?
 
     /**
-	 * Gets a pointer to this object cast to a @em sockaddr.
-	 * @return A pointer to this object cast to a @em sockaddr.
+	 * Gets a pointer to this object cast to a const @em sockaddr.
+	 * @return A pointer to this object cast to a const @em sockaddr.
 	 */
 	const sockaddr* sockaddr_ptr() const {
 		return reinterpret_cast<const sockaddr*>(this);
@@ -162,23 +170,31 @@ public:
 		return sock_address(sockaddr_ptr(), size());
 	}
 	/**
-	 * Gets a const pointer to this object cast to a @em sockaddr_in.
-	 * @return const sockaddr_in pointer to this object.
+	 * Gets a const pointer to this object cast to a @em sockaddr_un.
+	 * @return const sockaddr_un pointer to this object.
 	 */
 	const sockaddr_un* sockaddr_un_ptr() const {
 		return static_cast<const sockaddr_un*>(this);
 	}
 	/**
-	 * Gets a pointer to this object cast to a @em sockaddr_in.
-	 * @return sockaddr_in pointer to this object.
+	 * Gets a pointer to this object cast to a @em sockaddr_un.
+	 * @return sockaddr_un pointer to this object.
 	 */
 	sockaddr_un* sockaddr_un_ptr() {
 		return static_cast<sockaddr_un*>(this);
 	}
+    /**
+     * Implicit conversion to an address reference.
+     * @return Reference to the address.
+     */
+    operator sock_address_ref() const {
+        return sock_address_ref(reinterpret_cast<const sockaddr*>(this),
+                                sizeof(sockaddr_un));
+    }
 	/**
 	 * Gets a printable string for the address.
 	 * @return A string representation of the address in the form 
-	 *  	   'address:port'
+	 *  	   'unix:<path>'
 	 */
 	std::string to_string() const {
 		return std::string("unix:") + std::string(sun_path);

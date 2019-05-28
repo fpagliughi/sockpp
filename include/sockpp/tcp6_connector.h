@@ -96,10 +96,6 @@ public:
         return inet6_address(base::peer_address());
     }
 	/**
-	 * Base connect choices also work.
-	 */
-	using base::connect;
-	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
 	 * connection and open the new one.
@@ -107,7 +103,7 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool connect(const inet6_address& addr) {
-		return base::connect(addr.to_sock_address());
+		return base::connect(addr);
 	}
 };
 

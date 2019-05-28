@@ -64,6 +64,7 @@ namespace sockpp {
  */
 class inet_address : public sockaddr_in
 {
+	static constexpr sa_family_t ADDRESS_FAMILY = AF_INET;
 	// NOTE: This class makes heavy use of the fact that it is completely
 	// binary compatible with a sockaddr/sockaddr_in, and the same size as
 	// one of those structures. Do not add any other member variables,
@@ -220,6 +221,14 @@ public:
 	sockaddr_in* sockaddr_in_ptr() {
 		return static_cast<sockaddr_in*>(this);
 	}
+    /**
+     * Implicit conversion to an address reference.
+     * @return Reference to the address.
+     */
+    operator sock_address_ref() const {
+        return sock_address_ref(reinterpret_cast<const sockaddr*>(this),
+                                sizeof(sockaddr_in));
+    }
 	/**
 	 * Gets a printable string for the address.
 	 * This gets the simple dot notation of the address as returned from 
@@ -229,7 +238,8 @@ public:
 	 */
 	std::string to_string() const {
         char buf[INET_ADDRSTRLEN];
-        const char* str = inet_ntop(AF_INET, (void*) &(sockaddr_in_ptr()->sin_addr), buf, INET_ADDRSTRLEN);
+        const char* str = inet_ntop(AF_INET, (void*) &(sockaddr_in_ptr()->sin_addr),
+                                    buf, INET_ADDRSTRLEN);
 		return std::string(str ? str : "<unknown>")
             + ":" + std::to_string(unsigned(port()));
 	}
