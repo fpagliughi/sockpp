@@ -11,11 +11,11 @@ do
     printf "Testing: %s\n" "${COMPILER}"
     rm -rf build/
     mkdir build ; pushd build
-    if ! cmake -DSOCKPP_BUILD_EXAMPLES=ON .. ; then
+    if ! CXX=${COMPILER} cmake -DSOCKPP_BUILD_EXAMPLES=ON .. ; then
       printf "\nCMake configuration failed for %s\n" "${COMPILER}"
 	  exit 1
     fi
-    if ! make -j8 CXX=${COMPILER} ; then
+    if ! make -j8 ; then
 	  printf "\nCompilation failed for %s\n" "${COMPILER}"
 	  exit 1
 	fi
@@ -24,7 +24,7 @@ do
   printf "\n"
 done
 
-make distclean
+rm -rf build/*
 exit 0
 
 
