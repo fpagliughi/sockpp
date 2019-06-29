@@ -64,10 +64,6 @@ namespace sockpp {
  */
 class unix_address : public sockaddr_un
 {
-	static constexpr sa_family_t ADDRESS_FAMILY = AF_UNIX;
-	// TODO: This only applies to Linux
-	static constexpr size_t MAX_PATH_NAME = 108;
-
 	// NOTE: This class makes heavy use of the fact that it is completely
 	// binary compatible with a sockaddr/sockaddr_un, and the same size as 
 	// one of those structures. Do not add any other member variables, 
@@ -82,6 +78,12 @@ class unix_address : public sockaddr_un
 	}
 
 public:
+    /** The address family for this type of address */
+	static constexpr sa_family_t ADDRESS_FAMILY = AF_UNIX;
+
+    // TODO: This only applies to Linux
+	static constexpr size_t MAX_PATH_NAME = 108;
+
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.

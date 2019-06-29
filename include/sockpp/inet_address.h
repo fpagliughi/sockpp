@@ -64,7 +64,6 @@ namespace sockpp {
  */
 class inet_address : public sockaddr_in
 {
-	static constexpr sa_family_t ADDRESS_FAMILY = AF_INET;
 	// NOTE: This class makes heavy use of the fact that it is completely
 	// binary compatible with a sockaddr/sockaddr_in, and the same size as
 	// one of those structures. Do not add any other member variables,
@@ -76,6 +75,9 @@ class inet_address : public sockaddr_in
 	void zero() { std::memset(this, 0, sizeof(inet_address)); }
 
 public:
+    /** The address family for this type of address */
+	static constexpr sa_family_t ADDRESS_FAMILY = AF_INET;
+
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.

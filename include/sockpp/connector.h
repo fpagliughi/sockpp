@@ -109,9 +109,9 @@ public:
 	 */
 	bool connect(const sockaddr* addr, socklen_t len);
 	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
+     * Attempts to connect to the specified server.
+     * If the socket is currently connected, this will close the current
+     * connection and open the new one.
 	 * @param addr The remote server address.
 	 * @return @em true on success, @em false on error
 	 */

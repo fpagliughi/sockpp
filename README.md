@@ -18,7 +18,7 @@ To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
 
-## Unreleased Features (in this branch)
+## Unreleased Features and Updates (in this branch)
 
 The work in this branch is proceeding to add support for IPv6 and refactor the class hierarchies to better support the different address families without so much redundant code.
 
@@ -26,6 +26,8 @@ The work in this branch is proceeding to add support for IPv6 and refactor the c
  - (Breaking change) The `sock_address` class is now contains storage for any type of address and follows copy semantics. Previously it was a non-owning reference class. That reference class now exists as `sock_addresss_ref`.
  - Generic base classses are being re-implemented to use _sock_address_ and _sock_address_ref_ as generic addresses.
  - (Breaking change) In the `socket` class(es) the `bool address(address&)` and `bool peer_address(addr&)` forms of getting the socket addresses have been removed in favor of the ones that simply return the address.
+ Added `get_option()` and `set_option()` methods to the base `socket`class.
+ - The GNU Make build system (Makefile) was deprecated and removed.
  
  ## Coming Soon
  

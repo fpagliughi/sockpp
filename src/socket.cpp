@@ -161,6 +161,14 @@ sock_address socket::peer_address() const
 }
 
 // --------------------------------------------------------------------------
+
+//bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
+
+// --------------------------------------------------------------------------
+
+//bool socket::set_option(int level, int optname, void* optval, socklen_t optlen)
+
+// --------------------------------------------------------------------------
 // Gets a description of the last error encountered.
 
 std::string socket::error_str(int errNum)

@@ -1,5 +1,5 @@
 /**
- * @file address.h
+ * @file sock_address.h
  *
  * Generic address class for sockpp.
  *
@@ -56,7 +56,10 @@ namespace sockpp {
 
 /**
  * Generic socket address reference.
- * This is a non-owning reference.
+ * This is a non-owning reference to a generic socket address. Each of the
+ * concrete address classes should be able to implicitly convert itself to
+ * one of these for base, generic, communication classes that can work with
+ * any type of socket.
  */
 class sock_address_ref
 {
@@ -94,6 +97,9 @@ public:
 
 /**
  * Generic socket address.
+ *
+ * This is a wrapper around `sockaddr_storage` which can hold any family
+ * address.
  */
 class sock_address
 {

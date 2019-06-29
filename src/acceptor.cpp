@@ -82,10 +82,10 @@ bool acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE
 	reset(h);
 
 	#if !defined(WIN32)
-		if (domain == AF_INET) {
+        // TODO: This should be an option
+		if (domain == AF_INET || domain == AF_INET6) {
 			int reuse = 1;
-			if (!check_ret_bool(::setsockopt(h, SOL_SOCKET, SO_REUSEADDR,
-											 &reuse, sizeof(int)))) {
+			if (!set_option(SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int))) {
 				close();
 				return false;
 			}

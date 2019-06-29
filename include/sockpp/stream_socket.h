@@ -64,10 +64,7 @@ class stream_socket : public socket
 {
 protected:
 	friend class acceptor;
-	friend class stream_acceptor;
-	friend class tcp_acceptor;
-	friend class tcp6_acceptor;
-	friend class unix_acceptor;
+
 	/**
 	 * Creates a streaming socket.
 	 * @return An OS handle to a TCP socket.

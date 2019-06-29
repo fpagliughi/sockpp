@@ -111,7 +111,7 @@ protected:
 	/**
 	 * Checks the value and if less than zero, sets last error.
 	 * @param ret The return value from a library or system call.
-	 * @return Return the value sent to it, ret.
+	 * @return Returns the value sent to it, `ret`.
 	 */
 	int check_ret(int ret) const{
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
@@ -244,6 +244,41 @@ public:
 	 * @throw sys_error on error
 	 */
 	sock_address peer_address() const;
+    /**
+     * Gets the value of a socket option.
+     *
+     * This is a thin wrapper for the system `getsockopt`.
+     *
+     * @param level The protocol level at which the option resides, such as
+     *              SOL_SOCKET.
+     * @param optname The option passed directly to the protocol module.
+     * @param optval The buffer for the value to retrieve
+     * @param optlen Initially contains the lenth of the buffer, and on return
+     *               contains the length of the value retrieved.
+     *
+     * @return bool @em true if the value was retrieved, @em false if an error
+     *         occurred.
+     */
+    bool get_option(int level, int optname, void* optval, socklen_t* optlen) {
+        return check_ret_bool(::getsockopt(handle_, level, optname, optval, optlen));
+    }
+    /**
+     * Sets the value of a socket option.
+     *
+     * This is a thin wrapper for the system `setsockopt`.
+     *
+     * @param level The protocol level at which the option resides, such as
+     *              SOL_SOCKET.
+     * @param optname The option passed directly to the protocol module.
+     * @param optval The buffer with the value to set.
+     * @param optlen Contains the lenth of the value buffer.
+     *
+     * @return bool @em true if the value was set, @em false if an error
+     *         occurred.
+     */
+    bool set_option(int level, int optname, void* optval, socklen_t optlen) {
+        return check_ret_bool(::setsockopt(handle_, level, optname, optval, optlen));
+    }
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().
