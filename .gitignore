@@ -38,6 +38,7 @@ lib/
 # Mercurial Files
 .hg/
 .hgignore
+.hgtags
 
 # SlickEdit files
 *.vpj
