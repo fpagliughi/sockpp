@@ -12,8 +12,6 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
 
-Work is proceeding to add IPv6 support. After that, better UDP support will come next.
-
 To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
