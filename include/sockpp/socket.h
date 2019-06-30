@@ -259,9 +259,7 @@ public:
      * @return bool @em true if the value was retrieved, @em false if an error
      *         occurred.
      */
-    bool get_option(int level, int optname, void* optval, socklen_t* optlen) {
-        return check_ret_bool(::getsockopt(handle_, level, optname, optval, optlen));
-    }
+    bool get_option(int level, int optname, void* optval, socklen_t* optlen);
     /**
      * Sets the value of a socket option.
      *
@@ -276,9 +274,7 @@ public:
      * @return bool @em true if the value was set, @em false if an error
      *         occurred.
      */
-    bool set_option(int level, int optname, void* optval, socklen_t optlen) {
-        return check_ret_bool(::setsockopt(handle_, level, optname, optval, optlen));
-    }
+    bool set_option(int level, int optname, void* optval, socklen_t optlen);
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().

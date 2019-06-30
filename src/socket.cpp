@@ -162,11 +162,30 @@ sock_address socket::peer_address() const
 
 // --------------------------------------------------------------------------
 
-//bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
+bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
+{
+	#if defined(WIN32)
+		int len = static_cast<int>(*optlen);
+		return check_ret_bool(::getsockopt(handle_, level, optname,
+										   static_cast<char*>(optval), &len));
+		*optlen = static_cast<socklen_t>(len);
+	#else
+		return check_ret_bool(::getsockopt(handle_, level, optname, optval, optlen));
+	#endif
+}
 
 // --------------------------------------------------------------------------
 
-//bool socket::set_option(int level, int optname, void* optval, socklen_t optlen)
+bool socket::set_option(int level, int optname, void* optval, socklen_t optlen)
+{
+	#if defined(WIN32)
+		return check_ret_bool(::setsockopt(handle_, level, optname, 
+										   static_cast<const char*>(optval), 
+										   static_cast<int>(optlen)));
+	#else
+		return check_ret_bool(::setsockopt(handle_, level, optname, optval, optlen));
+	#endif
+}
 
 // --------------------------------------------------------------------------
 // Gets a description of the last error encountered.
