@@ -4,7 +4,7 @@
 
 Simple, modern, C++ socket library.
 
-This is a fairly low-level C++ wrapper around the Berkley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
+This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
 The base `socket` wraps a system integer socket handle, and maintains its lifetime. When the object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope (or thread) to another using `std::move()`.
 
