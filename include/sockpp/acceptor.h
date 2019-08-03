@@ -73,13 +73,13 @@ protected:
 	/**
 	 * The local address to which the acceptor is bound.
 	 */
-	sock_address addr_;
+	sock_address_any addr_;
 	/**
 	 * Binds the socket to the specified address.
 	 * @param addr The address to which we get bound.
 	 * @return @em true on success, @em false on error
 	 */
-	bool bind(const sockaddr* addr, socklen_t len);
+	bool bind(const sock_address& addr);
 	/**
 	 * Sets the socket listening on the address to which it is bound.
 	 * @param queSize The listener queue size.
@@ -100,39 +100,21 @@ public:
      * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 */
-    acceptor(sock_address_ref addr, int queSize=DFLT_QUE_SIZE) {
-        open(addr.sockaddr_ptr(), addr.size(), queSize);
+    acceptor(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
+        open(addr, queSize);
     }
 	/**
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
 	 */
-	sock_address addr() const { return addr_; }
+	sock_address_any addr() const { return addr_; }
 	/**
 	 * Opens the acceptor socket and binds it to the specified address.
 	 * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
 	 */
-	bool open(const sockaddr* addr, socklen_t len, int queSize=DFLT_QUE_SIZE);
-	/**
-	 * Opens the acceptor socket and binds it to the specified address.
-	 * @param addr The address to which this server should be bound.
-	 * @param queSize The listener queue size.
-	 * @return @em true on success, @em false on error
-	 */
-	bool open(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
-		return open(addr.sockaddr_ptr(), addr.size(), queSize);
-	}
-	/**
-	 * Opens the acceptor socket and binds it to the specified address.
-	 * @param addr The address to which this server should be bound.
-	 * @param queSize The listener queue size.
-	 * @return @em true on success, @em false on error
-	 */
-	bool open(const sock_address_ref& addr, int queSize=DFLT_QUE_SIZE) {
-		return open(addr.sockaddr_ptr(), addr.size(), queSize);
-	}
+	bool open(const sock_address& addr, int queSize=DFLT_QUE_SIZE);
 	/**
 	 * Accepts an incoming TCP connection and gets the address of the client.
 	 * @param clientAddr Pointer to the variable that will get the

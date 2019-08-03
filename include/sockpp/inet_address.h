@@ -56,23 +56,19 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-
 /**
  * Class that represents an internet (IPv4) address.
  * This inherits from the IP-specific form of a socket address,
  * @em sockaddr_in.
  */
-class inet_address : public sockaddr_in
+class inet_address : public sock_address
 {
-	// NOTE: This class makes heavy use of the fact that it is completely
-	// binary compatible with a sockaddr/sockaddr_in, and the same size as
-	// one of those structures. Do not add any other member variables,
-	// without going through the whole of the class to fixup!
+	sockaddr_in addr_;
 
 	/**
 	 * Sets the contents of this object to all zero.
 	 */
-	void zero() { std::memset(this, 0, sizeof(inet_address)); }
+	void zero() { std::memset(&addr_, 0, sizeof(sockaddr_in)); }
 
 public:
     /** The address family for this type of address */
@@ -133,7 +129,7 @@ public:
 	 * @param addr The other address
 	 */
 	inet_address(const inet_address& addr) {
-		std::memcpy(this, &addr, sizeof(inet_address));
+		std::memcpy(&addr_, &addr.addr_, sizeof(sockaddr_in));
 	}
 	/**
 	 * Checks if the address is set to some value.
@@ -166,7 +162,7 @@ public:
 	 * Gets the 32-bit internet address.
 	 * @return The internet address in the local host's byte order.
 	 */
-	in_addr_t address() const { return ntohl(this->sin_addr.s_addr); }
+	in_addr_t address() const { return ntohl(addr_.sin_addr.s_addr); }
 	/**
 	 * Gets a byte of the 32-bit Internet Address
 	 * @param i The byte to read (0-3)
@@ -180,57 +176,42 @@ public:
 	 * Gets the port number.
 	 * @return The port number in native/host byte order.
 	 */
-	in_port_t port() const { return ntohs(this->sin_port); }
+	in_port_t port() const { return ntohs(addr_.sin_port); }
 	/**
 	 * Gets the size of this structure.
 	 * This is equivalent to sizeof(this) but more convenient in some
 	 * places.
 	 * @return The size of this structure.
 	 */
-	socklen_t size() const { return (socklen_t) sizeof(sockaddr_in); }
+	socklen_t size() const override { return (socklen_t) sizeof(sockaddr_in); }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	const sockaddr* sockaddr_ptr() const {
-		return reinterpret_cast<const sockaddr*>(this);
+	const sockaddr* sockaddr_ptr() const override {
+		return reinterpret_cast<const sockaddr*>(&addr_);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	sockaddr* sockaddr_ptr() {
-		return reinterpret_cast<sockaddr*>(this);
-	}
-	/**
-	 * Gets this address as a sock_address. 
-	 * @return This address as a sock_address. 
-	 */
-	sock_address to_sock_address() const {
-		return sock_address(sockaddr_ptr(), size());
+	sockaddr* sockaddr_ptr() override {
+		return reinterpret_cast<sockaddr*>(&addr_);
 	}
 	/**
 	 * Gets a const pointer to this object cast to a @em sockaddr_in.
 	 * @return const sockaddr_in pointer to this object.
 	 */
 	const sockaddr_in* sockaddr_in_ptr() const {
-		return static_cast<const sockaddr_in*>(this);
+		return static_cast<const sockaddr_in*>(&addr_);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr_in.
 	 * @return sockaddr_in pointer to this object.
 	 */
 	sockaddr_in* sockaddr_in_ptr() {
-		return static_cast<sockaddr_in*>(this);
+		return static_cast<sockaddr_in*>(&addr_);
 	}
-    /**
-     * Implicit conversion to an address reference.
-     * @return Reference to the address.
-     */
-    operator sock_address_ref() const {
-        return sock_address_ref(reinterpret_cast<const sockaddr*>(this),
-                                sizeof(sockaddr_in));
-    }
 	/**
 	 * Gets a printable string for the address.
 	 * This gets the simple dot notation of the address as returned from 
@@ -257,7 +238,8 @@ public:
  * @return @em true if they are binary equivalent, @em false if not.
  */
 inline bool operator==(const inet_address& lhs, const inet_address& rhs) {
-	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(inet_address)) == 0);
+	return (&lhs == &rhs) ||
+		(std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), sizeof(sockaddr_in)) == 0);
 }
 
 /**

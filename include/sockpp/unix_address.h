@@ -62,19 +62,16 @@ namespace sockpp {
  * Class that represents a UNIX domain address.
  * This inherits from the UNIX form of a socket address, @em sockaddr_un.
  */
-class unix_address : public sockaddr_un
+class unix_address : public sock_address
 {
-	// NOTE: This class makes heavy use of the fact that it is completely
-	// binary compatible with a sockaddr/sockaddr_un, and the same size as 
-	// one of those structures. Do not add any other member variables, 
-	// without going through the whole of the class to fixup! 
+	sockaddr_un addr_;
 
 	/**
 	 * Sets the contents of this object to all zero.
 	 */
 	void zero() { 
-		std::memset(this, 0, sizeof(unix_address));
-		sun_family = ADDRESS_FAMILY;
+		std::memset(&addr_, 0, sizeof(sockaddr_un));
+		addr_.sun_family = ADDRESS_FAMILY;
 	}
 
 public:
@@ -122,7 +119,7 @@ public:
 	 * @param addr The other address
 	 */
 	unix_address(const unix_address& addr) {
-		std::memcpy(this, &addr, sizeof(unix_address));
+		std::memcpy(&addr_, &addr.addr_, sizeof(sockaddr_un));
 	}
 	/**
 	 * Checks if the address is set to some value.
@@ -130,12 +127,12 @@ public:
 	 * that it's not all zero.
 	 * @return @em true if the address has been set, @em false otherwise.
 	 */
-	bool is_set() const { return sun_path[0] != '\0'; }
+	bool is_set() const { return addr_.sun_path[0] != '\0'; }
 	/**
 	 * Gets the path to which this address refers.
 	 * @return The path to which this address refers.
 	 */
-	std::string path() const { return std::string(sun_path); }
+	std::string path() const { return std::string(addr_.sun_path); }
 	/**
 	 * Gets the size of the address structure. 
 	 * Note: In this implementation, this should return sizeof(this) but 
@@ -144,7 +141,7 @@ public:
 	 * to use this call. 
 	 * @return The size of the address structure.
 	 */
-	socklen_t size() const { return (socklen_t) sizeof(sockaddr_un); }
+	socklen_t size() const override { return (socklen_t) sizeof(sockaddr_un); }
 
     // TODO: Do we need a:
     //   create(path)
@@ -154,52 +151,37 @@ public:
 	 * Gets a pointer to this object cast to a const @em sockaddr.
 	 * @return A pointer to this object cast to a const @em sockaddr.
 	 */
-	const sockaddr* sockaddr_ptr() const {
+	const sockaddr* sockaddr_ptr() const override {
 		return reinterpret_cast<const sockaddr*>(this);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	sockaddr* sockaddr_ptr() {
-		return reinterpret_cast<sockaddr*>(this);
-	}
-	/**
-	 * Gets this address as a sock_address.
-	 * @return This address as a sock_address.
-	 */
-	sock_address to_sock_address() const {
-		return sock_address(sockaddr_ptr(), size());
+	sockaddr* sockaddr_ptr() override {
+		return reinterpret_cast<sockaddr*>(&addr_);
 	}
 	/**
 	 * Gets a const pointer to this object cast to a @em sockaddr_un.
 	 * @return const sockaddr_un pointer to this object.
 	 */
 	const sockaddr_un* sockaddr_un_ptr() const {
-		return static_cast<const sockaddr_un*>(this);
+		return static_cast<const sockaddr_un*>(&addr_);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr_un.
 	 * @return sockaddr_un pointer to this object.
 	 */
 	sockaddr_un* sockaddr_un_ptr() {
-		return static_cast<sockaddr_un*>(this);
+		return static_cast<sockaddr_un*>(&addr_);
 	}
-    /**
-     * Implicit conversion to an address reference.
-     * @return Reference to the address.
-     */
-    operator sock_address_ref() const {
-        return sock_address_ref(reinterpret_cast<const sockaddr*>(this),
-                                sizeof(sockaddr_un));
-    }
 	/**
 	 * Gets a printable string for the address.
 	 * @return A string representation of the address in the form 
 	 *  	   'unix:<path>'
 	 */
 	std::string to_string() const {
-		return std::string("unix:") + std::string(sun_path);
+		return std::string("unix:") + std::string(addr_.sun_path);
 	}
 };
 
@@ -213,7 +195,8 @@ public:
  * @return @em true if they are binary equivalent, @em false if not.
  */
 inline bool operator==(const unix_address& lhs, const unix_address& rhs) {
-	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(unix_address)) == 0);
+	return (&lhs == &rhs) ||
+		(std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), sizeof(sockaddr_un)) == 0);
 }
 
 /**

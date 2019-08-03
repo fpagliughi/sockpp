@@ -51,8 +51,8 @@ constexpr size_t unix_address::MAX_PATH_NAME;
 
 unix_address::unix_address(const string& path)
 {
-	sun_family = ADDRESS_FAMILY;
-	::strncpy(sun_path, path.c_str(), MAX_PATH_NAME);
+	addr_.sun_family = ADDRESS_FAMILY;
+	::strncpy(addr_.sun_path, path.c_str(), MAX_PATH_NAME);
 }
 
 unix_address::unix_address(const sockaddr& addr)
@@ -80,7 +80,9 @@ unix_address::unix_address(const sockaddr_un& addr)
 
 ostream& operator<<(ostream& os, const unix_address& addr)
 {
-	os << "unix:" << addr.sun_path;
+	// OPTIMIZE
+	//os << "unix:" << addr.sun_path;
+	os << addr.to_string();
 	return os;
 }
 

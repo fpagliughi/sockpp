@@ -55,42 +55,33 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Generic socket address reference.
- * This is a non-owning reference to a generic socket address. Each of the
- * concrete address classes should be able to implicitly convert itself to
- * one of these for base, generic, communication classes that can work with
- * any type of socket.
+ * Generic socket address.
+ * Abstract base class for socket addresses
  */
-class sock_address_ref
+class sock_address
 {
-	/** Pointer to the address */
-	const sockaddr* addr_;
-	/** Length of the address (in bytes) */
-	socklen_t sz_;
-
 public:
 	/**
-	 * Constructs an empty address.
-	 * The address is initialized to all zeroes.
+	 * Virtual destructor.
 	 */
-	sock_address_ref() : addr_(nullptr), sz_(0) {}
-	/**
-	 * Constructs an empty address.
-	 * The address is initialized to all zeroes.
-	 */
-	sock_address_ref(const sockaddr* a, socklen_t n) : addr_(a), sz_(n) {}
+	virtual ~sock_address() {}
 	/**
 	 * Gets the size of this structure.
 	 * This is equivalent to sizeof(this) but more convenient in some
 	 * places.
 	 * @return The size of this structure.
 	 */
-	socklen_t size() const { return sz_; }
+	virtual socklen_t size() const =0;
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	const sockaddr* sockaddr_ptr() const { return addr_; }
+	virtual sockaddr* sockaddr_ptr() =0;
+	/**
+	 * Gets a pointer to this object cast to a @em sockaddr.
+	 * @return A pointer to this object cast to a @em sockaddr.
+	 */
+	virtual const sockaddr* sockaddr_ptr() const =0;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -101,7 +92,7 @@ public:
  * This is a wrapper around `sockaddr_storage` which can hold any family
  * address.
  */
-class sock_address
+class sock_address_any : public sock_address
 {
     /** Storage for any kind of socket address */
     sockaddr_storage addr_;
@@ -111,42 +102,46 @@ class sock_address
 	/**
 	 * Sets the contents of this object to all zero.
 	 */
-	void zero() {
-        std::memset(&addr_, 0, sizeof(sockaddr_storage));
-    }
+	void zero() { std::memset(&addr_, 0, sizeof(sockaddr_storage)); }
 
 public:
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	sock_address() : sz_(0) { zero(); }
+	sock_address_any() : sz_(0) { zero(); }
 	/**
 	 * Constructs an address.
 	 */
-	sock_address(const sockaddr* addr, socklen_t n) {
-        // TODO: Check size of n n?
+	sock_address_any(const sockaddr* addr, socklen_t n) {
+        // TODO: Check size of n.
         std::memcpy(&addr_, addr, sz_ = n);
     }
 	/**
-     * Constructs a address.
+     * Constructs an address.
 	 */
-	sock_address(const sockaddr_storage& addr, socklen_t n) {
+	sock_address_any(const sockaddr_storage& addr, socklen_t n) {
         // TODO: Check size of n n?
         std::memcpy(&addr_, &addr, sz_ = n);
     }
+	/**
+	 * Copies another address to this one.
+	 * @param addr
+	 */
+	sock_address_any(const sock_address& addr)
+		: sock_address_any(addr.sockaddr_ptr(), addr.size()) {}
 	/**
 	 * Gets the size of this structure.
 	 * This is equivalent to sizeof(this) but more convenient in some
 	 * places.
 	 * @return The size of this structure.
 	 */
-	socklen_t size() const { return sz_; }
+	socklen_t size() const override { return sz_; }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	const sockaddr* sockaddr_ptr() const {
+	const sockaddr* sockaddr_ptr() const override {
 		return reinterpret_cast<const sockaddr*>(&addr_);
 	}
 	/**
@@ -156,13 +151,6 @@ public:
 	sockaddr* sockaddr_ptr() {
 		return reinterpret_cast<sockaddr*>(&addr_);
 	}
-    /**
-     * Implicit conversion to an address reference.
-     * @return Reference to the address.
-     */
-    operator sock_address_ref() const {
-        return sock_address_ref(reinterpret_cast<const sockaddr*>(&addr_), sz_);
-    }
 };
 
 inline bool operator==(const sock_address& lhs, const sock_address& rhs) {

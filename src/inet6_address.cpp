@@ -82,10 +82,10 @@ in6_addr inet6_address::resolve_name(const string& saddr)
 void inet6_address::create(const in6_addr& addr, in_port_t port)
 {
 	zero();
-    sin6_family = AF_INET6;
-    sin6_flowinfo = 0;
-    sin6_addr = addr;
-    sin6_port = htons(port);
+    addr_.sin6_family = AF_INET6;
+    addr_.sin6_flowinfo = 0;
+    addr_.sin6_addr = addr;
+    addr_.sin6_port = htons(port);
 }
 
 // --------------------------------------------------------------------------
@@ -93,19 +93,18 @@ void inet6_address::create(const in6_addr& addr, in_port_t port)
 void inet6_address::create(const string& saddr, in_port_t port)
 {
 	zero();
-	sin6_family = AF_INET6;
-    sin6_flowinfo = 0;
-	sin6_addr = resolve_name(saddr.c_str());
-	sin6_port = htons(port);
+	addr_.sin6_family = AF_INET6;
+    addr_.sin6_flowinfo = 0;
+	addr_.sin6_addr = resolve_name(saddr.c_str());
+	addr_.sin6_port = htons(port);
 }
-
 
 // --------------------------------------------------------------------------
 
 string inet6_address::to_string() const
 {
     char buf[INET6_ADDRSTRLEN];
-    auto str = inet_ntop(AF_INET6, (void*) &this->sin6_addr,
+    auto str = inet_ntop(AF_INET6, (void*) &addr_.sin6_addr,
 						 buf, INET6_ADDRSTRLEN);
     return std::string("[") + std::string(str ? str : "<unknown>")
         + "]:" + std::to_string(unsigned(port()));
@@ -115,10 +114,14 @@ string inet6_address::to_string() const
 
 ostream& operator<<(ostream& os, const inet6_address& addr)
 {
+	// OPTIMIZE
+	os << addr.to_string();
+	/*
 	char buf[INET6_ADDRSTRLEN];
-	auto str = inet_ntop(AF_INET6, (void*) &addr.sin6_addr, 
+	auto str = inet_ntop(AF_INET6, (void*) &addr.addr_.sin6_addr,
 						 buf, INET6_ADDRSTRLEN);
 	os << "[" << (str ? str : "<unknown>") << "]:" << unsigned(addr.port());
+	*/
 	return os;
 }
 

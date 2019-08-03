@@ -107,7 +107,7 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool open(const inet6_address& addr, int queSize=DFLT_QUE_SIZE) {
-		return base::open(addr.sockaddr_ptr(), addr.size(), queSize);
+		return base::open(addr, queSize);
 	}
 	/**
 	 * Opens the acceptor socket.

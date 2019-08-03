@@ -61,17 +61,14 @@ namespace sockpp {
  * Class that represents an internet (IPv6) address. This inherits from the
  * IP-specific form of a socket address, @em sockaddr_in.
  */
-class inet6_address : public sockaddr_in6
+class inet6_address : public sock_address
 {
-	// NOTE: This class makes heavy use of the fact that it is completely
-	// binary compatible with a sockaddr/sockaddr_in6.
-	// Do not add any other member variables, without going through the
-	// whole of the class to fixup!
+	sockaddr_in6 addr_;
 
 	/**
 	 * Sets the contents of this object to all zero.
 	 */
-	void zero() { std::memset(this, 0, sizeof(inet6_address)); }
+	void zero() { std::memset(&addr_, 0, sizeof(sockaddr_in6)); }
 
 public:
     /** The address family for this type of address */
@@ -116,28 +113,28 @@ public:
 	 * @param addr The other address
 	 */
 	inet6_address(const sockaddr_storage& addr) {
-		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr_storage));
+		std::memcpy(&addr_, &addr, sizeof(sockaddr_in6));
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
 	inet6_address(const sock_address& addr) {
-		std::memcpy(sockaddr_ptr(), addr.sockaddr_ptr(), sizeof(sockaddr_in));
+		std::memcpy(&addr_, addr.sockaddr_ptr(), sizeof(sockaddr_in6));
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
 	inet6_address(const sockaddr_in6& addr) {
-		std::memcpy(sockaddr_in6_ptr(), &addr, sizeof(sockaddr_in6));
+		std::memcpy(&addr_, &addr, sizeof(sockaddr_in6));
 	}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
 	 */
 	inet6_address(const inet6_address& addr) {
-		std::memcpy(this, &addr, sizeof(inet6_address));
+		std::memcpy(&addr_, &addr.addr_, sizeof(inet6_address));
 	}
     /**
      * Creates an address on the loopback (localhost) interface.
@@ -182,7 +179,7 @@ public:
      * The address is usually stored in network byte order.
 	 * @return The IPv6 address.
 	 */
-	in6_addr address() const { return this->sin6_addr; }
+	in6_addr address() const { return addr_.sin6_addr; }
 	/**
      * Gets a byte of the 128-bit IPv6 Address.
      * Note that the address is normally stored in network byte
@@ -191,40 +188,33 @@ public:
 	 * @return The specified byte in the 128-bit IPv6 Address
 	 */
 	uint8_t operator[](int i) const {
-		return this->sin6_addr.s6_addr[i];
+		return addr_.sin6_addr.s6_addr[i];
 	}
 	/**
 	 * Gets the port number.
 	 * @return The port number in native/host byte order.
 	 */
-	in_port_t port() const { return ntohs(this->sin6_port); }
+	in_port_t port() const { return ntohs(addr_.sin6_port); }
 	/**
 	 * Gets the size of this structure.
 	 * This is equivalent to sizeof(this) but more convenient in some
 	 * places.
 	 * @return The size of this structure.
 	 */
-	socklen_t size() const { return (socklen_t) sizeof(sockaddr_in6); }
+	socklen_t size() const override { return (socklen_t) sizeof(sockaddr_in6); }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	const sockaddr* sockaddr_ptr() const {
-		return reinterpret_cast<const sockaddr*>(this);
+	const sockaddr* sockaddr_ptr() const override {
+		return reinterpret_cast<const sockaddr*>(&addr_);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	sockaddr* sockaddr_ptr() {
-		return reinterpret_cast<sockaddr*>(this);
-	}
-	/**
-	 * Gets this address as a sock_address. 
-	 * @return This address as a sock_address. 
-	 */
-	sock_address to_sock_address() const {
-		return sock_address(sockaddr_ptr(), size());
+	sockaddr* sockaddr_ptr() override {
+		return reinterpret_cast<sockaddr*>(&addr_);
 	}
 	/**
      * Gets a const pointer to this object cast to a @em
@@ -232,23 +222,15 @@ public:
 	 * @return const sockaddr_in6 pointer to this object.
 	 */
 	const sockaddr_in6* sockaddr_in6_ptr() const {
-		return static_cast<const sockaddr_in6*>(this);
+		return static_cast<const sockaddr_in6*>(&addr_);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr_in6.
 	 * @return sockaddr_in6 pointer to this object.
 	 */
 	sockaddr_in6* sockaddr_in6_ptr() {
-		return static_cast<sockaddr_in6*>(this);
+		return static_cast<sockaddr_in6*>(&addr_);
 	}
-    /**
-     * Implicit conversion to an address reference.
-     * @return Reference to the address.
-     */
-    operator sock_address_ref() const {
-        return sock_address_ref(reinterpret_cast<const sockaddr*>(this),
-                                sizeof(sockaddr_in6));
-    }
 	/**
 	 * Gets a printable string for the address.
      * This gets the address in the printable form "[addr]:port"
@@ -270,7 +252,8 @@ public:
  * @return @em true if they are binary equivalent, @em false if not.
  */
 inline bool operator==(const inet6_address& lhs, const inet6_address& rhs) {
-	return (&lhs == &rhs) || (std::memcmp(&lhs, &rhs, sizeof(inet6_address)) == 0);
+	return (&lhs == &rhs) ||
+		(std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), sizeof(sockaddr_in6)) == 0);
 }
 
 /**

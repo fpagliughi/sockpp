@@ -84,13 +84,6 @@ public:
 	connector(const sock_address& addr)
         : connector(addr.sockaddr_ptr(), addr.size()) {}
 	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address.
-	 */
-	connector(const sock_address_ref& addr)
-        : connector(addr.sockaddr_ptr(), addr.size()) {}
-	/**
 	 * Determines if the socket connected to a remote host.
 	 * Note that this is not a reliable determination if the socket is
 	 * currently connected, but rather that an initial connection was
@@ -116,16 +109,6 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool connect(const sock_address& addr) {
-		return connect(addr.sockaddr_ptr(), addr.size());
-	}
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address.
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const sock_address_ref& addr) {
 		return connect(addr.sockaddr_ptr(), addr.size());
 	}
 };
