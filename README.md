@@ -6,7 +6,7 @@ Simple, modern, C++ socket library.
 
 This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
-The base `socket` wraps a system integer socket handle, and maintains its lifetime. When the object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope (or thread) to another using `std::move()`.
+The base `socket` wraps a system (integer) socket handle, and maintains its lifetime. When the object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope or thread to another using `std::move()`.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
@@ -26,6 +26,7 @@ To keep up with the latest announcements for this project, follow me at:
     - Adds a new `sock_address_any` class that can contain any address, and is used by base classes that need a generic address.
 - The `acceptor` and `connector` classes are still concrete, generic classes, but now a template derives from each of them to specialize.
 - The connector and acceptor classes for each address family (`tcp_connector`, `tcp_acceptor`, `tcp6_connector`, etc) are now typedef'ed to template specializations.
+- The `acceptor::bind()` and `acceptor::listen()` methods are now public.
 - CMake build now honors the `CMAKE_BUILD_TYPE` flag.
  
 ## Coming Soon
@@ -42,8 +43,9 @@ CMake is the supported build system.
 
 ### Requirements:
 
- - CMake v3.5 or newer.
- - Doxygen (optional) to generate API docs.
+ - _CMake_ v3.5 or newer.
+ - _Doxygen_ (optional) to generate API docs.
+ - _Catch2_ to build and run unit tests.
 
 Build like this on Linux:
 
@@ -63,9 +65,9 @@ Variable | Default Value | Description
 ------------ | ------------- | -------------
 SOCKPP_BUILD_SHARED | ON | Whether to build the shared library
 SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
-SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires Doxygen)
+SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires _Doxygen)_
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
-SOCKPP_BUILD_TESTS | OFF | Build the unit tests
+SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
 
  
 ## TCP Sockets

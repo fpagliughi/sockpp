@@ -70,9 +70,7 @@ unix_address::unix_address(const sockaddr& addr)
 
 ostream& operator<<(ostream& os, const unix_address& addr)
 {
-	// OPTIMIZE
-	//os << "unix:" << addr.sun_path;
-	os << addr.to_string();
+	os << "unix:" << addr.path();
 	return os;
 }
 

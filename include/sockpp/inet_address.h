@@ -217,12 +217,7 @@ public:
 	 * @return A string representation of the address in the form 
 	 *  	   'address:port'
 	 */
-	std::string to_string() const {
-        char buf[INET_ADDRSTRLEN];
-        auto str = inet_ntop(AF_INET, (void*) &(addr_.sin_addr), buf, INET_ADDRSTRLEN);
-		return std::string(str ? str : "<unknown>")
-            + ":" + std::to_string(unsigned(port()));
-	}
+	std::string to_string() const;
 };
 
 // --------------------------------------------------------------------------
