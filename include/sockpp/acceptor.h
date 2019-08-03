@@ -74,20 +74,6 @@ protected:
 	 * The local address to which the acceptor is bound.
 	 */
 	sock_address_any addr_;
-	/**
-	 * Binds the socket to the specified address.
-	 * @param addr The address to which we get bound.
-	 * @return @em true on success, @em false on error
-	 */
-	bool bind(const sock_address& addr);
-	/**
-	 * Sets the socket listening on the address to which it is bound.
-	 * @param queSize The listener queue size.
-	 * @return @em true on success, @em false on error
-	 */
-	bool listen(int queSize) {
-		return check_ret_bool(::listen(handle(), queSize));
-	};
 
 public:
 	/**
@@ -109,7 +95,22 @@ public:
 	 */
 	sock_address_any addr() const { return addr_; }
 	/**
-	 * Opens the acceptor socket and binds it to the specified address.
+	 * Binds the socket to the specified address.
+	 * @param addr The address to which we get bound.
+	 * @return @em true on success, @em false on error
+	 */
+	bool bind(const sock_address& addr);
+	/**
+	 * Sets the socket listening on the address to which it is bound.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
+	 */
+	bool listen(int queSize=DFLT_QUE_SIZE) {
+		return check_ret_bool(::listen(handle(), queSize));
+	};
+	/**
+	 * Opens the acceptor socket, binds it to the specified address, and starts
+	 * listening.
 	 * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
@@ -178,7 +179,14 @@ public:
 	 */
 	addr_t address() const { return addr_t(base::address()); }
 	/**
-	 * Opens the acceptor socket and binds it to the specified address.
+	 * Binds the socket to the specified address.
+	 * @param addr The address to which we get bound.
+	 * @return @em true on success, @em false on error
+	 */
+	bool bind(const addr_t& addr) { base::bind(addr); }
+	/**
+	 * Opens the acceptor socket, binds it to the specified address, and starts
+	 * listening.
 	 * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
