@@ -46,8 +46,6 @@ project(sockpp VERSION "0.5.0")
 set(SOCKPP sockpp)
 set(SOCKPP_STATIC ${SOCKPP}-static)
 
-set(CMAKE_BUILD_TYPE Release)
-
 # --- build options ---
 
 if(WIN32)

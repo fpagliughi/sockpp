@@ -54,42 +54,11 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Class to create a client UNIX-domain connection.
- */
-class unix_connector : public connector
-{
-	using base = connector;
-
-	// Non-copyable
-	unix_connector(const unix_connector&) =delete;
-	unix_connector& operator=(const unix_connector&) =delete;
-
-public:
-	/**
-	 * Creates an unconnected connector.
-	 */
-	unix_connector() {}
-	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address.
-	 */
-	unix_connector(const unix_address& addr);
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The  address.
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const unix_address& addr) {
-		return base::connect(addr);
-	}
-};
+using unix_connector = connector_tmpl<unix_socket, unix_address>;
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 };
 
 #endif		// __sockpp_unix_connector_h
+

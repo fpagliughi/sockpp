@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,55 +58,7 @@ namespace sockpp {
 /**
  * Class to create a client TCP connection.
  */
-class tcp_connector : public connector
-{
-    /** The base class */
-	using base = connector;
-
-	// Non-copyable
-	tcp_connector(const tcp_connector&) =delete;
-	tcp_connector& operator=(const tcp_connector&) =delete;
-
-public:
-	/**
-	 * Creates an unconnected connector.
-	 */
-	tcp_connector() {}
-	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address.
-	 */
-	tcp_connector(const inet_address& addr) {
-        connect(addr);
-    }
-	/**
-	 * Gets the local address to which the socket is bound.
-	 * @return The local address to which the socket is bound.
-	 * @throw sys_error on error
-	 */
-	inet_address address() const {
-        return inet_address(base::address());
-    }
-	/**
-	 * Gets the address of the remote peer, if this socket is connected.
-	 * @return The address of the remote peer, if this socket is connected.
-	 * @throw sys_error on error
-	 */
-	inet_address peer_address() const {
-        return inet_address(socket::peer_address());
-    }
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address.
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const inet_address& addr) {
-		return base::connect(addr);
-	}
-};
+using tcp_connector = connector_tmpl<tcp_socket>;
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

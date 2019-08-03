@@ -7,7 +7,7 @@
  * @author	SoRo Systems, Inc.
  * @author  www.sorosys.com
  *
- * @date	December 2014
+ * @date	May 2019
  */
 
 // --------------------------------------------------------------------------
@@ -58,54 +58,7 @@ namespace sockpp {
 /**
  * Class to create a client TCP v6 connection.
  */
-class tcp6_connector : public connector
-{
-	using base = connector;
-
-	// Non-copyable
-	tcp6_connector(const tcp6_connector&) =delete;
-	tcp6_connector& operator=(const tcp6_connector&) =delete;
-
-public:
-	/**
-	 * Creates an unconnected connector.
-	 */
-	tcp6_connector() {}
-	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address.
-	 */
-	tcp6_connector(const inet6_address& addr) {
-        connect(addr);
-    }
-	/**
-	 * Gets the local address to which the socket is bound.
-	 * @return The local address to which the socket is bound.
-	 * @throw sys_error on error
-	 */
-	inet6_address address() const {
-        return inet6_address(base::address());
-    }
-	/**
-	 * Gets the address of the remote peer, if this socket is connected.
-	 * @return The address of the remote peer, if this socket is connected.
-	 * @throw sys_error on error
-	 */
-	inet6_address peer_address() const {
-        return inet6_address(base::peer_address());
-    }
-	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address.
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const inet6_address& addr) {
-		return base::connect(addr);
-	}
-};
+using tcp6_connector = connector_tmpl<tcp6_socket>;
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

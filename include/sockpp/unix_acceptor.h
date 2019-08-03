@@ -98,7 +98,7 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool open(const unix_address& addr, int queSize=DFLT_QUE_SIZE) {
-		return open(addr, queSize);
+		return base::open(addr, queSize);
 	}
 	/**
      * Accepts an incoming UNIX connection and gets the address of the

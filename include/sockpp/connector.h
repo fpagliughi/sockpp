@@ -114,6 +114,61 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Class to create a client TCP connection.
+ */
+template <typename STREAM_SOCK, typename ADDR=typename STREAM_SOCK::addr_t>
+class connector_tmpl : public connector
+{
+    /** The base class */
+	using base = connector;
+
+	// Non-copyable
+	connector_tmpl(const connector_tmpl&) =delete;
+	connector_tmpl& operator=(const connector_tmpl&) =delete;
+
+public:
+	/** The type of streaming socket from the acceptor. */
+	using stream_sock_t = STREAM_SOCK;
+	/** The type of address for the acceptor and streams. */
+	using addr_t = ADDR;	//typename stream_sock_t::addr_t;
+
+	/**
+	 * Creates an unconnected connector.
+	 */
+	connector_tmpl() {}
+	/**
+	 * Creates the connector and attempts to connect to the specified
+	 * address.
+	 * @param addr The remote server address.
+	 */
+	connector_tmpl(const addr_t& addr) { connect(addr); }
+	/**
+	 * Gets the local address to which the socket is bound.
+	 * @return The local address to which the socket is bound.
+	 * @throw sys_error on error
+	 */
+	addr_t address() const { return addr_t(base::address()); }
+	/**
+	 * Gets the address of the remote peer, if this socket is connected.
+	 * @return The address of the remote peer, if this socket is connected.
+	 * @throw sys_error on error
+	 */
+	addr_t peer_address() const {
+        return addr_t(/*socket::*/ base::peer_address());
+    }
+	/**
+	 * Attempts to connects to the specified server.
+	 * If the socket is currently connected, this will close the current
+	 * connection and open the new one.
+	 * @param addr The remote server address.
+	 * @return @em true on success, @em false on error
+	 */
+	bool connect(const addr_t& addr) { return base::connect(addr); }
+};
+
+/////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 };
 
