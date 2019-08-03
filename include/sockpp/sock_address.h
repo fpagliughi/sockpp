@@ -148,7 +148,7 @@ public:
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
-	sockaddr* sockaddr_ptr() {
+	sockaddr* sockaddr_ptr() override {
 		return reinterpret_cast<sockaddr*>(&addr_);
 	}
 };
@@ -167,4 +167,3 @@ inline bool operator!=(const sock_address& lhs, const sock_address& rhs) {
 }
 
 #endif		// __sockpp_sock_address_h
-
