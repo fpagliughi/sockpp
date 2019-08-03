@@ -125,7 +125,6 @@ public:
 };
 
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 /// Class for creating a TCP server.
@@ -204,10 +203,7 @@ public:
 	 * @return A tcp_socket to the remote client.
 	 */
 	stream_sock_t accept(addr_t* clientAddr=nullptr) {
-		sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
-		socklen_t len = cli ? sizeof(inet_address) : 0;
-		socket_t  s = check_ret(::accept(handle(), cli, &len));
-		return stream_sock_t(s);
+		return stream_sock_t(base::accept(clientAddr));
 	}
 };
 

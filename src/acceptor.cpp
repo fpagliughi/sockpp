@@ -106,13 +106,10 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 
 stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
 {
-    sockaddr_storage addr;
-    socklen_t len;
+	sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
+    socklen_t len = clientAddr ? clientAddr->size() : 0;
 
-    auto paddr = reinterpret_cast <sockaddr*>(&addr);
-    socket_t s = check_ret(::accept(handle(), paddr, &len));
-    if (clientAddr) // TODO: Check size and then copy into obj?
-        *clientAddr = sock_address_any(paddr, len);
+    socket_t s = check_ret(::accept(handle(), p, &len));
 	return stream_socket(s);
 }
 

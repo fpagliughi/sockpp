@@ -105,10 +105,7 @@ public:
      * client.
 	 * @return A unix_socket to the client.
 	 */
-	unix_socket accept() {
-        socket_t s = check_ret(::accept(handle(), nullptr, 0));
-        return unix_socket(s);
-    }
+	unix_socket accept() { return unix_socket(base::accept()); }
 };
 
 /////////////////////////////////////////////////////////////////////////////

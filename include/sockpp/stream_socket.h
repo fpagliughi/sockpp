@@ -196,6 +196,12 @@ public:
 	 */
 	explicit stream_socket_tmpl(socket_t sock) : stream_socket(sock) {}
 	/**
+	 * Creates a stream socket by moving the other socket to this one.
+	 * @param sock Another stream socket.
+	 */
+	stream_socket_tmpl(stream_socket&& sock)
+			: stream_socket(std::move(sock)) {}
+	/**
 	 * Creates a stream socket by copying the socket handle from the
 	 * specified socket object and transfers ownership of the socket.
 	 */
