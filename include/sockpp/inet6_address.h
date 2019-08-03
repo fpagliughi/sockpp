@@ -63,12 +63,11 @@ namespace sockpp {
  */
 class inet6_address : public sock_address
 {
+	/** The underlying C IPv6 struct  */
 	sockaddr_in6 addr_;
 
-	/**
-	 * Sets the contents of this object to all zero.
-	 */
-	void zero() { std::memset(&addr_, 0, sizeof(sockaddr_in6)); }
+	/** The size of the underlying address struct, in bytes */
+	static constexpr size_t SZ = sizeof(sockaddr_in6);
 
 public:
     /** The address family for this type of address */
@@ -78,7 +77,7 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	inet6_address() { zero(); }
+	inet6_address() : addr_() {}
 	/**
 	 * Constructs an address for any iface using the specified port.
 	 * This is a convenient way for a server to specify an address that will
@@ -89,13 +88,6 @@ public:
 		const in6_addr ANY IN6ADDR_ANY_INIT;
 		create(ANY, port);
 	}
-	/**
-	 * Constructs an address for the specified host using the specified
-	 * port.
-	 * @param addr The 32-bit host address in native/host byte order.
-	 * @param port The port number in native/host byte order.
-	 */
-	//inet6_address(const uint8_t* addr, in_port_t port) { create(addr, port); }
 	/**
 	 * Constructs an address using the name of the host and the specified
 	 * port. This attempts to resolve the host name to an address.
@@ -113,29 +105,27 @@ public:
 	 * @param addr The other address
 	 */
 	inet6_address(const sockaddr_storage& addr) {
-		std::memcpy(&addr_, &addr, sizeof(sockaddr_in6));
+		std::memcpy(&addr_, &addr, SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
 	inet6_address(const sock_address& addr) {
-		std::memcpy(&addr_, addr.sockaddr_ptr(), sizeof(sockaddr_in6));
+		std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
 	inet6_address(const sockaddr_in6& addr) {
-		std::memcpy(&addr_, &addr, sizeof(sockaddr_in6));
+		std::memcpy(&addr_, &addr, SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
 	 */
-	inet6_address(const inet6_address& addr) {
-		std::memcpy(&addr_, &addr.addr_, sizeof(inet6_address));
-	}
+	inet6_address(const inet6_address& addr) : addr_(addr.addr_) {}
     /**
      * Creates an address on the loopback (localhost) interface.
      * @param port The port number (in native/host byte order).
@@ -201,7 +191,7 @@ public:
 	 * places.
 	 * @return The size of this structure.
 	 */
-	socklen_t size() const override { return (socklen_t) sizeof(sockaddr_in6); }
+	socklen_t size() const override { return socklen_t(SZ); }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
@@ -221,16 +211,12 @@ public:
      * sockaddr_in6.
 	 * @return const sockaddr_in6 pointer to this object.
 	 */
-	const sockaddr_in6* sockaddr_in6_ptr() const {
-		return static_cast<const sockaddr_in6*>(&addr_);
-	}
+	const sockaddr_in6* sockaddr_in6_ptr() const { return &addr_; }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr_in6.
 	 * @return sockaddr_in6 pointer to this object.
 	 */
-	sockaddr_in6* sockaddr_in6_ptr() {
-		return static_cast<sockaddr_in6*>(&addr_);
-	}
+	sockaddr_in6* sockaddr_in6_ptr() { return &addr_; }
 	/**
 	 * Gets a printable string for the address.
      * This gets the address in the printable form "[addr]:port"

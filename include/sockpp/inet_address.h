@@ -51,6 +51,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <algorithm>
 
 namespace sockpp {
 
@@ -63,12 +64,11 @@ namespace sockpp {
  */
 class inet_address : public sock_address
 {
+	/** The underlying C struct for IPv4 addresses */
 	sockaddr_in addr_;
 
-	/**
-	 * Sets the contents of this object to all zero.
-	 */
-	void zero() { std::memset(&addr_, 0, sizeof(sockaddr_in)); }
+	/** The size of the underlying address struct, in bytes */
+	static constexpr size_t SZ = sizeof(sockaddr_in);
 
 public:
     /** The address family for this type of address */
@@ -78,14 +78,16 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	inet_address() { zero(); }
+	inet_address() : addr_() {}
 	/**
      * Constructs an address for any iface using the specified port.
      * This is a convenient way for a server to specify an address that will
      * bind to all interfaces.
 	 * @param port The port number in native/host byte order.
 	 */
-	explicit inet_address(in_port_t port) { create(in_addr_t(INADDR_ANY), port); }
+	explicit inet_address(in_port_t port) {
+		create(in_addr_t(INADDR_ANY), port);
+	}
 	/**
 	 * Constructs an address for the specified host using the specified
 	 * port.
@@ -108,29 +110,25 @@ public:
 	 * @param addr The other address
 	 */
 	inet_address(const sockaddr& addr) {
-		std::memcpy(sockaddr_ptr(), &addr, sizeof(sockaddr_in));
+		std::memcpy(&addr_, &addr, SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
 	inet_address(const sock_address& addr) {
-		std::memcpy(sockaddr_ptr(), addr.sockaddr_ptr(), sizeof(sockaddr_in));
+		std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
-	inet_address(const sockaddr_in& addr) {
-		std::memcpy(sockaddr_in_ptr(), &addr, sizeof(sockaddr_in));
-	}
+	inet_address(const sockaddr_in& addr) : addr_(addr) {}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
 	 */
-	inet_address(const inet_address& addr) {
-		std::memcpy(&addr_, &addr.addr_, sizeof(sockaddr_in));
-	}
+	inet_address(const inet_address& addr) : addr_(addr.addr_) {}
 	/**
 	 * Checks if the address is set to some value.
 	 * This doesn't attempt to determine if the address is valid, simply
@@ -183,7 +181,7 @@ public:
 	 * places.
 	 * @return The size of this structure.
 	 */
-	socklen_t size() const override { return (socklen_t) sizeof(sockaddr_in); }
+	socklen_t size() const override { return socklen_t(SZ); }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
 	 * @return A pointer to this object cast to a @em sockaddr.
@@ -221,8 +219,7 @@ public:
 	 */
 	std::string to_string() const {
         char buf[INET_ADDRSTRLEN];
-        const char* str = inet_ntop(AF_INET, (void*) &(sockaddr_in_ptr()->sin_addr),
-                                    buf, INET_ADDRSTRLEN);
+        auto str = inet_ntop(AF_INET, (void*) &(addr_.sin_addr), buf, INET_ADDRSTRLEN);
 		return std::string(str ? str : "<unknown>")
             + ":" + std::to_string(unsigned(port()));
 	}

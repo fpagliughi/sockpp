@@ -77,7 +77,7 @@ in_addr_t inet_address::resolve_name(const std::string& saddr)
 
 void inet_address::create(uint32_t addr, in_port_t port)
 {
-	zero();
+	addr_ = sockaddr_in{};
 	addr_.sin_family = AF_INET;
 	addr_.sin_addr.s_addr = htonl(addr);
 	addr_.sin_port = htons(port);
@@ -87,7 +87,7 @@ void inet_address::create(uint32_t addr, in_port_t port)
 
 void inet_address::create(const std::string& saddr, in_port_t port)
 {
-	zero();
+	addr_ = sockaddr_in{};
 	addr_.sin_family = AF_INET;
 	addr_.sin_addr.s_addr = resolve_name(saddr.c_str());
 	addr_.sin_port = htons(port);

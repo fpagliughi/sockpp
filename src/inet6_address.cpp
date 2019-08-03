@@ -66,7 +66,8 @@ in6_addr inet6_address::resolve_name(const string& saddr)
 
     addrinfo hints, *res;
 
-    memset(&hints, 0, sizeof(addrinfo));
+    //memset(&hints, 0, sizeof(addrinfo));
+	hints = addrinfo{};
     hints.ai_family = ADDRESS_FAMILY;
     hints.ai_socktype = SOCK_STREAM;
 
@@ -81,7 +82,7 @@ in6_addr inet6_address::resolve_name(const string& saddr)
 
 void inet6_address::create(const in6_addr& addr, in_port_t port)
 {
-	zero();
+	addr_ = sockaddr_in6{};
     addr_.sin6_family = AF_INET6;
     addr_.sin6_flowinfo = 0;
     addr_.sin6_addr = addr;
@@ -92,7 +93,7 @@ void inet6_address::create(const in6_addr& addr, in_port_t port)
 
 void inet6_address::create(const string& saddr, in_port_t port)
 {
-	zero();
+	addr_ = sockaddr_in6{};
 	addr_.sin6_family = AF_INET6;
     addr_.sin6_flowinfo = 0;
 	addr_.sin6_addr = resolve_name(saddr.c_str());

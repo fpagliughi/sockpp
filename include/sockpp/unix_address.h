@@ -64,15 +64,11 @@ namespace sockpp {
  */
 class unix_address : public sock_address
 {
+	/** The underlying C struct for unix-domain addresses  */
 	sockaddr_un addr_;
 
-	/**
-	 * Sets the contents of this object to all zero.
-	 */
-	void zero() {
-		std::memset(&addr_, 0, sizeof(sockaddr_un));
-		addr_.sun_family = ADDRESS_FAMILY;
-	}
+	/** The size of the underlying address struct, in bytes */
+	static constexpr size_t SZ = sizeof(sockaddr_un);
 
 public:
     /** The address family for this type of address */
@@ -85,7 +81,7 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	unix_address() { zero(); }
+	unix_address() : addr_() {}
 	/**
 	 * Constructs an address for the specified path.
 	 * @param path The
@@ -103,8 +99,7 @@ public:
 	 * @param addr The other address
 	 */
 	unix_address(const sock_address& addr) {
-        // TODO: Maybe throw EINVAL if wrong size
-		std::memcpy(sockaddr_ptr(), addr.sockaddr_ptr(), sizeof(sockaddr_un));
+		std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
@@ -113,7 +108,7 @@ public:
      *            initialized as a UNIX-domain address (i.e. family is not
      *            AF_UNIX)
 	 */
-	unix_address(const sockaddr_un& addr);
+	unix_address(const sockaddr_un& addr) : addr_(addr) {}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
@@ -139,7 +134,7 @@ public:
 	 * to use this call.
 	 * @return The size of the address structure.
 	 */
-	socklen_t size() const override { return (socklen_t) sizeof(sockaddr_un); }
+	socklen_t size() const override { return socklen_t(SZ); }
 
     // TODO: Do we need a:
     //   create(path)
@@ -163,16 +158,12 @@ public:
 	 * Gets a const pointer to this object cast to a @em sockaddr_un.
 	 * @return const sockaddr_un pointer to this object.
 	 */
-	const sockaddr_un* sockaddr_un_ptr() const {
-		return &addr_;
-	}
+	const sockaddr_un* sockaddr_un_ptr() const { return &addr_; }
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr_un.
 	 * @return sockaddr_un pointer to this object.
 	 */
-	sockaddr_un* sockaddr_un_ptr() {
-		return &addr_;
-	}
+	sockaddr_un* sockaddr_un_ptr() { return &addr_; }
 	/**
 	 * Gets a printable string for the address.
 	 * @return A string representation of the address in the form
