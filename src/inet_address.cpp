@@ -44,9 +44,9 @@ namespace sockpp {
 
 bool inet_address::is_set() const
 {
-	const uint8_t* b = reinterpret_cast<const uint8_t*>(this);
+	auto b = reinterpret_cast<const uint8_t*>(&addr_);
 
-	for (size_t i=0; i<sizeof(inet_address); ++i) {
+	for (size_t i=0; i<sizeof(addr_); ++i) {
 		if (b[i] != 0)
 			return true;
 	}
@@ -67,7 +67,7 @@ in_addr_t inet_address::resolve_name(const std::string& saddr)
 			return ia.s_addr;
 	#endif
 
-	// On error this sets h_error (not errno). Errors could be 
+	// On error this sets h_error (not errno). Errors could be
 	// HOST_NOT_FOUND, NO_ADDRESS, etc.
 	hostent *host = ::gethostbyname(saddr.c_str());
 	return (host) ? *((in_addr_t*) host->h_addr_list[0]) : in_addr_t(0);
@@ -78,9 +78,9 @@ in_addr_t inet_address::resolve_name(const std::string& saddr)
 void inet_address::create(uint32_t addr, in_port_t port)
 {
 	zero();
-	sin_family = AF_INET;
-	sin_addr.s_addr = htonl(addr);
-	sin_port = htons(port);
+	addr_.sin_family = AF_INET;
+	addr_.sin_addr.s_addr = htonl(addr);
+	addr_.sin_port = htons(port);
 }
 
 // --------------------------------------------------------------------------
@@ -88,9 +88,9 @@ void inet_address::create(uint32_t addr, in_port_t port)
 void inet_address::create(const std::string& saddr, in_port_t port)
 {
 	zero();
-	sin_family = AF_INET;
-	sin_addr.s_addr = resolve_name(saddr.c_str());
-	sin_port = htons(port);
+	addr_.sin_family = AF_INET;
+	addr_.sin_addr.s_addr = resolve_name(saddr.c_str());
+	addr_.sin_port = htons(port);
 }
 
 /////////////////////////////////////////////////////////////////////////////

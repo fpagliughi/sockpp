@@ -84,7 +84,7 @@ int datagram_socket::recvfrom(void* buf, size_t n, int flags, sock_address& addr
                                    reinterpret_cast<sockaddr*>(&addrStore), &len));
 
 	if (ret >= 0)
-		addr = sock_address(addrStore, len);
+		addr = sock_address_any(addrStore, len);
 
 	return ret;
 }

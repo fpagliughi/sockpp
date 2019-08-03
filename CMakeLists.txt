@@ -40,13 +40,11 @@
 cmake_minimum_required(VERSION 3.5)
 
 ## project
-project(sockpp VERSION "0.4.0")
+project(sockpp VERSION "0.5.0")
 
 ## library name
 set(SOCKPP sockpp)
 set(SOCKPP_STATIC ${SOCKPP}-static)
-
-set(CMAKE_BUILD_TYPE Release)
 
 # --- build options ---
 

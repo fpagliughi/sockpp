@@ -16,24 +16,23 @@ To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
 
-## What's New in Version v0.4
+## Unreleased Features in this Branch
 
-Version 0.4 added support for IPv6 and refactored the class hierarchies to better support the different address families without so much redundant code.
-
- - IPv6 support: `inet6_address`, `tcp6_acceptor`, `tcp_connector`, etc.
- - **(Breaking change)** The `sock_address` class is now contains storage for any type of address and follows copy semantics. Previously it was a non-owning reference class. That reference class now exists as `sock_addresss_ref`.
- - Generic base classses are being re-implemented to use _sock_address_ and _sock_address_ref_ as generic addresses.
- - **(Breaking change)** In the `socket` class(es) the `bool address(address&)` and `bool peer_address(addr&)` forms of getting the socket addresses have been removed in favor of the ones that simply return the address.
- Added `get_option()` and `set_option()` methods to the base `socket`class.
- - The GNU Make build system (Makefile) was deprecated and removed.
+- Updated the hierarchy of network address classes, now derived from a common base class.
+    - Removed `sock_address_ref` class. Now a C++ reference to `sock_address` will replace it (i.e. `sock_address&`).
+    - `sock_address` is now an abstract base class.
+    - All the network address classes now derive from `sock_address`
+    - Consolidates a number of overloaded functions that took different forms of addresses to just take a `const sock_address&`
+    - Adds a new `sock_address_any` class that can contain any address, and is used by base classes that need a generic address.
+- The `acceptor` and `connector` classes are still concrete, generic classes, but now a template derives from each of them to specialize.
+- The connector and acceptor classes for each address family (`tcp_connector`, `tcp_acceptor`, `tcp6_connector`, etc) are now typedef'ed to template specializations.
+- CMake build now honors the `CMAKE_BUILD_TYPE` flag.
  
 ## Coming Soon
  
  The following improvements are soon to follow:
  
   - **Proper UDP support.** The existing `datagram_socket` will serve as a base for UDP socket classes for all the families supported (IPv4, v6, and Unix-Domain).
-  
-  - **Better use of templates and generics.** Currently there is a lot of redundant code in the implementations for the different familiess. This can likely be replaced with some template classes, while keeping the public API compatible.
   
   - **SSL Sockets.** It might be nice to add optional support for secure sockets.
  

@@ -137,27 +137,26 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/)
 // Gets the local address to which the socket is bound.
 // Throw an exception on error.
 
-sock_address socket::address() const
+sock_address_any socket::address() const
 {
     sockaddr_storage addrStore;
 	socklen_t len = sizeof(sockaddr_storage);
 	check_ret(::getsockname(handle_,
         reinterpret_cast<sockaddr*>(&addrStore), &len));
-    return sock_address(addrStore, len);
+    return sock_address_any(addrStore, len);
 }
 
 // --------------------------------------------------------------------------
 // Gets the address of the remote peer, if this socket is bound. Throw an
 // exception on error.
 
-sock_address socket::peer_address() const
+sock_address_any socket::peer_address() const
 {
     sockaddr_storage addrStore;
 	socklen_t len = sizeof(sockaddr_storage);
 	check_ret(::getpeername(handle_,
         reinterpret_cast<sockaddr*>(&addrStore), &len));
-    return sock_address(addrStore, len);
-
+    return sock_address_any(addrStore, len);
 }
 
 // --------------------------------------------------------------------------

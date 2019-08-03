@@ -73,13 +73,13 @@ protected:
 	/**
 	 * The local address to which the acceptor is bound.
 	 */
-	sock_address addr_;
+	sock_address_any addr_;
 	/**
 	 * Binds the socket to the specified address.
 	 * @param addr The address to which we get bound.
 	 * @return @em true on success, @em false on error
 	 */
-	bool bind(const sockaddr* addr, socklen_t len);
+	bool bind(const sock_address& addr);
 	/**
 	 * Sets the socket listening on the address to which it is bound.
 	 * @param queSize The listener queue size.
@@ -100,39 +100,21 @@ public:
      * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 */
-    acceptor(sock_address_ref addr, int queSize=DFLT_QUE_SIZE) {
-        open(addr.sockaddr_ptr(), addr.size(), queSize);
+    acceptor(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
+        open(addr, queSize);
     }
 	/**
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
 	 */
-	sock_address addr() const { return addr_; }
+	sock_address_any addr() const { return addr_; }
 	/**
 	 * Opens the acceptor socket and binds it to the specified address.
 	 * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
 	 */
-	bool open(const sockaddr* addr, socklen_t len, int queSize=DFLT_QUE_SIZE);
-	/**
-	 * Opens the acceptor socket and binds it to the specified address.
-	 * @param addr The address to which this server should be bound.
-	 * @param queSize The listener queue size.
-	 * @return @em true on success, @em false on error
-	 */
-	bool open(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
-		return open(addr.sockaddr_ptr(), addr.size(), queSize);
-	}
-	/**
-	 * Opens the acceptor socket and binds it to the specified address.
-	 * @param addr The address to which this server should be bound.
-	 * @param queSize The listener queue size.
-	 * @return @em true on success, @em false on error
-	 */
-	bool open(const sock_address_ref& addr, int queSize=DFLT_QUE_SIZE) {
-		return open(addr.sockaddr_ptr(), addr.size(), queSize);
-	}
+	bool open(const sock_address& addr, int queSize=DFLT_QUE_SIZE);
 	/**
 	 * Accepts an incoming TCP connection and gets the address of the client.
 	 * @param clientAddr Pointer to the variable that will get the
@@ -140,6 +122,93 @@ public:
 	 * @return A socket to the remote client.
 	 */
 	stream_socket accept(sock_address* clientAddr=nullptr);
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+/// Class for creating a TCP server.
+/// Objects of this class bind and listen on TCP ports for incoming
+/// connections. Normally, a server thread creates one of these and blocks
+/// on the call to accept incoming connections. The call to accept creates
+/// and returns a @ref TcpSocket which can then be used for the actual
+/// communications.
+
+template <typename STREAM_SOCK, typename ADDR=typename STREAM_SOCK::addr_t>
+class acceptor_tmpl : public acceptor
+{
+    /** The base class */
+    using base = acceptor;
+
+	// Non-copyable
+	acceptor_tmpl(const acceptor_tmpl&) =delete;
+	acceptor_tmpl& operator=(const acceptor_tmpl&) =delete;
+
+public:
+	/** The type of streaming socket from the acceptor. */
+	using stream_sock_t = STREAM_SOCK;
+	/** The type of address for the acceptor and streams. */
+	using addr_t = ADDR;
+	/**
+	 * Creates an unconnected acceptor.
+	 */
+	acceptor_tmpl() {}
+	/**
+	 * Creates a acceptor and starts it listening on the specified address.
+	 * @param addr The TCP address on which to listen.
+	 * @param queSize The listener queue size.
+	 */
+	acceptor_tmpl(const addr_t& addr, int queSize=DFLT_QUE_SIZE) {
+		open(addr, queSize);
+	}
+	/**
+	 * Creates a acceptor and starts it listening on the specified port.
+	 * The acceptor binds to the specified port for any address on the local
+	 * host.
+	 * @param port The TCP port on which to listen.
+	 * @param queSize The listener queue size.
+	 */
+	acceptor_tmpl(in_port_t port, int queSize=DFLT_QUE_SIZE) {
+		open(port, queSize);
+	}
+
+	/**
+	 * Gets the local address to which we are bound.
+	 * @return The local address to which we are bound.
+	 */
+	addr_t address() const { return addr_t(base::address()); }
+	/**
+	 * Opens the acceptor socket and binds it to the specified address.
+	 * @param addr The address to which this server should be bound.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
+	 */
+	bool open(const addr_t& addr, int queSize=DFLT_QUE_SIZE) {
+		return base::open(addr, queSize);
+	}
+	/**
+	 * Opens the acceptor socket.
+	 * This binds the socket to all adapters and starts it listening.
+	 * @param port The TCP port on which to listen.
+	 * @param queSize The listener queue size.
+	 * @return @em true on success, @em false on error
+	 */
+	virtual bool open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
+		return open(addr_t(port), queSize);
+	}
+	/**
+	 * Accepts an incoming TCP connection and gets the address of the client.
+	 * @param clientAddr Pointer to the variable that will get the
+	 *  				 address of a client when it connects.
+	 * @return A tcp_socket to the remote client.
+	 */
+	stream_sock_t accept(addr_t* clientAddr=nullptr) {
+		sockaddr* cli = reinterpret_cast<sockaddr*>(clientAddr);
+		socklen_t len = cli ? sizeof(inet_address) : 0;
+		socket_t  s = check_ret(::accept(handle(), cli, &len));
+		return stream_sock_t(s);
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////

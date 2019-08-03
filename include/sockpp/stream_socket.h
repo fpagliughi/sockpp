@@ -178,79 +178,54 @@ public:
 	}
 };
 
+/////////////////////////////////////////////////////////////////////////////
+
 /**
- * Socket for IPv4 stream.
+ * Template for creating specific stream types (IPv4, IPv6, etc)
  */
-class tcp_socket : public stream_socket
+template <typename ADDR>
+class stream_socket_tmpl : public stream_socket
 {
 public:
+	/** The type of network address used with this socket. */
+	using addr_t = ADDR;
 	/**
      * Creates a streaming socket from an existing OS socket handle and
      * claims ownership of the handle.
 	 * @param sock A socket handle from the operating system.
 	 */
-	explicit tcp_socket(socket_t sock) : stream_socket(sock) {}
+	explicit stream_socket_tmpl(socket_t sock) : stream_socket(sock) {}
 	/**
 	 * Creates a stream socket by copying the socket handle from the
 	 * specified socket object and transfers ownership of the socket.
 	 */
-	tcp_socket(tcp_socket&& sock) : stream_socket(std::move(sock)) {}
+	stream_socket_tmpl(stream_socket_tmpl&& sock)
+			: stream_socket(std::move(sock)) {}
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.
 	 * @throw sys_error on error
 	 */
-	inet_address address() const {
-        return inet_address(socket::address());
-    }
+	addr_t address() const { return addr_t(socket::address()); }
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @return The address of the remote peer, if this socket is connected.
 	 * @throw sys_error on error
 	 */
-	inet_address peer_address() const {
-        return inet_address(socket::peer_address());
-    }
+	addr_t peer_address() const { return addr_t(socket::peer_address()); }
 };
 
-/**
- * Socket for IPv6 stream.
- */
-class tcp6_socket : public stream_socket
-{
-public:
-	/**
-     * Creates a streaming socket from an existing OS socket handle and
-     * claims ownership of the handle.
-	 * @param sock A socket handle from the operating system.
-	 */
-	explicit tcp6_socket(socket_t sock) : stream_socket(sock) {}
-	/**
-	 * Creates a stream socket by copying the socket handle from the
-	 * specified socket object and transfers ownership of the socket.
-	 */
-	tcp6_socket(tcp6_socket&& sock) : stream_socket(std::move(sock)) {}
-	/**
-	 * Gets the local address to which the socket is bound.
-	 * @return The local address to which the socket is bound.
-	 * @throw sys_error on error
-	 */
-	inet6_address address() const {
-        return inet6_address(socket::address());
-    }
-	/**
-	 * Gets the address of the remote peer, if this socket is connected.
-	 * @return The address of the remote peer, if this socket is connected.
-	 * @throw sys_error on error
-	 */
-	inet6_address peer_address() const {
-        return inet6_address(socket::peer_address());
-    }
-};
+/////////////////////////////////////////////////////////////////////////////
 
-/**
- * Stream for Unix Sockets
- */
+/** Socket for IPv4 stream. */
+using tcp_socket = stream_socket_tmpl<inet_address>;
+
+/** Socket for IPv6 stream. */
+using tcp6_socket = stream_socket_tmpl<inet6_address>;
+
+
+/** Socket for unix stream. */
+// TODO: Do this right
 using unix_socket = stream_socket;
 
 /////////////////////////////////////////////////////////////////////////////

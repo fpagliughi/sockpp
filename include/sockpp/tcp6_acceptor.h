@@ -60,73 +60,7 @@ namespace sockpp {
 /// and returns a @ref tcp6_socket which can then be used for the actual
 /// communications.
 
-class tcp6_acceptor : public acceptor
-{
-    /** The base class */
-    using base = acceptor;
-
-	// Non-copyable
-	tcp6_acceptor(const tcp6_acceptor&) =delete;
-	tcp6_acceptor& operator=(const tcp6_acceptor&) =delete;
-
-public:
-	/**
-	 * Creates an unconnected acceptor.
-	 */
-	tcp6_acceptor() {}
-	/**
-	 * Creates a acceptor and starts it listening on the specified address.
-	 * @param addr The TCP address on which to listen.
-	 * @param queSize The listener queue size.
-	 */
-	tcp6_acceptor(const inet6_address& addr, int queSize=DFLT_QUE_SIZE) {
-		open(addr, queSize);
-	}
-	/**
-	 * Creates a acceptor and starts it listening on the specified port.
-	 * The acceptor binds to the specified port for any address on the local
-	 * host.
-	 * @param port The TCP port on which to listen.
-	 * @param queSize The listener queue size.
-	 */
-	tcp6_acceptor(in_port_t port, int queSize=DFLT_QUE_SIZE) {
-		open(port, queSize);
-	}
-
-	/**
-	 * Gets the local address to which we are bound.
-	 * @return The local address to which we are bound.
-	 */
-	inet6_address address() const {
-        return inet6_address(base::address());
-    }
-	/**
-	 * Opens the acceptor socket and binds it to the specified address.
-	 * @param addr The address to which this server should be bound.
-	 * @param queSize The listener queue size.
-	 * @return @em true on success, @em false on error
-	 */
-	bool open(const inet6_address& addr, int queSize=DFLT_QUE_SIZE) {
-		return base::open(addr.sockaddr_ptr(), addr.size(), queSize);
-	}
-	/**
-	 * Opens the acceptor socket.
-	 * This binds the socket to all adapters and starts it listening.
-	 * @param port The TCP port on which to listen.
-	 * @param queSize The listener queue size.
-	 * @return @em true on success, @em false on error
-	 */
-	virtual bool open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
-		return open(inet6_address(port), queSize);
-	}
-	/**
-	 * Accepts an incoming TCP connection and gets the address of the client.
-	 * @param clientAddr Pointer to the variable that will get the
-	 *  				 address of a client when it connects.
-	 * @return A tcp_socket to the remote client.
-	 */
-	tcp6_socket accept(inet6_address* clientAddr=nullptr);
-};
+using tcp6_acceptor = acceptor_tmpl<tcp6_socket>;
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

@@ -45,12 +45,12 @@ namespace sockpp {
 
 // Binds the socket to the specified address.
 
-bool acceptor::bind(const sockaddr* addr, socklen_t len)
+bool acceptor::bind(const sock_address& addr)
 {
-    bool ok = check_ret_bool(::bind(handle(), addr, len));
+	bool ok = check_ret_bool(::bind(handle(), addr.sockaddr_ptr(), addr.size()));
 
     if (ok)
-        addr_ = sock_address(addr, len);
+        addr_ = addr;
 
     return ok;
 }
@@ -62,15 +62,17 @@ bool acceptor::bind(const sockaddr* addr, socklen_t len)
 // If the acceptor appears to already be opened, this will quietly succeed
 // without doing anything.
 
-bool acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE_SIZE*/)
+bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 {
 	// TODO: What to do if we are open but bound to a different address?
 	if (is_open())
 		return true;
 
-	sa_family_t domain;
-	if (!addr || len < sizeof(sa_family_t)
-			|| 	(domain = *(reinterpret_cast<const sa_family_t*>(addr))) == AF_UNSPEC) {
+	if (addr.size() < sizeof(sa_family_t))
+		return false;
+
+	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr.sockaddr_ptr()));
+	if (domain == AF_UNSPEC) {
 		// TODO: Set last error for "address unspecified"
 		return false;
 	}
@@ -92,7 +94,7 @@ bool acceptor::open(const sockaddr* addr, socklen_t len, int queSize /*=DFLT_QUE
 		}
 	#endif
 
-	if (!bind(addr, len) || !listen(queSize)) {
+	if (!bind(addr) || !listen(queSize)) {
 		close();
 		return false;
 	}
@@ -109,8 +111,8 @@ stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
 
     auto paddr = reinterpret_cast <sockaddr*>(&addr);
     socket_t s = check_ret(::accept(handle(), paddr, &len));
-    if (clientAddr)
-        *clientAddr = sock_address(paddr, len);
+    if (clientAddr) // TODO: Check size and then copy into obj?
+        *clientAddr = sock_address_any(paddr, len);
 	return stream_socket(s);
 }
 

@@ -45,8 +45,6 @@ add_library(sockpp-objs OBJECT
 	inet6_address.cpp
 	socket.cpp
 	stream_socket.cpp
-	tcp_acceptor.cpp
-	tcp6_acceptor.cpp
 )
 
 if(UNIX)

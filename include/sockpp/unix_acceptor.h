@@ -82,14 +82,11 @@ public:
 	unix_acceptor(const unix_address& addr, int queSize=DFLT_QUE_SIZE) {
 		open(addr, queSize);
 	}
-
 	/**
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
 	 */
-	unix_address address() const {
-        return unix_address(base::address());
-    }
+	unix_address address() const { return unix_address(base::address()); }
     /**
      * Base open call also work.
      */
@@ -101,7 +98,7 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool open(const unix_address& addr, int queSize=DFLT_QUE_SIZE) {
-		return open(addr.sockaddr_ptr(), addr.size(), queSize);
+		return base::open(addr, queSize);
 	}
 	/**
      * Accepts an incoming UNIX connection and gets the address of the

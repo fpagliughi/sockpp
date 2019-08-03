@@ -237,13 +237,13 @@ public:
 	 * @return The local address to which the socket is bound.
 	 * @throw sys_error on error
 	 */
-	sock_address address() const;
+	sock_address_any address() const;
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @return The address of the remote peer, if this socket is connected.
 	 * @throw sys_error on error
 	 */
-	sock_address peer_address() const;
+	sock_address_any peer_address() const;
     /**
      * Gets the value of a socket option.
      *
