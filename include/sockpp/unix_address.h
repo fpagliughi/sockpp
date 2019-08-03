@@ -69,7 +69,7 @@ class unix_address : public sock_address
 	/**
 	 * Sets the contents of this object to all zero.
 	 */
-	void zero() { 
+	void zero() {
 		std::memset(&addr_, 0, sizeof(sockaddr_un));
 		addr_.sun_family = ADDRESS_FAMILY;
 	}
@@ -88,7 +88,7 @@ public:
 	unix_address() { zero(); }
 	/**
 	 * Constructs an address for the specified path.
-	 * @param path The 
+	 * @param path The
 	 */
 	unix_address(const std::string& path);
 	/**
@@ -118,9 +118,7 @@ public:
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
 	 */
-	unix_address(const unix_address& addr) {
-		std::memcpy(&addr_, &addr.addr_, sizeof(sockaddr_un));
-	}
+	unix_address(const unix_address& addr) : addr_(addr.addr_) {}
 	/**
 	 * Checks if the address is set to some value.
 	 * This doesn't attempt to determine if the address is valid, simply
@@ -134,11 +132,11 @@ public:
 	 */
 	std::string path() const { return std::string(addr_.sun_path); }
 	/**
-	 * Gets the size of the address structure. 
-	 * Note: In this implementation, this should return sizeof(this) but 
-	 * more convenient in some places, and the implementation might change 
-	 * in the future, so it might be more compatible with future revisions 
-	 * to use this call. 
+	 * Gets the size of the address structure.
+	 * Note: In this implementation, this should return sizeof(this) but
+	 * more convenient in some places, and the implementation might change
+	 * in the future, so it might be more compatible with future revisions
+	 * to use this call.
 	 * @return The size of the address structure.
 	 */
 	socklen_t size() const override { return (socklen_t) sizeof(sockaddr_un); }
@@ -152,7 +150,7 @@ public:
 	 * @return A pointer to this object cast to a const @em sockaddr.
 	 */
 	const sockaddr* sockaddr_ptr() const override {
-		return reinterpret_cast<const sockaddr*>(this);
+		return reinterpret_cast<const sockaddr*>(&addr_);
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr.
@@ -166,18 +164,18 @@ public:
 	 * @return const sockaddr_un pointer to this object.
 	 */
 	const sockaddr_un* sockaddr_un_ptr() const {
-		return static_cast<const sockaddr_un*>(&addr_);
+		return &addr_;
 	}
 	/**
 	 * Gets a pointer to this object cast to a @em sockaddr_un.
 	 * @return sockaddr_un pointer to this object.
 	 */
 	sockaddr_un* sockaddr_un_ptr() {
-		return static_cast<sockaddr_un*>(&addr_);
+		return &addr_;
 	}
 	/**
 	 * Gets a printable string for the address.
-	 * @return A string representation of the address in the form 
+	 * @return A string representation of the address in the form
 	 *  	   'unix:<path>'
 	 */
 	std::string to_string() const {
@@ -212,7 +210,7 @@ inline bool operator!=(const unix_address& lhs, const unix_address& rhs) {
 }
 
 /**
- * Stream inserter for the address. 
+ * Stream inserter for the address.
  * @param os The output stream
  * @param addr The address
  * @return A reference to the output stream.
@@ -224,4 +222,3 @@ std::ostream& operator<<(std::ostream& os, const unix_address& addr);
 };
 
 #endif		// __sockpp_unix_addr_h
-

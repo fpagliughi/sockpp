@@ -57,7 +57,7 @@ unix_address::unix_address(const string& path)
 
 unix_address::unix_address(const sockaddr& addr)
 {
-    sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(&addr));
+    auto domain = addr.sa_family;
     if (domain != AF_UNIX)
         throw std::invalid_argument("Not a UNIX-domain address");
 

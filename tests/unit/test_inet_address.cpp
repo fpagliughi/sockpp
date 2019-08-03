@@ -70,9 +70,9 @@ TEST_CASE("inet_address default constructor", "[address]") {
         REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) &0xFF) == addr[3]);
 
         // Check the low-level struct
-        REQUIRE(AF_INET == addr.sin_family);
-        REQUIRE(LOCALHOST_ADDR == ntohl(addr.sin_addr.s_addr));
-        REQUIRE(PORT == ntohs(addr.sin_port));
+        REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
+        REQUIRE(LOCALHOST_ADDR == ntohl(addr.sockaddr_in_ptr()->sin_addr.s_addr));
+        REQUIRE(PORT == ntohs(addr.sockaddr_in_ptr()->sin_port));
     }
 
     SECTION("creating address from name") {
@@ -83,9 +83,9 @@ TEST_CASE("inet_address default constructor", "[address]") {
         REQUIRE(PORT == addr.port());
 
         // Check the low-level struct
-        REQUIRE(AF_INET == addr.sin_family);
-        REQUIRE(LOCALHOST_ADDR == ntohl(addr.sin_addr.s_addr));
-        REQUIRE(PORT == ntohs(addr.sin_port));
+        REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
+        REQUIRE(LOCALHOST_ADDR == ntohl(addr.sockaddr_in_ptr()->sin_addr.s_addr));
+        REQUIRE(PORT == ntohs(addr.sockaddr_in_ptr()->sin_port));
     }
 }
 
@@ -99,7 +99,7 @@ TEST_CASE("inet_address port-only constructor", "[address]") {
     REQUIRE(PORT == addr.port());
 
     // Check the low-level struct
-    REQUIRE(AF_INET == addr.sin_family);
+    REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
 }
 
 TEST_CASE("inet_address int32_t constructor", "[address]") {
@@ -115,9 +115,9 @@ TEST_CASE("inet_address int32_t constructor", "[address]") {
     REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) &0xFF) == addr[3]);
 
     // Check the low-level struct
-    REQUIRE(AF_INET == addr.sin_family);
-    REQUIRE(LOCALHOST_ADDR == ntohl(addr.sin_addr.s_addr));
-    REQUIRE(PORT == ntohs(addr.sin_port));
+    REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
+    REQUIRE(LOCALHOST_ADDR == ntohl(addr.sockaddr_in_ptr()->sin_addr.s_addr));
+    REQUIRE(PORT == ntohs(addr.sockaddr_in_ptr()->sin_port));
 }
 
 TEST_CASE("inet_address name constructor", "[address]") {
@@ -133,9 +133,7 @@ TEST_CASE("inet_address name constructor", "[address]") {
     REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) &0xFF) == addr[3]);
 
     // Check the low-level struct
-    REQUIRE(AF_INET == addr.sin_family);
-    REQUIRE(LOCALHOST_ADDR == ntohl(addr.sin_addr.s_addr));
-    REQUIRE(PORT == ntohs(addr.sin_port));
+    REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
+    REQUIRE(LOCALHOST_ADDR == ntohl(addr.sockaddr_in_ptr()->sin_addr.s_addr));
+    REQUIRE(PORT == ntohs(addr.sockaddr_in_ptr()->sin_port));
 }
-
-

@@ -64,8 +64,9 @@ TEST_CASE("unix_address path constructor", "[address]") {
     REQUIRE(sizeof(sockaddr_un) == addr.size());
 
     // Check the low-level struct
-    REQUIRE(AF_UNIX == addr.sun_family);
-    REQUIRE(0 == strcmp(PATH.c_str(), (const char*) &addr.sun_path));
+    REQUIRE(AF_UNIX == addr.sockaddr_un_ptr()->sun_family);
+    REQUIRE(0 == strcmp(PATH.c_str(),
+                        (const char*) &addr.sockaddr_un_ptr()->sun_path));
 
     SECTION("copy constructor") {
         unix_address addr2(addr);
@@ -75,8 +76,9 @@ TEST_CASE("unix_address path constructor", "[address]") {
         REQUIRE(sizeof(sockaddr_un) == addr2.size());
 
         // Check the low-level struct
-        REQUIRE(AF_UNIX == addr2.sun_family);
-        REQUIRE(0 == strcmp(PATH.c_str(), (const char*) &addr2.sun_path));
+        REQUIRE(AF_UNIX == addr2.sockaddr_un_ptr()->sun_family);
+        REQUIRE(0 == strcmp(PATH.c_str(),
+                            (const char*) &addr2.sockaddr_un_ptr()->sun_path));
     }
 
     SECTION("sockaddr conversions") {
@@ -88,8 +90,9 @@ TEST_CASE("unix_address path constructor", "[address]") {
         REQUIRE(sizeof(sockaddr_un) == addr2.size());
 
         // Check the low-level struct
-        REQUIRE(AF_UNIX == addr2.sun_family);
-        REQUIRE(0 == strcmp(PATH.c_str(), (const char*) &addr2.sun_path));
+        REQUIRE(AF_UNIX == addr2.sockaddr_un_ptr()->sun_family);
+        REQUIRE(0 == strcmp(PATH.c_str(),
+                            (const char*) &(addr2.sockaddr_un_ptr()->sun_path)));
     }
 }
 
@@ -105,8 +108,9 @@ TEST_CASE("unix_address sockaddr_un constructor", "[address]") {
     REQUIRE(sizeof(sockaddr_un) == addr.size());
 
     // Check the low-level struct
-    REQUIRE(AF_UNIX == addr.sun_family);
-    REQUIRE(0 == strcmp(PATH.c_str(), (const char*) &addr.sun_path));
+    REQUIRE(AF_UNIX == addr.sockaddr_un_ptr()->sun_family);
+    REQUIRE(0 == strcmp(PATH.c_str(),
+                        (const char*) &addr.sockaddr_un_ptr()->sun_path));
 
     SECTION("reject bad sockaddr_un") {
         unaddr.sun_family = AF_INET;
@@ -115,5 +119,3 @@ TEST_CASE("unix_address sockaddr_un constructor", "[address]") {
         }(), std::invalid_argument);
     }
 }
-
-
