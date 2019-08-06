@@ -210,6 +210,7 @@ std::ostream& operator<<(std::ostream& os, const unix_address& addr);
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
-};
+}
 
 #endif		// __sockpp_unix_addr_h
+

@@ -258,7 +258,7 @@ std::ostream& operator<<(std::ostream& os, const inet_address& addr);
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
-};
+}
 
 #endif		// __sockpp_inet_addr_h
 

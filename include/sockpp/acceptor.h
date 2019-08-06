@@ -183,7 +183,7 @@ public:
 	 * @param addr The address to which we get bound.
 	 * @return @em true on success, @em false on error
 	 */
-	bool bind(const addr_t& addr) { base::bind(addr); }
+	bool bind(const addr_t& addr) { return base::bind(addr); }
 	/**
 	 * Opens the acceptor socket, binds it to the specified address, and starts
 	 * listening.
@@ -217,7 +217,7 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
-};
+}
 
 #endif		// __sockpp_acceptor_h
 

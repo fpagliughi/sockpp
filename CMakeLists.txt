@@ -160,6 +160,7 @@ else()
 	set(SOCKPP_LIB ${SOCKPP_STATIC})
 endif()
 
+
 # --- Examples Applications ---
 
 if(SOCKPP_BUILD_EXAMPLES)
