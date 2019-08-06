@@ -47,12 +47,11 @@ namespace sockpp {
 
 bool acceptor::bind(const sock_address& addr)
 {
-	bool ok = check_ret_bool(::bind(handle(), addr.sockaddr_ptr(), addr.size()));
-
-    if (ok)
+	if (check_ret_bool(::bind(handle(), addr.sockaddr_ptr(), addr.size()))) {
         addr_ = addr;
-
-    return ok;
+		return true;
+	}
+    return false;
 }
 
 // --------------------------------------------------------------------------

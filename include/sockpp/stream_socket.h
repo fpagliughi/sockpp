@@ -89,13 +89,11 @@ public:
 	 * specified socket object and transfers ownership of the socket. 
 	 */
 	stream_socket(stream_socket&& sock) : socket(std::move(sock)) {}
-
 	/**
 	 * Open the socket.
 	 * @return @em true on success, @em false on failure.
 	 */
 	bool open();
-
 	/**
 	 * Reads from the port
 	 * @param buf Buffer to get the incoming data.

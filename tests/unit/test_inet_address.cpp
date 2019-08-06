@@ -137,3 +137,8 @@ TEST_CASE("inet_address name constructor", "[address]") {
     REQUIRE(LOCALHOST_ADDR == ntohl(addr.sockaddr_in_ptr()->sin_addr.s_addr));
     REQUIRE(PORT == ntohs(addr.sockaddr_in_ptr()->sin_port));
 }
+
+TEST_CASE("IPv4 resolve_address", "[address]") {
+	REQUIRE(inet_address::resolve_name("127.0.0.1") == htonl(LOCALHOST_ADDR));
+	REQUIRE(inet_address::resolve_name(LOCALHOST_STR) == htonl(LOCALHOST_ADDR));
+}

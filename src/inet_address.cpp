@@ -35,6 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/inet_address.h"
+#include "sockpp/exception.h"
 
 using namespace std;
 
@@ -44,33 +45,29 @@ namespace sockpp {
 
 bool inet_address::is_set() const
 {
-	auto b = reinterpret_cast<const uint8_t*>(&addr_);
-
-	for (size_t i=0; i<sizeof(addr_); ++i) {
-		if (b[i] != 0)
-			return true;
-	}
-	return false;
+	static const auto EMPTY_ADDR = sockaddr_in{};
+	return std::memcmp(&addr_, &EMPTY_ADDR, SZ) != 0;
 }
 
 // --------------------------------------------------------------------------
 
 in_addr_t inet_address::resolve_name(const std::string& saddr)
 {
-	#if defined(NET_LWIP)
-		return in_addr_t(0);
-	#endif
-
 	#if !defined(WIN32)
 		in_addr ia;
-		if (::inet_aton(saddr.c_str(), &ia) != 0)
+		if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
 			return ia.s_addr;
 	#endif
 
-	// On error this sets h_error (not errno). Errors could be
-	// HOST_NOT_FOUND, NO_ADDRESS, etc.
-	hostent *host = ::gethostbyname(saddr.c_str());
-	return (host) ? *((in_addr_t*) host->h_addr_list[0]) : in_addr_t(0);
+    addrinfo *res, hints = addrinfo{};
+    hints.ai_family = ADDRESS_FAMILY;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (::getaddrinfo(saddr.c_str(), NULL, &hints, &res) != 0)
+        throw sys_error();
+
+    auto ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
+    return ipv4->sin_addr.s_addr;
 }
 
 // --------------------------------------------------------------------------
@@ -108,7 +105,8 @@ string inet_address::to_string() const
 ostream& operator<<(ostream& os, const inet_address& addr)
 {
     char buf[INET_ADDRSTRLEN];
-	auto str = inet_ntop(AF_INET, &(addr.sockaddr_in_ptr()->sin_addr), buf, INET_ADDRSTRLEN);
+	auto str = inet_ntop(AF_INET, &(addr.sockaddr_in_ptr()->sin_addr),
+						 buf, INET_ADDRSTRLEN);
 	os << (str ? str : "<unknown>") << ":" << unsigned(addr.port());
 	return os;
 }

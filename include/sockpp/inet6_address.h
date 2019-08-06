@@ -175,6 +175,8 @@ public:
      * Note that the address is normally stored in network byte
      * order.
 	 * @param i The byte to read (0-7)
+{
+	return addr_ != sockaddr_in6{};
 	 * @return The specified byte in the 128-bit IPv6 Address
 	 */
 	uint8_t operator[](int i) const {

@@ -45,13 +45,8 @@ namespace sockpp {
 
 bool inet6_address::is_set() const
 {
-	const uint8_t* b = reinterpret_cast<const uint8_t*>(this);
-
-	for (size_t i=0; i<sizeof(inet6_address); ++i) {
-		if (b[i] != 0)
-			return true;
-	}
-	return false;
+	static const auto EMPTY_ADDR = sockaddr_in6{};
+	return std::memcmp(&addr_, &EMPTY_ADDR, SZ) != 0;
 }
 
 // --------------------------------------------------------------------------
@@ -60,14 +55,11 @@ in6_addr inet6_address::resolve_name(const string& saddr)
 {
 	#if !defined(WIN32)
 		in6_addr ia;
-		if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) != 0)
+		if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
 			return ia;
 	#endif
 
-    addrinfo hints, *res;
-
-    //memset(&hints, 0, sizeof(addrinfo));
-	hints = addrinfo{};
+    addrinfo *res, hints = addrinfo{};
     hints.ai_family = ADDRESS_FAMILY;
     hints.ai_socktype = SOCK_STREAM;
 

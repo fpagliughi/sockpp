@@ -16,9 +16,9 @@ To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
 
-## Unreleased Features in this Branch
+## New in v0.5
 
-- Updated the hierarchy of network address classes, now derived from a common base class.
+- (Breaking change) Updated the hierarchy of network address classes, now derived from a common base class.
     - Removed `sock_address_ref` class. Now a C++ reference to `sock_address` will replace it (i.e. `sock_address&`).
     - `sock_address` is now an abstract base class.
     - All the network address classes now derive from `sock_address`
@@ -28,18 +28,18 @@ To keep up with the latest announcements for this project, follow me at:
 - The connector and acceptor classes for each address family (`tcp_connector`, `tcp_acceptor`, `tcp6_connector`, etc) are now typedef'ed to template specializations.
 - The `acceptor::bind()` and `acceptor::listen()` methods are now public.
 - CMake build now honors the `CMAKE_BUILD_TYPE` flag.
- 
+
 ## Coming Soon
- 
+
  The following improvements are soon to follow:
- 
+
   - **Proper UDP support.** The existing `datagram_socket` will serve as a base for UDP socket classes for all the families supported (IPv4, v6, and Unix-Domain).
-  
+
   - **SSL Sockets.** It might be nice to add optional support for secure sockets.
- 
+
 ## Building the Library
 
-CMake is the supported build system. 
+CMake is the supported build system.
 
 ### Requirements:
 
@@ -69,7 +69,7 @@ SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documen
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
 
- 
+
 ## TCP Sockets
 
 TCP and other "streaming" network applications are usually set up as either servers or clients. An acceptor is used to create a TCP/streaming server. It binds an address and listens on a known port to accept incoming connections. When a connection is accepted, a new, streaming socket is created. That new socket can be handled directly or moved to a thread (or thread pool) for processing.
@@ -98,7 +98,7 @@ The acceptor normally sits in a loop accepting new connections, and passes them 
         sockpp::tcp_socket sock = acc.accept();
 
         if (!sock) {
-            cerr << "Error accepting incoming connection: " 
+            cerr << "Error accepting incoming connection: "
                 << acc.last_error_str() << endl;
         }
         else {
@@ -121,7 +121,7 @@ The TCP client is somewhat simpler in that a `tcp_connector` object is created a
         report_error(acc.last_error_str());
 
     conn.write_n("Hello", 5);
-	
+
     char buf[5];
     int n = conn.read(buf, 5);
 
@@ -132,7 +132,7 @@ The same style of  connectors and acceptors can be used for TCP connections over
     inet6_address
     tcp6_connector
     tcp6_acceptor
-    
+
 ### Unix Domain Sockets
 
 The same us true for local connection on *nix systems that implement Unix Domain Sockets. For that use the classes:
@@ -140,4 +140,4 @@ The same us true for local connection on *nix systems that implement Unix Domain
     unix_address
     unix_connector
     unix_acceptor
-    
+
