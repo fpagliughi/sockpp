@@ -82,6 +82,15 @@ public:
 	 * @return A pointer to this object cast to a @em sockaddr.
 	 */
 	virtual const sockaddr* sockaddr_ptr() const =0;
+	/**
+	 * Gets the network family of the address.
+	 * @return The network family of the address (AF_INET, etc). If the
+	 *  	   address is not know, returns AF_UNSPEC.
+	 */
+	virtual sa_family_t family() const {
+		return (size() < sizeof(sa_family_t))
+			? AF_UNSPEC : *reinterpret_cast<const sa_family_t*>(sockaddr_ptr());
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////

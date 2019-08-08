@@ -49,7 +49,7 @@
 
 #include <cstdint>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 	//#pragma warning(4 : 4996)	// Deprecated functions (CRT & all)
 	//#pragma warning(4 : 4250)	// Inheritance via dominance
 

@@ -152,7 +152,7 @@ public:
 	 *  	   the number of bytes written should always be the length of
 	 *  	   the string.
 	 */
-	virtual int write(const std::string& s) {
+	virtual ssize_t write(const std::string& s) {
 		return write_n(s.data(), s.size());
 	}
 	/**

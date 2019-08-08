@@ -67,10 +67,7 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 	if (is_open())
 		return true;
 
-	if (addr.size() < sizeof(sa_family_t))
-		return false;
-
-	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr.sockaddr_ptr()));
+	sa_family_t domain = addr.family();
 	if (domain == AF_UNSPEC) {
 		// TODO: Set last error for "address unspecified"
 		return false;
@@ -82,7 +79,7 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 
 	reset(h);
 
-	#if !defined(WIN32)
+	#if !defined(_WIN32)
         // TODO: This should be an option
 		if (domain == AF_INET || domain == AF_INET6) {
 			int reuse = 1;

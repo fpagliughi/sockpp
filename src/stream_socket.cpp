@@ -68,7 +68,11 @@ bool stream_socket::open()
 
 ssize_t stream_socket::read(void *buf, size_t n)
 {
-	return check_ret(::recv(handle(), (char*) buf, n, 0));
+    #if defined(_WIN32)
+        return check_ret(::recv(handle(), reinterpret_cast<char*>(buf), int(n), 0));
+    #else
+        return check_ret(::recv(handle(), buf, n, 0));
+    #endif
 }
 
 // --------------------------------------------------------------------------
@@ -97,7 +101,7 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 
 bool stream_socket::read_timeout(const microseconds& to)
 {
-	#if !defined(WIN32)
+	#if !defined(_WIN32)
 		timeval tv = to_timeval(to);
 		return check_ret_bool(::setsockopt(handle(), SOL_SOCKET, SO_RCVTIMEO,
                                            &tv, sizeof(timeval))) == 0;
@@ -110,7 +114,12 @@ bool stream_socket::read_timeout(const microseconds& to)
 
 ssize_t stream_socket::write(const void *buf, size_t n)
 {
-	return check_ret(::send(handle(), (const char*) buf, n , 0));
+    #if defined(_WIN32)
+        return check_ret(::send(handle(), reinterpret_cast<const char*>(buf), 
+                                int(n) , 0));
+    #else
+        return check_ret(::send(handle(), buf, n , 0));
+    #endif
 }
 
 // --------------------------------------------------------------------------
@@ -138,7 +147,7 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 
 bool stream_socket::write_timeout(const microseconds& to)
 {
-	#if !defined(WIN32)
+	#if !defined(_WIN32)
 		timeval tv = to_timeval(to);
 		return check_ret_bool(::setsockopt(handle(), SOL_SOCKET, SO_SNDTIMEO,
                                            &tv, sizeof(timeval))) == 0;

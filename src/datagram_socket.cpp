@@ -46,8 +46,6 @@ namespace sockpp {
 //								udp_socket
 /////////////////////////////////////////////////////////////////////////////
 
-#if !defined(WIN32)
-
 /*
 datagram_socket::datagram_socket(in_port_t port) : socket(create())
 {
@@ -56,18 +54,28 @@ datagram_socket::datagram_socket(in_port_t port) : socket(create())
 }
 */
 
-datagram_socket::datagram_socket(const sock_address& addr) : socket(create())
+datagram_socket::datagram_socket(const sock_address& addr)
 {
-	if (check_ret_bool(handle()))
-		bind(addr);
+	auto domain = addr.family();
+	if (domain == AF_UNSPEC) {
+		// TODO: Set last error for "address unspecified"
+		return /*false*/;
+	}
+
+	socket_t h = create(domain);
+	if (!check_ret_bool(h))
+		return /*false*/;
+
+	reset(h);
+	bind(addr);
 }
 
 // Opens a UDP socket. If it was already open, it just succeeds without
 // doing anything.
 
 #if 0
-int datagram_socket::open() 
-{ 
+int datagram_socket::open()
+{
 	if (!is_open())
 		reset(create());
 
@@ -75,21 +83,18 @@ int datagram_socket::open()
 }
 #endif
 
-int datagram_socket::recvfrom(void* buf, size_t n, int flags, sock_address& addr)
+ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags, sock_address& srcAddr)
 {
-	sockaddr_storage addrStore;
-	socklen_t len = sizeof(sockaddr_storage);
-
-	int ret = check_ret(::recvfrom(handle(), buf, n, flags,
-                                   reinterpret_cast<sockaddr*>(&addrStore), &len));
-
-	if (ret >= 0)
-		addr = sock_address_any(addrStore, len);
-
-	return ret;
+    socklen_t len = srcAddr.size();
+	// TODO: Check returned length
+    #if defined(_WIN32)
+        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
+                                    int(n), flags, srcAddr.sockaddr_ptr(), &len));
+    #else
+        return check_ret(::recvfrom(handle(), buf, n, flags,
+                                    srcAddr.sockaddr_ptr(), &len));
+    #endif
 }
-
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp

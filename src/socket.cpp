@@ -49,7 +49,7 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 // Some platform-specific functions
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 timeval to_timeval(const microseconds& dur)
 {
 	const seconds sec = duration_cast<seconds>(dur);
@@ -67,7 +67,7 @@ timeval to_timeval(const microseconds& dur)
 
 int socket::get_last_error()
 {
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		return ::WSAGetLastError();
 	#else
 		int err = errno;
@@ -79,7 +79,7 @@ int socket::get_last_error()
 
 void socket::close(socket_t h)
 {
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		::closesocket(h);
 	#else
 		::close(h);
@@ -90,7 +90,7 @@ void socket::close(socket_t h)
 
 void socket::initialize()
 {
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		WSADATA wsadata;
 		::WSAStartup(MAKEWORD(2, 0), &wsadata);
 	#else
@@ -103,7 +103,7 @@ void socket::initialize()
 
 void socket::destroy()
 {
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		::WSACleanup();
 	#endif
 }
@@ -113,7 +113,7 @@ void socket::destroy()
 socket socket::clone() 
 {
 	socket_t h = INVALID_SOCKET;
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		WSAPROTOCOL_INFO protInfo;
 		if (::WSADuplicateSocket(handle_, ::GetCurrentProcessId(), &protInfo) != 0)
 			h = ::WSASocket(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED);
@@ -163,7 +163,7 @@ sock_address_any socket::peer_address() const
 
 bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
 {
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		int len = static_cast<int>(*optlen);
 		return check_ret_bool(::getsockopt(handle_, level, optname,
 										   static_cast<char*>(optval), &len));
@@ -177,7 +177,7 @@ bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
 
 bool socket::set_option(int level, int optname, void* optval, socklen_t optlen)
 {
-	#if defined(WIN32)
+	#if defined(_WIN32)
 		return check_ret_bool(::setsockopt(handle_, level, optname, 
 										   static_cast<const char*>(optval), 
 										   static_cast<int>(optlen)));
@@ -191,7 +191,7 @@ bool socket::set_option(int level, int optname, void* optval, socklen_t optlen)
 
 std::string socket::error_str(int errNum)
 {
-	#if defined(WIN32)
+	#if defined(_WIN32)
         char buf[1024];
         strerror_s(buf, sizeof(buf), errNum);
         return std::string(buf);

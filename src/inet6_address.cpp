@@ -53,7 +53,7 @@ bool inet6_address::is_set() const
 
 in6_addr inet6_address::resolve_name(const string& saddr)
 {
-	#if !defined(WIN32)
+	#if !defined(_WIN32)
 		in6_addr ia;
 		if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
 			return ia;
@@ -97,7 +97,7 @@ void inet6_address::create(const string& saddr, in_port_t port)
 string inet6_address::to_string() const
 {
     char buf[INET6_ADDRSTRLEN];
-    auto str = inet_ntop(AF_INET6, &addr_.sin6_addr,
+    auto str = inet_ntop(AF_INET6, (void*) &(addr_.sin6_addr),
 						 buf, INET6_ADDRSTRLEN);
     return std::string("[") + std::string(str ? str : "<unknown>")
         + "]:" + std::to_string(unsigned(port()));
@@ -108,7 +108,7 @@ string inet6_address::to_string() const
 ostream& operator<<(ostream& os, const inet6_address& addr)
 {
 	char buf[INET6_ADDRSTRLEN];
-	auto str = inet_ntop(AF_INET6, &(addr.sockaddr_in6_ptr()->sin6_addr),
+	auto str = inet_ntop(AF_INET6, (void*) &(addr.sockaddr_in6_ptr()->sin6_addr),
 						 buf, INET6_ADDRSTRLEN);
 	os << "[" << (str ? str : "<unknown>") << "]:" << unsigned(addr.port());
 	return os;

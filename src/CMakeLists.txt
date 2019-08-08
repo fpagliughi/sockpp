@@ -59,10 +59,10 @@ set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
 
 # --- Warnings ---
 
-if(MSVC)
-  target_compile_options(sockpp-objs PRIVATE /W4 /WX)
-else()
-  target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)	# -Werror)
-endif()
+#if(MSVC)
+#  target_compile_options(sockpp-objs PRIVATE /W4 /WX)
+#else()
+#  target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)	# -Werror)
+#endif()
 
 

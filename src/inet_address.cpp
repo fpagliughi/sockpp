@@ -53,7 +53,7 @@ bool inet_address::is_set() const
 
 in_addr_t inet_address::resolve_name(const std::string& saddr)
 {
-	#if !defined(WIN32)
+	#if !defined(_WIN32)
 		in_addr ia;
 		if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
 			return ia.s_addr;
@@ -105,7 +105,7 @@ string inet_address::to_string() const
 ostream& operator<<(ostream& os, const inet_address& addr)
 {
     char buf[INET_ADDRSTRLEN];
-	auto str = inet_ntop(AF_INET, &(addr.sockaddr_in_ptr()->sin_addr),
+	auto str = inet_ntop(AF_INET, (void*) &(addr.sockaddr_in_ptr()->sin_addr),
 						 buf, INET_ADDRSTRLEN);
 	os << (str ? str : "<unknown>") << ":" << unsigned(addr.port());
 	return os;

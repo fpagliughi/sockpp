@@ -61,7 +61,7 @@ namespace sockpp {
 	#define SOCKPP_SOCKET_T_DEFINED
 #endif
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 	timeval to_timeval(const std::chrono::microseconds& dur);
 #endif
 
@@ -110,20 +110,24 @@ protected:
 	}
 	/**
 	 * Checks the value and if less than zero, sets last error.
+     * @param T A signed integer type of any size 
 	 * @param ret The return value from a library or system call.
 	 * @return Returns the value sent to it, `ret`.
 	 */
-	int check_ret(int ret) const{
+    template <typename T>
+	T check_ret(T ret) const{
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
 		return ret;
 	}
 	/**
-	 * Checks the value and if less than zero, sets last error.
+     * Checks the value and if less than zero, sets last error. 
+     * @param T A signed integer type of any size 
 	 * @param ret The return value from a library or system call.
 	 * @return @em true if the value is a typical system success value (>=0)
 	 *  	   or @em false is is an error (<0)
 	 */
-	bool check_ret_bool(int ret) const{
+    template <typename T>
+	bool check_ret_bool(T ret) const{
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
 		return ret >= 0;
 	}

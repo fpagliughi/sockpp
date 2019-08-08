@@ -53,7 +53,7 @@ using namespace std;
 
 void run_echo(sockpp::tcp_socket sock)
 {
-	int n;
+	ssize_t n;
 	char buf[512];
 
 	while ((n = sock.read(buf, sizeof(buf))) > 0)
