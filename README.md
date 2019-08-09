@@ -127,8 +127,24 @@ The TCP client is somewhat simpler in that a `tcp_connector` object is created a
 
     conn.write_n("Hello", 5);
 
-    char buf[5];
-    int n = conn.read(buf, 5);
+    char buf[16];
+    ssize_t n = conn.read(buf, sizeof(buf));
+
+### UDP Socket: `udp_socket`
+
+UDP sockets can be used for connectionless communications:
+
+    sockpp::udp_socket sock;
+    sockpp::inet_address addr("localhost", 12345);
+
+    std::string msg("Hello there!");
+    sock.send_to(msg, addr);
+
+    sockpp::inet_address srcAddr;
+
+    char buf[16];
+    ssize_t n = sock.recv(buf, sizeof(buf), &srcAddr);
+
 
 ### IPv6
 
@@ -137,10 +153,11 @@ The same style of  connectors and acceptors can be used for TCP connections over
     inet6_address
     tcp6_connector
     tcp6_acceptor
+    udp6_socket
 
 ### Unix Domain Sockets
 
-The same us true for local connection on *nix systems that implement Unix Domain Sockets. For that use the classes:
+The same is true for local connection on *nix systems that implement Unix Domain Sockets. For that use the classes:
 
     unix_address
     unix_connector
