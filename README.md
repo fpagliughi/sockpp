@@ -29,6 +29,8 @@ To keep up with the latest announcements for this project, follow me at:
 - Windows support
     - Windows support was broken in release v0.5. It is now fixed, and includes the UDP features.
 
+- The local CI script, `buildtst.sh` now includes clang++-7 and runs the unit tests.
+
 ## New in v0.5
 
 - (Breaking change) Updated the hierarchy of network address classes, now derived from a common base class.

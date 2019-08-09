@@ -47,6 +47,9 @@ find_package(Threads REQUIRED)
 add_executable(mtunechosvr mtunechosvr.cpp)
 add_executable(unecho unecho.cpp)
 
+add_executable(unudpechosvr unudpechosvr.cpp)
+add_executable(unudpecho unudpecho.cpp)
+
 # --- Link for executables ---
 
 message(STATUS "Using library for unix samples: ${SOCKPP_LIB}")
@@ -54,11 +57,16 @@ message(STATUS "Using library for unix samples: ${SOCKPP_LIB}")
 target_link_libraries(mtunechosvr ${SOCKPP_LIB} Threads::Threads)
 target_link_libraries(unecho ${SOCKPP_LIB})
 
+target_link_libraries(unudpechosvr ${SOCKPP_LIB} Threads::Threads)
+target_link_libraries(unudpecho ${SOCKPP_LIB})
+
 # --- Install ---
 
 set(INSTALL_TARGETS
 	mtunechosvr
 	unecho
+	unudpechosvr
+	unudpecho
 )
 
 install(TARGETS ${INSTALL_TARGETS}
