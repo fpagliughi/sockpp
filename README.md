@@ -6,15 +6,28 @@ Simple, modern, C++ socket library.
 
 This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
-The base `socket` wraps a system (integer) socket handle, and maintains its lifetime. When the object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope or thread to another using `std::move()`.
+The base `socket` wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope or thread to another using `std::move()`.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
 
+**Proper UDP support is currently under development for a v0.6 release due by August 2019.**
+
 To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
+
+## Unreleased Features in this Branch
+
+- UDP support
+    - The base `datagram_socket` added to the Windows build
+    - The `datagram_socket` cleaned up for proper parameter and return types.
+    - New `datagram_socket_tmpl` template class for defining UDP sockets for the different address families.
+    - New UDP classes for IPv4 (`udp_socket`) and IPv6 (`udp6_socket`)
+
+- Windows support
+    - Windows support was broken in release v0.5. It is now fixed, and includes the UDP features.
 
 ## New in v0.5
 
@@ -28,14 +41,6 @@ To keep up with the latest announcements for this project, follow me at:
 - The connector and acceptor classes for each address family (`tcp_connector`, `tcp_acceptor`, `tcp6_connector`, etc) are now typedef'ed to template specializations.
 - The `acceptor::bind()` and `acceptor::listen()` methods are now public.
 - CMake build now honors the `CMAKE_BUILD_TYPE` flag.
-
-## Coming Soon
-
- The following improvements are soon to follow:
-
-  - **Proper UDP support.** The existing `datagram_socket` will serve as a base for UDP socket classes for all the families supported (IPv4, v6, and Unix-Domain).
-
-  - **SSL Sockets.** It might be nice to add optional support for secure sockets.
 
 ## Building the Library
 
