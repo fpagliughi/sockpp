@@ -70,7 +70,7 @@ void run_echo(UDPSOCK sock)
 
 	// Read some data, also getting the address of the sender,
 	// then just send it back.
-	while ((n = sock.recv_from(buf, sizeof(buf), srcAddr)) > 0)
+	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
 		sock.send_to(buf, n, srcAddr);
 }
 

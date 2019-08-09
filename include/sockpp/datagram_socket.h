@@ -205,7 +205,7 @@ public:
 	 * @param addr Receives the address of the peer that sent the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	ssize_t recv_from(void* buf, size_t n, int flags, sock_address& srcAddr);
+	ssize_t recv_from(void* buf, size_t n, int flags, sock_address* srcAddr=nullptr);
 	/**
 	 * Receives a message on the socket.
 	 * @param buf Buffer to get the incoming data.
@@ -213,8 +213,8 @@ public:
 	 * @param addr Receives the address of the peer that sent the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	ssize_t recv_from(void* buf, size_t n, sock_address& addr) {
-		return recv_from(buf, n, 0, addr);
+	ssize_t recv_from(void* buf, size_t n, sock_address* srcAddr=nullptr) {
+		return recv_from(buf, n, 0, srcAddr);
 	}
 	/**
 	 * Receives a message on the socket.
@@ -342,21 +342,23 @@ public:
 	 * Receives a message on the socket.
 	 * @param buf Buffer to get the incoming data.
 	 * @param n The number of bytes to read.
-	 * @param addr Receives the address of the peer that sent the message
+	 * @param srcAddr Receives the address of the peer that sent
+	 *  			the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	ssize_t recv_from(void* buf, size_t n, int flags, ADDR& srcAddr) {
+	ssize_t recv_from(void* buf, size_t n, int flags, ADDR* srcAddr) {
 		return base::recv_from(buf, n, flags, srcAddr);
 	}
 	/**
 	 * Receives a message on the socket.
 	 * @param buf Buffer to get the incoming data.
 	 * @param n The number of bytes to read.
-	 * @param addr Receives the address of the peer that sent the message
+	 * @param srcAddr Receives the address of the peer that sent
+	 *  			the message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
-	ssize_t recv_from(void* buf, size_t n, ADDR& addr) {
-		return base::recv_from(buf, n, addr);
+	ssize_t recv_from(void* buf, size_t n, ADDR* srcAddr=nullptr) {
+		return base::recv_from(buf, n, srcAddr);
 	}
 };
 
