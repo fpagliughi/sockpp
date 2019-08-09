@@ -45,25 +45,28 @@ find_package(Threads REQUIRED)
 # --- Executables ---
 
 add_executable(udpechosvr udpechosvr.cpp)
-#add_executable(tcpecho tcpecho.cpp)
+add_executable(udpecho udpecho.cpp)
+add_executable(udp6echo udp6echo.cpp)
 
 # --- Link for executables ---
 
 message(STATUS "Using library for samples: ${SOCKPP_LIB}")
 
 target_link_libraries(udpechosvr ${SOCKPP_LIB} Threads::Threads)
-#target_link_libraries(tcpecho ${SOCKPP_LIB})
+target_link_libraries(udpecho ${SOCKPP_LIB})
+target_link_libraries(udp6echo ${SOCKPP_LIB})
 
 # --- Install ---
 
 set(INSTALL_TARGETS
-    udpechosvr
-#    tcpecho
+	udpechosvr
+	udpecho
+	udp6echo
 )
 
 install(TARGETS ${INSTALL_TARGETS}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
 )
 
 
