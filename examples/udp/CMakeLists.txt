@@ -1,6 +1,7 @@
 # CMakeLists.txt
 #
-# Source CMake build file (src/) for the 'sockpp' library.
+# CMake file for the TCP v4 socket example applications
+# in the 'sockpp' library.
 #
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
@@ -34,39 +35,35 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 
-add_library(sockpp-objs OBJECT
-  acceptor.cpp
-	connector.cpp
-	datagram_socket.cpp
-	exception.cpp
-	inet_address.cpp
-	inet6_address.cpp
-	socket.cpp
-	stream_socket.cpp
+# --- For apps that use threads ---
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+# --- Executables ---
+
+add_executable(udpechosvr udpechosvr.cpp)
+#add_executable(tcpecho tcpecho.cpp)
+
+# --- Link for executables ---
+
+message(STATUS "Using library for samples: ${SOCKPP_LIB}")
+
+target_link_libraries(udpechosvr ${SOCKPP_LIB} Threads::Threads)
+#target_link_libraries(tcpecho ${SOCKPP_LIB})
+
+# --- Install ---
+
+set(INSTALL_TARGETS
+    udpechosvr
+#    tcpecho
 )
 
-if(UNIX)
-	target_sources(sockpp-objs PUBLIC
-		unix/unix_address.cpp
-	)
-endif()
-
-# This is only necessary for older compilers, but doesn't hurt
-set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
-
-
-# --- Warnings ---
-
-if(NOT MSVC)
-  target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)	# -Werror)
-endif()
-
-#if(MSVC)
-#  target_compile_options(sockpp-objs PRIVATE /W4 /WX)
-#else()
-#  target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)	# -Werror)
-#endif()
+install(TARGETS ${INSTALL_TARGETS}
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+)
 
 

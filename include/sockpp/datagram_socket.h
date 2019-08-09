@@ -52,7 +52,6 @@
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-/// Class that wraps UDP sockets
 
 /**
  * Base class for datagram sockets.
@@ -62,6 +61,13 @@ namespace sockpp {
  */
 class datagram_socket : public socket
 {
+	/** The base class   */
+	using base = socket;
+
+	// Non-copyable
+	datagram_socket(const datagram_socket&) =delete;
+	datagram_socket& operator=(const datagram_socket&) =delete;
+
 protected:
 	static socket_t create(int domain) {
 		return socket_t(::socket(domain, SOCK_DGRAM, 0));
@@ -72,12 +78,27 @@ public:
 	 * Creates an unbound datagram socket.
 	 * This can be used as a client or later bound as a server socket.
 	 */
-	datagram_socket(int domain) : socket(create(domain)) {}
+	datagram_socket(int domain) : base(create(domain)) {}
 	/**
 	 * Creates a UDP socket and binds it to the address.
 	 * @param addr The address to bind.
 	 */
 	datagram_socket(const sock_address& addr);
+	/**
+	 * Move constructor.
+	 * @param other The other socket to move to this one
+	 */
+	datagram_socket(datagram_socket&& other)
+		: base(std::move(other)) {}
+	/**
+	 * Move assignment.
+	 * @param rhs The other socket to move into this one.
+	 * @return A reference to this object.
+	 */
+	datagram_socket& operator=(datagram_socket&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
 	/**
 	 * Binds the socket to the local address.
 	 * Datagram sockets can bind to a local address/adapter to filter which
@@ -115,7 +136,7 @@ public:
 	 */
 	ssize_t send_to(const void* buf, size_t n, int flags, const sock_address& addr) {
         #if defined(_WIN32)
-            return check_ret(::sendto(handle(), reinterpret_cast<const char*>(buf), int(n), 
+            return check_ret(::sendto(handle(), reinterpret_cast<const char*>(buf), int(n),
                                       flags, addr.sockaddr_ptr(), addr.size()));
         #else
             return check_ret(::sendto(handle(), buf, n, flags,
@@ -161,7 +182,7 @@ public:
 	 */
 	ssize_t send(const void* buf, size_t n, int flags=0) {
         #if defined(_WIN32)
-            return check_ret(::send(handle(), reinterpret_cast<const char*>(buf), 
+            return check_ret(::send(handle(), reinterpret_cast<const char*>(buf),
                                     int(n), flags));
         #else
             return check_ret(::send(handle(), buf, n, flags));
@@ -203,11 +224,139 @@ public:
 	 */
 	ssize_t recv(void* buf, size_t n, int flags=0) {
         #if defined(_WIN32)
-            return check_ret(::recv(handle(), reinterpret_cast<char*>(buf), 
+            return check_ret(::recv(handle(), reinterpret_cast<char*>(buf),
                                     int(n), flags));
         #else
             return check_ret(::recv(handle(), buf, n, flags));
         #endif
+	}
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Base class for datagram sockets.
+ *
+ * Datagram sockets are normally connectionless, where each packet is
+ * individually routed and delivered.
+ */
+template <typename ADDR>
+class datagram_socket_tmpl : public datagram_socket
+{
+    /** The base class */
+    using base = datagram_socket;
+
+public:
+    /** The address family for this type of address */
+	static constexpr sa_family_t ADDRESS_FAMILY = ADDR::ADDRESS_FAMILY;
+	/** The type of address for the socket. */
+	using addr_t = ADDR;
+
+	/**
+	 * Creates an unbound datagram socket.
+	 * This can be used as a client or later bound as a server socket.
+	 */
+	datagram_socket_tmpl() : base(ADDRESS_FAMILY) {}
+	/**
+	 * Creates a UDP socket and binds it to the address.
+	 * @param addr The address to bind.
+	 */
+	datagram_socket_tmpl(const ADDR& addr) : base(addr) {}
+	/**
+	 * Move constructor.
+	 * @param other The other socket to move to this one
+	 */
+	datagram_socket_tmpl(datagram_socket_tmpl&& other)
+		: base(std::move(other)) {}
+	/**
+	 * Move assignment.
+	 * @param rhs The other socket to move into this one.
+	 * @return A reference to this object.
+	 */
+	datagram_socket_tmpl& operator=(datagram_socket_tmpl&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
+	/**
+	 * Binds the socket to the local address.
+	 * Datagram sockets can bind to a local address/adapter to filter which
+	 * incoming packets to receive.
+	 * @param addr The address on which to bind.
+	 * @return @em true on success, @em false on failure
+	 */
+	bool bind(const ADDR& addr) { return base::bind(addr); }
+	/**
+	 * Connects the socket to the remote address.
+	 * In the case of datagram sockets, this does not create an actual
+	 * connection, but rather specifies the address to which datagrams are
+	 * sent by default and the only address from which packets are
+	 * received.
+	 * @param addr The address on which to "connect".
+	 * @return @em true on success, @em false on failure
+	 */
+	bool connect(const ADDR& addr) { return base::connect(addr); }
+
+	// ----- I/O -----
+
+	/**
+	 * Sends a message to the socket at the specified address.
+	 * @param buf The data to send.
+	 * @param n The number of bytes in the data buffer.
+	 * @param flags The flags. See send(2).
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const void* buf, size_t n, int flags, const ADDR& addr) {
+		return base::send_to(buf, n, flags, addr);
+	}
+	/**
+	 * Sends a string to the socket at the specified address.
+	 * @param s The string to send.
+	 * @param flags The flags. See send(2).
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const std::string& s, int flags, const ADDR& addr) {
+		return base::send_to(s, flags, addr);
+	}
+	/**
+	 * Sends a message to another socket.
+	 * @param buf The data to send.
+	 * @param n The number of bytes in the data buffer.
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const void* buf, size_t n, const ADDR& addr) {
+		return base::send_to(buf, n, 0, addr);
+	}
+	/**
+	 * Sends a string to another socket.
+	 * @param buf The string to send.
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const std::string& s, const ADDR& addr) {
+		return base::send_to(s, addr);
+	}
+	/**
+	 * Receives a message on the socket.
+	 * @param buf Buffer to get the incoming data.
+	 * @param n The number of bytes to read.
+	 * @param addr Receives the address of the peer that sent the message
+	 * @return The number of bytes read or @em -1 on error.
+	 */
+	ssize_t recv_from(void* buf, size_t n, int flags, ADDR& srcAddr) {
+		return base::recv_from(buf, n, flags, srcAddr);
+	}
+	/**
+	 * Receives a message on the socket.
+	 * @param buf Buffer to get the incoming data.
+	 * @param n The number of bytes to read.
+	 * @param addr Receives the address of the peer that sent the message
+	 * @return The number of bytes read or @em -1 on error.
+	 */
+	ssize_t recv_from(void* buf, size_t n, ADDR& addr) {
+		return base::recv_from(buf, n, addr);
 	}
 };
 

@@ -131,8 +131,8 @@ class connector_tmpl : public connector
 public:
 	/** The type of streaming socket from the acceptor. */
 	using stream_sock_t = STREAM_SOCK;
-	/** The type of address for the acceptor and streams. */
-	using addr_t = ADDR;	//typename stream_sock_t::addr_t;
+	/** The type of address for the connector. */
+	using addr_t = ADDR;
 
 	/**
 	 * Creates an unconnected connector.

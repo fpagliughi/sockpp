@@ -40,7 +40,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 ## project
-project(sockpp VERSION "0.5.0")
+project(sockpp VERSION "0.6.0")
 
 ## library name
 set(SOCKPP sockpp)
@@ -166,6 +166,7 @@ endif()
 if(SOCKPP_BUILD_EXAMPLES)
 	add_subdirectory(examples/tcp)
 	add_subdirectory(examples/tcp6)
+	add_subdirectory(examples/udp)
 	if(UNIX)
 		add_subdirectory(examples/unix)
 	endif()
