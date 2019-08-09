@@ -62,9 +62,19 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-7
           packages:
             - clang-7
       env: COMPILER=clang++-7
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-8
+          packages:
+            - clang-8
+      env: COMPILER=clang++-8
   exclude:
     - compiler: gcc
 
