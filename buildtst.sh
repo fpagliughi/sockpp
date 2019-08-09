@@ -11,7 +11,10 @@ BUILD_JOBS=4
 # Add or remove any compilers here. If any are not found on the local system,
 # it reports the missing compiler and continues to the next one.
 
-for COMPILER in g++-5 g++-6 g++-7 g++-8 g++-9 clang++-4.0 clang++-5.0 clang++-6.0 clang++-7
+GCC="g++-5 g++-6 g++-7 g++-8 g++-9"
+CLANG="clang++-4.0 clang++-5.0 clang++-6.0 clang++-7 clang++-8"
+
+for COMPILER in ${GCC} ${CLANG}
 do
   if [ -z "$(which ${COMPILER})" ]; then
     printf "Compiler not found: %s\n" "${COMPILER}"

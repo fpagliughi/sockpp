@@ -1,10 +1,10 @@
-// mtechosvr6.cpp
+// tcp6echosvr.cpp
 //
 // A multi-threaded TCP v6 echo server for sockpp library.
 // This is a simple thread-per-connection TCP server for IPv6.
 //
 // USAGE:
-//  	mtechosvr6 [port]
+//  	tcp6echosvr [port]
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.

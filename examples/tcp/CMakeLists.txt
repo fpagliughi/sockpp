@@ -44,21 +44,36 @@ find_package(Threads REQUIRED)
 
 # --- Executables ---
 
-add_executable(mtechosvr mtechosvr.cpp)
+# IPv4
+
+add_executable(tcpechosvr tcpechosvr.cpp)
 add_executable(tcpecho tcpecho.cpp)
+
+# IPv6
+
+add_executable(tcp6echosvr tcp6echosvr.cpp)
+add_executable(tcp6echo tcp6echo.cpp)
 
 # --- Link for executables ---
 
 message(STATUS "Using library for samples: ${SOCKPP_LIB}")
 
-target_link_libraries(mtechosvr ${SOCKPP_LIB} Threads::Threads)
+target_link_libraries(tcpechosvr ${SOCKPP_LIB} Threads::Threads)
 target_link_libraries(tcpecho ${SOCKPP_LIB})
+
+target_link_libraries(tcp6echosvr ${SOCKPP_LIB} Threads::Threads)
+target_link_libraries(tcp6echo ${SOCKPP_LIB})
+
 
 # --- Install ---
 
 set(INSTALL_TARGETS
-    mtechosvr
-    tcpecho)
+    tcpechosvr
+    tcpecho
+    tcp6echosvr
+    tcp6echo
+)
+
 
 install(TARGETS ${INSTALL_TARGETS}
     RUNTIME DESTINATION bin

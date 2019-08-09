@@ -1,10 +1,10 @@
-// mtechosvr.cpp
+// tcpechosvr.cpp
 //
 // A multi-threaded TCP echo server for sockpp library.
 // This is a simple thread-per-connection TCP server.
 //
 // USAGE:
-//  	mtechosvr [port]
+//  	tcpechosvr [port]
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.

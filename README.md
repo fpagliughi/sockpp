@@ -50,9 +50,10 @@ CMake is the supported build system.
 
 ### Requirements:
 
- - _CMake_ v3.5 or newer.
- - _Doxygen_ (optional) to generate API docs.
- - _Catch2_ to build and run unit tests.
+- _gcc_ v5.0 or later (or) _clang_ v3.8 or later
+- _CMake_ v3.5 or newer.
+- _Doxygen_ (optional) to generate API docs.
+- _Catch2_ to build and run unit tests.
 
 Build like this on Linux:
 
