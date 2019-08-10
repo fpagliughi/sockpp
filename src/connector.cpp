@@ -47,7 +47,11 @@ bool connector::connect(const sockaddr* addr, socklen_t len)
 		return false;
 	}
 
-	sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
+#ifdef __APPLE__
+    sa_family_t domain = addr->sa_family;
+#else
+    sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
+#endif
 	socket_t h = create(domain);
 
 	if (h == INVALID_SOCKET) {
