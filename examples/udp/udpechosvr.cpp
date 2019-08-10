@@ -51,6 +51,7 @@
 #include <thread>
 #include "sockpp/udp_socket.h"
 #include "sockpp/udp6_socket.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -80,6 +81,9 @@ void run_echo(UDPSOCK sock)
 
 int main(int argc, char* argv[])
 {
+	cout << "Sample UDP echo server for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
 	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
 	sockpp::socket_initializer sockInit;

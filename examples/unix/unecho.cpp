@@ -38,28 +38,32 @@
 
 #include <iostream>
 #include <string>
-#include "sockpp/unix_address.h"
 #include "sockpp/unix_connector.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
+// --------------------------------------------------------------------------
+
 int main(int argc, char* argv[])
 {
-	string path = (argc > 1) ? argv[1] : "/tmp/sock";
+	cout << "Sample Unix-domain echo client for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
+	string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
 
 	sockpp::socket_initializer sockInit;
 
 	sockpp::unix_connector conn;
 
     bool ok = conn.connect(sockpp::unix_address(path));
-
 	if (!ok) {
 		cerr << "Error connecting to UNIX socket at " << path
 			<< "\n\t" << conn.last_error_str() << endl;
 		return 1;
 	}
 
-	cout << "Created a connection to '" << /*path*/ conn.address() << "'" << endl;
+	cout << "Created a connection to '" << conn.peer_address() << "'" << endl;
 
 	string s, sret;
 	while (getline(cin, s) && !s.empty()) {

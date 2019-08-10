@@ -43,6 +43,7 @@
 #include <iostream>
 #include <thread>
 #include "sockpp/tcp6_acceptor.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -69,6 +70,9 @@ void run_echo(sockpp::tcp6_socket sock)
 
 int main(int argc, char* argv[])
 {
+	cout << "Sample IPv6 TCP echo server for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
 	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
 	sockpp::socket_initializer sockInit;
@@ -78,7 +82,7 @@ int main(int argc, char* argv[])
 		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
-	cout << "Awaiting TCP v6 connections on port " << port << "..." << endl;
+	cout << "Awaiting connections on port " << port << "..." << endl;
 
 	while (true) {
 		sockpp::inet6_address peer;

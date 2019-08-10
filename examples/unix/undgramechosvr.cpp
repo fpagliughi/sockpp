@@ -49,6 +49,7 @@
 
 #include <iostream>
 #include "sockpp/unix_dgram_socket.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -58,9 +59,12 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+	cout << "Sample Unix-domain datagram echo server for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
 	sockpp::socket_initializer sockInit;
 
-	sockpp::unix_dgram_socket	sock;
+	sockpp::unix_dgram_socket sock;
 	if (!sock) {
 		cerr << "Error creating the socket: " << sock.last_error_str() << endl;
 		return 1;

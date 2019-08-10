@@ -43,6 +43,7 @@
 #include <iostream>
 #include <thread>
 #include "sockpp/tcp_acceptor.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -69,17 +70,21 @@ void run_echo(sockpp::tcp_socket sock)
 
 int main(int argc, char* argv[])
 {
+	cout << "Sample TCP echo server for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
 	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
-	sockpp::socket_initializer	sockInit;
-	sockpp::tcp_acceptor		acc(port);
+	sockpp::socket_initializer sockInit;
+
+	sockpp::tcp_acceptor acc(port);
 
 	if (!acc) {
 		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
     //cout << "Acceptor bound to address: " << acc.address() << endl;
-	cout << "Awaiting connections on TCP port " << port << "..." << endl;
+	cout << "Awaiting connections on port " << port << "..." << endl;
 
 	while (true) {
 		sockpp::inet_address peer;

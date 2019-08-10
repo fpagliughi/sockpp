@@ -39,15 +39,21 @@
 #include <iostream>
 #include <string>
 #include "sockpp/tcp6_connector.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
+// --------------------------------------------------------------------------
+
 int main(int argc, char* argv[])
 {
+	cout << "Sample IPv6 TCP echo client for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
 	std::string host = (argc > 1) ? argv[1] : "::1";
 	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
-	sockpp::socket_initializer	sockInit;
+	sockpp::socket_initializer sockInit;
 
 	// Implicitly creates an inet6_address from {host,port}
 	// and then tries the connection.

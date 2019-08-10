@@ -42,8 +42,8 @@
 
 #include <iostream>
 #include <thread>
-#include "sockpp/unix_address.h"
 #include "sockpp/unix_acceptor.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -70,7 +70,10 @@ void run_echo(sockpp::unix_socket sock)
 
 int main(int argc, char* argv[])
 {
-	string path = "/tmp/sock";
+	cout << "Sample Unix-domain echo server for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
+	string path = "/tmp/unechosvr.sock";
 
 	if (argc > 1) {
 		path = argv[1];

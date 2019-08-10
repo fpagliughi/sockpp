@@ -39,7 +39,7 @@
 #include <iostream>
 #include <string>
 #include "sockpp/udp_socket.h"
-#include "sockpp/inet_address.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -47,6 +47,9 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+	cout << "Sample UDP echo client for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+
 	string host = (argc > 1) ? argv[1] : "localhost";
 	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 

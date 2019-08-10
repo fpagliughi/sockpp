@@ -66,6 +66,14 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# --- Generate a version header ---
+
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/version.h.in  
+	generated/${SOCKPP}/version.h
+	@ONLY
+)
+
 # --- Common Library Sources, etc ---
 
 add_subdirectory(src)
@@ -77,6 +85,7 @@ target_include_directories(sockpp-objs
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 		$<INSTALL_INTERFACE:include>
 	PRIVATE 
+		${CMAKE_CURRENT_BINARY_DIR}/generated
 		src
 )
 
@@ -101,8 +110,11 @@ if(SOCKPP_BUILD_SHARED)
     ## add dependencies to the shared library
     target_link_libraries(${SOCKPP} ${LIBS_SYSTEM})
 
-	target_include_directories(${SOCKPP} PUBLIC 
-		$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>
+	target_include_directories(${SOCKPP} 
+		PUBLIC 
+			$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>
+		PRIVATE
+			${CMAKE_CURRENT_BINARY_DIR}/generated
 	)
 
 	set_target_properties(${SOCKPP} PROPERTIES
@@ -126,8 +138,11 @@ if(SOCKPP_BUILD_STATIC)
     ## add dependencies to the static library
     target_link_libraries(${SOCKPP_STATIC} ${LIBS_SYSTEM})
 
-	target_include_directories(${SOCKPP_STATIC} PUBLIC 
-		$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>
+	target_include_directories(${SOCKPP_STATIC} 
+		PUBLIC 
+			$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>
+		PRIVATE
+			${CMAKE_CURRENT_BINARY_DIR}/generated
 	)
 
 	install(TARGETS ${SOCKPP}-static
@@ -143,6 +158,10 @@ endif()
 # --- Install the library ---
 
 install(DIRECTORY include/${SOCKPP}/
+	DESTINATION include/${SOCKPP}
+	FILES_MATCHING PATTERN "*.h*")
+
+install(DIRECTORY ${CMAKE_BINARY_DIR}/generated/${SOCKPP}/
 	DESTINATION include/${SOCKPP}
 	FILES_MATCHING PATTERN "*.h*")
 
