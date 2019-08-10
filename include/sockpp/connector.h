@@ -73,16 +73,8 @@ public:
 	 * Creates the connector and attempts to connect to the specified
 	 * address.
 	 * @param addr The remote server address. 
-	 * @param len The length of the address structure. 
 	 */
-	connector(const sockaddr* addr, socklen_t len);
-	/**
-	 * Creates the connector and attempts to connect to the specified
-	 * address.
-	 * @param addr The remote server address. 
-	 */
-	connector(const sock_address& addr)
-        : connector(addr.sockaddr_ptr(), addr.size()) {}
+	connector(const sock_address& addr);
 	/**
 	 * Determines if the socket connected to a remote host.
 	 * Note that this is not a reliable determination if the socket is
@@ -93,24 +85,13 @@ public:
 	 */
 	bool is_connected() const { return is_open(); }
 	/**
-	 * Attempts to connects to the specified server.
-	 * If the socket is currently connected, this will close the current
-	 * connection and open the new one.
-	 * @param addr The remote server address. 
-	 * @param len The length of the address structure in bytes 
-	 * @return @em true on success, @em false on error
-	 */
-	bool connect(const sockaddr* addr, socklen_t len);
-	/**
      * Attempts to connect to the specified server.
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
 	 * @param addr The remote server address.
 	 * @return @em true on success, @em false on error
 	 */
-	bool connect(const sock_address& addr) {
-		return connect(addr.sockaddr_ptr(), addr.size());
-	}
+	bool connect(const sock_address& addr);
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -155,9 +136,7 @@ public:
 	 * @return The address of the remote peer, if this socket is connected.
 	 * @throw sys_error on error
 	 */
-	addr_t peer_address() const {
-        return addr_t(/*socket::*/ base::peer_address());
-    }
+	addr_t peer_address() const { return addr_t(base::peer_address()); }
 	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current

@@ -40,18 +40,9 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::connect(const sockaddr* addr, socklen_t len)
+bool connector::connect(const sock_address& addr)
 {
-	if (len < sizeof(sa_family_t)) {
-		// TODO: Set last error
-		return false;
-	}
-
-#ifdef __APPLE__
-    sa_family_t domain = addr->sa_family;
-#else
-    sa_family_t domain = *(reinterpret_cast<const sa_family_t*>(addr));
-#endif
+    sa_family_t domain = addr.family();
 	socket_t h = create(domain);
 
 	if (h == INVALID_SOCKET) {
@@ -61,7 +52,7 @@ bool connector::connect(const sockaddr* addr, socklen_t len)
 
 	// This will close the old connection, if any.
 	reset(h);
-	if (!check_ret_bool(::connect(h, addr, len))) {
+	if (!check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size()))) {
 		close();
 		return false;
 	}

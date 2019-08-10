@@ -88,12 +88,7 @@ public:
 	 *  	   address is not know, returns AF_UNSPEC.
 	 */
 	virtual sa_family_t family() const {
-#ifdef __APPLE__
-        return sockaddr_ptr()->sa_family;
-#else
-        return (size() < sizeof(sa_family_t))
-			? AF_UNSPEC : *reinterpret_cast<const sa_family_t*>(sockaddr_ptr());
-#endif
+		return sockaddr_ptr()->sa_family;
 	}
 };
 
