@@ -135,7 +135,7 @@ public:
 	 * address.
 	 * @param addr The remote server address.
 	 */
-	connector_tmpl(const addr_t& addr) { connect(addr); }
+	connector_tmpl(const addr_t& addr) : base(addr) {}
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.

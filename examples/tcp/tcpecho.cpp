@@ -47,11 +47,15 @@ int main(int argc, char* argv[])
 	string host = (argc > 1) ? argv[1] : "localhost";
 	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
-	sockpp::socket_initializer	sockInit;
-	sockpp::tcp_connector		conn;
+	sockpp::socket_initializer sockInit;
 
-	if (!conn.connect(sockpp::inet_address(host, port))) {
-		cerr << "Error connecting to server at " << host << ":" << port 
+	// Implicitly creates an inet_address from {host,port}
+	// and then tries the connection.
+
+	sockpp::tcp_connector conn({host, port});
+	if (!conn) {
+		cerr << "Error connecting to server at "
+			<< sockpp::inet_address(host, port)
 			<< "\n\t" << conn.last_error_str() << endl;
 		return 1;
 	}

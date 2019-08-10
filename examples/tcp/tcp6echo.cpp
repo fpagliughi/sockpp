@@ -48,12 +48,14 @@ int main(int argc, char* argv[])
 	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
 	sockpp::socket_initializer	sockInit;
-	sockpp::tcp6_connector		conn;
 
-    auto addr = sockpp::inet6_address(host, port);
+	// Implicitly creates an inet6_address from {host,port}
+	// and then tries the connection.
 
-	if (!conn.connect(addr)) {
-		cerr << "Error connecting to server at " << addr
+	sockpp::tcp6_connector conn({host, port});
+	if (!conn) {
+		cerr << "Error connecting to server at "
+			<< sockpp::inet6_address(host, port)
 			<< "\n\t" << conn.last_error_str() << endl;
 		return 1;
 	}
