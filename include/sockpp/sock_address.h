@@ -56,7 +56,9 @@ namespace sockpp {
 
 /**
  * Generic socket address.
- * Abstract base class for socket addresses
+ * Abstract base class for socket addresses. The underlying C socket
+ * functions typically take or return an address as a `sockaddr` pointer and
+ * length. So derived classes that wrap the
  */
 class sock_address
 {
@@ -85,10 +87,11 @@ public:
 	/**
 	 * Gets the network family of the address.
 	 * @return The network family of the address (AF_INET, etc). If the
-	 *  	   address is not know, returns AF_UNSPEC.
+	 *  	   address is not known, returns AF_UNSPEC.
 	 */
 	virtual sa_family_t family() const {
-		return sockaddr_ptr()->sa_family;
+		auto p = sockaddr_ptr();
+		return p ? p->sa_family : AF_UNSPEC;
 	}
 };
 
@@ -98,7 +101,8 @@ public:
  * Generic socket address.
  *
  * This is a wrapper around `sockaddr_storage` which can hold any family
- * address.
+ * address. This should have enough memory to contain any address struct for
+ * the system on which it is compiled.
  */
 class sock_address_any : public sock_address
 {
@@ -107,17 +111,12 @@ class sock_address_any : public sock_address
 	/** Length of the address (in bytes) */
 	socklen_t sz_;
 
-	/**
-	 * Sets the contents of this object to all zero.
-	 */
-	void zero() { std::memset(&addr_, 0, sizeof(sockaddr_storage)); }
-
 public:
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	sock_address_any() : sz_(0) { zero(); }
+	sock_address_any() : addr_{}, sz_(0) {}
 	/**
 	 * Constructs an address.
 	 */
@@ -139,10 +138,9 @@ public:
 	sock_address_any(const sock_address& addr)
 		: sock_address_any(addr.sockaddr_ptr(), addr.size()) {}
 	/**
-	 * Gets the size of this structure.
-	 * This is equivalent to sizeof(this) but more convenient in some
-	 * places.
-	 * @return The size of this structure.
+	 * Gets the size of the address.
+	 * @return The size of the address. This is the number of bytes that are a
+	 *  	   valid part of the address.
 	 */
 	socklen_t size() const override { return sz_; }
 	/**
