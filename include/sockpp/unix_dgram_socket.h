@@ -1,11 +1,19 @@
-// unecho.cpp
-//
-// Simple Unix-domain echo client
-//
+/**
+ * @file unix_udp_socket.h
+ *
+ * Class (typedef) for Unix-domain UDP socket.
+ *
+ * @author Frank Pagliughi
+ * @author SoRo Systems, Inc.
+ * @author www.sorosys.com
+ *
+ * @date August 2019
+ */
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,48 +44,25 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <iostream>
-#include <string>
+#ifndef __sockpp_unix_dgram_socket_h
+#define __sockpp_unix_dgram_socket_h
+
+#include "sockpp/datagram_socket.h"
 #include "sockpp/unix_address.h"
-#include "sockpp/unix_connector.h"
 
-using namespace std;
+namespace sockpp {
 
-int main(int argc, char* argv[])
-{
-	string path = (argc > 1) ? argv[1] : "/tmp/sock";
+/////////////////////////////////////////////////////////////////////////////
 
-	sockpp::socket_initializer sockInit;
+/** Unix-domain datagram socket */
+using unix_datagram_socket = datagram_socket_tmpl<unix_address>;
 
-	sockpp::unix_connector conn;
+/** Unix-domain datagram socket (same as `unix_datagram_socket`) */
+using unix_dgram_socket = unix_datagram_socket;
 
-    bool ok = conn.connect(sockpp::unix_address(path));
-
-	if (!ok) {
-		cerr << "Error connecting to UNIX socket at " << path
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
-
-	cout << "Created a connection to '" << /*path*/ conn.address() << "'" << endl;
-
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != (int) s.length()) {
-			cerr << "Error writing to the UNIX stream" << endl;
-			break;
-		}
-
-		sret.resize(s.length());
-		int n = conn.read_n(&sret[0], s.length());
-
-		if (n != (int) s.length()) {
-			cerr << "Error reading from UNIX stream" << endl;
-			break;
-		}
-
-		cout << sret << endl;
-	}
-
-	return (!conn) ? 1 : 0;
+/////////////////////////////////////////////////////////////////////////////
+// end namespace sockpp
 }
+
+#endif		// __sockpp_unix_dgram_socket_h
+

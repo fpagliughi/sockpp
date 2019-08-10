@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,10 +56,15 @@ namespace sockpp {
 
 /**
  * Class to create a client stream connection.
- * This is a streaming socket, like a TCP socket.
+ * This is a base class for creating active, streaming sockets that initiate
+ * connections to a server. It can be used to derive classes that implement
+ * TCP on IPv4 or IPv6.
  */
 class connector : public stream_socket
 {
+    /** The base class */
+	using base = stream_socket;
+
 	// Non-copyable
 	connector(const connector&) =delete;
 	connector& operator=(const connector&) =delete;
@@ -74,7 +79,13 @@ public:
 	 * address.
 	 * @param addr The remote server address. 
 	 */
-	connector(const sock_address& addr);
+	connector(const sock_address& addr) { connect(addr); }
+	/**
+	 * Move constructor.
+	 * Creates a connector by moving the other connector to this one.
+	 * @param conn Another connector.
+	 */
+	connector(connector&& conn) : base(std::move(conn)) {}
 	/**
 	 * Determines if the socket connected to a remote host.
 	 * Note that this is not a reliable determination if the socket is

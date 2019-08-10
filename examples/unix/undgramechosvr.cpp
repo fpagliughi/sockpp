@@ -1,6 +1,17 @@
-// udpecho.cpp
+// undgramechosvr.cpp
 //
-// Simple Unix-domain UDP echo client
+// A simple multi-threaded TCP/IP UDP echo server for sockpp library.
+//
+// This runs a UDP echo server for both IPv4 and IPv6, each in a separate
+// thread. They both use the same port number, either as provided by the user
+// on the command line, or defaulting to 12345.
+//
+// USAGE:
+//  	undgramechosvr [port]
+//
+// You can test with a netcat client, like:
+// 		$ nc -u localhost 12345		# IPv4
+// 		$ nc -6u localhost 12345	# IPv6
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -37,61 +48,42 @@
 // --------------------------------------------------------------------------
 
 #include <iostream>
-#include <string>
-#include "sockpp/unix_udp_socket.h"
+#include "sockpp/unix_dgram_socket.h"
 
 using namespace std;
 
 // --------------------------------------------------------------------------
+// The main thread creates the UDP socket, and then starts them running the
+// echo service in a loop.
 
 int main(int argc, char* argv[])
 {
 	sockpp::socket_initializer sockInit;
 
-	string	cliAddr { "/tmp/unudpecho" },
-			svrAddr { "/tmp/unudpechosvr" };
-
-	sockpp::unix_udp_socket sock;
-
-	// A Unix-domain UDP client needs to bind to its own address
-	// before it can send or receive packets
-
-	if (!sock.bind(sockpp::unix_address(cliAddr))) {
-		cerr << "Error connecting to client address at '" << cliAddr << "'"
-			<< "\n\t" << sock.last_error_str() << endl;
+	sockpp::unix_dgram_socket	sock;
+	if (!sock) {
+		cerr << "Error creating the socket: " << sock.last_error_str() << endl;
 		return 1;
 	}
 
-	// "Connect" to the server address. This is a convenience to set the
-	// default 'send_to' address, as there is no real connection.
-
-	if (!sock.connect(sockpp::unix_address(svrAddr))) {
-		cerr << "Error connecting to server at '" << svrAddr << "'"
-			<< "\n\t" << sock.last_error_str() << endl;
+	if (!sock.bind(sockpp::unix_address("/tmp/undgramechosvr.sock"))) {
+		cerr << "Error binding the socket: " << sock.last_error_str() << endl;
 		return 1;
 	}
 
-	cout << "Created UDP socket at: " << sock.address() << endl;
+	// Run the socket in this thread.
+	ssize_t n;
+	char buf[512];
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (sock.send(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+	sockpp::unix_address srcAddr;
 
-		sret.resize(s.length());
-		ssize_t n = sock.recv(&sret[0], s.length());
+	cout << "Awaiting packets on: '" << sock.address() << "'" << endl;
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+	// Read some data, also getting the address of the sender,
+	// then just send it back.
+	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
+		sock.send_to(buf, n, srcAddr);
 
-		cout << sret << endl;
-	}
-
-	return (!sock) ? 1 : 0;
+	return 0;
 }
+

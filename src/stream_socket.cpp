@@ -48,7 +48,7 @@ namespace sockpp {
 
 // Opens a TCP socket. If it was already open, it just succeeds without
 // doing anything.
-
+#if 0
 bool stream_socket::open()
 {
 	if (!is_open()) {
@@ -61,6 +61,7 @@ bool stream_socket::open()
 
 	return is_open();
 }
+#endif
 
 // --------------------------------------------------------------------------
 // Reads from the socket. Note that we use ::recv() rather then ::read()

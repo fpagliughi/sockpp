@@ -1,7 +1,7 @@
 /**
- * @file unix_udp_socket.h
+ * @file tcp6_socket.h
  *
- * Class (typedef) for Unix-domain UDP socket.
+ * Class (typedef) for IPv6 TCP socket.
  *
  * @author Frank Pagliughi
  * @author SoRo Systems, Inc.
@@ -44,21 +44,22 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_unix_udp_socket_h
-#define __sockpp_unix_udp_socket_h
+#ifndef __sockpp_tcp6_socket_h
+#define __sockpp_tcp6_socket_h
 
-#include "sockpp/datagram_socket.h"
-#include "sockpp/unix_address.h"
+#include "sockpp/stream_socket.h"
+#include "sockpp/inet6_address.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-using unix_udp_socket = datagram_socket_tmpl<unix_address>;
+/** IPv6 streaming TCP socket */
+using tcp6_socket = stream_socket_tmpl<inet6_address>;
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 }
 
-#endif		// __sockpp_unix_udp_socket_h
+#endif		// __sockpp_tcp6_socket_h
 

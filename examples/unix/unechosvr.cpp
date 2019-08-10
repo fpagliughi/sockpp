@@ -1,10 +1,10 @@
-// mtunechosvr.cpp
+// unechosvr.cpp
 //
 // A multi-threaded UNIX-domain echo server for sockpp library.
 // This is a simple thread-per-connection UNIX server.
 //
 // USAGE:
-//  	mtunechosvr [path]
+//  	unechosvr [path]
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 
 	while (true) {
 		// Accept a new client connection
-		sockpp::unix_socket sock = acc.accept();
+		auto sock = acc.accept();
 		cout << "Received a connection" << endl;
 
 		if (!sock) {

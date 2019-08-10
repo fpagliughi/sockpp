@@ -45,9 +45,8 @@
 #ifndef __sockpp_tcp6_acceptor_h
 #define __sockpp_tcp6_acceptor_h
 
-#include "sockpp/inet6_address.h"
-#include "sockpp/stream_socket.h"
 #include "sockpp/acceptor.h"
+#include "sockpp/tcp6_socket.h"
 
 namespace sockpp {
 

@@ -1,18 +1,15 @@
-// udpechosvr.cpp
-//
-// A simple multi-threaded TCP/IP UDP echo server for sockpp library.
-//
-// This runs a UDP echo server for both IPv4 and IPv6, each in a separate
-// thread. They both use the same port number, either as provided by the user
-// on the command line, or defaulting to 12345.
-//
-// USAGE:
-//  	uspechosvr [port]
-//
-// You can test with a netcat client, like:
-// 		$ nc -u localhost 12345		# IPv4
-// 		$ nc -6u localhost 12345	# IPv6
-//
+/**
+ * @file tcp_socket.h
+ *
+ * Class (typedef) for IPv4 TCP socket.
+ *
+ * @author Frank Pagliughi
+ * @author SoRo Systems, Inc.
+ * @author www.sorosys.com
+ *
+ * @date August 2019
+ */
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
@@ -47,41 +44,22 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <iostream>
-#include "sockpp/unix_udp_socket.h"
+#ifndef __sockpp_tcp_socket_h
+#define __sockpp_tcp_socket_h
 
-using namespace std;
+#include "sockpp/stream_socket.h"
+#include "sockpp/inet_address.h"
 
-// --------------------------------------------------------------------------
-// The main thread creates the UDP socket, and then starts them running the
-// echo service in a loop.
+namespace sockpp {
 
-int main(int argc, char* argv[])
-{
-	sockpp::socket_initializer sockInit;
+/////////////////////////////////////////////////////////////////////////////
 
-	sockpp::unix_udp_socket	sock;
-	if (!sock) {
-		cerr << "Error creating the socket: " << sock.last_error_str() << endl;
-		return 1;
-	}
+/** IPv4 streaming TCP socket */
+using tcp_socket = stream_socket_tmpl<inet_address>;
 
-	if (!sock.bind(sockpp::unix_address("/tmp/unudpechosvr"))) {
-		cerr << "Error binding the socket: " << sock.last_error_str() << endl;
-		return 1;
-	}
-
-	// Run the socket in this thread.
-	ssize_t n;
-	char buf[512];
-
-	sockpp::unix_address srcAddr;
-
-	// Read some data, also getting the address of the sender,
-	// then just send it back.
-	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
-		sock.send_to(buf, n, srcAddr);
-
-	return 0;
+/////////////////////////////////////////////////////////////////////////////
+// end namespace sockpp
 }
+
+#endif		// __sockpp_tcp_socket_h
 

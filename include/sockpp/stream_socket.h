@@ -62,14 +62,18 @@ namespace sockpp {
  */
 class stream_socket : public socket
 {
+	/** The base class   */
+	using base = socket;
+
 protected:
+	/** Acceptor can create stream sockets. */
 	friend class acceptor;
 
 	/**
 	 * Creates a streaming socket.
 	 * @return An OS handle to a TCP socket.
 	 */
-	static socket_t create(int domain=AF_INET) {
+	static socket_t create(int domain) {
 		return (socket_t) ::socket(domain, SOCK_STREAM, 0);
 	}
 
@@ -83,17 +87,26 @@ public:
      * claims ownership of the handle.
 	 * @param sock A socket handle from the operating system.
 	 */
-	explicit stream_socket(socket_t sock) : socket(sock) {}
+	explicit stream_socket(socket_t sock) : base(sock) {}
 	/**
 	 * Creates a stream socket by copying the socket handle from the 
 	 * specified socket object and transfers ownership of the socket. 
 	 */
-	stream_socket(stream_socket&& sock) : socket(std::move(sock)) {}
+	stream_socket(stream_socket&& sock) : base(std::move(sock)) {}
+	/**
+	 * Move assignment.
+	 * @param rhs The other socket to move into this one.
+	 * @return A reference to this object.
+	 */
+	stream_socket& operator=(stream_socket&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
 	/**
 	 * Open the socket.
 	 * @return @em true on success, @em false on failure.
 	 */
-	bool open();
+	//bool open();
 	/**
 	 * Reads from the port
 	 * @param buf Buffer to get the incoming data.
@@ -179,11 +192,18 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Template for creating specific stream types (IPv4, IPv6, etc)
+ * Template for creating specific stream types (IPv4, IPv6, etc).
+ * This just overrides methods that take a generic address and replace them
+ * with the address type for a specific family. This doesn't add any
+ * runtime functionality, but has compile-time checks that address types
+ * aren't accidentally being mixed for an object.
  */
 template <typename ADDR>
 class stream_socket_tmpl : public stream_socket
 {
+	/** The base class */
+	using base = stream_socket;
+
 public:
 	/** The type of network address used with this socket. */
 	using addr_t = ADDR;
@@ -192,19 +212,29 @@ public:
      * claims ownership of the handle.
 	 * @param sock A socket handle from the operating system.
 	 */
-	explicit stream_socket_tmpl(socket_t sock) : stream_socket(sock) {}
+	explicit stream_socket_tmpl(socket_t sock) : base(sock) {}
 	/**
+	 * Move constructor.
 	 * Creates a stream socket by moving the other socket to this one.
 	 * @param sock Another stream socket.
 	 */
 	stream_socket_tmpl(stream_socket&& sock)
-			: stream_socket(std::move(sock)) {}
+			: base(std::move(sock)) {}
 	/**
 	 * Creates a stream socket by copying the socket handle from the
 	 * specified socket object and transfers ownership of the socket.
 	 */
 	stream_socket_tmpl(stream_socket_tmpl&& sock)
-			: stream_socket(std::move(sock)) {}
+			: base(std::move(sock)) {}
+	/**
+	 * Move assignment.
+	 * @param rhs The other socket to move into this one.
+	 * @return A reference to this object.
+	 */
+	stream_socket_tmpl& operator=(stream_socket_tmpl&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.
@@ -218,19 +248,6 @@ public:
 	 */
 	addr_t peer_address() const { return addr_t(socket::peer_address()); }
 };
-
-/////////////////////////////////////////////////////////////////////////////
-
-/** Socket for IPv4 stream. */
-using tcp_socket = stream_socket_tmpl<inet_address>;
-
-/** Socket for IPv6 stream. */
-using tcp6_socket = stream_socket_tmpl<inet6_address>;
-
-
-/** Socket for unix stream. */
-// TODO: Do this right
-using unix_socket = stream_socket;
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

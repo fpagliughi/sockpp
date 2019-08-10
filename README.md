@@ -24,11 +24,12 @@ To keep up with the latest announcements for this project, follow me at:
     - The base `datagram_socket` added to the Windows build
     - The `datagram_socket` cleaned up for proper parameter and return types.
     - New `datagram_socket_tmpl` template class for defining UDP sockets for the different address families.
-    - New UDP classes for IPv4 (`udp_socket`) and IPv6 (`udp6_socket`)
+    - New datagram classes for IPv4 (`udp_socket`), IPv6 (`udp6_socket`), and Unix-domain (`unix_dgram_socket`)
 
 - Windows support
     - Windows support was broken in release v0.5. It is now fixed, and includes the UDP features.
 
+- Proper move semantics for stream sockets and connectors.
 - The local CI script, `buildtst.sh` now includes clang++-7 and runs the unit tests.
 
 ## New in v0.5

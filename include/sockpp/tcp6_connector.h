@@ -49,15 +49,13 @@
 #define __sockpp_tcp6_connector_h
 
 #include "sockpp/connector.h"
-#include "sockpp/inet6_address.h"
+#include "sockpp/tcp6_socket.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Class to create a client TCP v6 connection.
- */
+/** IPv6 active, connector (client) socket. */
 using tcp6_connector = connector_tmpl<tcp6_socket>;
 
 /////////////////////////////////////////////////////////////////////////////

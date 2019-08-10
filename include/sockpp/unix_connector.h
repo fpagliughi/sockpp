@@ -48,12 +48,13 @@
 #define __sockpp_unix_connector_h
 
 #include "sockpp/connector.h"
-#include "sockpp/unix_address.h"
+#include "sockpp/unix_stream_socket.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+/** Unix-domain active connector socket. */
 using unix_connector = connector_tmpl<unix_socket, unix_address>;
 
 /////////////////////////////////////////////////////////////////////////////

@@ -49,15 +49,13 @@
 #define __sockpp_tcp_connector_h
 
 #include "sockpp/connector.h"
-#include "sockpp/inet_address.h"
+#include "sockpp/tcp_socket.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/**
- * Class to create a client TCP connection.
- */
+/** IPv4 active, connector (client) socket. */
 using tcp_connector = connector_tmpl<tcp_socket>;
 
 /////////////////////////////////////////////////////////////////////////////
