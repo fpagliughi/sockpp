@@ -6,44 +6,39 @@ Simple, modern, C++ socket library.
 
 This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
-The base `socket` wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope or thread to another using `std::move()`.
+The base `socket` wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope (or thread) to another using `std::move()`.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
 
-**Proper UDP support is currently under development for a v0.6 release due by August 2019.**
+The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
 
 To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
 
-## Unreleased Features in this Branch
+## New in v0.6
 
 - UDP support
     - The base `datagram_socket` added to the Windows build
     - The `datagram_socket` cleaned up for proper parameter and return types.
     - New `datagram_socket_tmpl` template class for defining UDP sockets for the different address families.
     - New datagram classes for IPv4 (`udp_socket`), IPv6 (`udp6_socket`), and Unix-domain (`unix_dgram_socket`)
-
 - Windows support
     - Windows support was broken in release v0.5. It is now fixed, and includes the UDP features.
-
 - Proper move semantics for stream sockets and connectors.
-- The local CI script, `buildtst.sh` now includes clang++-7 and runs the unit tests.
+- Separate tcp socket header files for each address family (`tcp_socket.h`, `tcp6_socket.h`, etc).
+- Proper implementation of Unix-domain streaming socket.
+- CMake auto-generates a version header file, _version.h_
+- CI dropped tests for gcc-4.9, and added support for clang-7 and 8.
 
-## New in v0.5
+## TODO
 
-- (Breaking change) Updated the hierarchy of network address classes, now derived from a common base class.
-    - Removed `sock_address_ref` class. Now a C++ reference to `sock_address` will replace it (i.e. `sock_address&`).
-    - `sock_address` is now an abstract base class.
-    - All the network address classes now derive from `sock_address`
-    - Consolidates a number of overloaded functions that took different forms of addresses to just take a `const sock_address&`
-    - Adds a new `sock_address_any` class that can contain any address, and is used by base classes that need a generic address.
-- The `acceptor` and `connector` classes are still concrete, generic classes, but now a template derives from each of them to specialize.
-- The connector and acceptor classes for each address family (`tcp_connector`, `tcp_acceptor`, `tcp6_connector`, etc) are now typedef'ed to template specializations.
-- The `acceptor::bind()` and `acceptor::listen()` methods are now public.
-- CMake build now honors the `CMAKE_BUILD_TYPE` flag.
+- **Unit Tests** - The framework for unit and regression tests is in place (using _Catch2_), along with the GitHub Travis CI integration. But the library could use a lot more tests.
+- **Consolidate Header Files** - The last round of refactoring left a large number of header files with a single line of code in each. This may be OK, in that it separates all the protocols and families, but seems a waste of space.
+- **Secure Sockets** - It would be extremely handy to have support for SSL/TLS built right into the library as an optional feature.
+- **SCTP** - The _SCTP_ protocol never caught on, but it seems intriguing, and might be nice to have in the library for experimentation, if not for some internal applications.
 
 ## Building the Library
 
@@ -51,10 +46,12 @@ CMake is the supported build system.
 
 ### Requirements:
 
-- _gcc_ v5.0 or later (or) _clang_ v3.8 or later
+- A conforming C++-14 compiler.
+    - _gcc_ v5.0 or later (or) _clang_ v3.8 or later.
+    - _Visual Studio 2015_, or later on WIndows.
 - _CMake_ v3.5 or newer.
 - _Doxygen_ (optional) to generate API docs.
-- _Catch2_ to build and run unit tests.
+- _Catch2_ (optional) to build and run unit tests.
 
 Build like this on Linux:
 
@@ -157,6 +154,7 @@ The same style of  connectors and acceptors can be used for TCP connections over
     inet6_address
     tcp6_connector
     tcp6_acceptor
+    tcp6_socket
     udp6_socket
 
 ### Unix Domain Sockets
@@ -166,4 +164,5 @@ The same is true for local connection on *nix systems that implement Unix Domain
     unix_address
     unix_connector
     unix_acceptor
-
+    unix_socket  (unix_stream_socket)
+    unix_dgram_socket
