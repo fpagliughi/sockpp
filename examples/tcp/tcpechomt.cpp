@@ -61,9 +61,6 @@ void read_thr(sockpp::tcp_socket rdSock)
 
 	if (n < 0)
 		cout << "Read error: " << rdSock.last_error_str() << endl;
-
-	// Reset to prevent double close
-	rdSock.reset();
 }
 
 // --------------------------------------------------------------------------
@@ -91,13 +88,10 @@ int main(int argc, char* argv[])
 
 	cout << "Created a connection from " << conn.address() << endl;
 
-	// We create a read socket that uses the same handle as the connector,
-	// which we will move into the read thread. We need to be careful to
-	// reset this socket before it goes out of scope so that it doesn't
-	// close the underlying handle.
+	// We create a read thread and send it a clone (dup) of the
+	// connector socket.
 
-	sockpp::tcp_socket rdSock(conn.handle());
-	std::thread rdThr(read_thr, std::move(rdSock));
+	std::thread rdThr(read_thr, std::move(conn.clone()));
 
 	// The write loop get user input and writes it to the socket.
 
@@ -112,12 +106,10 @@ int main(int argc, char* argv[])
 	int ret = !conn ? 1 : 0;
 
 	// Shutting down the  socket will cause the read thread to exit.
+	// We wait for it to exit before we leave the app.
 
 	conn.shutdown(SHUT_WR);
-
-	// Now, we make sure the thread is done and the
-	// read socket is out of scope.
-
 	rdThr.join();
+
 	return ret;
 }

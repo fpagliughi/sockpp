@@ -110,7 +110,7 @@ void socket::destroy()
 
 // --------------------------------------------------------------------------
 
-socket socket::clone() 
+socket socket::clone() const
 {
 	socket_t h = INVALID_SOCKET;
 	#if defined(_WIN32)

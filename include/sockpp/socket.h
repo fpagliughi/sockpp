@@ -205,7 +205,7 @@ public:
 	 * @return A new socket object that refers to the same socket as this
 	 *  	   one.
 	 */
-	socket clone();
+	socket clone() const;
 	/**
 	 * Clears the error flag for the object.
 	 * @param val The value to set the flag, normally zero.
