@@ -48,6 +48,7 @@ find_package(Threads REQUIRED)
 
 add_executable(tcpechosvr tcpechosvr.cpp)
 add_executable(tcpecho tcpecho.cpp)
+add_executable(tcpechomt tcpechomt.cpp)
 
 # IPv6
 
@@ -60,6 +61,7 @@ message(STATUS "Using library for samples: ${SOCKPP_LIB}")
 
 target_link_libraries(tcpechosvr ${SOCKPP_LIB} Threads::Threads)
 target_link_libraries(tcpecho ${SOCKPP_LIB})
+target_link_libraries(tcpechomt ${SOCKPP_LIB} Threads::Threads)
 
 target_link_libraries(tcp6echosvr ${SOCKPP_LIB} Threads::Threads)
 target_link_libraries(tcp6echo ${SOCKPP_LIB})
@@ -70,6 +72,7 @@ target_link_libraries(tcp6echo ${SOCKPP_LIB})
 set(INSTALL_TARGETS
     tcpechosvr
     tcpecho
+    tcpechomt
     tcp6echosvr
     tcp6echo
 )

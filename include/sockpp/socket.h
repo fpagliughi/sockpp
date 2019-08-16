@@ -301,6 +301,14 @@ public:
         return error_str(lastErr_);
     }
 	/**
+	 * Shuts down all or part of the full-duplex connection.
+	 * @param how Which part of the connection should be shut:
+	 *  	@li SHUT_RD   (0) Further reads disallowed.
+	 *  	@li SHUT_WR   (1) Further writes disallowed
+	 *  	@li SHUT_RDWR (2) Further reads and writes disallowed.
+	 */
+	void shutdown(int how=SHUT_RDWR);
+	/**
 	 * Closes the socket.
 	 * After closing the socket, the handle is @em invalid, and can not be
 	 * used again until reassigned.

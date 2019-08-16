@@ -209,6 +209,14 @@ std::string socket::error_str(int errNum)
 }
 
 // --------------------------------------------------------------------------
+// Shuts down all or part of the connection.
+
+void socket::shutdown(int how /*=SHUT_RDWR*/)
+{
+	::shutdown(handle_, how);
+}
+
+// --------------------------------------------------------------------------
 // Closes the socket
 
 void socket::close()
