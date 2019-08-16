@@ -40,13 +40,15 @@ find_package(Catch2 REQUIRED)
 
 # --- For apps that use threads ---
 
-#set(THREADS_PREFER_PTHREAD_FLAG ON)
-#find_package(Threads REQUIRED)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 # --- Executables ---
 
-add_executable(unit_tests unit_tests.cpp
+add_executable(unit_tests 
+	unit_tests.cpp
 	test_inet_address.cpp
+	test_socket.cpp
 )
 
 if(UNIX)
@@ -60,7 +62,10 @@ endif()
 message(STATUS "Using library for unit tests: ${SOCKPP_LIB}")
 
 # .. Threads::Threads)
-target_link_libraries(unit_tests ${SOCKPP_LIB} Catch2::Catch2)
+target_link_libraries(unit_tests ${SOCKPP_LIB} 
+	Catch2::Catch2
+	Threads::Threads
+)
 
 include(CTest)
 include(Catch)

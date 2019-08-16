@@ -81,7 +81,7 @@ class socket
 	/** The OS integer socket handle */
 	socket_t handle_;
 	/** Cache of the last error (errno) */
-	mutable int lastErr_;
+	mutable /*thread_local*/ int lastErr_;
 	/**
 	 * The OS-specific socket close function
 	 * @param h The integer socket handle.
