@@ -49,6 +49,107 @@
 
 using namespace sockpp;
 
+TEST_CASE("socket constructors", "[socket]") {
+	SECTION("default constructor") {
+		sockpp::socket sock;
+
+		REQUIRE(!sock);
+		REQUIRE(!sock.is_open());
+		REQUIRE(sock.handle() == INVALID_SOCKET);
+		REQUIRE(sock.last_error() == 0);
+	}
+
+	SECTION("handle constructor") {
+		constexpr auto HANDLE = socket_t(3);
+		sockpp::socket sock(HANDLE);
+
+		REQUIRE(sock);
+		REQUIRE(sock.is_open());
+		REQUIRE(sock.handle() == HANDLE);
+		REQUIRE(sock.last_error() == 0);
+	}
+
+
+	SECTION("move constructor") {
+		constexpr auto HANDLE = socket_t(3);
+		sockpp::socket org_sock(HANDLE);
+
+		sockpp::socket sock(std::move(org_sock));
+
+		// Make sure the new socket got the handle
+		REQUIRE(sock);
+		REQUIRE(sock.handle() == HANDLE);
+		REQUIRE(sock.last_error() == 0);
+
+		// Make sure the handle was moved out of the org_sock
+		REQUIRE(!org_sock);
+		REQUIRE(org_sock.handle() == INVALID_SOCKET);
+	}
+}
+
+// Test the socket error behavior
+TEST_CASE("socket errors", "[socket]") {
+	sockpp::socket sock;
+
+	// Operations on an unopened socket should give an error
+	int reuse = 1;
+	socklen_t len = sizeof(int);
+	bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
+
+	// Socket should be in error state
+	REQUIRE(!ok);
+	REQUIRE(!sock);
+
+	int err = sock.last_error();
+	REQUIRE(err != 0);
+
+	// last_error() is sticky, unlike `errno`
+	REQUIRE(sock.last_error() == err);
+
+	// We can clear the error
+	sock.clear();
+	REQUIRE(sock.last_error() == 0);
+
+	// Test arbitrary clear value
+	sock.clear(42);
+	REQUIRE(sock.last_error() == 42);
+}
+
+TEST_CASE("socket handles", "[socket]") {
+
+	constexpr auto HANDLE = socket_t(3);
+
+	SECTION("test release") {
+		sockpp::socket sock(HANDLE);
+
+		REQUIRE(sock.handle() == HANDLE);
+		REQUIRE(sock.release() == HANDLE);
+
+		// Make sure the handle was moved out of the sock
+		REQUIRE(!sock);
+		REQUIRE(sock.handle() == INVALID_SOCKET);
+	}
+
+	SECTION("test reset") {
+		sockpp::socket sock(HANDLE);
+
+		REQUIRE(sock.handle() == HANDLE);
+
+		sock.reset();	// Default reset acts like release w/o return
+
+		// Make sure the handle was moved out of the sock
+		REQUIRE(!sock);
+		REQUIRE(sock.handle() == INVALID_SOCKET);
+
+		// Now reset with a "valid" handle
+		sock.reset(HANDLE);
+		REQUIRE(sock);
+		REQUIRE(sock.handle() == HANDLE);
+	}
+}
+
+// --------------------------------------------------------------------------
+
 // Test that the "last error" call to a socket gives the proper result
 // for the current thread.
 // Here we share a socket across two threads, force an error in one
