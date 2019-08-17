@@ -115,8 +115,9 @@ socket socket::clone() const
 	socket_t h = INVALID_SOCKET;
 	#if defined(_WIN32)
 		WSAPROTOCOL_INFO protInfo;
-		if (::WSADuplicateSocket(handle_, ::GetCurrentProcessId(), &protInfo) != 0)
+		if (::WSADuplicateSocket(handle_, ::GetCurrentProcessId(), &protInfo) == 0)
 			h = ::WSASocket(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED);
+		// TODO: Set lastErr_ on failure
 	#else
 		h = ::dup(handle_);
 	#endif
@@ -189,20 +190,23 @@ bool socket::set_option(int level, int optname, void* optval, socklen_t optlen)
 // --------------------------------------------------------------------------
 // Gets a description of the last error encountered.
 
-std::string socket::error_str(int errNum)
+std::string socket::error_str(int err)
 {
 	#if defined(_WIN32)
         char buf[1024];
-        strerror_s(buf, sizeof(buf), errNum);
+		buf[0] = '\0';
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			buf, sizeof(buf), NULL);
         return std::string(buf);
     #else
         char buf[512];
         buf[0] = '\x0';
 
     	#ifdef _GNU_SOURCE
-            return std::string(strerror_r(errNum, buf, sizeof(buf)));
+            return std::string(strerror_r(err, buf, sizeof(buf)));
         #else
-            ignore_result(strerror_r(errNum, buf, sizeof(buf)));
+            ignore_result(strerror_r(err, buf, sizeof(buf)));
             return std::string(buf);
         #endif
     #endif

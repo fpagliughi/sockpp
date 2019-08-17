@@ -55,6 +55,7 @@ using namespace sockpp;
 // thread, and then check to make sure that the error did not propagate
 // to the other thread.
 //
+#if 0
 TEST_CASE("thread-safe last error", "[socket]") {
 	sockpp::socket sock;
 
@@ -99,4 +100,5 @@ TEST_CASE("thread-safe last error", "[socket]") {
 	}
 	thr.join();
 }
+#endif
 

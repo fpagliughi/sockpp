@@ -85,6 +85,10 @@
 		#endif // _WIN64 
 	#endif // _SSIZE_T_DEFINED
 
+    #define SHUT_RD SD_RECEIVE
+    #define SHUT_WR SD_SEND
+    #define SHUT_RDWR SD_BOTH
+
 #else
 	#include <unistd.h>
 	#include <sys/socket.h>

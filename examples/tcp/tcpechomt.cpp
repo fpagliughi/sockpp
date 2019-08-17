@@ -59,8 +59,11 @@ void read_thr(sockpp::tcp_socket rdSock)
 		cout << endl;
 	}
 
-	if (n < 0)
-		cout << "Read error: " << rdSock.last_error_str() << endl;
+	if (n < 0) {
+		cout << "Read error [" << rdSock.last_error() << "]: " 
+			<< rdSock.last_error_str() << endl;
+	}
+	rdSock.shutdown();
 }
 
 // --------------------------------------------------------------------------
@@ -89,7 +92,7 @@ int main(int argc, char* argv[])
 	cout << "Created a connection from " << conn.address() << endl;
 
 	// We create a read thread and send it a clone (dup) of the
-	// connector socket.
+	// connector socket. 
 
 	std::thread rdThr(read_thr, std::move(conn.clone()));
 
@@ -98,14 +101,20 @@ int main(int argc, char* argv[])
 	string s, sret;
 	while (getline(cin, s) && !s.empty()) {
 		if (conn.write(s) != (int) s.length()) {
-			cerr << "Error writing to the TCP stream: "
-				<< conn.last_error_str() << endl;
+			if (conn.last_error() == EPIPE) {
+				cerr << "It appears that the socket was closed." << endl;
+			}
+			else {
+				cerr << "Error writing to the TCP stream ["
+					<< conn.last_error() << "]: "
+					<< conn.last_error_str() << endl;
+			}
 			break;
 		}
 	}
 	int ret = !conn ? 1 : 0;
 
-	// Shutting down the  socket will cause the read thread to exit.
+	// Shutting down the socket will cause the read thread to exit.
 	// We wait for it to exit before we leave the app.
 
 	conn.shutdown(SHUT_WR);
