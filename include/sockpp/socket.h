@@ -263,7 +263,22 @@ public:
      * @return bool @em true if the value was retrieved, @em false if an error
      *         occurred.
      */
-    bool get_option(int level, int optname, void* optval, socklen_t* optlen);
+    bool get_option(int level, int optname, void* optval, socklen_t* optlen) const;
+    /**
+     * Gets the value of a socket option.
+     *
+     * @param level The protocol level at which the option resides, such as
+     *              SOL_SOCKET.
+     * @param optname The option passed directly to the protocol module.
+     * @param optval The value to retrieve
+     * @return bool @em true if the value was retrieved, @em false if an error
+     *         occurred.
+     */
+	template <typename T>
+    bool get_option(int level, int optname, T* val) const {
+		socklen_t len = sizeof(T);
+		return get_option(level, optname, (void*) val, &len);
+	}
     /**
      * Sets the value of a socket option.
      *
@@ -278,7 +293,22 @@ public:
      * @return bool @em true if the value was set, @em false if an error
      *         occurred.
      */
-    bool set_option(int level, int optname, void* optval, socklen_t optlen);
+    bool set_option(int level, int optname, const void* optval, socklen_t optlen);
+    /**
+     * Sets the value of a socket option.
+     *
+     * @param level The protocol level at which the option resides, such as
+     *              SOL_SOCKET.
+     * @param optname The option passed directly to the protocol module.
+     * @param val The value to set.
+     *
+     * @return bool @em true if the value was set, @em false if an error
+     *         occurred.
+     */
+	template <typename T>
+    bool set_option(int level, int optname, const T& val) {
+		return set_option(level, optname, (void*) &val, sizeof(T));
+	}
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().

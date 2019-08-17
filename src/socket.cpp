@@ -162,7 +162,7 @@ sock_address_any socket::peer_address() const
 
 // --------------------------------------------------------------------------
 
-bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
+bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen) const
 {
 	#if defined(_WIN32)
 		int len = static_cast<int>(*optlen);
@@ -176,7 +176,7 @@ bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
 
 // --------------------------------------------------------------------------
 
-bool socket::set_option(int level, int optname, void* optval, socklen_t optlen)
+bool socket::set_option(int level, int optname, const void* optval, socklen_t optlen)
 {
 	#if defined(_WIN32)
 		return check_ret_bool(::setsockopt(handle_, level, optname, 
