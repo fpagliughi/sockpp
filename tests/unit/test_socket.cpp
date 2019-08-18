@@ -148,6 +148,14 @@ TEST_CASE("socket handles", "[socket]") {
 	}
 }
 
+TEST_CASE("socket family", "[socket]") {
+	sockpp::socket sock;
+
+	// Uninitialized socket should have unspecified family
+	REQUIRE(sock.family() == AF_UNSPEC);
+
+}
+
 // Socket pair shouldn't work for TCP sockets on any known platform.
 // So this should fail, but fail gracefully and retain the error
 // in both sockets.

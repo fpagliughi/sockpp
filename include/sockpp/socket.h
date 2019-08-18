@@ -197,6 +197,15 @@ public:
 	 */
 	socket_t handle() const { return handle_; }
 	/**
+	 * Gets the network family of the address to which the socket is bound.
+	 * @return The network family of the address (AF_INET, etc) to which the
+	 *  	   socket is bound. If the socket is not bound, or the address
+	 *  	   is not known, returns AF_UNSPEC.
+	 */
+	virtual sa_family_t family() const {
+		return address().family();
+	}
+	/**
 	 * Creates a new socket that refers to this one.
 	 * This creates a new object with an independent lifetime, but refers
 	 * back to this same socket. On most systems, this duplicates the file
@@ -215,12 +224,15 @@ public:
 	 * Currently it is only known to work for Unix-domain sockets on *nix
 	 * systems.
 	 *
-	 * Note that applications would normally call this from
+	 * Note that applications would normally call this from a derived socket
+	 * class which would return the properly type-cast sockets to match the
+	 * `domain` and `type`.
 	 *
 	 * @param domain The communications domain for the sockets (i.e. the
 	 *  			 address family)
-	 * @param type
-	 * @param protocol
+	 * @param type The communication semantics for the sockets (SOCK_STREAM,
+	 *  		   SOCK_DGRAM, etc).
+	 * @param protocol The particular protocol to be used with the sockets
 	 *
 	 * @return A std::tuple of sockets. On error both sockets will be in an
 	 *  	   error state with the
@@ -260,13 +272,11 @@ public:
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.
-	 * @throw sys_error on error
 	 */
 	sock_address_any address() const;
 	/**
 	 * Gets the address of the remote peer, if this socket is connected.
 	 * @return The address of the remote peer, if this socket is connected.
-	 * @throw sys_error on error
 	 */
 	sock_address_any peer_address() const;
     /**
