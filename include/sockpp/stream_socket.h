@@ -48,8 +48,6 @@
 #define __sockpp_stream_socket_h
 
 #include "sockpp/socket.h"
-#include "sockpp/inet_address.h"
-#include "sockpp/inet6_address.h"
 
 namespace sockpp {
 
@@ -71,13 +69,15 @@ protected:
 
 	/**
 	 * Creates a streaming socket.
-	 * @return An OS handle to a TCP socket.
+	 * @return An OS handle to a stream socket.
 	 */
 	static socket_t create(int domain) {
-		return (socket_t) ::socket(domain, SOCK_STREAM, 0);
+		return (socket_t) ::socket(domain, COMM_TYPE, 0);
 	}
 
 public:
+	/** The socket 'type' for communications semantics. */
+	static constexpr int COMM_TYPE = SOCK_STREAM;
 	/**
 	 * Creates an unconnected streaming socket.
 	 */
@@ -85,9 +85,9 @@ public:
 	/**
      * Creates a streaming socket from an existing OS socket handle and
      * claims ownership of the handle.
-	 * @param sock A socket handle from the operating system.
+	 * @param handle A socket handle from the operating system.
 	 */
-	explicit stream_socket(socket_t sock) : base(sock) {}
+	explicit stream_socket(socket_t handle) : base(handle) {}
 	/**
 	 * Creates a stream socket by copying the socket handle from the 
 	 * specified socket object and transfers ownership of the socket. 
@@ -117,11 +117,6 @@ public:
 		auto h = base::clone().release();
 		return stream_socket(h);
 	}
-	/**
-	 * Open the socket.
-	 * @return @em true on success, @em false on failure.
-	 */
-	//bool open();
 	/**
 	 * Reads from the port
 	 * @param buf Buffer to get the incoming data.
@@ -220,14 +215,20 @@ class stream_socket_tmpl : public stream_socket
 	using base = stream_socket;
 
 public:
+    /** The address family for this type of address */
+	static constexpr sa_family_t ADDRESS_FAMILY = ADDR::ADDRESS_FAMILY;
 	/** The type of network address used with this socket. */
 	using addr_t = ADDR;
 	/**
+	 * Creates an unconnected streaming socket.
+	 */
+	stream_socket_tmpl() {}
+	/**
      * Creates a streaming socket from an existing OS socket handle and
      * claims ownership of the handle.
-	 * @param sock A socket handle from the operating system.
+	 * @param handle A socket handle from the operating system.
 	 */
-	explicit stream_socket_tmpl(socket_t sock) : base(sock) {}
+	explicit stream_socket_tmpl(socket_t handle) : base(handle) {}
 	/**
 	 * Move constructor.
 	 * Creates a stream socket by moving the other socket to this one.
@@ -249,6 +250,24 @@ public:
 	stream_socket_tmpl& operator=(stream_socket_tmpl&& rhs) {
 		base::operator=(std::move(rhs));
 		return *this;
+	}
+	/**
+	 * Creates a pair of connected stream sockets.
+	 *
+	 * Whether this will work at all is highly system and domain dependent.
+	 * Currently it is only known to work for Unix-domain sockets on *nix
+	 * systems.
+	 *
+	 * @param protocol The protocol to be used with the socket. (Normally 0)
+	 *
+	 * @return A std::tuple of stream sockets. On error both sockets will be
+	 *  	   in an error state with the last error set.
+	 */
+	static std::tuple<stream_socket_tmpl, stream_socket_tmpl> pair(int protocol=0) {
+		auto pr = base::pair(ADDRESS_FAMILY, COMM_TYPE, protocol);
+		return std::make_tuple<stream_socket_tmpl, stream_socket_tmpl>(
+			stream_socket_tmpl{std::get<0>(pr).release()},
+			stream_socket_tmpl{std::get<1>(pr).release()});
 	}
 	/**
 	 * Gets the local address to which the socket is bound.

@@ -14,9 +14,24 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
 
+On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote, embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable.
+
 To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
+
+If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it's wound up!
+
+## Unreleased Features in this Branch
+
+The next release will mainly target bug fixes and numerous small features that had been overlooked previously.
+
+- `stream_socket` cloning.
+- Fixed bug in Windows socket cloning.
+- Example of multi-threaded client sharing a socket using `clone()`.
+- Set and get socket options using template types.
+- Fixed bug in Windows `socket::last_error_string`.
+- Some more unit tests
 
 ## New in v0.6
 

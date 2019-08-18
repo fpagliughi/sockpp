@@ -124,6 +124,29 @@ socket socket::clone() const
 
 	return socket(h); 
 }
+
+// --------------------------------------------------------------------------
+
+std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*/)
+{
+	int sv[2];
+	socket sock0, sock1;
+
+	int ret = ::socketpair(domain, type, protocol, sv);
+
+	if (ret == 0) {
+		sock0.reset(sv[0]);
+		sock1.reset(sv[1]);
+	}
+	else {
+		int err = get_last_error();
+		sock0.clear(err);
+		sock1.clear(err);
+	}
+
+	return std::make_tuple<socket, socket>(std::move(sock0), std::move(sock1));
+}
+
 // --------------------------------------------------------------------------
 
 void socket::reset(socket_t h /*=INVALID_SOCKET*/)
@@ -192,24 +215,21 @@ bool socket::set_option(int level, int optname, const void* optval, socklen_t op
 
 std::string socket::error_str(int err)
 {
+	char buf[1024];
+	buf[0] = '\x0';
+
 	#if defined(_WIN32)
-        char buf[1024];
-		buf[0] = '\0';
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 			NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			buf, sizeof(buf), NULL);
-        return std::string(buf);
     #else
-        char buf[512];
-        buf[0] = '\x0';
-
     	#ifdef _GNU_SOURCE
-            return std::string(strerror_r(err, buf, sizeof(buf)));
+			strerror_r(err, buf, sizeof(buf));
         #else
             ignore_result(strerror_r(err, buf, sizeof(buf)));
-            return std::string(buf);
         #endif
     #endif
+	return std::string(buf);
 }
 
 // --------------------------------------------------------------------------

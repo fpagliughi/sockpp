@@ -1,12 +1,12 @@
-// test_inet_address.cpp
+// test_socket.cpp
 //
-// Unit tests for the `inet_address` class.
+// Unit tests for the base `socket` class.
 //
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2018 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,12 @@
 
 #include "catch2/catch.hpp"
 #include "sockpp/socket.h"
-#include "sockpp/tcp_connector.h"
-#include "sockpp/tcp_acceptor.h"
 #include <string>
+/*
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+*/
 
 using namespace sockpp;
 
@@ -146,6 +146,20 @@ TEST_CASE("socket handles", "[socket]") {
 		REQUIRE(sock);
 		REQUIRE(sock.handle() == HANDLE);
 	}
+}
+
+// Socket pair shouldn't work for TCP sockets on any known platform.
+// So this should fail, but fail gracefully and retain the error
+// in both sockets.
+TEST_CASE("failed socket pair", "[socket]") {
+	sockpp::socket sock1, sock2;
+	std::tie(sock1, sock2) = std::move(socket::pair(AF_INET, SOCK_STREAM));
+
+	REQUIRE(!sock1);
+	REQUIRE(!sock2);
+
+	REQUIRE(sock1.last_error() != 0);
+	REQUIRE(sock1.last_error() == sock2.last_error());
 }
 
 // --------------------------------------------------------------------------

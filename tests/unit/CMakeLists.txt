@@ -52,8 +52,11 @@ add_executable(unit_tests
 )
 
 if(UNIX)
-	target_sources(unit_tests PUBLIC
-		test_unix_address.cpp
+	target_sources(unit_tests 
+		PUBLIC
+			test_unix_address.cpp
+			test_unix_stream_socket.cpp
+			test_unix_dgram_socket.cpp
 	)
 endif()
 
@@ -61,7 +64,6 @@ endif()
 
 message(STATUS "Using library for unit tests: ${SOCKPP_LIB}")
 
-# .. Threads::Threads)
 target_link_libraries(unit_tests ${SOCKPP_LIB} 
 	Catch2::Catch2
 	Threads::Threads

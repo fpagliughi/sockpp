@@ -50,6 +50,7 @@
 #include "sockpp/sock_address.h"
 #include <chrono>
 #include <string>
+#include <tuple>
 
 namespace sockpp {
 
@@ -83,8 +84,8 @@ class socket
 	/** Cache of the last error (errno) */
 	mutable /*thread_local*/ int lastErr_;
 	/**
-	 * The OS-specific socket close function
-	 * @param h The integer socket handle.
+	 * The OS-specific function to close a socket handle/
+	 * @param h The OS socket handle.
 	 */
 	void close(socket_t h);
 
@@ -138,7 +139,7 @@ public:
 	 */
 	socket() : handle_(INVALID_SOCKET), lastErr_(0) {}
 	/**
-	 * Creates a socket from an OS socket handle.
+	 * Creates a socket from an existing OS socket handle.
 	 * The object takes ownership of the handle and will close it when
 	 * destroyed.
 	 * @param h An OS socket handle.
@@ -149,7 +150,8 @@ public:
 	 * This takes ownership of the underlying handle in sock.
 	 * @param An rvalue reference to a socket object.
 	 */
-	socket(socket&& sock) noexcept : handle_(sock.handle_), lastErr_(0) {
+	socket(socket&& sock) noexcept
+			: handle_(sock.handle_), lastErr_(sock.lastErr_) {
 		sock.handle_ = INVALID_SOCKET;
 	}
 	/**
@@ -207,6 +209,24 @@ public:
 	 */
 	socket clone() const;
 	/**
+	 * Creates a pair of connected sockets.
+	 *
+	 * Whether this will work at all is highly system and domain dependent.
+	 * Currently it is only known to work for Unix-domain sockets on *nix
+	 * systems.
+	 *
+	 * Note that applications would normally call this from
+	 *
+	 * @param domain The communications domain for the sockets (i.e. the
+	 *  			 address family)
+	 * @param type
+	 * @param protocol
+	 *
+	 * @return A std::tuple of sockets. On error both sockets will be in an
+	 *  	   error state with the
+	 */
+	static std::tuple<socket, socket> pair(int domain, int type, int protocol=0);
+	/**
 	 * Clears the error flag for the object.
 	 * @param val The value to set the flag, normally zero.
 	 */
@@ -234,6 +254,7 @@ public:
 	socket& operator=(socket&& sock) noexcept {
 		// Give our handle to the other to close.
 		std::swap(handle_, sock.handle_);
+		lastErr_ = sock.lastErr_;
 		return *this;
 	}
 	/**

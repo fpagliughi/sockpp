@@ -1,9 +1,9 @@
-// socket.cpp
+// stream_socket.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,34 +43,15 @@ using namespace std::chrono;
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-//								stream_socket
-/////////////////////////////////////////////////////////////////////////////
 
-// Opens a TCP socket. If it was already open, it just succeeds without
-// doing anything.
-#if 0
-bool stream_socket::open()
-{
-	if (!is_open()) {
-		socket_t h = create();
-		if (check_ret_bool(h))
-			reset(h);
-		else
-			set_last_error();
-	}
-
-	return is_open();
-}
-#endif
-
-// --------------------------------------------------------------------------
 // Reads from the socket. Note that we use ::recv() rather then ::read()
 // because many non-*nix operating systems make a distinction.
 
 ssize_t stream_socket::read(void *buf, size_t n)
 {
     #if defined(_WIN32)
-        return check_ret(::recv(handle(), reinterpret_cast<char*>(buf), int(n), 0));
+        return check_ret(::recv(handle(), reinterpret_cast<char*>(buf),
+								int(n), 0));
     #else
         return check_ret(::recv(handle(), buf, n, 0));
     #endif
@@ -158,6 +139,6 @@ bool stream_socket::write_timeout(const microseconds& to)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
+// end namespace sockpp
 }
 

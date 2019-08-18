@@ -70,20 +70,26 @@ class datagram_socket : public socket
 
 protected:
 	static socket_t create(int domain) {
-		return socket_t(::socket(domain, SOCK_DGRAM, 0));
+		return socket_t(::socket(domain, COMM_TYPE, 0));
 	}
 
 public:
+	/** The socket 'type' for communications semantics. */
+	static constexpr int COMM_TYPE = SOCK_DGRAM;
+
+	datagram_socket() {}
+
+	explicit datagram_socket(socket_t handle) : base(handle) {}
 	/**
 	 * Creates an unbound datagram socket.
 	 * This can be used as a client or later bound as a server socket.
 	 */
-	datagram_socket(int domain) : base(create(domain)) {}
+	//explicit datagram_socket(int domain) : base(create(domain)) {}
 	/**
 	 * Creates a UDP socket and binds it to the address.
 	 * @param addr The address to bind.
 	 */
-	datagram_socket(const sock_address& addr);
+	explicit datagram_socket(const sock_address& addr);
 	/**
 	 * Move constructor.
 	 * @param other The other socket to move to this one
@@ -256,7 +262,13 @@ public:
 	 * Creates an unbound datagram socket.
 	 * This can be used as a client or later bound as a server socket.
 	 */
-	datagram_socket_tmpl() : base(ADDRESS_FAMILY) {}
+	datagram_socket_tmpl() : base(create(ADDRESS_FAMILY)) {}
+	/**
+     * Creates a datagram socket from an existing OS socket handle and
+     * claims ownership of the handle.
+	 * @param handle A socket handle from the operating system.
+	 */
+	datagram_socket_tmpl(socket_t handle) : base(handle) {}
 	/**
 	 * Creates a UDP socket and binds it to the address.
 	 * @param addr The address to bind.
@@ -276,6 +288,25 @@ public:
 	datagram_socket_tmpl& operator=(datagram_socket_tmpl&& rhs) {
 		base::operator=(std::move(rhs));
 		return *this;
+	}
+
+	/**
+	 * Creates a pair of connected stream sockets.
+	 *
+	 * Whether this will work at all is highly system and domain dependent.
+	 * Currently it is only known to work for Unix-domain sockets on *nix
+	 * systems.
+	 *
+	 * @param protocol The protocol to be used with the socket. (Normally 0)
+	 *
+	 * @return A std::tuple of stream sockets. On error both sockets will be
+	 *  	   in an error state with the last error set.
+	 */
+	static std::tuple<datagram_socket_tmpl, datagram_socket_tmpl> pair(int protocol=0) {
+		auto pr = base::pair(addr_t::ADDRESS_FAMILY, COMM_TYPE, protocol);
+		return std::make_tuple<datagram_socket_tmpl, datagram_socket_tmpl>(
+			datagram_socket_tmpl{std::get<0>(pr).release()},
+			datagram_socket_tmpl{std::get<1>(pr).release()});
 	}
 	/**
 	 * Binds the socket to the local address.
