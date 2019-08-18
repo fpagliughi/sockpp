@@ -24,8 +24,9 @@ If you're using this library, tweet at me or send me a message, and let me know 
 
 ## Unreleased Features in this Branch
 
-The next release will mainly target bug fixes and numerous small features that had been overlooked previously.
+The next release will mainly target bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
 
+- Unix-domain socket pairs (stream and datagram)
 - `stream_socket` cloning.
 - Fixed bug in Windows socket cloning.
 - Example of multi-threaded client sharing a socket using `clone()`.
