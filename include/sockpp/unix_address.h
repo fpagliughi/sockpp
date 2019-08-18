@@ -167,7 +167,7 @@ public:
 	/**
 	 * Gets a printable string for the address.
 	 * @return A string representation of the address in the form
-	 *  	   'unix:<path>'
+	 *  	   "unix:<path>"
 	 */
 	std::string to_string() const {
 		return std::string("unix:") + std::string(addr_.sun_path);

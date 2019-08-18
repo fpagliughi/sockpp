@@ -26,10 +26,11 @@ If you're using this library, tweet at me or send me a message, and let me know 
 
 The next release will mainly target bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
 
+- `socket::shutdown(int)` 
 - Unix-domain socket pairs (stream and datagram)
 - `stream_socket` cloning.
 - Fixed bug in Windows socket cloning.
-- Example of multi-threaded client sharing a socket using `clone()`.
+- _tcpechomt.cpp_: Example of a client sharing a socket between read and write threads - using `clone()`. 
 - Set and get socket options using template types.
 - Fixed bug in Windows `socket::last_error_string`.
 - Some more unit tests

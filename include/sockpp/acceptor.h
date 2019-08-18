@@ -52,13 +52,14 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/// Class for creating a streaming server.
-/// Objects of this class bind and listen on streaming ports for incoming
-/// connections. Normally, a server thread creates one of these and blocks
-/// on the call to accept incoming connections. The call to accept creates
-/// and returns a @ref stream_socket which can then be used for the actual
-/// communications.
-
+/**
+ * Class for creating a streaming server.
+ * Objects of this class bind and listen on streaming ports for incoming
+ * connections. Normally, a server thread creates one of these and blocks on
+ * the call to accept incoming connections. The call to accept creates and
+ * returns a @ref stream_socket which can then be used for the actual
+ * communications.
+ */
 class acceptor : public socket
 {
 	// Non-copyable
@@ -128,13 +129,14 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 
-/// Class for creating a TCP server.
-/// Objects of this class bind and listen on TCP ports for incoming
-/// connections. Normally, a server thread creates one of these and blocks
-/// on the call to accept incoming connections. The call to accept creates
-/// and returns a @ref TcpSocket which can then be used for the actual
-/// communications.
-
+/**
+ * Base template class for streaming servers of specific address families.
+ * This is a base for creating socket acceptor classes for an individual
+ * family. In most cases, all that is needed is a type definition specifying
+ * which addresses type should be used to receive incoming connections,
+ * like:
+ *     using tcp_acceptor = acceptor_tmpl<tcp_socket>;
+ */
 template <typename STREAM_SOCK, typename ADDR=typename STREAM_SOCK::addr_t>
 class acceptor_tmpl : public acceptor
 {
@@ -150,6 +152,7 @@ public:
 	using stream_sock_t = STREAM_SOCK;
 	/** The type of address for the acceptor and streams. */
 	using addr_t = ADDR;
+
 	/**
 	 * Creates an unconnected acceptor.
 	 */

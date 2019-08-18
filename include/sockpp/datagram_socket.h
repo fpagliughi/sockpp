@@ -77,14 +77,16 @@ public:
 	/** The socket 'type' for communications semantics. */
 	static constexpr int COMM_TYPE = SOCK_DGRAM;
 
-	datagram_socket() {}
-
-	explicit datagram_socket(socket_t handle) : base(handle) {}
 	/**
-	 * Creates an unbound datagram socket.
-	 * This can be used as a client or later bound as a server socket.
+	 * Creates an uninitialized datagram socket.
 	 */
-	//explicit datagram_socket(int domain) : base(create(domain)) {}
+	datagram_socket() {}
+	/**
+     * Creates a datagram socket from an existing OS socket handle and
+     * claims ownership of the handle.
+	 * @param handle A socket handle from the operating system.
+	 */
+	explicit datagram_socket(socket_t handle) : base(handle) {}
 	/**
 	 * Creates a UDP socket and binds it to the address.
 	 * @param addr The address to bind.
@@ -171,7 +173,7 @@ public:
 	}
 	/**
 	 * Sends a string to another socket.
-	 * @param buf The string to send.
+	 * @param s The string to send.
 	 * @param addr The remote destination of the data.
 	 * @return the number of bytes sent on success or, @em -1 on failure.
 	 */
@@ -183,7 +185,7 @@ public:
 	 * The socket should be connected before calling this.
 	 * @param buf The date to send.
 	 * @param n The number of bytes in the data buffer.
-	 * @param addr The remote destination of the data.
+	 * @param flags The option bit flags. See send(2).
 	 * @return @em zero on success, @em -1 on failure.
 	 */
 	ssize_t send(const void* buf, size_t n, int flags=0) {
@@ -198,7 +200,7 @@ public:
 	 * Sends a string to the socket at the default address.
 	 * The socket should be connected before calling this
 	 * @param s The string to send.
-	 * @param addr The remote destination of the data.
+	 * @param flags The option bit flags. See send(2).
 	 * @return @em zero on success, @em -1 on failure.
 	 */
 	ssize_t send(const std::string& s, int flags=0) {
@@ -208,7 +210,9 @@ public:
 	 * Receives a message on the socket.
 	 * @param buf Buffer to get the incoming data.
 	 * @param n The number of bytes to read.
-	 * @param addr Receives the address of the peer that sent the message
+	 * @param flags The option bit flags. See send(2).
+	 * @param srcAddr Receives the address of the peer that sent the
+	 *  			   message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
 	ssize_t recv_from(void* buf, size_t n, int flags, sock_address* srcAddr=nullptr);
@@ -216,7 +220,8 @@ public:
 	 * Receives a message on the socket.
 	 * @param buf Buffer to get the incoming data.
 	 * @param n The number of bytes to read.
-	 * @param addr Receives the address of the peer that sent the message
+	 * @param srcAddr Receives the address of the peer that sent the
+	 *  			   message
 	 * @return The number of bytes read or @em -1 on error.
 	 */
 	ssize_t recv_from(void* buf, size_t n, sock_address* srcAddr=nullptr) {
@@ -226,6 +231,7 @@ public:
 	 * Receives a message on the socket.
 	 * @param buf Buffer to get the incoming data.
 	 * @param n The number of bytes to read.
+	 * @param flags The option bit flags. See send(2).
 	 * @return The number of bytes read or @em -1 on error.
 	 */
 	ssize_t recv(void* buf, size_t n, int flags=0) {
@@ -333,7 +339,7 @@ public:
 	 * Sends a message to the socket at the specified address.
 	 * @param buf The data to send.
 	 * @param n The number of bytes in the data buffer.
-	 * @param flags The flags. See send(2).
+	 * @param flags The option bit flags. See send(2).
 	 * @param addr The remote destination of the data.
 	 * @return the number of bytes sent on success or, @em -1 on failure.
 	 */
@@ -362,7 +368,7 @@ public:
 	}
 	/**
 	 * Sends a string to another socket.
-	 * @param buf The string to send.
+	 * @param s The string to send.
 	 * @param addr The remote destination of the data.
 	 * @return the number of bytes sent on success or, @em -1 on failure.
 	 */
@@ -373,6 +379,7 @@ public:
 	 * Receives a message on the socket.
 	 * @param buf Buffer to get the incoming data.
 	 * @param n The number of bytes to read.
+	 * @param flags The option bit flags. See send(2).
 	 * @param srcAddr Receives the address of the peer that sent
 	 *  			the message
 	 * @return The number of bytes read or @em -1 on error.

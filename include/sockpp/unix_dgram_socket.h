@@ -1,5 +1,5 @@
 /**
- * @file unix_udp_socket.h
+ * @file unix_dgram_socket.h
  *
  * Class (typedef) for Unix-domain UDP socket.
  *

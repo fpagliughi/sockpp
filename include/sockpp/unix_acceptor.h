@@ -56,8 +56,8 @@ namespace sockpp {
 /// Objects of this class bind and listen on Unix-domain ports for
 /// connections. Normally, a server thread creates one of these and blocks
 /// on the call to accept incoming connections. The call to accept creates
-/// and returns a @ref unix_socket which can then be used for the actual
-/// communications.
+/// and returns a @ref unix_stream_socket which can then be used for the
+/// actual communications.
 
 class unix_acceptor : public acceptor
 {

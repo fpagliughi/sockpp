@@ -159,11 +159,25 @@ public:
 	}
 };
 
+/**
+ * Determines if the two objects refer to the same address.
+ * @param lhs A socket address
+ * @param rhs A socket address
+ * @return @em true if `lhs` and `rhs` refer to the same address, @em false
+ *  	   otherwise.
+ */
 inline bool operator==(const sock_address& lhs, const sock_address& rhs) {
     return lhs.size() == rhs.size() &&
         std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), lhs.size()) == 0;
 }
 
+/**
+ * Determines if the two objects refer to the different address.
+ * @param lhs A socket address
+ * @param rhs A socket address
+ * @return @em true if `lhs` and `rhs` refer to different address, @em false
+ *  	   if they refer to the same address.
+ */
 inline bool operator!=(const sock_address& lhs, const sock_address& rhs) {
 	return !operator==(lhs, rhs);
 }

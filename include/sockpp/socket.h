@@ -111,7 +111,7 @@ protected:
 	}
 	/**
 	 * Checks the value and if less than zero, sets last error.
-     * @param T A signed integer type of any size 
+     * @tparam T A signed integer type of any size
 	 * @param ret The return value from a library or system call.
 	 * @return Returns the value sent to it, `ret`.
 	 */
@@ -122,7 +122,7 @@ protected:
 	}
 	/**
      * Checks the value and if less than zero, sets last error. 
-     * @param T A signed integer type of any size 
+     * @tparam T A signed integer type of any size
 	 * @param ret The return value from a library or system call.
 	 * @return @em true if the value is a typical system success value (>=0)
 	 *  	   or @em false is is an error (<0)
@@ -148,7 +148,7 @@ public:
 	/**
 	 * Move constructor.
 	 * This takes ownership of the underlying handle in sock.
-	 * @param An rvalue reference to a socket object.
+	 * @param sock An rvalue reference to a socket object.
 	 */
 	socket(socket&& sock) noexcept
 			: handle_(sock.handle_), lastErr_(sock.lastErr_) {
@@ -291,7 +291,7 @@ public:
      * @param level The protocol level at which the option resides, such as
      *              SOL_SOCKET.
      * @param optname The option passed directly to the protocol module.
-     * @param optval The value to retrieve
+     * @param val The value to retrieve
      * @return bool @em true if the value was retrieved, @em false if an error
      *         occurred.
      */
