@@ -43,7 +43,7 @@ namespace sockpp {
 bool connector::connect(const sock_address& addr)
 {
     sa_family_t domain = addr.family();
-	socket_t h = create(domain);
+	socket_t h = create_handle(domain);
 
 	if (h == INVALID_SOCKET) {
 		set_last_error();

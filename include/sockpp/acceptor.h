@@ -67,14 +67,8 @@ class acceptor : public socket
 	acceptor& operator=(const acceptor&) =delete;
 
 protected:
-	/**
-	 * The default listener queue size.
-	 */
+	/** The default listener queue size. */
 	static const int DFLT_QUE_SIZE = 4;
-	/**
-	 * The local address to which the acceptor is bound.
-	 */
-	sock_address_any addr_;
 
 public:
 	/**
@@ -90,17 +84,6 @@ public:
     acceptor(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
         open(addr, queSize);
     }
-	/**
-	 * Gets the local address to which we are bound.
-	 * @return The local address to which we are bound.
-	 */
-	sock_address_any addr() const { return addr_; }
-	/**
-	 * Binds the socket to the specified address.
-	 * @param addr The address to which we get bound.
-	 * @return @em true on success, @em false on error
-	 */
-	bool bind(const sock_address& addr);
 	/**
 	 * Sets the socket listening on the address to which it is bound.
 	 * @param queSize The listener queue size.

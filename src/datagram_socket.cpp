@@ -46,25 +46,18 @@ namespace sockpp {
 //								udp_socket
 /////////////////////////////////////////////////////////////////////////////
 
-/*
-datagram_socket::datagram_socket(in_port_t port) : socket(create())
-{
-	if (check_ret_bool(handle()))
-		bind(sock_address(port));
-}
-*/
-
 datagram_socket::datagram_socket(const sock_address& addr)
 {
 	auto domain = addr.family();
+
 	if (domain == AF_UNSPEC) {
 		// TODO: Set last error for "address unspecified"
-		return /*false*/;
+		return;
 	}
 
-	socket_t h = create(domain);
+	socket_t h = create_handle(domain);
 	if (!check_ret_bool(h))
-		return /*false*/;
+		return;
 
 	reset(h);
 	bind(addr);

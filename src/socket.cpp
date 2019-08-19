@@ -110,6 +110,16 @@ void socket::destroy()
 
 // --------------------------------------------------------------------------
 
+socket socket::create(int domain, int type, int protocol /*=0*/)
+{
+	socket sock(::socket(domain, type, protocol));
+	if (!sock)
+		sock.clear(get_last_error());
+	return sock;
+}
+
+// --------------------------------------------------------------------------
+
 socket socket::clone() const
 {
 	socket_t h = INVALID_SOCKET;
@@ -155,6 +165,14 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/)
 	handle_ = h;
 	if (oh != INVALID_SOCKET)
 		close(oh);
+}
+
+// --------------------------------------------------------------------------
+// Binds the socket to the specified address.
+
+bool socket::bind(const sock_address& addr)
+{
+	return check_ret_bool(::bind(handle_, addr.sockaddr_ptr(), addr.size()));
 }
 
 // --------------------------------------------------------------------------

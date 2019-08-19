@@ -40,6 +40,7 @@
 
 #include "catch2/catch.hpp"
 #include "sockpp/socket.h"
+#include "sockpp/inet_address.h"
 #include <string>
 /*
 #include <thread>
@@ -48,6 +49,8 @@
 */
 
 using namespace sockpp;
+
+constexpr in_port_t INET_TEST_PORT = 12345;
 
 TEST_CASE("socket constructors", "[socket]") {
 	SECTION("default constructor") {
@@ -149,11 +152,29 @@ TEST_CASE("socket handles", "[socket]") {
 }
 
 TEST_CASE("socket family", "[socket]") {
-	sockpp::socket sock;
+	SECTION("uninitialized socket") {
+		// Uninitialized socket should have unspecified family
+		sockpp::socket sock;
+		REQUIRE(sock.family() == AF_UNSPEC);
+	}
 
-	// Uninitialized socket should have unspecified family
-	REQUIRE(sock.family() == AF_UNSPEC);
+	SECTION("unbound socket") {
+		// Unbound socket shouls have creation family
+		auto sock = socket::create(AF_INET, SOCK_STREAM);
+		REQUIRE(sock.family() == AF_INET);
+	}
 
+	SECTION("bound socket") {
+		// Bound socket should have same family as
+		// address to which it's bound
+		auto sock = socket::create(AF_INET, SOCK_STREAM);
+		inet_address addr(INET_TEST_PORT);
+
+		int reuse = 1;
+		REQUIRE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
+		REQUIRE(sock.bind(addr));
+		REQUIRE(sock.family() == addr.family());
+	}
 }
 
 // Socket pair shouldn't work for TCP sockets on any known platform.

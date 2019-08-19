@@ -43,18 +43,6 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// Binds the socket to the specified address.
-
-bool acceptor::bind(const sock_address& addr)
-{
-	if (check_ret_bool(::bind(handle(), addr.sockaddr_ptr(), addr.size()))) {
-        addr_ = addr;
-		return true;
-	}
-    return false;
-}
-
-// --------------------------------------------------------------------------
 // This attempts to open the acceptor, bind to the requested address, and
 // start listening. On any error it will be sure to leave the underlying
 // socket in an unopened/invalid state.
@@ -69,11 +57,11 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 
 	sa_family_t domain = addr.family();
 	if (domain == AF_UNSPEC) {
-		// TODO: Set last error for "address unspecified"
+		clear(EADDRNOTAVAIL);
 		return false;
 	}
 
-	socket_t h = stream_socket::create(domain);
+	socket_t h = stream_socket::create_handle(domain);
 	if (!check_ret_bool(h))
 		return false;
 

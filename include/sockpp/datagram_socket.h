@@ -69,7 +69,7 @@ class datagram_socket : public socket
 	datagram_socket& operator=(const datagram_socket&) =delete;
 
 protected:
-	static socket_t create(int domain) {
+	static socket_t create_handle(int domain) {
 		return socket_t(::socket(domain, COMM_TYPE, 0));
 	}
 
@@ -106,17 +106,6 @@ public:
 	datagram_socket& operator=(datagram_socket&& rhs) {
 		base::operator=(std::move(rhs));
 		return *this;
-	}
-	/**
-	 * Binds the socket to the local address.
-	 * Datagram sockets can bind to a local address/adapter to filter which
-	 * incoming packets to receive.
-	 * @param addr The address on which to bind.
-	 * @return @em true on success, @em false on failure
-	 */
-	bool bind(const sock_address& addr) {
-		return check_ret_bool(::bind(handle(), addr.sockaddr_ptr(),
-                                     addr.size()));
 	}
 	/**
 	 * Connects the socket to the remote address.
@@ -268,7 +257,7 @@ public:
 	 * Creates an unbound datagram socket.
 	 * This can be used as a client or later bound as a server socket.
 	 */
-	datagram_socket_tmpl() : base(create(ADDRESS_FAMILY)) {}
+	datagram_socket_tmpl() : base(create_handle(ADDRESS_FAMILY)) {}
 	/**
      * Creates a datagram socket from an existing OS socket handle and
      * claims ownership of the handle.

@@ -171,6 +171,24 @@ public:
 	 */
 	static void destroy();
 	/**
+	 * Creates a socket with the specified communications characterics.
+	 * Not that this is not normally how a socket is creates in the sockpp
+	 * library. Applications would typically create a connector (client) or
+	 * acceptor (server) socket which would take care of the details.
+	 *
+	 * This is included for completeness or for creating different types of
+	 * sockets than are supported by the library.
+	 *
+	 * @param domain The communications domain for the sockets (i.e. the
+	 *  			 address family)
+	 * @param type The communication semantics for the sockets (SOCK_STREAM,
+	 *  		   SOCK_DGRAM, etc).
+	 * @param protocol The particular protocol to be used with the sockets
+	 *
+	 * @return A socket with the requested communications characteristics.
+	 */
+	static socket create(int domain, int type, int protocol=0);
+	/**
 	 * Determines if the socket is open (valid).
 	 * @return @em true if the socket is open, @em false otherwise.
 	 */
@@ -269,6 +287,12 @@ public:
 		lastErr_ = sock.lastErr_;
 		return *this;
 	}
+	/**
+	 * Binds the socket to the specified address.
+	 * @param addr The address to which we get bound.
+	 * @return @em true on success, @em false on error
+	 */
+	bool bind(const sock_address& addr);
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.

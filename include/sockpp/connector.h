@@ -149,6 +149,14 @@ public:
 	 */
 	addr_t peer_address() const { return addr_t(base::peer_address()); }
 	/**
+	 * Binds the socket to the specified address.
+	 * This call is optional for a client connector, though it is rarely
+	 * used.
+	 * @param addr The address to which we get bound.
+	 * @return @em true on success, @em false on error
+	 */
+	bool bind(const addr_t& addr) { return base::bind(addr); }
+	/**
 	 * Attempts to connects to the specified server.
 	 * If the socket is currently connected, this will close the current
 	 * connection and open the new one.

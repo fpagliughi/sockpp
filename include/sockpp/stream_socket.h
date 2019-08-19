@@ -71,7 +71,7 @@ protected:
 	 * Creates a streaming socket.
 	 * @return An OS handle to a stream socket.
 	 */
-	static socket_t create(int domain) {
+	static socket_t create_handle(int domain) {
 		return (socket_t) ::socket(domain, COMM_TYPE, 0);
 	}
 
