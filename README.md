@@ -30,12 +30,12 @@ The next release will mainly target bug fixes, API inconsistencies, and numerous
     - `shutdown()` added
     - `create()` added
     - `bind()` moved into base socket (from `acceptor`)
-    - Set and get socket options using template types (simpler use).
-    - Fixed bug in Windows socket cloning.
-    - Fixed bug in Windows `last_error_string()`.
 - Unix-domain socket pairs (stream and datagram)
 - `stream_socket` cloning.
+- Fixed bug in Windows socket cloning.
 - _tcpechomt.cpp_: Example of a client sharing a socket between read and write threads - using `clone()`. 
+- Set and get socket options using template types.
+- Fixed bug in Windows `socket::last_error_string`.
 - Some more unit tests
 
 ## New in v0.6

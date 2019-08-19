@@ -139,20 +139,23 @@ socket socket::clone() const
 
 std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*/)
 {
-	int sv[2];
 	socket sock0, sock1;
 
-	int ret = ::socketpair(domain, type, protocol, sv);
+    #if !defined(_WIN32)
+        int ret = ::socketpair(domain, type, protocol, sv);
 
-	if (ret == 0) {
-		sock0.reset(sv[0]);
-		sock1.reset(sv[1]);
-	}
-	else {
-		int err = get_last_error();
-		sock0.clear(err);
-		sock1.clear(err);
-	}
+        if (ret == 0) {
+		    sock0.reset(sv[0]);
+		    sock1.reset(sv[1]);
+		}
+		else {
+		    int err = get_last_error();
+		    sock0.clear(err);
+		    sock1.clear(err);
+		}
+    #endif
+
+    // TODO: Should we set an "unsupported" error on Windows?
 
 	return std::make_tuple<socket, socket>(std::move(sock0), std::move(sock1));
 }
