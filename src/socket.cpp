@@ -142,6 +142,7 @@ std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*
 	socket sock0, sock1;
 
     #if !defined(_WIN32)
+		int sv[2];
         int ret = ::socketpair(domain, type, protocol, sv);
 
         if (ret == 0) {
