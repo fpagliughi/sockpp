@@ -38,6 +38,7 @@
 #include "sockpp/exception.h"
 #include <errno.h>
 #include <cstring>
+#include <netdb.h>
 
 using namespace std;
 
@@ -52,6 +53,12 @@ sys_error::sys_error() : sys_error(errno)
 // TODO: Replace strerror() with a thread-safe call.
 
 sys_error::sys_error(int err) : runtime_error(strerror(err)), errno_(err)
+{
+}
+
+
+getaddrinfo_error::getaddrinfo_error(int err, const string &hostname)
+: runtime_error(gai_strerror(err)), error_(err), hostname_(hostname)
 {
 }
 

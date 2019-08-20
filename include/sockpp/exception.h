@@ -59,7 +59,7 @@ namespace sockpp {
  * codes are platform 'errno' values (or similar), and the messages are
  * typically derived from the system.
  */
-class sys_error : std::runtime_error
+class sys_error : public std::runtime_error
 {
 	/** The system error number (errno) */
 	int errno_;
@@ -79,6 +79,37 @@ public:
 	 * @return The system error number.
 	 */
 	int error() const { return errno_; }
+};
+
+/**
+ * Errors from getaddrinfo.
+ * These are errors relating to DNS lookup, returned from the getaddrinfo system call.
+ * Their codes are declared in <netdb.h>.
+ */
+class getaddrinfo_error : public std::runtime_error
+{
+	/** The error number, as returned by getaddrinfo. */
+	int error_;
+    /** The hostname being resolved. */
+    std::string hostname_;
+
+public:
+	/**
+	 * Constructs an error with the specified getaddrinfo error code.
+	 * @param err The error number, as returned by getaddrinfo.
+     * @param hostname The DNS name being resolved that triggered the error.
+	 */
+	getaddrinfo_error(int err, const std::string &hostname);
+	/**
+	 * Get the error number.
+	 * @return The error number returned by getaddrinfo.
+	 */
+	int error() const { return error_; }
+    /**
+     * Get the hostname that triggered the error.
+     * @return The hostname that getaddrinfo failed to resolve.
+     */
+    const std::string &hostname() const { return hostname_; }
 };
 
 /////////////////////////////////////////////////////////////////////////////

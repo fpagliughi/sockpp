@@ -63,11 +63,16 @@ in_addr_t inet_address::resolve_name(const std::string& saddr)
     hints.ai_family = ADDRESS_FAMILY;
     hints.ai_socktype = SOCK_STREAM;
 
-    if (::getaddrinfo(saddr.c_str(), NULL, &hints, &res) != 0)
+    int gai_err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
+    if (gai_err == EAI_SYSTEM)
         throw sys_error();
+    else if (gai_err != 0)
+        throw getaddrinfo_error(gai_err, saddr);
 
     auto ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
-    return ipv4->sin_addr.s_addr;
+    auto result = ipv4->sin_addr.s_addr;
+    freeaddrinfo(res);
+    return result;
 }
 
 // --------------------------------------------------------------------------

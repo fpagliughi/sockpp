@@ -140,6 +140,7 @@ public:
 	 * Attempts to resolve the host name into a 32-bit internet address.
 	 * @param saddr The string host name.
 	 * @return The internet address in network byte order.
+     * @throw sys_error, getaddrinfo_error
 	 */
 	static in_addr_t resolve_name(const std::string& saddr);
 	/**
@@ -154,6 +155,7 @@ public:
 	 * number.
 	 * @param saddr The string host name.
 	 * @param port The port number in native/host byte order.
+     * @throw sys_error, getaddrinfo_error
 	 */
 	void create(const std::string& saddr, in_port_t port);
 	/**
