@@ -63,11 +63,21 @@ in6_addr inet6_address::resolve_name(const string& saddr)
     hints.ai_family = ADDRESS_FAMILY;
     hints.ai_socktype = SOCK_STREAM;
 
-    if (::getaddrinfo(saddr.c_str(), NULL, &hints, &res) != 0)
-        throw sys_error();
+    int gai_err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
+
+    #if !defined(_WIN32)
+        if (gai_err == EAI_SYSTEM)
+            throw sys_error();
+    #endif
+
+    if (gai_err != 0)
+        throw getaddrinfo_error(gai_err, saddr);
+
 
     auto ipv6 = reinterpret_cast<sockaddr_in6*>(res->ai_addr);
-    return ipv6->sin6_addr;
+    auto addr = ipv6->sin6_addr;
+    freeaddrinfo(res);
+    return addr;
 }
 
 // --------------------------------------------------------------------------

@@ -64,15 +64,19 @@ in_addr_t inet_address::resolve_name(const std::string& saddr)
     hints.ai_socktype = SOCK_STREAM;
 
     int gai_err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
-    if (gai_err == EAI_SYSTEM)
-        throw sys_error();
-    else if (gai_err != 0)
+
+    #if !defined(_WIN32)
+        if (gai_err == EAI_SYSTEM)
+            throw sys_error();
+    #endif
+
+    if (gai_err != 0)
         throw getaddrinfo_error(gai_err, saddr);
 
     auto ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
-    auto result = ipv4->sin_addr.s_addr;
+    auto addr = ipv4->sin_addr.s_addr;
     freeaddrinfo(res);
-    return result;
+    return addr;
 }
 
 // --------------------------------------------------------------------------
