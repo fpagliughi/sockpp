@@ -119,13 +119,17 @@ public:
 	sock_address_any() : addr_{}, sz_(0) {}
 	/**
 	 * Constructs an address.
+	 * @param addr Pointer to a buffer holding the address.
+	 * @param n The number of valid bytes in the address
 	 */
 	sock_address_any(const sockaddr* addr, socklen_t n) {
         // TODO: Check size of n.
         std::memcpy(&addr_, addr, sz_ = n);
     }
 	/**
-     * Constructs an address.
+	 * Constructs an address.
+	 * @param addr The buffer holding the address.
+	 * @param n The number of valid bytes in the address
 	 */
 	sock_address_any(const sockaddr_storage& addr, socklen_t n) {
         // TODO: Check size of n n?
@@ -133,7 +137,7 @@ public:
     }
 	/**
 	 * Copies another address to this one.
-	 * @param addr
+	 * @param addr The other address to copy into this one.
 	 */
 	sock_address_any(const sock_address& addr)
 		: sock_address_any(addr.sockaddr_ptr(), addr.size()) {}

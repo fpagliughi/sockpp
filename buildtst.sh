@@ -24,22 +24,22 @@ do
     mkdir buildtst ; pushd buildtst
 
     # Configure the build
-    if ! CXX=${COMPILER} cmake -DSOCKPP_BUILD_EXAMPLES=ON -DSOCKPP_BUILD_TESTS=ON .. ; then
+    if ! cmake -DSOCKPP_BUILD_EXAMPLES=ON -DSOCKPP_BUILD_TESTS=ON -DCMAKE_CXX_COMPILER=${COMPILER} .. ; then
       printf "\nCMake configuration failed for %s\n" "${COMPILER}"
-	  exit 1
+      exit 1
     fi
 
     # Build the library, examples, and unit tests
     if ! make -j${BUILD_JOBS} ; then
-	  printf "\nCompilation failed for %s\n" "${COMPILER}"
-	  exit 2
-	fi
+      printf "\nCompilation failed for %s\n" "${COMPILER}"
+      exit 2
+    fi
 
     # Run the unit tests
     if ! ./tests/unit/unit_tests ; then
-	  printf "\nUnit tests failed for %s\n" "${COMPILER}"
-	  exit 3
-	fi
+      printf "\nUnit tests failed for %s\n" "${COMPILER}"
+      exit 3
+    fi
 
     popd
   fi

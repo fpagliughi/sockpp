@@ -60,7 +60,12 @@ set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
 # --- Warnings ---
 
 if(NOT MSVC)
-  target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)	# -Werror)
+	# Maybe set '-Werror' for Release builds?
+	if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
+		target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic -Wdocumentation)
+	else()
+		target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)
+	endif()
 endif()
 
 #if(MSVC)
