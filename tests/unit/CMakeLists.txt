@@ -49,6 +49,8 @@ add_executable(unit_tests
 	unit_tests.cpp
 	test_inet_address.cpp
 	test_socket.cpp
+    test_datagram_socket.cpp
+	test_connector.cpp
 )
 
 if(UNIX)
