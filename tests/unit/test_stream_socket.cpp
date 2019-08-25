@@ -1,9 +1,12 @@
-// stream_connector.cpp
+// test_stream_socket.cpp
 //
+// Unit tests for the `stream_socket` class(es).
+//
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,33 +36,59 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
-#include "sockpp/connector.h"
+#include "catch2/catch.hpp"
+#include "sockpp/stream_socket.h"
+#include "sockpp/inet_address.h"
+#include <string>
 
-namespace sockpp {
+using namespace sockpp;
 
-/////////////////////////////////////////////////////////////////////////////
+TEST_CASE("stream_socket default constructor", "[stream_socket]") {
+	stream_socket sock;
+	REQUIRE(!sock);
+	REQUIRE(!sock.is_open());
+}
 
-bool connector::connect(const sock_address& addr)
-{
-    sa_family_t domain = addr.family();
-	socket_t h = create_handle(domain);
+TEST_CASE("stream_socket handle constructor", "[stream_socket]") {
+	constexpr auto HANDLE = socket_t(3);
 
-	if (!check_ret_bool(h))
-		return false;
-
-	// This will close the old connection, if any.
-	reset(h);
-
-	if (!check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size()))) {
-		close();
-		return false;
+	SECTION("valid handle") {
+		stream_socket sock(HANDLE);
+		REQUIRE(sock);
+		REQUIRE(sock.is_open());
 	}
 
-	return true;
+	SECTION("invalid handle") {
+		stream_socket sock(INVALID_SOCKET);
+		REQUIRE(!sock);
+		REQUIRE(!sock.is_open());
+		// TODO: Should this set an error?
+		REQUIRE(sock.last_error() == 0);
+	}
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+/*
+TEST_CASE("stream_socket address constructor", "[stream_socket]") {
+	SECTION("valid address") {
+		const auto ADDR = inet_address("localhost", 12345);
+
+		stream_socket sock(ADDR);
+		REQUIRE(sock);
+		REQUIRE(sock.is_open());
+		REQUIRE(sock.last_error() == 0);
+		REQUIRE(inet_address(sock.address()) == ADDR);
+	}
+
+	SECTION("invalid address") {
+		const auto ADDR = sock_address_any();
+
+		stream_socket sock(ADDR);
+		REQUIRE(!sock);
+		REQUIRE(!sock.is_open());
+		REQUIRE(sock.last_error() == EAFNOSUPPORT);
+	}
 }
+*/
 

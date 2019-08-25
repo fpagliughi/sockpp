@@ -1,9 +1,12 @@
-// stream_connector.cpp
+// test_acceptor.cpp
 //
+// Unit tests for the `acceptor` class(es).
+//
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,33 +36,59 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
-#include "sockpp/connector.h"
+#include "catch2/catch.hpp"
+#include "sockpp/acceptor.h"
+#include "sockpp/inet_address.h"
+#include <string>
 
-namespace sockpp {
+using namespace sockpp;
 
-/////////////////////////////////////////////////////////////////////////////
-
-bool connector::connect(const sock_address& addr)
-{
-    sa_family_t domain = addr.family();
-	socket_t h = create_handle(domain);
-
-	if (!check_ret_bool(h))
-		return false;
-
-	// This will close the old connection, if any.
-	reset(h);
-
-	if (!check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size()))) {
-		close();
-		return false;
-	}
-
-	return true;
+TEST_CASE("acceptor default constructor", "[acceptor]") {
+	acceptor sock;
+	REQUIRE(!sock);
+	REQUIRE(!sock.is_open());
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+/*
+TEST_CASE("acceptor handle constructor", "[acceptor]") {
+	constexpr auto HANDLE = socket_t(3);
+
+	SECTION("valid handle") {
+		acceptor sock(HANDLE);
+		REQUIRE(sock);
+		REQUIRE(sock.is_open());
+	}
+
+	SECTION("invalid handle") {
+		acceptor sock(INVALID_SOCKET);
+		REQUIRE(!sock);
+		REQUIRE(!sock.is_open());
+		// TODO: Should this set an error?
+		REQUIRE(sock.last_error() == 0);
+	}
+}
+*/
+
+TEST_CASE("acceptor address constructor", "[acceptor]") {
+	SECTION("valid address") {
+		const auto ADDR = inet_address("localhost", 12345);
+
+		acceptor sock(ADDR);
+		REQUIRE(sock);
+		REQUIRE(sock.is_open());
+		REQUIRE(sock.last_error() == 0);
+		REQUIRE(inet_address(sock.address()) == ADDR);
+	}
+
+	SECTION("invalid address") {
+		const auto ADDR = sock_address_any();
+
+		acceptor sock(ADDR);
+		REQUIRE(!sock);
+		REQUIRE(!sock.is_open());
+		REQUIRE(sock.last_error() == EAFNOSUPPORT);
+	}
 }
 

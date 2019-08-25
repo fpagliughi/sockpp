@@ -70,6 +70,17 @@ protected:
 	/** The default listener queue size. */
 	static const int DFLT_QUE_SIZE = 4;
 
+	/**
+	 * Creates an acceptor socket.
+	 * The acceptor uses a stream socket type, but for our purposes is not
+	 * classified (derived from) a streaming socket, since it doesn't
+	 * support read and write to the socket.
+	 * @return An OS handle to a stream socket.
+	 */
+	static socket_t create_handle(int domain) {
+		return stream_socket::create_handle(domain);
+	}
+
 public:
 	/**
 	 * Creates an unconnected acceptor.

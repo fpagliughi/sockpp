@@ -56,12 +56,8 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 		return true;
 
 	sa_family_t domain = addr.family();
-	if (domain == AF_UNSPEC) {
-		clear(EADDRNOTAVAIL);
-		return false;
-	}
+	socket_t h = create_handle(domain);
 
-	socket_t h = stream_socket::create_handle(domain);
 	if (!check_ret_bool(h))
 		return false;
 
