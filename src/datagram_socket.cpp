@@ -51,7 +51,7 @@ datagram_socket::datagram_socket(const sock_address& addr)
 	auto domain = addr.family();
 
 	if (domain == AF_UNSPEC) {
-		// TODO: Set last error for "address unspecified"
+		//clear(EADDRNOTAVAIL);
 		return;
 	}
 
@@ -63,18 +63,7 @@ datagram_socket::datagram_socket(const sock_address& addr)
 	bind(addr);
 }
 
-// Opens a UDP socket. If it was already open, it just succeeds without
-// doing anything.
-
-#if 0
-int datagram_socket::open()
-{
-	if (!is_open())
-		reset(create());
-
-	return is_open() ? 0 : -1;
-}
-#endif
+// --------------------------------------------------------------------------
 
 ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
 								   sock_address* srcAddr /*=nullptr*/)

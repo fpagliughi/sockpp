@@ -49,6 +49,7 @@
 
 #include "sockpp/platform.h"
 #include <cstring>
+#include <stdexcept>
 
 namespace sockpp {
 
@@ -121,18 +122,24 @@ public:
 	 * Constructs an address.
 	 * @param addr Pointer to a buffer holding the address.
 	 * @param n The number of valid bytes in the address
+	 * @throws std::length_error if `n` is greater than the maximum size of
+	 *  		  an address.
 	 */
 	sock_address_any(const sockaddr* addr, socklen_t n) {
-        // TODO: Check size of n.
+		if (n > sizeof(sockaddr_storage))
+			throw std::length_error("Address length out of range");
         std::memcpy(&addr_, addr, sz_ = n);
     }
 	/**
 	 * Constructs an address.
 	 * @param addr The buffer holding the address.
 	 * @param n The number of valid bytes in the address
+	 * @throws std::length_error if `n` is greater than the maximum size of
+	 *  		  an address.
 	 */
 	sock_address_any(const sockaddr_storage& addr, socklen_t n) {
-        // TODO: Check size of n n?
+		if (n > sizeof(sockaddr_storage))
+			throw std::length_error("Address length out of range");
         std::memcpy(&addr_, &addr, sz_ = n);
     }
 	/**

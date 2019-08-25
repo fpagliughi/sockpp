@@ -235,21 +235,7 @@ bool socket::set_option(int level, int optname, const void* optval, socklen_t op
 
 std::string socket::error_str(int err)
 {
-	char buf[1024];
-	buf[0] = '\x0';
-
-	#if defined(_WIN32)
-		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			buf, sizeof(buf), NULL);
-    #else
-    	#ifdef _GNU_SOURCE
-			strerror_r(err, buf, sizeof(buf));
-        #else
-            ignore_result(strerror_r(err, buf, sizeof(buf)));
-        #endif
-    #endif
-	return std::string(buf);
+	return sys_error::error_str(err);
 }
 
 // --------------------------------------------------------------------------
