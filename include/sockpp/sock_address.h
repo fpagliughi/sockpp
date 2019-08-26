@@ -112,12 +112,15 @@ class sock_address_any : public sock_address
 	/** Length of the address (in bytes) */
 	socklen_t sz_;
 
+	/** The maximum size of an address, in bytes */
+	static constexpr size_t MAX_SZ = sizeof(sockaddr_in);
+
 public:
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	sock_address_any() : addr_{}, sz_(0) {}
+	sock_address_any() : addr_{}, sz_{MAX_SZ} {}
 	/**
 	 * Constructs an address.
 	 * @param addr Pointer to a buffer holding the address.
@@ -126,7 +129,7 @@ public:
 	 *  		  an address.
 	 */
 	sock_address_any(const sockaddr* addr, socklen_t n) {
-		if (n > sizeof(sockaddr_storage))
+		if (n > MAX_SZ)
 			throw std::length_error("Address length out of range");
         std::memcpy(&addr_, addr, sz_ = n);
     }
@@ -138,7 +141,7 @@ public:
 	 *  		  an address.
 	 */
 	sock_address_any(const sockaddr_storage& addr, socklen_t n) {
-		if (n > sizeof(sockaddr_storage))
+		if (n > MAX_SZ)
 			throw std::length_error("Address length out of range");
         std::memcpy(&addr_, &addr, sz_ = n);
     }

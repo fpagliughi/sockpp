@@ -77,7 +77,7 @@ TEST_CASE("datagram_socket address constructor", "[datagram_socket]") {
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
 		REQUIRE(sock.last_error() == 0);
-		REQUIRE(inet_address(sock.address()) == ADDR);
+		REQUIRE(sock.address() == ADDR);
 	}
 
 	SECTION("invalid address") {

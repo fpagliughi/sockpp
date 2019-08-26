@@ -69,7 +69,6 @@ TEST_CASE("acceptor handle constructor", "[acceptor]") {
 	}
 }
 
-
 TEST_CASE("acceptor address constructor", "[acceptor]") {
 	SECTION("valid address") {
 		const auto ADDR = inet_address("localhost", 12345);
@@ -78,11 +77,11 @@ TEST_CASE("acceptor address constructor", "[acceptor]") {
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
 		REQUIRE(sock.last_error() == 0);
-		REQUIRE(inet_address(sock.address()) == ADDR);
+		REQUIRE(sock.address() == ADDR);
 	}
 
 	SECTION("invalid address") {
-		const auto ADDR = sock_address_any();
+		const auto ADDR = sock_address_any{};
 
 		acceptor sock(ADDR);
 		REQUIRE(!sock);

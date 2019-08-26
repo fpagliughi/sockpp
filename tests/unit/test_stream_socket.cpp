@@ -69,7 +69,7 @@ TEST_CASE("stream_socket handle constructor", "[stream_socket]") {
 	}
 }
 
-/*
+#if 0
 TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 	SECTION("valid address") {
 		const auto ADDR = inet_address("localhost", 12345);
@@ -78,7 +78,7 @@ TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
 		REQUIRE(sock.last_error() == 0);
-		REQUIRE(inet_address(sock.address()) == ADDR);
+		REQUIRE(sock.address() == ADDR);
 	}
 
 	SECTION("invalid address") {
@@ -90,5 +90,6 @@ TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 		REQUIRE(sock.last_error() == EAFNOSUPPORT);
 	}
 }
-*/
+#endif
+
 

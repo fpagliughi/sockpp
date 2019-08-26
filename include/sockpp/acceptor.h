@@ -120,6 +120,15 @@ public:
 	 */
 	static acceptor create(int domain);
 	/**
+	 * Move assignment.
+	 * @param rhs The other socket to move into this one.
+	 * @return A reference to this object.
+	 */
+	acceptor& operator=(acceptor&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
+	/**
 	 * Sets the socket listening on the address to which it is bound.
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
@@ -209,6 +218,15 @@ public:
 		return base::create(addr_t::ADDRESS_FAMILY);
 	}
 	/**
+	 * Move assignment.
+	 * @param rhs The other socket to move into this one.
+	 * @return A reference to this object.
+	 */
+	acceptor_tmpl& operator=(acceptor_tmpl&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
+	/**
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
 	 */
@@ -230,17 +248,17 @@ public:
 		return base::open(addr, queSize);
 	}
 	/**
-	 * Opens the acceptor socket.
-	 * This binds the socket to all adapters and starts it listening.
+	 * Opens the acceptor socket, binds the socket to all adapters and starts it
+	 * listening.
 	 * @param port The TCP port on which to listen.
 	 * @param queSize The listener queue size.
 	 * @return @em true on success, @em false on error
 	 */
-	virtual bool open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
+	bool open(in_port_t port, int queSize=DFLT_QUE_SIZE) {
 		return open(addr_t(port), queSize);
 	}
 	/**
-	 * Accepts an incoming TCP connection and gets the address of the client.
+	 * Accepts an incoming connection and gets the address of the client.
 	 * @param clientAddr Pointer to the variable that will get the
 	 *  				 address of a client when it connects.
 	 * @return A tcp_socket to the remote client.
