@@ -51,7 +51,6 @@ TEST_CASE("acceptor default constructor", "[acceptor]") {
 	REQUIRE(!sock.is_open());
 }
 
-/*
 TEST_CASE("acceptor handle constructor", "[acceptor]") {
 	constexpr auto HANDLE = socket_t(3);
 
@@ -69,7 +68,7 @@ TEST_CASE("acceptor handle constructor", "[acceptor]") {
 		REQUIRE(sock.last_error() == 0);
 	}
 }
-*/
+
 
 TEST_CASE("acceptor address constructor", "[acceptor]") {
 	SECTION("valid address") {
@@ -86,6 +85,25 @@ TEST_CASE("acceptor address constructor", "[acceptor]") {
 		const auto ADDR = sock_address_any();
 
 		acceptor sock(ADDR);
+		REQUIRE(!sock);
+		REQUIRE(!sock.is_open());
+		REQUIRE(sock.last_error() == EAFNOSUPPORT);
+	}
+}
+
+TEST_CASE("acceptor create", "[acceptor]") {
+	SECTION("valid domain") {
+		auto sock = acceptor::create(AF_INET);
+
+		REQUIRE(sock);
+		REQUIRE(sock.is_open());
+		REQUIRE(sock.last_error() == 0);
+		REQUIRE(sock.family() == AF_INET);
+	}
+
+	SECTION("invalid domain") {
+		auto sock = acceptor::create(AF_UNSPEC);
+
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
 		REQUIRE(sock.last_error() == EAFNOSUPPORT);

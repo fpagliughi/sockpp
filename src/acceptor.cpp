@@ -43,6 +43,16 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+acceptor acceptor::create(int domain)
+{
+	acceptor acc(create_handle(domain));
+	if (!acc)
+		acc.clear(get_last_error());
+	return acc;
+}
+
+// --------------------------------------------------------------------------
+
 // This attempts to open the acceptor, bind to the requested address, and
 // start listening. On any error it will be sure to leave the underlying
 // socket in an unopened/invalid state.

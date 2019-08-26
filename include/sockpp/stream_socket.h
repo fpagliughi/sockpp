@@ -93,6 +93,8 @@ public:
 	 * specified socket object and transfers ownership of the socket. 
 	 */
 	stream_socket(stream_socket&& sock) : base(std::move(sock)) {}
+
+
 	/**
 	 * Move assignment.
 	 * @param rhs The other socket to move into this one.

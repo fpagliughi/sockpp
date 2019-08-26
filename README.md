@@ -38,7 +38,7 @@ The next release will mainly target bug fixes, API inconsistencies, and numerous
 - _tcpechomt.cpp_: Example of a client sharing a socket between read and write threads - using `clone()`. 
 - Set and get socket options using template types.
 - Fixed bug in Windows `socket::last_error_string`.
-- Some more unit tests
+- More unit tests
 
 ## New in v0.6
 

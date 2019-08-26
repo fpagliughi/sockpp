@@ -62,6 +62,9 @@ namespace sockpp {
  */
 class acceptor : public socket
 {
+	/** The base class */
+	using base = socket;
+
 	// Non-copyable
 	acceptor(const acceptor&) =delete;
 	acceptor& operator=(const acceptor&) =delete;
@@ -71,10 +74,11 @@ protected:
 	static const int DFLT_QUE_SIZE = 4;
 
 	/**
-	 * Creates an acceptor socket.
+	 * Creates an underlying acceptor socket.
 	 * The acceptor uses a stream socket type, but for our purposes is not
 	 * classified (derived from) a streaming socket, since it doesn't
 	 * support read and write to the socket.
+	 * @param domain The communications domain (address family).
 	 * @return An OS handle to a stream socket.
 	 */
 	static socket_t create_handle(int domain) {
@@ -86,6 +90,12 @@ public:
 	 * Creates an unconnected acceptor.
 	 */
 	acceptor() {}
+	/**
+	 * Creates an acceptor from an existing OS socket
+	 * handle and claims ownership of the handle.
+	 * @param handle A socket handle from the operating system.
+	 */
+	explicit acceptor(socket_t handle) : base(handle) {}
     /**
      * Creates an acceptor socket and starts it listening to the specified
      * address.
@@ -95,6 +105,20 @@ public:
     acceptor(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
         open(addr, queSize);
     }
+	/**
+	 * Move constructor.
+	 * Creates an acceptor by moving the other acceptor to this one.
+	 * @param acc Another acceptor
+	 */
+	acceptor(acceptor&& acc) : base(std::move(acc)) {}
+	/**
+	 * Creates an unbound acceptor socket with an open OS socket handle.
+	 * An application would need to manually bind and listen to this
+	 * acceptor to get incoming connections.
+	 * @param domain The communications domain (address family).
+	 * @return An open, but unbound acceptor socket.
+	 */
+	static acceptor create(int domain);
 	/**
 	 * Sets the socket listening on the address to which it is bound.
 	 * @param queSize The listener queue size.
@@ -169,7 +193,21 @@ public:
 	acceptor_tmpl(in_port_t port, int queSize=DFLT_QUE_SIZE) {
 		open(port, queSize);
 	}
-
+	/**
+	 * Move constructor.
+	 * Creates an acceptor by moving the other acceptor to this one.
+	 * @param acc Another acceptor
+	 */
+	acceptor_tmpl(acceptor_tmpl&& acc) : base(std::move(acc)) {}
+	/**
+	 * Creates an unbound acceptor socket with an open OS socket handle.
+	 * An application would need to manually bind and listen to this
+	 * acceptor to get incoming connections.
+	 * @return An open, but unbound acceptor socket.
+	 */
+	static acceptor_tmpl create() {
+		return base::create(addr_t::ADDRESS_FAMILY);
+	}
 	/**
 	 * Gets the local address to which we are bound.
 	 * @return The local address to which we are bound.
