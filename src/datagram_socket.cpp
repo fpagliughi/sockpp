@@ -56,7 +56,7 @@ datagram_socket::datagram_socket(const sock_address& addr)
 	}
 
 	socket_t h = create_handle(domain);
-	if (!check_ret_bool(h))
+	if (!check_socket_bool(h))
 		return;
 
 	reset(h);

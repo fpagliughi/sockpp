@@ -62,7 +62,7 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 	}
 
 	socket_t h = stream_socket::create_handle(domain);
-	if (!check_ret_bool(h))
+	if (!check_socket_bool(h))
 		return false;
 
 	reset(h);

@@ -132,7 +132,6 @@ protected:
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
 		return ret >= 0;
 	}
-
 	/**
 	 * Checks the value and if it is not a valid socket, sets last error
 	 * @tparam T A signed integer type of any size
@@ -143,6 +142,18 @@ protected:
 	T check_socket(T ret) const {
 		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
 		return ret;
+	}
+    /**
+     * Checks the value and if it is INVALID_SOCKET, sets last error. 
+     * @tparam T A signed integer type of any size
+	 * @param ret The return value from a library or system call.
+	 * @return @em true if the value is a valid socket (not INVALID_SOCKET)
+	 *  	   or @em false is is an error (INVALID_SOCKET)
+	 */
+    template <typename T>
+	bool check_socket_bool(T ret) const{
+		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
+		return ret != INVALID_SOCKET;
 	}
 
 public:
