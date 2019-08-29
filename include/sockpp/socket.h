@@ -133,6 +133,18 @@ protected:
 		return ret >= 0;
 	}
 
+	/**
+	 * Checks the value and if it is not a valid socket, sets last error
+	 * @tparam T A signed integer type of any size
+	 * @param ret The return value from a library or system call.
+	 * @return Returns the value sent to it, `ret`.
+	 */
+	template <typename T>
+	T check_socket(T ret) const {
+		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
+		return ret;
+	}
+
 public:
 	/**
 	 * Creates an unconnected (invalid) socket
