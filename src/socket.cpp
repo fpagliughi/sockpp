@@ -47,21 +47,6 @@ using namespace std::chrono;
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-// Some platform-specific functions
-
-#if !defined(_WIN32)
-timeval to_timeval(const microseconds& dur)
-{
-	const seconds sec = duration_cast<seconds>(dur);
-
-	timeval tv;
-    tv.tv_sec  = sec.count();
-    tv.tv_usec = duration_cast<microseconds>(dur - sec).count();
-	return tv;
-}
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
 //								socket
 /////////////////////////////////////////////////////////////////////////////
 
