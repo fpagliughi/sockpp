@@ -68,7 +68,7 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 	sa_family_t domain = addr.family();
 	socket_t h = create_handle(domain);
 
-	if (!check_ret_bool(h))
+	if (!check_socket_bool(h))
 		return false;
 
 	reset(h);
@@ -99,7 +99,7 @@ stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
 	sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
     socklen_t len = clientAddr ? clientAddr->size() : 0;
 
-    socket_t s = check_ret(::accept(handle(), p, &len));
+    socket_t s = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr));
 	return stream_socket(s);
 }
 

@@ -51,7 +51,7 @@ datagram_socket::datagram_socket(const sock_address& addr)
 	auto domain = addr.family();
 	socket_t h = create_handle(domain);
 
-	if (check_ret_bool(h)) {
+	if (check_socket_bool(h)) {
 		reset(h);
 		bind(addr);
 	}
