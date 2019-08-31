@@ -133,25 +133,27 @@ protected:
 		return ret >= 0;
 	}
 	/**
-	 * Checks the value and if it is not a valid socket, sets last error
-	 * @tparam T A signed integer type of any size
-	 * @param ret The return value from a library or system call.
+	 * Checks the value and if it is not a valid socket, sets last error.
+	 * This is specifically required for Windows which uses an unsigned type
+	 * for its SOCKET.
+	 * @param ret The return value from a library or system call that returns
+	 *  		  a socket, such as socket() or accept().
 	 * @return Returns the value sent to it, `ret`.
 	 */
-	template <typename T>
-	T check_socket(T ret) const {
+	socket_t check_socket(socket_t ret) const {
 		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
 		return ret;
 	}
     /**
      * Checks the value and if it is INVALID_SOCKET, sets last error. 
-     * @tparam T A signed integer type of any size
-	 * @param ret The return value from a library or system call.
+	 * This is specifically required for Windows which uses an unsigned type
+	 * for its SOCKET.
+	 * @param ret The return value from a library or system call that returns
+	 *  		  a socket such as socket() or accept().
 	 * @return @em true if the value is a valid socket (not INVALID_SOCKET)
 	 *  	   or @em false is is an error (INVALID_SOCKET)
 	 */
-    template <typename T>
-	bool check_socket_bool(T ret) const{
+	bool check_socket_bool(socket_t ret) const{
 		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
 		return ret != INVALID_SOCKET;
 	}
