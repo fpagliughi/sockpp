@@ -48,6 +48,7 @@
 #define __sockpp_exception_h
 
 #include <stdexcept>
+#include <string>
 
 namespace sockpp {
 
