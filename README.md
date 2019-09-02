@@ -55,6 +55,12 @@ The next release will mainly target bug fixes, API inconsistencies, and numerous
 - CMake auto-generates a version header file, _version.h_
 - CI dropped tests for gcc-4.9, and added support for clang-7 and 8.
 
+## Contributing
+
+Contributions are accepted and appreciated. New and unstable work is done in the `develop` branch Please submit all pull requests against that branch, not _master_.
+
+For more information, refer to: [CONTRIBUTING.md](https://github.com/fpagliughi/sockpp/blob/master/CONTRIBUTING.md)
+
 ## TODO
 
 - **Unit Tests** - The framework for unit and regression tests is in place (using _Catch2_), along with the GitHub Travis CI integration. But the library could use a lot more tests.
