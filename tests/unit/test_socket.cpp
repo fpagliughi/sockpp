@@ -193,15 +193,15 @@ TEST_CASE("socket address", "[socket]") {
 		REQUIRE(sock.address() == sock_address_any{});
 	}
 
-	//#if 0
-	// The address has the specified family but all zeros?
+	// The address has the specified family but all zeros
 	SECTION("unbound socket") {
-	    auto sock = socket::create(AF_INET, SOCK_STREAM);
-		auto addr = sock.address();
-		sock_address_any any;
-		REQUIRE(sock.address() == sock_address_any{});
+		auto sock = socket::create(AF_INET, SOCK_STREAM);
+		auto addr = inet_address(sock.address());
+
+		REQUIRE(addr.family() == AF_INET);
+		REQUIRE(addr.address() == 0);
+		REQUIRE(addr.port() == 0);
 	}
-	//#endif
 
 	SECTION("bound socket") {
 		// Bound socket should have same family as
