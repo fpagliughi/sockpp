@@ -69,7 +69,7 @@ public:
 	/**
 	 * Creates an error using the current system 'errno' value.
 	 */
-	sys_error();
+	sys_error() : sys_error(errno) {}
 	/**
 	 * Constructs an error with the specified system errno.
 	 * @param err The error number. This is the system errno value.
@@ -80,6 +80,13 @@ public:
 	 * @return The system error number.
 	 */
 	int error() const { return errno_; }
+    /**
+     * Gets a string describing the specified error.
+     * This is typically the returned message from the system strerror().
+     * @param err The system error number.
+     * @return A string describing the specified error.
+     */
+    static std::string error_str(int err);
 };
 
 /**

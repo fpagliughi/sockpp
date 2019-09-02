@@ -1,9 +1,12 @@
-// datagram_socket.cpp
+// test_connector.cpp
 //
+// Unit tests for the `connector` class(es).
+//
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2019 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,48 +36,25 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
-#include "sockpp/datagram_socket.h"
-#include "sockpp/exception.h"
-#include <algorithm>
+#include "catch2/catch.hpp"
+#include "sockpp/connector.h"
+#include "sockpp/sock_address.h"
+#include <string>
 
-using namespace std::chrono;
+using namespace sockpp;
 
-namespace sockpp {
+// Test that connector errors properly when given an empty address.
+TEST_CASE("connector unspecified address", "[connector]") {
+	connector conn;
+	REQUIRE(!conn);
 
-/////////////////////////////////////////////////////////////////////////////
-//								udp_socket
-/////////////////////////////////////////////////////////////////////////////
+	sock_address_any addr;
 
-datagram_socket::datagram_socket(const sock_address& addr)
-{
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
-
-	if (check_socket_bool(h)) {
-		reset(h);
-		bind(addr);
-	}
+	bool ok = conn.connect(addr);
+	REQUIRE(!ok);
+	REQUIRE(conn.last_error() == EAFNOSUPPORT);
 }
 
-// --------------------------------------------------------------------------
-
-ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
-								   sock_address* srcAddr /*=nullptr*/)
-{
-	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
-    socklen_t len = srcAddr ? srcAddr->size() : 0;
-
-	// TODO: Check returned length
-    #if defined(_WIN32)
-        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
-                                    int(n), flags, p, &len));
-    #else
-        return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
-    #endif
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
-}
 

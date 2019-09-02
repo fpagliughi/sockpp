@@ -186,8 +186,11 @@ sock_address_any socket::address() const
 {
     auto addrStore = sockaddr_storage{};
 	socklen_t len = sizeof(sockaddr_storage);
-	check_ret(::getsockname(handle_,
-        reinterpret_cast<sockaddr*>(&addrStore), &len));
+
+	if (!check_ret_bool(::getsockname(handle_,
+				reinterpret_cast<sockaddr*>(&addrStore), &len)))
+		return sock_address_any{};
+
     return sock_address_any(addrStore, len);
 }
 
@@ -198,8 +201,11 @@ sock_address_any socket::peer_address() const
 {
     auto addrStore = sockaddr_storage{};
 	socklen_t len = sizeof(sockaddr_storage);
-	check_ret(::getpeername(handle_,
-        reinterpret_cast<sockaddr*>(&addrStore), &len));
+
+	if (!check_ret_bool(::getpeername(handle_,
+				reinterpret_cast<sockaddr*>(&addrStore), &len)))
+		return sock_address_any{};
+
     return sock_address_any(addrStore, len);
 }
 
@@ -235,21 +241,7 @@ bool socket::set_option(int level, int optname, const void* optval, socklen_t op
 
 std::string socket::error_str(int err)
 {
-	char buf[1024];
-	buf[0] = '\x0';
-
-	#if defined(_WIN32)
-		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			buf, sizeof(buf), NULL);
-    #else
-    	#ifdef _GNU_SOURCE
-			strerror_r(err, buf, sizeof(buf));
-        #else
-            ignore_result(strerror_r(err, buf, sizeof(buf)));
-        #endif
-    #endif
-	return std::string(buf);
+	return sys_error::error_str(err);
 }
 
 // --------------------------------------------------------------------------

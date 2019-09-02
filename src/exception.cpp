@@ -46,16 +46,31 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-sys_error::sys_error() : sys_error(errno)
+sys_error::sys_error(int err) : runtime_error(error_str(err)), errno_(err)
 {
 }
 
-// TODO: Replace strerror() with a thread-safe call.
+// --------------------------------------------------------------------------
+// Get a string description of the specified system error.
 
-sys_error::sys_error(int err) : runtime_error(strerror(err)), errno_(err)
+std::string sys_error::error_str(int err)
 {
-}
+	char buf[1024];
+	buf[0] = '\x0';
 
+	#if defined(_WIN32)
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			buf, sizeof(buf), NULL);
+    #else
+    	#ifdef _GNU_SOURCE
+			strerror_r(err, buf, sizeof(buf));
+        #else
+            ignore_result(strerror_r(err, buf, sizeof(buf)));
+        #endif
+    #endif
+	return std::string(buf);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 

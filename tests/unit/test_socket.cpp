@@ -42,11 +42,6 @@
 #include "sockpp/socket.h"
 #include "sockpp/inet_address.h"
 #include <string>
-/*
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-*/
 
 using namespace sockpp;
 
@@ -92,30 +87,44 @@ TEST_CASE("socket constructors", "[socket]") {
 
 // Test the socket error behavior
 TEST_CASE("socket errors", "[socket]") {
-	sockpp::socket sock;
+	SECTION("basic errors") {
+    	sockpp::socket sock;
 
-	// Operations on an unopened socket should give an error
-	int reuse = 1;
-	socklen_t len = sizeof(int);
-	bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
+    	// Operations on an unopened socket should give an error
+    	int reuse = 1;
+    	socklen_t len = sizeof(int);
+    	bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
 
-	// Socket should be in error state
-	REQUIRE(!ok);
-	REQUIRE(!sock);
+    	// Socket should be in error state
+    	REQUIRE(!ok);
+    	REQUIRE(!sock);
 
-	int err = sock.last_error();
-	REQUIRE(err != 0);
+    	int err = sock.last_error();
+    	REQUIRE(err != 0);
 
-	// last_error() is sticky, unlike `errno`
-	REQUIRE(sock.last_error() == err);
+    	// last_error() is sticky, unlike `errno`
+    	REQUIRE(sock.last_error() == err);
 
-	// We can clear the error
-	sock.clear();
-	REQUIRE(sock.last_error() == 0);
+    	// We can clear the error
+    	sock.clear();
+    	REQUIRE(sock.last_error() == 0);
 
-	// Test arbitrary clear value
-	sock.clear(42);
-	REQUIRE(sock.last_error() == 42);
+    	// Test arbitrary clear value
+    	sock.clear(42);
+    	REQUIRE(sock.last_error() == 42);
+    	REQUIRE(!sock);
+	}
+
+	SECTION("clear error") {
+		auto sock = sockpp::socket::create(AF_INET, SOCK_STREAM);
+		REQUIRE(sock);
+
+		sock.clear(42);
+		REQUIRE(!sock);
+
+		sock.clear();
+		REQUIRE(sock);
+	}
 }
 
 TEST_CASE("socket handles", "[socket]") {
@@ -159,7 +168,7 @@ TEST_CASE("socket family", "[socket]") {
 	}
 
 	SECTION("unbound socket") {
-		// Unbound socket shouls have creation family
+		// Unbound socket should have creation family
 		auto sock = socket::create(AF_INET, SOCK_STREAM);
 		REQUIRE(sock.family() == AF_INET);
 	}
@@ -174,6 +183,37 @@ TEST_CASE("socket family", "[socket]") {
 		REQUIRE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
 		REQUIRE(sock.bind(addr));
 		REQUIRE(sock.family() == addr.family());
+	}
+}
+
+TEST_CASE("socket address", "[socket]") {
+	SECTION("uninitialized socket") {
+		// Uninitialized socket should have empty address
+		sockpp::socket sock;
+		REQUIRE(sock.address() == sock_address_any{});
+	}
+
+	//#if 0
+	// The address has the specified family but all zeros?
+	SECTION("unbound socket") {
+	    auto sock = socket::create(AF_INET, SOCK_STREAM);
+		auto addr = sock.address();
+		sock_address_any any;
+		REQUIRE(sock.address() == sock_address_any{});
+	}
+	//#endif
+
+	SECTION("bound socket") {
+		// Bound socket should have same family as
+		// address to which it's bound
+		auto sock = socket::create(AF_INET, SOCK_STREAM);
+		const inet_address ADDR(INET_TEST_PORT);
+
+		int reuse = 1;
+		REQUIRE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
+
+		REQUIRE(sock.bind(ADDR));
+		REQUIRE(sock.address() == ADDR);
 	}
 }
 

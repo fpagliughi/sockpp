@@ -45,10 +45,8 @@ bool connector::connect(const sock_address& addr)
     sa_family_t domain = addr.family();
 	socket_t h = create_handle(domain);
 
-	if (h == INVALID_SOCKET) {
-		set_last_error();
+	if (!check_ret_bool(h))
 		return false;
-	}
 
 	// This will close the old connection, if any.
 	reset(h);

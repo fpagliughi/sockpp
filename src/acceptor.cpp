@@ -43,6 +43,16 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+acceptor acceptor::create(int domain)
+{
+	acceptor acc(create_handle(domain));
+	if (!acc)
+		acc.clear(get_last_error());
+	return acc;
+}
+
+// --------------------------------------------------------------------------
+
 // This attempts to open the acceptor, bind to the requested address, and
 // start listening. On any error it will be sure to leave the underlying
 // socket in an unopened/invalid state.
@@ -56,13 +66,9 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 		return true;
 
 	sa_family_t domain = addr.family();
-	if (domain == AF_UNSPEC) {
-		clear(EADDRNOTAVAIL);
-		return false;
-	}
+	socket_t h = create_handle(domain);
 
-	socket_t h = stream_socket::create_handle(domain);
-	if (!check_ret_bool(h))
+	if (!check_socket_bool(h))
 		return false;
 
 	reset(h);
@@ -93,7 +99,7 @@ stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
 	sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
     socklen_t len = clientAddr ? clientAddr->size() : 0;
 
-    socket_t s = check_ret(::accept(handle(), p, &len));
+    socket_t s = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr));
 	return stream_socket(s);
 }
 

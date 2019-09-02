@@ -8,6 +8,8 @@ This is a fairly low-level C++ wrapper around the Berkeley sockets library using
 
 The base `socket` wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope (or thread) to another using `std::move()`.
 
+Currently supports: IPv4, IPv6, and Unix-Domain Sockets on Linux, Mac, and Windows.
+
 All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
@@ -36,7 +38,7 @@ The next release will mainly target bug fixes, API inconsistencies, and numerous
 - _tcpechomt.cpp_: Example of a client sharing a socket between read and write threads - using `clone()`. 
 - Set and get socket options using template types.
 - Fixed bug in Windows `socket::last_error_string`.
-- Some more unit tests
+- More unit tests
 
 ## New in v0.6
 
@@ -104,7 +106,7 @@ Conversely, to create a TCP client, a connector object is created and connected 
 
 For IPv4 the `tcp_acceptor` and `tcp_connector` classes are used to create servers and clients, respectively. These use the `inet_address` class to specify endpoint addresses composed of a 32-bit host address and a 16-bit port number.
 
-### TCP server: `tcp_acceptor`
+### TCP Server: `tcp_acceptor`
 
 The `tcp_acceptor` is used to set up a server and listen for incoming connections.
 
@@ -136,6 +138,8 @@ The acceptor normally sits in a loop accepting new connections, and passes them 
 
 The hazards of a thread-per-connection design is well documented, but the same technique can be used to pass the socket into a thread pool, if one is available.
 
+See the [tcpechosvr.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/tcp/tcpechosvr.cpp) example.
+
 ### TCP Client: `tcp_connector`
 
 The TCP client is somewhat simpler in that a `tcp_connector` object is created and connected, then can be used to read and write data directly.
@@ -144,12 +148,14 @@ The TCP client is somewhat simpler in that a `tcp_connector` object is created a
     int16_t port = 12345;
 
     if (!conn.connect(sockpp::inet_address("localhost", port)))
-        report_error(acc.last_error_str());
+        report_error(conn.last_error_str());
 
     conn.write_n("Hello", 5);
 
     char buf[16];
     ssize_t n = conn.read(buf, sizeof(buf));
+
+See the [tcpecho.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/tcp/tcpecho.cpp) example.
 
 ### UDP Socket: `udp_socket`
 
@@ -166,7 +172,7 @@ UDP sockets can be used for connectionless communications:
     char buf[16];
     ssize_t n = sock.recv(buf, sizeof(buf), &srcAddr);
 
-
+See the [udpecho.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/udp/udpecho.cpp) and [udpechosvr.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/udp/udpechosvr.cpp) examples.
 ### IPv6
 
 The same style of  connectors and acceptors can be used for TCP connections over IPv6 using the classes:
@@ -176,6 +182,8 @@ The same style of  connectors and acceptors can be used for TCP connections over
     tcp6_acceptor
     tcp6_socket
     udp6_socket
+    
+Examples are in the [examples/tcp](https://github.com/fpagliughi/sockpp/tree/master/examples/tcp) directory.
 
 ### Unix Domain Sockets
 
@@ -186,3 +194,52 @@ The same is true for local connection on *nix systems that implement Unix Domain
     unix_acceptor
     unix_socket  (unix_stream_socket)
     unix_dgram_socket
+
+Examples are in the [examples/unix](https://github.com/fpagliughi/sockpp/tree/master/examples/unix) directory.
+
+## Implementation Details
+
+The socket class hierarchy is built upon a base `socket` class. Most simple applications will probably not use `socket` directly, but rather use top-level classes defined for a specific address family like `tcp_connector` and `tcp_acceptor`.
+
+The socket objects keep a handle to an underlying OS socket handle and a cached value for the last error that occurred for that socket. The socket handle is typically an integer file descriptor, with values >=0 for open sockets, and -1 for an unopened or invalid socket. The value used for unopened sockets is defined as a constant, `INVALID_SOCKET`, although it usually doesn't need to be tested directly, as the object itself will evaluate to _false_ if it's uninitialized or in an error state. A typical error check would be like this:
+
+    tcp_connector conn({"localhost", 12345});
+
+    if (!conn)
+        cerr << conn.last_error_str() << std::endl;
+
+The default constructors for each of the socket classes do nothing, and simply set the underlying handle to `INVALID_SOCKET`. They do not create a socket object. The call to actively connect a `connector` object or open an `acceptor` object will create an underlying OS socket and then perform the requested operation.
+
+An application can generally perform most low-level operations with the library. Unconnected and unbound sockets can be created with the static `create()` function in most of the classes, and then manually bind and listen on those sockets.
+
+The `socket::handle()` method exposes the underlying OS handle which can then be sent to any platform API call that is not exposed by the library.
+
+### Thread Safety
+
+A socket object is not thread-safe. Applications that want to have multiple threads reading from a socket or writing to a socket should use some form of serialization, such as a `std::mutex` to protect access.
+
+A `socket` can be _moved_ from one thread to another safely. This is a common pattern for a server which uses one thread to accept incoming connections and then passes off the new socket to another thread or thread pool for handling. This can be done like:
+
+    sockpp::tcp6_socket sock = acc.accept(&peer);
+
+    // Create a thread and transfer the new socket to it.
+    std::thread thr(handle_connection, std::move(sock));
+
+In this case, _handle_connection_ would be a function that takes a socket by value, like:
+
+    void handle_connection(sockpp::tcp6_socket sock) { ... }
+
+Since a `socket` can not be copied, the only choice would be to move the socket to a function like this.
+
+It is a common patern, especially in client applications, to have one thread to read from a socket and another thread to write to the socket. In this case the underlying socket handle can be considered thread safe (one read thread and one write thread). But even in this scenario, a `sockpp::socket` object is still not thread-safe due especially to the cached error value. The write thread might see an error that happened on the read thread and visa versa.
+
+The solution for this case is to use the `socket::clone()` method to make a copy of the socket. This will use the system's `dup()` function or similar create another socket with a duplicated copy of the socket handle. This has the added benefit that each copy of the socket can maintain an independent lifetime. The underlying socket will not be closed until both objects go out of scope.
+
+    sockpp::tcp_connector conn({host, port});
+    
+    auto rdSock = conn.clone();
+    std::thread rdThr(read_thread_func, std::move(rdSock));
+
+The `socket::shutdown()` method can be used to communicate the intent to close the socket from one of these objects to the other without needing another thread signaling mechanism. 
+
+See the [tcpechomt.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/tcp/tcpechomt.cpp) example.

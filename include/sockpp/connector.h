@@ -87,6 +87,15 @@ public:
 	 */
 	connector(connector&& conn) : base(std::move(conn)) {}
 	/**
+	 * Move assignment.
+	 * @param rhs The other connector to move into this one.
+	 * @return A reference to this object.
+	 */
+	connector& operator=(connector&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
+	/**
 	 * Determines if the socket connected to a remote host.
 	 * Note that this is not a reliable determination if the socket is
 	 * currently connected, but rather that an initial connection was
@@ -136,6 +145,15 @@ public:
 	 * @param addr The remote server address.
 	 */
 	connector_tmpl(const addr_t& addr) : base(addr) {}
+	/**
+	 * Move assignment.
+	 * @param rhs The other connector to move into this one.
+	 * @return A reference to this object.
+	 */
+	connector_tmpl& operator=(connector_tmpl&& rhs) {
+		base::operator=(std::move(rhs));
+		return *this;
+	}
 	/**
 	 * Gets the local address to which the socket is bound.
 	 * @return The local address to which the socket is bound.

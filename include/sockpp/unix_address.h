@@ -177,30 +177,6 @@ public:
 // --------------------------------------------------------------------------
 
 /**
- * Equality comparator.
- * This does a bitwise comparison.
- * @param lhs The first address to compare.
- * @param rhs The second address to compare.
- * @return @em true if they are binary equivalent, @em false if not.
- */
-inline bool operator==(const unix_address& lhs, const unix_address& rhs) {
-	return (&lhs == &rhs) ||
-		(std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), sizeof(sockaddr_un)) == 0);
-}
-
-/**
- * Inequality comparator.
- * This does a bitwise comparison.
- * @param lhs The first address to compare.
- * @param rhs The second address to compare.
- * @return @em true if they are binary different, @em false if they are
- *  	   equivalent.
- */
-inline bool operator!=(const unix_address& lhs, const unix_address& rhs) {
-	return !operator==(lhs, rhs);
-}
-
-/**
  * Stream inserter for the address.
  * @param os The output stream
  * @param addr The address
