@@ -55,6 +55,51 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Result of a thread-safe read or write.
+ * (@ref read_r, @ref read_n_r, @ref write_r, @ref write_n_r)
+ */
+class ioresult {
+	size_t cnt_ = 0;		///< Byte count, or 0 on error or EOF
+	int err_ = 0;			///< errno value (0 if no error or EOF)
+
+public:
+	/** Creates an empty result */
+	ioresult() = default;
+
+	/**
+	 * Creates a result from the return value of a low-level I/O function.
+	 * @param n The number of bytes read or written. If <0, then an error is
+	 *  		assumed and obtained from socket::get_last_error().
+	 *
+	 */
+	explicit inline ioresult(ssize_t n) {
+		if (n < 0)
+			err_ = socket::get_last_error();
+		else
+			cnt_ = size_t(n);
+	}
+
+	/** Sets the error value */
+	void set_error(int e) { err_ = e; }
+
+	/** Increments the count */
+	void incr(size_t n) { cnt_ += n; }
+
+	/** Determines if the result is OK (not an error) */
+	bool is_ok() const { return err_ == 0; }
+	/** Determines if the result is an error */
+	bool is_err() const { return err_ != 0; }
+
+	/** Gets the count */
+	size_t count() const { return cnt_; }
+
+	/** Gets the error */
+	int error() const { return err_; }
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+/**
  * Base class for streaming sockets, such as TCP and Unix Domain.
  * This is the streaming connection between two peers. It looks like a
  * readable/writeable device.
@@ -94,8 +139,6 @@ public:
 	 * specified socket object and transfers ownership of the socket. 
 	 */
 	stream_socket(stream_socket&& sock) : base(std::move(sock)) {}
-
-
 	/**
 	 * Creates a socket with the specified communications characterics.
 	 * Not that this is not normally how a socket is creates in the sockpp
@@ -113,7 +156,6 @@ public:
 	 *  	   characteristics.
 	 */
 	static stream_socket create(int domain, int protocol=0);
-
 	/**
 	 * Move assignment.
 	 * @param rhs The other socket to move into this one.
@@ -139,12 +181,22 @@ public:
 		return stream_socket(h);
 	}
 	/**
-	 * Reads from the port
+	 * Reads from the socket.
 	 * @param buf Buffer to get the incoming data.
 	 * @param n The number of bytes to try to read.
 	 * @return The number of bytes read on success, or @em -1 on error.
 	 */
 	virtual ssize_t read(void *buf, size_t n);
+	/**
+	 * Read that returns the error code on a failure.
+	 * This is the same as a standard @ref read, but returns the error code
+	 * directly on a failure.
+	 * @param buf Buffer to get the incoming data.
+	 * @param n The number of bytes to try to read.
+	 * @return The result of the operation. On success, the number of bytes
+	 *  	   read; on failure the error code.
+	 */
+    virtual ioresult read_r(void *buf, size_t n);
 	/**
 	 * Best effort attempts to read the specified number of bytes.
 	 * This will make repeated read attempts until all the bytes are read in
@@ -155,6 +207,19 @@ public:
 	 *  	   successful, the number of bytes read should always be 'n'.
 	 */
 	virtual ssize_t read_n(void *buf, size_t n);
+	/**
+	 * Best effort attempts to read the specified number of bytes, returning
+	 * the error code on failure.
+	 * This will make repeated read attempts until all the bytes are read in
+	 * or until an error occurs. It's the same as @ref read_n, but returns
+	 * the error code on failure.
+	 *
+	 * @param buf Buffer to get the incoming data.
+	 * @param n The number of bytes to try to read.
+	 * @return The number of bytes read on success, or @em -1 on error. If
+	 *  	   successful, the number of bytes read should always be 'n'.
+	 */
+    virtual ioresult read_n_r(void *buf, size_t n);
     /**
      * Reads discontiguous memory ranges from the socket.
      * @param ranges The vector of memory ranges to fill
@@ -188,13 +253,30 @@ public:
 	 */
 	virtual ssize_t write(const void *buf, size_t n);
 	/**
+	 * Writes the buffer to the socket, returning the error code on failure.
+	 * @param buf The buffer to write
+	 * @param n The number of bytes in the buffer.
+	 * @return The number of bytes written, or @em -1 on error.
+	 */
+    virtual ioresult write_r(const void *buf, size_t n);
+	/**
 	 * Best effort attempt to write the whole buffer to the socket.
 	 * @param buf The buffer to write
 	 * @param n The number of bytes in the buffer.
-	 * @return The number of bytes written, or @em -1 on error. If
-	 *  	   successful, the number of bytes written should always be 'n'.
+	 * @return The number of bytes written, or @em -1 on error. On success,
+	 *  	   the number of bytes written should always be 'n'.
 	 */
 	virtual ssize_t write_n(const void *buf, size_t n);
+	/**
+	 * Best effort attempt to write the whole buffer to the socket,
+	 * returning the error code on error.
+	 * @param buf The buffer to write
+	 * @param n The number of bytes in the buffer.
+	 * @return An I/O result with number of bytes written, or the error code
+	 *  	   on failure. On success, the number of bytes written should
+	 *  	   always be 'n'.
+	 */
+    virtual ioresult write_n_r(const void *buf, size_t n);
 	/**
 	 * Best effort attempt to write a string to the socket.
 	 * @param s The string to write.

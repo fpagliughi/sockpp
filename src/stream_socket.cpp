@@ -70,6 +70,18 @@ ssize_t stream_socket::read(void *buf, size_t n)
 }
 
 // --------------------------------------------------------------------------
+
+ioresult stream_socket::read_r(void *buf, size_t n)
+{
+    #if defined(_WIN32)
+        return ioresult(::recv(handle(), reinterpret_cast<char*>(buf),
+                               int(n), 0));
+    #else
+        return ioresult(::recv(handle(), buf, n, 0));
+    #endif
+}
+
+// --------------------------------------------------------------------------
 // Attempts to read the requested number of bytes by repeatedly calling
 // read() until it has the data or an error occurs.
 //
@@ -94,6 +106,24 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 	return (nr == 0 && nx < 0) ? nx : ssize_t(nr);
 }
 
+// --------------------------------------------------------------------------
+
+ioresult stream_socket::read_n_r(void *buf, size_t n)
+{
+    ioresult res;
+	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
+
+	while (res.count() < n) {
+        ioresult r = read_r(b + res.count(), n - res.count());
+		if (r.is_err() && r.error() != EINTR) {
+            res.set_error(r.error());
+			break;
+        }
+		res.incr(r.count());
+	}
+
+	return res;
+}
 
 // --------------------------------------------------------------------------
 
@@ -117,7 +147,8 @@ ssize_t stream_socket::read(const std::vector<iovec>& ranges)
 			  nread = 0,
 			  nbuf = DWORD(bufs.size());
 
-		auto ret = check_ret(::WSARecv(handle(), bufs.data(), nbuf, &nread, &flags, nullptr, nullptr));
+		auto ret = check_ret(::WSARecv(handle(), bufs.data(), nbuf, &nread,
+									    &flags, nullptr, nullptr));
 		return ssize_t(ret == SOCKET_ERROR ? ret : nread);
 	#endif
 }
@@ -143,8 +174,20 @@ ssize_t stream_socket::write(const void *buf, size_t n)
 		return check_ret(::send(handle(), reinterpret_cast<const char*>(buf),
 								int(n) , 0));
 	#else
-		return check_ret(::send(handle(), buf, n , 0));
+		return check_ret(::send(handle(), buf, n, 0));
 	#endif
+}
+
+// --------------------------------------------------------------------------
+
+ioresult stream_socket::write_r(const void *buf, size_t n)
+{
+    #if defined(_WIN32)
+        return ioresult(::send(handle(), reinterpret_cast<const char*>(buf),
+                               int(n) , 0));
+    #else
+        return ioresult(::send(handle(), buf, n, 0));
+    #endif
 }
 
 // --------------------------------------------------------------------------
@@ -173,6 +216,25 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 
 // --------------------------------------------------------------------------
 
+ioresult stream_socket::write_n_r(const void *buf, size_t n)
+{
+    ioresult res;
+	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
+
+	while (res.count() < n) {
+        ioresult r = write_r(b + res.count(), n - res.count());
+		if (r.is_err() && r.error() != EINTR) {
+			res.set_error(r.error());
+			break;
+		}
+		res.incr(r.count());
+	}
+
+	return res;
+}
+
+// --------------------------------------------------------------------------
+
 ssize_t stream_socket::write(const std::vector<iovec>& ranges)
 {
 	if (ranges.empty())
@@ -190,13 +252,13 @@ ssize_t stream_socket::write(const std::vector<iovec>& ranges)
 		}
 
 		DWORD nwritten = 0,
-			nmsg = DWORD(bufs.size());
+			  nmsg = DWORD(bufs.size());
 
-		auto ret = check_ret(::WSASend(handle(), bufs.data(), nmsg, &nwritten, 0, nullptr, nullptr));
+		auto ret = check_ret(::WSASend(handle(), bufs.data(), nmsg,
+									   &nwritten, 0, nullptr, nullptr));
 		return ssize_t(ret == SOCKET_ERROR ? ret : nwritten);
 	#endif
 }
-
 
 // --------------------------------------------------------------------------
 
