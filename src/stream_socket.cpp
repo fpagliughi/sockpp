@@ -58,6 +58,16 @@ ssize_t stream_socket::read(void *buf, size_t n)
     #endif
 }
 
+ioresult stream_socket::read_r(void *buf, size_t n)
+{
+    #if defined(_WIN32)
+        return ioresult(::recv(handle(), reinterpret_cast<char*>(buf),
+                               int(n), 0));
+    #else
+        return ioresult(::recv(handle(), buf, n, 0));
+    #endif
+}
+
 // --------------------------------------------------------------------------
 // Attempts to read the requested number of bytes by repeatedly calling
 // read() until it has the data or an error occurs.
@@ -81,6 +91,23 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 	}
 
 	return (nr == 0 && nx < 0) ? nx : ssize_t(nr);
+}
+
+ioresult stream_socket::read_n_r(void *buf, size_t n)
+{
+    ioresult result;
+	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
+
+	while (result.count < n) {
+        ioresult r = read_r(b + result.count, n - result.count);
+		if (r.count == 0) {
+            result.error = r.error;
+			break;
+        }
+		result.count += r.count;
+	}
+
+	return result;
 }
 
 // --------------------------------------------------------------------------
@@ -108,6 +135,16 @@ ssize_t stream_socket::write(const void *buf, size_t n)
     #endif
 }
 
+ioresult stream_socket::write_r(const void *buf, size_t n)
+{
+    #if defined(_WIN32)
+        return ioresult(::send(handle(), reinterpret_cast<const char*>(buf),
+                               int(n) , 0));
+    #else
+        return ioresult(::send(handle(), buf, n , 0));
+    #endif
+}
+
 // --------------------------------------------------------------------------
 // Attempts to write the entire buffer by repeatedly calling write() until
 // either all of the data is sent or an error occurs.
@@ -130,6 +167,23 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 	}
 
 	return (nw == 0 && nx < 0) ? nx : ssize_t(nw);
+}
+
+ioresult stream_socket::write_n_r(const void *buf, size_t n)
+{
+    ioresult result;
+	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
+
+	while (result.count < n) {
+        ioresult r = write_r(b + result.count, n - result.count);
+		if (r.count == 0) {
+            result.error = r.error;
+			break;
+        }
+		result.count += r.count;
+	}
+
+	return result;
 }
 
 // --------------------------------------------------------------------------
@@ -175,6 +229,8 @@ bool stream_socket::write_timeout(const microseconds& to)
 
     return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
 }
+
+    
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

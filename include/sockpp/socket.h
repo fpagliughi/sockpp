@@ -452,7 +452,9 @@ public:
 	 * used again until reassigned.
 	 * @return @em true if the sock is closed, @em false on error.
 	 */
-	bool close();
+	virtual bool close();
+
+    friend struct ioresult;
 };
 
 /////////////////////////////////////////////////////////////////////////////
