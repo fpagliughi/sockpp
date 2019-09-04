@@ -47,6 +47,7 @@
 #ifndef __sockpp_exception_h
 #define __sockpp_exception_h
 
+#include <cerrno>
 #include <stdexcept>
 #include <string>
 
