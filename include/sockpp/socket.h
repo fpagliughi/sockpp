@@ -86,8 +86,9 @@ class socket
 	/**
 	 * The OS-specific function to close a socket handle/
 	 * @param h The OS socket handle.
+	 * @return @em true if the sock is closed, @em false on error.
 	 */
-	void close(socket_t h);
+	bool close(socket_t h);
 
 	// Non-copyable.
 	socket(const socket&) =delete;
@@ -416,14 +417,16 @@ public:
 	 *  	@li SHUT_RD   (0) Further reads disallowed.
 	 *  	@li SHUT_WR   (1) Further writes disallowed
 	 *  	@li SHUT_RDWR (2) Further reads and writes disallowed.
+	 * @return @em true on success, @em false on error.
 	 */
-	void shutdown(int how=SHUT_RDWR);
+	bool shutdown(int how=SHUT_RDWR);
 	/**
 	 * Closes the socket.
 	 * After closing the socket, the handle is @em invalid, and can not be
 	 * used again until reassigned.
+	 * @return @em true if the sock is closed, @em false on error.
 	 */
-	void close();
+	bool close();
 };
 
 /////////////////////////////////////////////////////////////////////////////

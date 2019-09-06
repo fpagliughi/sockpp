@@ -77,13 +77,15 @@ int socket::get_last_error()
 
 // --------------------------------------------------------------------------
 
-void socket::close(socket_t h)
+bool socket::close(socket_t h)
 {
-	#if defined(_WIN32)
-		::closesocket(h);
-	#else
-		::close(h);
-	#endif
+	return check_ret_bool(
+		#if defined(_WIN32)
+			::closesocket(h);
+		#else
+			::close(h)
+		#endif
+	);
 }
 
 // --------------------------------------------------------------------------
@@ -169,6 +171,7 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/)
 	handle_ = h;
 	if (oh != INVALID_SOCKET)
 		close(oh);
+	clear();
 }
 
 // --------------------------------------------------------------------------
@@ -247,20 +250,21 @@ std::string socket::error_str(int err)
 // --------------------------------------------------------------------------
 // Shuts down all or part of the connection.
 
-void socket::shutdown(int how /*=SHUT_RDWR*/)
+bool socket::shutdown(int how /*=SHUT_RDWR*/)
 {
-	::shutdown(handle_, how);
+	return check_ret_bool(::shutdown(handle_, how));
 }
 
 // --------------------------------------------------------------------------
 // Closes the socket
 
-void socket::close()
+bool socket::close()
 {
-	if (handle_ != INVALID_SOCKET) {
-		socket_t h = release();
-		close(h);
-	}
+	if (handle_ == INVALID_SOCKET)
+		return true;
+
+	socket_t h = release();
+	return close(h);
 }
 
 /////////////////////////////////////////////////////////////////////////////

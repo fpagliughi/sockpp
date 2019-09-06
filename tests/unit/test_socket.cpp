@@ -144,7 +144,6 @@ TEST_CASE("socket handles", "[socket]") {
 
 	SECTION("test reset") {
 		sockpp::socket sock(HANDLE);
-
 		REQUIRE(sock.handle() == HANDLE);
 
 		sock.reset();	// Default reset acts like release w/o return
