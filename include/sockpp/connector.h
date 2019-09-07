@@ -69,6 +69,8 @@ class connector : public stream_socket
 	connector(const connector&) =delete;
 	connector& operator=(const connector&) =delete;
 
+    bool recreate(const sock_address& addr);
+
 public:
 	/**
 	 * Creates an unconnected connector.
@@ -80,6 +82,14 @@ public:
 	 * @param addr The remote server address.
 	 */
 	connector(const sock_address& addr) { connect(addr); }
+	/**
+	 * Creates the connector and attempts to connect to the specified
+	 * address, with a timeout.
+     * If the operation times out, the \ref last_error will be set to ETIMEOUT.
+	 * @param addr The remote server address.
+     * @param t The duration after which to give up. Zero means never.
+	 */
+	connector(const sock_address& addr, std::chrono::milliseconds t) { connect(addr, t); }
 	/**
 	 * Move constructor.
 	 * Creates a connector by moving the other connector to this one.
@@ -112,6 +122,16 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool connect(const sock_address& addr);
+	/**
+     * Attempts to connect to the specified server, with a timeout.
+     * If the socket is currently connected, this will close the current
+     * connection and open the new one.
+     * If the operation times out, the \ref last_error will be set to ETIMEOUT.
+	 * @param addr The remote server address.
+     * @param timeout The duration after which to give up. Zero means never.
+	 * @return @em true on success, @em false on error
+	 */
+	bool connect(const sock_address& addr, std::chrono::microseconds timeout);
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -188,6 +208,18 @@ public:
 	 * @return @em true on success, @em false on error
 	 */
 	bool connect(const addr_t& addr) { return base::connect(addr); }
+	/**
+     * Attempts to connect to the specified server, with a timeout.
+     * If the socket is currently connected, this will close the current
+     * connection and open the new one.
+     * If the operation times out, the \ref last_error will be set to ETIMEOUT.
+	 * @param addr The remote server address.
+     * @param timeout The duration after which to give up. Zero means never.
+	 * @return @em true on success, @em false on error
+	 */
+	bool connect(const addr_t& addr, std::chrono::microseconds timeout) {
+        return base::connect(addr, timeout);
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////
