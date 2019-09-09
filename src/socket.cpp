@@ -79,13 +79,11 @@ int socket::get_last_error()
 
 bool socket::close(socket_t h)
 {
-	return check_ret_bool(
-		#if defined(_WIN32)
-			::closesocket(h);
-		#else
-			::close(h)
-		#endif
-	);
+    #if defined(_WIN32)
+        return ::closesocket(h) >= 0;
+    #else
+        return ::close(h) >= 0;
+    #endif
 }
 
 // --------------------------------------------------------------------------
@@ -256,7 +254,7 @@ bool socket::shutdown(int how /*=SHUT_RDWR*/)
 }
 
 // --------------------------------------------------------------------------
-// Closes the socket
+// Closes the socket and updates lastErr_
 
 bool socket::close()
 {
@@ -264,7 +262,12 @@ bool socket::close()
 		return true;
 
 	socket_t h = release();
-	return close(h);
+    if (close(h))
+        return true;
+
+    if (lastErr_ == 0)          // Preserve any pre-existing error
+        set_last_error();
+    return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////
