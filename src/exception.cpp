@@ -37,7 +37,6 @@
 
 #include "sockpp/exception.h"
 #include "sockpp/platform.h"
-#include <errno.h>
 #include <cstring>
 
 // Used to explicitly ignore the returned value of a function call.

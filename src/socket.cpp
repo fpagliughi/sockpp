@@ -55,8 +55,8 @@ timeval to_timeval(const microseconds& dur)
 	const seconds sec = duration_cast<seconds>(dur);
 
 	timeval tv;
-    tv.tv_sec  = sec.count();
-    tv.tv_usec = int(duration_cast<microseconds>(dur - sec).count());
+    tv.tv_sec  = time_t(sec.count());
+    tv.tv_usec = suseconds_t(duration_cast<microseconds>(dur - sec).count());
 	return tv;
 }
 #endif

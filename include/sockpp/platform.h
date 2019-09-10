@@ -95,7 +95,7 @@
 	#include <arpa/inet.h>
 	#include <netdb.h>
 	#include <signal.h>
-	#include <errno.h>
+	#include <cerrno>
 #endif
 
 #endif
