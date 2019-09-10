@@ -44,6 +44,39 @@
 #include <string>
 
 using namespace sockpp;
+using namespace std::chrono;
+
+/////////////////////////////////////////////////////////////////////////////
+// Aux functions
+
+TEST_CASE("test to_timeval", "aux") {
+	SECTION("concrete function") {
+		timeval tv = to_timeval(microseconds(500));
+		REQUIRE(tv.tv_sec == 0);
+		REQUIRE(tv.tv_usec == 500);
+
+		tv = to_timeval(microseconds(2500000));
+		REQUIRE(tv.tv_sec == 2);
+		REQUIRE(tv.tv_usec == 500000);
+	}
+
+	SECTION("template") {
+		timeval tv = to_timeval(milliseconds(1));
+		REQUIRE(tv.tv_sec == 0);
+		REQUIRE(tv.tv_usec == 1000);
+
+		tv = to_timeval(milliseconds(2500));
+		REQUIRE(tv.tv_sec == 2);
+		REQUIRE(tv.tv_usec == 500000);
+
+		tv = to_timeval(seconds(5));
+		REQUIRE(tv.tv_sec == 5);
+		REQUIRE(tv.tv_usec == 0);
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// socket class
 
 constexpr in_port_t INET_TEST_PORT = 12345;
 

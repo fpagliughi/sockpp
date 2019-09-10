@@ -63,16 +63,12 @@ namespace sockpp {
 #endif
 
 #if !defined(_WIN32)
-    template <class DURATION>
-    timeval to_timeval(DURATION dur)
-    {
-        const std::chrono::seconds sec = std::chrono::duration_cast<std::chrono::seconds>(dur);
+	timeval to_timeval(const std::chrono::microseconds& dur);
 
-        timeval tv;
-        tv.tv_sec  = sec.count();
-        tv.tv_usec = int(std::chrono::duration_cast<std::chrono::microseconds>(dur - sec).count());
-        return tv;
-    }
+	template<class Rep, class Period>
+	timeval to_timeval(const std::chrono::duration<Rep,Period>& dur) {
+		return to_timeval(std::chrono::duration_cast<std::chrono::microseconds>(dur));
+	}
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
