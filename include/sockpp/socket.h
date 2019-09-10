@@ -101,6 +101,19 @@ class socket
 
 protected:
 	/**
+	 * Closes the socket without checking for errors or updating the last
+	 * error.
+	 * This is used in internal open/connect type functions that fail after
+	 * creating the socket, but want to preserve the previous failure
+	 * condition.
+	 * Assumes that the socket handle is valid.
+	 * @return Always returns @em false.
+	 */
+	bool close_on_err() {
+		close(release());
+		return false;
+	}
+	/**
 	 * OS-specific means to retrieve the last error from an operation.
 	 * This should be called after a failed system call to set the
 	 * lastErr_ member variable. Normally this would be called from

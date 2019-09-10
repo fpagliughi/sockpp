@@ -51,10 +51,8 @@ bool connector::connect(const sock_address& addr)
 	// This will close the old connection, if any.
 	reset(h);
 
-	if (!check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size()))) {
-		close();
-		return false;
-	}
+	if (!check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size())))
+		return close_on_err();
 
 	return true;
 }

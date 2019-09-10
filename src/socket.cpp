@@ -87,6 +87,9 @@ bool socket::close(socket_t h)
 }
 
 // --------------------------------------------------------------------------
+// Closes the socket and updates the last error on failure.
+
+// --------------------------------------------------------------------------
 
 void socket::initialize()
 {
@@ -254,20 +257,17 @@ bool socket::shutdown(int how /*=SHUT_RDWR*/)
 }
 
 // --------------------------------------------------------------------------
-// Closes the socket and updates lastErr_
+// Closes the socket and updates the last error on failure.
 
 bool socket::close()
 {
-	if (handle_ == INVALID_SOCKET)
-		return true;
-
-	socket_t h = release();
-    if (close(h))
-        return true;
-
-    if (lastErr_ == 0)          // Preserve any pre-existing error
-        set_last_error();
-    return false;
+	if (handle_ != INVALID_SOCKET) {
+		if (!close(release())){
+			set_last_error();
+			return false;
+		}
+	}
+	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
