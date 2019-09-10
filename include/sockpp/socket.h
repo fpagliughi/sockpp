@@ -408,6 +408,15 @@ public:
     bool set_option(int level, int optname, const T& val) {
 		return set_option(level, optname, (void*) &val, sizeof(T));
 	}
+	/**
+	 * Places the socket into or out of non-blocking mode.
+	 * When in non-blocking mode, a call that is not immediately ready to
+	 * complete (read, write, accept, etc) will return immediately with the
+	 * error EWOULDBLOCK.
+	 * @param on Whether to turn non-blocking mode on or off.
+	 * @return @em true on success, @em false on failure.
+	 */
+	bool set_non_blocking(bool on=true);
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().

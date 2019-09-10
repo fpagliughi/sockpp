@@ -38,6 +38,7 @@
 #include "sockpp/exception.h"
 #include <algorithm>
 #include <cstring>
+#include <fcntl.h>
 
 // Used to explicitly ignore the returned value of a function call.
 #define ignore_result(x) if (x) {}
@@ -237,6 +238,36 @@ bool socket::set_option(int level, int optname, const void* optval, socklen_t op
 										   static_cast<int>(optlen)));
 	#else
 		return check_ret_bool(::setsockopt(handle_, level, optname, optval, optlen));
+	#endif
+}
+
+/// --------------------------------------------------------------------------
+
+bool socket::set_non_blocking(bool on /*=true*/)
+{
+	#if defined(_WIN32)
+		unsigned long mode = on ? 1 : 0;
+		return check_ret_bool(::ioctlsocket(handle_, FIONBIO, &mode));
+	#else
+		/**
+		 * TODO: Consider a generic function:
+		 *   bool set_flag(int flag, bool on=true);
+		 * Used like:
+		 *   set_flag(O_NONBLOCK, on);
+		 */
+		int flags = ::fcntl(handle_, F_GETFL, 0);
+
+		if (flags == -1) {
+			set_last_error();
+			return false;
+		}
+		flags = on ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK);
+
+		if (::fcntl(handle_, F_SETFL, flags) == -1) {
+			set_last_error();
+			return false;
+		}
+		return true;
 	#endif
 }
 
