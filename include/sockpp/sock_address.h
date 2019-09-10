@@ -113,7 +113,7 @@ class sock_address_any : public sock_address
 	socklen_t sz_;
 
 	/** The maximum size of an address, in bytes */
-	static constexpr size_t MAX_SZ = sizeof(sockaddr_in);
+	static constexpr size_t MAX_SZ = sizeof(sockaddr_storage);
 
 public:
 	/**

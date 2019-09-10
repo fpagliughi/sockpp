@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 
 	string s, sret;
 	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != (int) s.length()) {
+		if (conn.write(s) != ssize_t(s.length())) {
 			cerr << "Error writing to the TCP stream: "
 				<< conn.last_error_str() << endl;
 			break;
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 		sret.resize(s.length());
 		ssize_t n = conn.read_n(&sret[0], s.length());
 
-		if (n != (int) s.length()) {
+		if (n != ssize_t(s.length())) {
 			cerr << "Error reading from TCP stream: "
 				<< conn.last_error_str() << endl;
 			break;
