@@ -70,7 +70,10 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
 
 	while (nr < n) {
-		if ((nx = read(b+nr, n-nr)) <= 0)
+		if ((nx = read(b+nr, n-nr)) < 0 && last_error() == EINTR)
+			continue;
+
+		if (nx <= 0)
 			break;
 
 		nr += nx;
@@ -115,7 +118,10 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
 
 	while (nw < n) {
-		if ((nx = write(b+nw, n-nw)) <= 0)
+		if ((nx = write(b+nw, n-nw)) < 0 && last_error() == EINTR)
+			continue;
+
+		if (nx <= 0)
 			break;
 
 		nw += nx;
