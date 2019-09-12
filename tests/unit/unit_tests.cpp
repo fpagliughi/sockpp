@@ -38,7 +38,34 @@
 // --------------------------------------------------------------------------
 //
 
+// Normally, we would just tell Catch2 to define main() like this...
 // This tells Catch to provide a main() - only do this in one cpp file
-#define CATCH_CONFIG_MAIN
+//#define CATCH_CONFIG_MAIN
+
+// ...but we need to run the sockpp global initialization before running 
+// any of the tests. Defining a main() is described here:
+// https://github.com/catchorg/Catch2/blob/master/docs/own-main.md 
+//  
+
+#include "sockpp/socket.h"
+
+// This seems to be required, at least for MSVS 2015 on Win7, 
+// using Catch2 v2.9.2
+#if defined(_WIN32)
+    #define CATCH_CONFIG_DISABLE_EXCEPTIONS
+#endif
+
+#define CATCH_CONFIG_RUNNER
 #include "catch2/catch.hpp"
 
+int main(int argc, char* argv[]) 
+{
+    // global setup...
+	sockpp::socket_initializer sockInit;
+
+    int result = Catch::Session().run(argc, argv);
+
+    // global clean-up...
+
+    return result;
+}

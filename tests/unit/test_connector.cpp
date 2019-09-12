@@ -38,9 +38,9 @@
 // --------------------------------------------------------------------------
 //
 
-#include "catch2/catch.hpp"
 #include "sockpp/connector.h"
 #include "sockpp/sock_address.h"
+#include "catch2/catch.hpp"
 #include <string>
 
 using namespace sockpp;

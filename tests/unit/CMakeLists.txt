@@ -50,7 +50,7 @@ add_executable(unit_tests
 	test_inet_address.cpp
 	test_socket.cpp
 	test_stream_socket.cpp
-    test_datagram_socket.cpp
+	test_datagram_socket.cpp
 	test_acceptor.cpp
 	test_connector.cpp
 )

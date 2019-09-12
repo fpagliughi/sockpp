@@ -85,6 +85,11 @@
 		#endif // _WIN64 
 	#endif // _SSIZE_T_DEFINED
 
+    #ifndef _SUSECONDS_T
+        #define _SUSECONDS_T
+        typedef long suseconds_t;	// signed # of microseconds in timeval
+    #endif	// _SUSECONDS_T
+ 
     #define SHUT_RD SD_RECEIVE
     #define SHUT_WR SD_SEND
     #define SHUT_RDWR SD_BOTH

@@ -38,8 +38,8 @@
 // --------------------------------------------------------------------------
 //
 
-#include "catch2/catch.hpp"
 #include "sockpp/inet_address.h"
+#include "catch2/catch.hpp"
 #include <string>
 
 using namespace sockpp;

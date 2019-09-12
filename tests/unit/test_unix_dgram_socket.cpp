@@ -38,8 +38,8 @@
 // --------------------------------------------------------------------------
 //
 
-#include "catch2/catch.hpp"
 #include "sockpp/unix_dgram_socket.h"
+#include "catch2/catch.hpp"
 #include <string>
 
 using namespace sockpp;
