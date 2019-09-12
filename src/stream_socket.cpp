@@ -86,12 +86,13 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 
 bool stream_socket::read_timeout(const microseconds& to)
 {
-	#if !defined(_WIN32)
-		timeval tv = to_timeval(to);
-		return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
-	#else
-		return false;
-	#endif
+    auto tv = 
+        #if defined(_WIN32)
+            DWORD(duration_cast<milliseconds>(to).count());
+        #else
+            to_timeval(to);
+        #endif
+    return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
 }
 
 // --------------------------------------------------------------------------
@@ -134,12 +135,14 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 
 bool stream_socket::write_timeout(const microseconds& to)
 {
-	#if !defined(_WIN32)
-		timeval tv = to_timeval(to);
-		return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
-	#else
-		return false;
-	#endif
+    auto tv = 
+        #if defined(_WIN32)
+            DWORD(duration_cast<milliseconds>(to).count());
+        #else
+            to_timeval(to);
+        #endif
+
+    return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
 }
 
 /////////////////////////////////////////////////////////////////////////////

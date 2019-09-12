@@ -57,7 +57,7 @@ void run_echo(sockpp::tcp6_socket sock)
 	ssize_t n;
 	char buf[512];
 
-	while ((n = sock.read(buf, sizeof(buf))) > 0)
+    while ((n = sock.read(buf, sizeof(buf))) > 0)
 		sock.write_n(buf, n);
 
 	cout << "Connection closed from " << sock.peer_address() << endl;

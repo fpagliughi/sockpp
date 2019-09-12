@@ -42,6 +42,7 @@
 #include "sockpp/version.h"
 
 using namespace std;
+using namespace std::chrono;
 
 int main(int argc, char* argv[])
 {
@@ -65,6 +66,12 @@ int main(int argc, char* argv[])
 	}
 
 	cout << "Created a connection from " << conn.address() << endl;
+
+    // Set a timeout for the responses
+    if (!conn.read_timeout(seconds(5))) {
+        cerr << "Error setting timeout on TCP stream: "
+                << conn.last_error_str() << endl;
+    }
 
 	string s, sret;
 	while (getline(cin, s) && !s.empty()) {
