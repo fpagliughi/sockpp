@@ -86,7 +86,13 @@ TEST_CASE("acceptor address constructor", "[acceptor]") {
 		acceptor sock(ADDR);
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
-		REQUIRE(sock.last_error() == EAFNOSUPPORT);
+
+        // Windows returns a different error code than *nix
+        #if defined(_WIN32)
+            REQUIRE(sock.last_error() == WSAEINVAL);
+        #else
+            REQUIRE(sock.last_error() == EAFNOSUPPORT);
+        #endif
 	}
 }
 
@@ -97,7 +103,14 @@ TEST_CASE("acceptor create", "[acceptor]") {
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
 		REQUIRE(sock.last_error() == 0);
-		REQUIRE(sock.family() == AF_INET);
+
+        // Windows returns unknown family for unbound socket
+        // Windows returns a different error code than *nix
+        #if defined(_WIN32)
+            REQUIRE(sock.family() == AF_UNSPEC);
+        #else
+            REQUIRE(sock.family() == AF_INET);
+        #endif
 	}
 
 	SECTION("invalid domain") {
@@ -105,7 +118,13 @@ TEST_CASE("acceptor create", "[acceptor]") {
 
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
-		REQUIRE(sock.last_error() == EAFNOSUPPORT);
+
+        // Windows returns a different error code than *nix
+        #if defined(_WIN32)
+            REQUIRE(sock.last_error() == WSAEINVAL);
+        #else
+            REQUIRE(sock.last_error() == EAFNOSUPPORT);
+        #endif
 	}
 }
 

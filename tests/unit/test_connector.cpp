@@ -54,7 +54,13 @@ TEST_CASE("connector unspecified address", "[connector]") {
 
 	bool ok = conn.connect(addr);
 	REQUIRE(!ok);
-	REQUIRE(conn.last_error() == EAFNOSUPPORT);
+
+    // Windows returns a different error code than *nix
+    #if defined(_WIN32)
+        REQUIRE(conn.last_error() == WSAENOTSOCK);
+    #else
+        REQUIRE(conn.last_error() == EAFNOSUPPORT);
+    #endif
 }
 
 

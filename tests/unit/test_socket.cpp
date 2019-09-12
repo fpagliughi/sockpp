@@ -202,7 +202,13 @@ TEST_CASE("socket family", "[socket]") {
 	SECTION("unbound socket") {
 		// Unbound socket should have creation family
 		auto sock = socket::create(AF_INET, SOCK_STREAM);
-		REQUIRE(sock.family() == AF_INET);
+
+        // Windows and *nix behave differently
+        #if defined(_WIN32)
+            REQUIRE(sock.family() == AF_UNSPEC);
+        #else
+            REQUIRE(sock.family() == AF_INET);
+        #endif
 	}
 
 	SECTION("bound socket") {
@@ -230,7 +236,13 @@ TEST_CASE("socket address", "[socket]") {
 		auto sock = socket::create(AF_INET, SOCK_STREAM);
 		auto addr = inet_address(sock.address());
 
-		REQUIRE(addr.family() == AF_INET);
+        // Windows and *nix behave differently for family
+        #if defined(_WIN32)
+            REQUIRE(sock.family() == AF_UNSPEC);
+        #else
+            REQUIRE(sock.family() == AF_INET);
+        #endif
+
 		REQUIRE(addr.address() == 0);
 		REQUIRE(addr.port() == 0);
 	}

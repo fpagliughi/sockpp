@@ -86,7 +86,13 @@ TEST_CASE("datagram_socket address constructor", "[datagram_socket]") {
 		datagram_socket sock(ADDR);
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
-		REQUIRE(sock.last_error() == EAFNOSUPPORT);
+
+        // Windows returns a different error code than *nix
+        #if defined(_WIN32)
+            REQUIRE(sock.last_error() == WSAEINVAL);
+        #else
+            REQUIRE(sock.last_error() == EAFNOSUPPORT);
+        #endif
 	}
 }
 
