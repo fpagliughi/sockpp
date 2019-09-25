@@ -95,9 +95,16 @@ namespace sockpp {
     // Simple RAII helper for mbedTLS cert struct
     struct mbedtls_context::cert : public mbedtls_x509_crt
     {
-    public:
         cert()  {mbedtls_x509_crt_init(this);}
         ~cert() {mbedtls_x509_crt_free(this);}
+    };
+
+
+    // Simple RAII helper for mbedTLS cert struct
+    struct mbedtls_context::key : public mbedtls_pk_context
+    {
+        key()  {mbedtls_pk_init(this);}
+        ~key() {mbedtls_pk_free(this);}
     };
 
 
@@ -342,7 +349,7 @@ namespace sockpp {
             if (ret != 0) {
                 log_mbed_ret(ret, fn);
                 reset(); // marks me as closed/invalid
-                clear(ret); // sets last_error
+                clear(translate_mbed_err(ret)); // sets last_error
                 stream().close();
                 open_ = false;
             }
@@ -487,8 +494,10 @@ namespace sockpp {
     }
 
 
-    void mbedtls_context::allow_invalid_peer_certs(bool allow) {
-        int authMode = (allow ? MBEDTLS_SSL_VERIFY_OPTIONAL : MBEDTLS_SSL_VERIFY_REQUIRED);
+    void mbedtls_context::require_peer_cert(role_t forRole, bool require) {
+        if (forRole != role())
+            return;
+        int authMode = (require ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_OPTIONAL);
         mbedtls_ssl_conf_authmode(ssl_config_.get(), authMode);
     }
 
@@ -541,18 +550,27 @@ namespace sockpp {
     void mbedtls_context::set_identity(const std::string &certificate_data,
                                        const std::string &private_key_data)
     {
-        abort();
+        auto ident_cert = parse_cert(certificate_data);
+
+        unique_ptr<key> ident_key(new key);
+        int err = mbedtls_pk_parse_key(ident_key.get(),
+                                       (const uint8_t*) private_key_data.data(),
+                                       private_key_data.size(), NULL, 0);
+        if( err != 0 ) {
+            log_mbed_ret(err, "mbedtls_pk_parse_key");
+            throw sys_error(err);
+        }
+
+        set_identity(ident_cert.get(), ident_key.get());
+        identity_cert_ = move(ident_cert);
+        identity_key_  = move(ident_key);
     }
 
-    void mbedtls_context::set_identity_files(const std::string &certificate_file,
-                                             const std::string &private_key_file,
-                                             const std::string &private_key_password)
+
+    void mbedtls_context::set_identity(mbedtls_x509_crt *certificate,
+                                       mbedtls_pk_context *private_key)
     {
-        abort();
-    }
-
-
-    void mbedtls_context::set_identity(mbedtls_x509_crt *certificate, mbedtls_pk_context *private_key) {
+        //mbedtls_ssl_conf_ca_chain(ssl_config_.get(), certificate->next, nullptr);
         mbedtls_ssl_conf_own_cert(ssl_config_.get(), certificate, private_key);
     }
 

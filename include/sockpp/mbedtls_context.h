@@ -69,7 +69,7 @@ namespace sockpp {
         ~mbedtls_context() override;
 
         void set_root_certs(const std::string &certData) override;
-        void allow_invalid_peer_certs(bool) override;
+        void require_peer_cert(role_t, bool) override;
         void allow_only_certificate(const std::string &certData) override;
 
         void allow_only_certificate(mbedtls_x509_crt *certificate);
@@ -77,14 +77,11 @@ namespace sockpp {
         /**
          * Sets the identity certificate and private key using mbedTLS objects.
          */
-        void set_identity(mbedtls_x509_crt *certificate, mbedtls_pk_context *private_key);
+        void set_identity(mbedtls_x509_crt *certificate,
+                          mbedtls_pk_context *private_key);
 
         void set_identity(const std::string &certificate_data,
                           const std::string &private_key_data) override;
-
-        void set_identity_files(const std::string &certificate_file,
-                                const std::string &private_key_file,
-                                const std::string &private_key_password) override;
 
         std::unique_ptr<tls_socket> wrap_socket(std::unique_ptr<stream_socket> socket,
                                                 role_t,
@@ -96,6 +93,7 @@ namespace sockpp {
 
     private:
         struct cert;
+        struct key;
 
         int verify_callback(mbedtls_x509_crt *crt, int depth, uint32_t *flags);
         static std::unique_ptr<cert> parse_cert(const std::string &cert_data);
@@ -103,6 +101,9 @@ namespace sockpp {
         std::unique_ptr<mbedtls_ssl_config> ssl_config_;
         std::unique_ptr<cert> root_certs_;
         std::unique_ptr<cert> pinned_cert_;
+
+        std::unique_ptr<cert> identity_cert_;
+        std::unique_ptr<key> identity_key_;
 
         static cert *s_system_root_certs;
 

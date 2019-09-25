@@ -98,12 +98,16 @@ namespace sockpp {
         virtual void set_root_certs(const std::string &certData) =0;
 
         /**
-         * Allows connections to peers whose X.509 certificates are not valid.
-         * **If enabled, you take responsibility for validating the certificate yourself!**
-         * @param allow Pass true to allow invalid certs to be used, false to disallow
-         *              (default is false.)
+         * Configures whether the peer is required to present a valid certificate, for a connection
+         * using the given role.
+         * * For the CLIENT role the default is true; if you change to false, you take
+         *   responsibility for validating the server certificate yourself!
+         * * For the SERVER role the default is false; you can change it to true to require
+         *   client certificate authentication.
+         * @param role  The role you are configuring this setting for
+         * @param require Pass true to require a valid peer certificate, false to not require.
          */
-        virtual void allow_invalid_peer_certs(bool allow) =0;
+        virtual void require_peer_cert(role_t role, bool require) =0;
 
         /**
          * Requires that the peer have the exact certificate given.
@@ -116,10 +120,6 @@ namespace sockpp {
 
         virtual void set_identity(const std::string &certificate_data,
                                   const std::string &private_key_data) =0;
-
-        virtual void set_identity_files(const std::string &certificate_file,
-                                        const std::string &private_key_file,
-                                        const std::string &private_key_password) =0;
 
         /**
          * Creates a new \ref tls_socket instance that wraps the given connector socket.
