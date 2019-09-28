@@ -94,6 +94,12 @@
     #define SHUT_WR SD_SEND
     #define SHUT_RDWR SD_BOTH
 
+    struct iovec
+    {
+        void* iov_base;
+		size_t iov_len;
+    };
+
 #else
 	#include <unistd.h>
 	#include <sys/socket.h>

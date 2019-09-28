@@ -48,6 +48,7 @@
 #define __sockpp_stream_socket_h
 
 #include "sockpp/socket.h"
+#include <vector>
 
 namespace sockpp {
 
@@ -180,6 +181,12 @@ public:
 	virtual ssize_t write(const std::string& s) {
 		return write_n(s.data(), s.size());
 	}
+    /**
+     * Writes discontiguous memory ranges to the socket.
+     * @param ranges The vector of memory ranges to write
+     * @return The number of bytes written, or @em -1 on error.
+     */
+    virtual ssize_t write(const std::vector<iovec> &ranges);
 	/**
 	 * Set a timeout for write operations.
 	 * Sets the timout that the device uses for write operations. Not all
