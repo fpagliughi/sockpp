@@ -83,6 +83,33 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 	return (nr == 0 && nx < 0) ? nx : ssize_t(nr);
 }
 
+
+// --------------------------------------------------------------------------
+
+ssize_t stream_socket::read(const std::vector<iovec>& ranges)
+{
+	if (ranges.empty())
+		return 0;
+
+	#if !defined(_WIN32)
+		return check_ret(::readv(handle(), ranges.data(), int(ranges.size())));
+	#else
+		std::vector<WSABUF> bufs;
+		for (const auto& iovec : ranges) {
+			bufs.push_back({
+                static_cast<ULONG>(iovec.iov_len),
+				static_cast<CHAR*>(iovec.iov_base)
+            });
+		}
+
+		DWORD nread = 0,
+            nbuf = DWORD(bufs.size());
+
+		auto ret = check_ret(::WSARecv(handle(), bufs.data(), nbuf, &nread, 0, nullptr, nullptr));
+		return ssize_t(ret == SOCKET_ERROR ? ret : nread);
+	#endif
+}
+
 // --------------------------------------------------------------------------
 
 bool stream_socket::read_timeout(const microseconds& to)
@@ -134,31 +161,28 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 
 // --------------------------------------------------------------------------
 
-ssize_t stream_socket::write(const std::vector<iovec> &ranges) {
-#if !defined(_WIN32)
-    msghdr msg = {};
-    msg.msg_iov = const_cast<iovec*>(ranges.data());
-    msg.msg_iovlen = int(ranges.size());
-    if (msg.msg_iovlen == 0)
-        return 0;
-    return check_ret(sendmsg(handle(), &msg, 0));
-#else
-	if(ranges.empty()) {
+ssize_t stream_socket::write(const std::vector<iovec>& ranges)
+{
+	if (ranges.empty())
 		return 0;
-	}
-	
-	WSAMSG msg = {};
-	std::vector<WSABUF> buffers;
-	for(const auto& iovec : ranges) {
-		buffers.push_back({static_cast<ULONG>(iovec.iov_len), static_cast<CHAR FAR *>(iovec.iov_base)});
-	}
 
-	msg.lpBuffers = buffers.data();
-	msg.dwBufferCount = buffers.size();
-	DWORD written = 0;
-	auto ret = check_ret(WSASendMsg(handle(), &msg, 0, &written, nullptr, nullptr));
-	return ret == SOCKET_ERROR ? ret : written;
-#endif
+	#if !defined(_WIN32)
+		return check_ret(::writev(handle(), ranges.data(), int(ranges.size())));
+	#else
+		std::vector<WSABUF> bufs;
+		for (const auto& iovec : ranges) {
+			bufs.push_back({
+                static_cast<ULONG>(iovec.iov_len),
+				static_cast<CHAR*>(iovec.iov_base)
+            });
+		}
+
+		DWORD nwritten = 0,
+            nmsg = DWORD(bufs.size());
+
+		auto ret = check_ret(::WSASend(handle(), bufs.data(), nmsg, &nwritten, 0, nullptr, nullptr));
+		return ssize_t(ret == SOCKET_ERROR ? ret : nwritten);
+	#endif
 }
 
 

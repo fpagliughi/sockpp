@@ -95,7 +95,6 @@ public:
 	 */
 	stream_socket(stream_socket&& sock) : base(std::move(sock)) {}
 
-
 	/**
 	 * Move assignment.
 	 * @param rhs The other socket to move into this one.
@@ -137,6 +136,12 @@ public:
 	 *  	   successful, the number of bytes read should always be 'n'.
 	 */
 	virtual ssize_t read_n(void *buf, size_t n);
+    /**
+     * Reads discontiguous memory ranges from the socket.
+     * @param ranges The vector of memory ranges to fill
+     * @return The number of bytes read, or @em -1 on error.
+     */
+	ssize_t read(const std::vector<iovec>& ranges);
 	/**
 	 * Set a timeout for read operations.
 	 * Sets the timeout that the device uses for read operations. Not all

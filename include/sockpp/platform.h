@@ -103,10 +103,11 @@
 #else
 	#include <unistd.h>
 	#include <sys/socket.h>
+	#include <sys/uio.h>
 	#include <arpa/inet.h>
-#ifdef __FreeBSD__
-	#include <netinet/in.h>
-#endif
+	#ifdef __FreeBSD__
+		#include <netinet/in.h>
+	#endif
 	#include <netdb.h>
 	#include <signal.h>
 	#include <cerrno>
