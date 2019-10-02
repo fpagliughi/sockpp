@@ -48,10 +48,31 @@
 #define __sockpp_stream_socket_h
 
 #include "sockpp/socket.h"
+#include <vector>
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Result of a thread-safe read or write
+ * (\ref read_r, \ref read_n_r, \ref write_r, \ref write_n_r)
+ */
+struct ioresult {
+    size_t count = 0;               ///< Byte count, or 0 on error or EOF
+    int error = 0;                  ///< errno value (0 if no error or EOF)
+
+    ioresult() = default;
+    
+    ioresult(size_t c, int e) :count(c), error(e) { }
+
+    explicit inline ioresult(ssize_t n) {
+        if (n >= 0)
+            count = size_t(n);
+        else
+            error = socket::get_last_error();
+    }
+};
 
 /**
  * Base class for streaming sockets, such as TCP and Unix Domain.
@@ -180,6 +201,12 @@ public:
 	virtual ssize_t write(const std::string& s) {
 		return write_n(s.data(), s.size());
 	}
+    /**
+     * Writes discontiguous memory ranges to the socket.
+     * @param ranges The vector of memory ranges to write
+     * @return The number of bytes written, or @em -1 on error.
+     */
+    virtual ssize_t write(const std::vector<iovec> &ranges);
 	/**
 	 * Set a timeout for write operations.
 	 * Sets the timout that the device uses for write operations. Not all
@@ -199,6 +226,12 @@ public:
 	bool write_timeout(const std::chrono::duration<Rep,Period>& to) {
 		return write_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
 	}
+
+    virtual ioresult read_r(void *buf, size_t n);
+    virtual ioresult read_n_r(void *buf, size_t n);
+    virtual ioresult write_r(const void *buf, size_t n);
+    virtual ioresult write_n_r(const void *buf, size_t n);
+
 };
 
 /////////////////////////////////////////////////////////////////////////////
