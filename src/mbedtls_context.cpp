@@ -38,6 +38,7 @@
 #include "sockpp/connector.h"
 #include "sockpp/exception.h"
 #include <mbedtls/ctr_drbg.h>
+#include <mbedtls/debug.h>
 #include <mbedtls/entropy.h>
 #include <mbedtls/error.h>
 #include <mbedtls/net_sockets.h>
@@ -494,6 +495,20 @@ namespace sockpp {
     }
 
 
+    void mbedtls_context::set_logger(int threshold, Logger logger) {
+        if (!logger_) {
+            mbedtls_ssl_conf_dbg(ssl_config_.get(), [](void *ctx, int level, const char *file, int line,
+                                                       const char *msg) {
+                auto &logger = ((mbedtls_context*)ctx)->logger_;
+                if (logger)
+                    logger(level, file, line, msg);
+            }, this);
+        }
+        logger_ = logger;
+        mbedtls_debug_set_threshold(threshold);
+    }
+
+
     void mbedtls_context::require_peer_cert(role_t forRole, bool require) {
         if (forRole != role())
             return;
@@ -570,7 +585,6 @@ namespace sockpp {
     void mbedtls_context::set_identity(mbedtls_x509_crt *certificate,
                                        mbedtls_pk_context *private_key)
     {
-        //mbedtls_ssl_conf_ca_chain(ssl_config_.get(), certificate->next, nullptr);
         mbedtls_ssl_conf_own_cert(ssl_config_.get(), certificate, private_key);
     }
 

@@ -91,6 +91,9 @@ namespace sockpp {
 
         static mbedtls_x509_crt* get_system_root_certs();
 
+        using Logger = std::function<void(int level, const char *filename, int line, const char *message)>;
+        void set_logger(int threshold, Logger);
+
     private:
         struct cert;
         struct key;
@@ -104,6 +107,7 @@ namespace sockpp {
 
         std::unique_ptr<cert> identity_cert_;
         std::unique_ptr<key> identity_key_;
+        Logger logger_;
 
         static cert *s_system_root_certs;
 
