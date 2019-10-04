@@ -95,6 +95,25 @@ public:
 	 */
 	stream_socket(stream_socket&& sock) : base(std::move(sock)) {}
 
+
+	/**
+	 * Creates a socket with the specified communications characterics.
+	 * Not that this is not normally how a socket is creates in the sockpp
+	 * library. Applications would typically create a connector (client) or
+	 * acceptor (server) socket which would take care of the details.
+	 *
+	 * This is included for completeness or for creating different types of
+	 * sockets than are supported by the library.
+	 *
+	 * @param domain The communications domain for the sockets (i.e. the
+	 *  			 address family)
+	 * @param protocol The particular protocol to be used with the sockets
+	 *
+	 * @return A stream socket with the requested communications
+	 *  	   characteristics.
+	 */
+	static stream_socket create(int domain, int protocol=0);
+
 	/**
 	 * Move assignment.
 	 * @param rhs The other socket to move into this one.
@@ -264,6 +283,14 @@ public:
 	stream_socket_tmpl& operator=(stream_socket_tmpl&& rhs) {
 		base::operator=(std::move(rhs));
 		return *this;
+	}
+	/**
+	 * Cretates a stream socket.
+	 * @param protocol The particular protocol to be used with the sockets
+	 * @return A stream socket
+	 */
+	stream_socket_tmpl create(int protocol=0) {
+		return stream_socket_tmpl(std::move(base::create(ADDRESS_FAMILY, protocol)));
 	}
 	/**
 	 * Creates a pair of connected stream sockets.

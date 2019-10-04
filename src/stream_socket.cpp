@@ -45,6 +45,17 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+// Creates a stream socket for the given domain/protocol.
+
+stream_socket stream_socket::create(int domain, int protocol /*=0*/)
+{
+	stream_socket sock(::socket(domain, COMM_TYPE, protocol));
+	if (!sock)
+		sock.clear(get_last_error());
+	return sock;
+}
+
+// --------------------------------------------------------------------------
 // Reads from the socket. Note that we use ::recv() rather then ::read()
 // because many non-*nix operating systems make a distinction.
 

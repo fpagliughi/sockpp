@@ -1,6 +1,6 @@
-// test_stream_socket.cpp
+// test_tcp_socket.cpp
 //
-// Unit tests for the `stream_socket` class(es).
+// Unit tests for the `tcp_socket` class(es).
 //
 
 // --------------------------------------------------------------------------
@@ -38,63 +38,113 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/stream_socket.h"
-#include "sockpp/inet_address.h"
+#include "sockpp/tcp_socket.h"
+#include "sockpp/tcp_connector.h"
+#include "sockpp/tcp_acceptor.h"
 #include "catch2/catch.hpp"
 #include <string>
 
 using namespace sockpp;
 
-TEST_CASE("stream_socket default constructor", "[stream_socket]") {
-	stream_socket sock;
+static const in_port_t TEST_PORT = 12346;
+
+TEST_CASE("tcp_socket default constructor", "[tcp_socket]") {
+	tcp_socket sock;
 	REQUIRE(!sock);
 	REQUIRE(!sock.is_open());
+
+	//REQUIRE(sock.family() == AF_INET);
 }
 
-TEST_CASE("stream_socket handle constructor", "[stream_socket]") {
+TEST_CASE("tcp_socket handle constructor", "[tcp_socket]") {
 	constexpr auto HANDLE = socket_t(3);
 
 	SECTION("valid handle") {
-		stream_socket sock(HANDLE);
+		tcp_socket sock(HANDLE);
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
+
+		//REQUIRE(sock.family() == AF_INET);
 	}
 
 	SECTION("invalid handle") {
-		stream_socket sock(INVALID_SOCKET);
+		tcp_socket sock(INVALID_SOCKET);
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
 		// TODO: Should this set an error?
 		REQUIRE(sock.last_error() == 0);
+
+		//REQUIRE(sock.family() == AF_INET);
 	}
 }
-
-#if 0
-TEST_CASE("stream_socket address constructor", "[stream_socket]") {
-	SECTION("valid address") {
-		const auto ADDR = inet_address("localhost", 12345);
-
-		stream_socket sock(ADDR);
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-		REQUIRE(sock.last_error() == 0);
-		REQUIRE(sock.address() == ADDR);
-	}
-
-	SECTION("invalid address") {
-		const auto ADDR = sock_address_any();
-
-		stream_socket sock(ADDR);
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
-		REQUIRE(sock.last_error() == EAFNOSUPPORT);
-	}
-}
-#endif
 
 // --------------------------------------------------------------------------
 // Connected tests
 
-TEST_CASE("stream_socket readn, writen", "[stream_socket]") {
-	//auto lsock = stream_socket::create(AF
+TEST_CASE("tcp_socket read/write", "[stream_socket]") {
+	const std::string STR { "This is a test. This is only a test." };
+	const size_t N = STR.length();
+
+	inet_address addr { "localhost", TEST_PORT };
+	tcp_acceptor asock{ addr };
+
+	tcp_connector csock;
+	csock.set_non_blocking();
+
+	REQUIRE(csock.connect(addr));
+	auto ssock = asock.accept();
+
+	REQUIRE(ssock);
+
+	SECTION("read_n/write_n") {
+		char buf[N];
+
+		REQUIRE(csock.write_n(STR.data(), N) == N);
+		REQUIRE(ssock.read_n(buf, N) == N);
+
+		std::string str { buf, buf+N };
+		REQUIRE(str == STR);
+
+		char buf2[N];
+
+		// string write is a write_n()
+		REQUIRE(csock.write(STR) == N);
+		REQUIRE(ssock.read_n(buf2, N) == N);
+
+		std::string str2 { buf2, buf2+N };
+		REQUIRE(str2 == STR);
+	}
+
+	SECTION("scatter/gather") {
+		const std::string HEADER { "<start>" },
+						  FOOTER { "<end>" };
+
+		const size_t N_HEADER = HEADER.length(),
+					 N_FOOTER = FOOTER.length(),
+					 N_TOT = N_HEADER + N + N_FOOTER;
+
+		std::vector<iovec> outv {
+			iovec { (void*) HEADER.data(), N_HEADER },
+			iovec { (void*) STR.data(), N },
+			iovec { (void*) FOOTER.data(), N_FOOTER }
+		};
+
+		char hbuf[N_HEADER],
+			 buf[N],
+			 fbuf[N_FOOTER];
+
+		std::vector<iovec> inv {
+			iovec { (void*) hbuf, N_HEADER },
+			iovec { (void*) buf, N },
+			iovec { (void*) fbuf, N_FOOTER }
+		};
+
+		REQUIRE(csock.write(outv) == N_TOT);
+		REQUIRE(ssock.read(inv) == N_TOT);
+
+		REQUIRE(std::string(hbuf, N_HEADER) == HEADER);
+		REQUIRE(std::string(buf, N) == STR);
+		REQUIRE(std::string(fbuf, N_FOOTER-1) == FOOTER);
+	}
 }
+
