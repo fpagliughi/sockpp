@@ -55,12 +55,12 @@ timeval to_timeval(const microseconds& dur)
 	const seconds sec = duration_cast<seconds>(dur);
 
 	timeval tv;
-    #if defined(_WIN32)
-        tv.tv_sec  = long(sec.count());
-    #else
-        tv.tv_sec  = time_t(sec.count());
-    #endif
-    tv.tv_usec = suseconds_t(duration_cast<microseconds>(dur - sec).count());
+	#if defined(_WIN32)
+		tv.tv_sec  = long(sec.count());
+	#else
+		tv.tv_sec  = time_t(sec.count());
+	#endif
+	tv.tv_usec = suseconds_t(duration_cast<microseconds>(dur - sec).count());
 	return tv;
 }
 
@@ -82,11 +82,11 @@ int socket::get_last_error()
 
 bool socket::close(socket_t h)
 {
-    #if defined(_WIN32)
-        return ::closesocket(h) >= 0;
-    #else
-        return ::close(h) >= 0;
-    #endif
+	#if defined(_WIN32)
+		return ::closesocket(h) >= 0;
+	#else
+		return ::close(h) >= 0;
+	#endif
 }
 
 // --------------------------------------------------------------------------
@@ -147,25 +147,25 @@ std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*
 {
 	socket sock0, sock1;
 
-    #if !defined(_WIN32)
+	#if !defined(_WIN32)
 		int sv[2];
-        int ret = ::socketpair(domain, type, protocol, sv);
+		int ret = ::socketpair(domain, type, protocol, sv);
 
-        if (ret == 0) {
-		    sock0.reset(sv[0]);
-		    sock1.reset(sv[1]);
+		if (ret == 0) {
+			sock0.reset(sv[0]);
+			sock1.reset(sv[1]);
 		}
 		else {
-		    int err = get_last_error();
-		    sock0.clear(err);
-		    sock1.clear(err);
+			int err = get_last_error();
+			sock0.clear(err);
+			sock1.clear(err);
 		}
-    #else
-        sock0.clear(ENOTSUP);
-        sock1.clear(ENOTSUP);
-    #endif
+	#else
+		sock0.clear(ENOTSUP);
+		sock1.clear(ENOTSUP);
+	#endif
 
-    // TODO: Should we set an "unsupported" error on Windows?
+	// TODO: Should we set an "unsupported" error on Windows?
 
 	return std::make_tuple<socket, socket>(std::move(sock0), std::move(sock1));
 }
@@ -194,14 +194,14 @@ bool socket::bind(const sock_address& addr)
 
 sock_address_any socket::address() const
 {
-    auto addrStore = sockaddr_storage{};
+	auto addrStore = sockaddr_storage{};
 	socklen_t len = sizeof(sockaddr_storage);
 
 	if (!check_ret_bool(::getsockname(handle_,
 				reinterpret_cast<sockaddr*>(&addrStore), &len)))
 		return sock_address_any{};
 
-    return sock_address_any(addrStore, len);
+	return sock_address_any(addrStore, len);
 }
 
 // --------------------------------------------------------------------------
@@ -209,14 +209,14 @@ sock_address_any socket::address() const
 
 sock_address_any socket::peer_address() const
 {
-    auto addrStore = sockaddr_storage{};
+	auto addrStore = sockaddr_storage{};
 	socklen_t len = sizeof(sockaddr_storage);
 
 	if (!check_ret_bool(::getpeername(handle_,
 				reinterpret_cast<sockaddr*>(&addrStore), &len)))
 		return sock_address_any{};
 
-    return sock_address_any(addrStore, len);
+	return sock_address_any(addrStore, len);
 }
 
 // --------------------------------------------------------------------------

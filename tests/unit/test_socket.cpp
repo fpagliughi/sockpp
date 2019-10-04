@@ -78,7 +78,7 @@ TEST_CASE("test to_timeval", "aux") {
 /////////////////////////////////////////////////////////////////////////////
 // socket class
 
-constexpr in_port_t INET_TEST_PORT = 12345;
+constexpr in_port_t INET_TEST_PORT = 12346;
 
 TEST_CASE("socket constructors", "[socket]") {
 	SECTION("default constructor") {
@@ -121,31 +121,31 @@ TEST_CASE("socket constructors", "[socket]") {
 // Test the socket error behavior
 TEST_CASE("socket errors", "[socket]") {
 	SECTION("basic errors") {
-    	sockpp::socket sock;
+		sockpp::socket sock;
 
-    	// Operations on an unopened socket should give an error
-    	int reuse = 1;
-    	socklen_t len = sizeof(int);
-    	bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
+		// Operations on an unopened socket should give an error
+		int reuse = 1;
+		socklen_t len = sizeof(int);
+		bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
 
-    	// Socket should be in error state
-    	REQUIRE(!ok);
-    	REQUIRE(!sock);
+		// Socket should be in error state
+		REQUIRE(!ok);
+		REQUIRE(!sock);
 
-    	int err = sock.last_error();
-    	REQUIRE(err != 0);
+		int err = sock.last_error();
+		REQUIRE(err != 0);
 
-    	// last_error() is sticky, unlike `errno`
-    	REQUIRE(sock.last_error() == err);
+		// last_error() is sticky, unlike `errno`
+		REQUIRE(sock.last_error() == err);
 
-    	// We can clear the error
-    	sock.clear();
-    	REQUIRE(sock.last_error() == 0);
+		// We can clear the error
+		sock.clear();
+		REQUIRE(sock.last_error() == 0);
 
-    	// Test arbitrary clear value
-    	sock.clear(42);
-    	REQUIRE(sock.last_error() == 42);
-    	REQUIRE(!sock);
+		// Test arbitrary clear value
+		sock.clear(42);
+		REQUIRE(sock.last_error() == 42);
+		REQUIRE(!sock);
 	}
 
 	SECTION("clear error") {
@@ -203,12 +203,12 @@ TEST_CASE("socket family", "[socket]") {
 		// Unbound socket should have creation family
 		auto sock = socket::create(AF_INET, SOCK_STREAM);
 
-        // Windows and *nix behave differently
-        #if defined(_WIN32)
-            REQUIRE(sock.family() == AF_UNSPEC);
-        #else
-            REQUIRE(sock.family() == AF_INET);
-        #endif
+		// Windows and *nix behave differently
+		#if defined(_WIN32)
+			REQUIRE(sock.family() == AF_UNSPEC);
+		#else
+			REQUIRE(sock.family() == AF_INET);
+		#endif
 	}
 
 	SECTION("bound socket") {
@@ -236,12 +236,12 @@ TEST_CASE("socket address", "[socket]") {
 		auto sock = socket::create(AF_INET, SOCK_STREAM);
 		auto addr = inet_address(sock.address());
 
-        // Windows and *nix behave differently for family
-        #if defined(_WIN32)
-            REQUIRE(sock.family() == AF_UNSPEC);
-        #else
-            REQUIRE(sock.family() == AF_INET);
-        #endif
+		// Windows and *nix behave differently for family
+		#if defined(_WIN32)
+			REQUIRE(sock.family() == AF_UNSPEC);
+		#else
+			REQUIRE(sock.family() == AF_INET);
+		#endif
 
 		REQUIRE(addr.address() == 0);
 		REQUIRE(addr.port() == 0);

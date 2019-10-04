@@ -61,12 +61,12 @@ stream_socket stream_socket::create(int domain, int protocol /*=0*/)
 
 ssize_t stream_socket::read(void *buf, size_t n)
 {
-    #if defined(_WIN32)
-        return check_ret(::recv(handle(), reinterpret_cast<char*>(buf),
+	#if defined(_WIN32)
+		return check_ret(::recv(handle(), reinterpret_cast<char*>(buf),
 								int(n), 0));
-    #else
-        return check_ret(::recv(handle(), buf, n, 0));
-    #endif
+	#else
+		return check_ret(::recv(handle(), buf, n, 0));
+	#endif
 }
 
 // --------------------------------------------------------------------------
@@ -108,15 +108,16 @@ ssize_t stream_socket::read(const std::vector<iovec>& ranges)
 		std::vector<WSABUF> bufs;
 		for (const auto& iovec : ranges) {
 			bufs.push_back({
-                static_cast<ULONG>(iovec.iov_len),
+				static_cast<ULONG>(iovec.iov_len),
 				static_cast<CHAR*>(iovec.iov_base)
-            });
+			});
 		}
 
-		DWORD nread = 0,
-            nbuf = DWORD(bufs.size());
+		DWORD flags = 0,
+			  nread = 0,
+			  nbuf = DWORD(bufs.size());
 
-		auto ret = check_ret(::WSARecv(handle(), bufs.data(), nbuf, &nread, 0, nullptr, nullptr));
+		auto ret = check_ret(::WSARecv(handle(), bufs.data(), nbuf, &nread, &flags, nullptr, nullptr));
 		return ssize_t(ret == SOCKET_ERROR ? ret : nread);
 	#endif
 }
@@ -125,25 +126,25 @@ ssize_t stream_socket::read(const std::vector<iovec>& ranges)
 
 bool stream_socket::read_timeout(const microseconds& to)
 {
-    auto tv = 
-        #if defined(_WIN32)
-            DWORD(duration_cast<milliseconds>(to).count());
-        #else
-            to_timeval(to);
-        #endif
-    return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
+	auto tv = 
+		#if defined(_WIN32)
+			DWORD(duration_cast<milliseconds>(to).count());
+		#else
+			to_timeval(to);
+		#endif
+	return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
 }
 
 // --------------------------------------------------------------------------
 
 ssize_t stream_socket::write(const void *buf, size_t n)
 {
-    #if defined(_WIN32)
-        return check_ret(::send(handle(), reinterpret_cast<const char*>(buf),
-                                int(n) , 0));
-    #else
-        return check_ret(::send(handle(), buf, n , 0));
-    #endif
+	#if defined(_WIN32)
+		return check_ret(::send(handle(), reinterpret_cast<const char*>(buf),
+								int(n) , 0));
+	#else
+		return check_ret(::send(handle(), buf, n , 0));
+	#endif
 }
 
 // --------------------------------------------------------------------------
@@ -183,13 +184,13 @@ ssize_t stream_socket::write(const std::vector<iovec>& ranges)
 		std::vector<WSABUF> bufs;
 		for (const auto& iovec : ranges) {
 			bufs.push_back({
-                static_cast<ULONG>(iovec.iov_len),
+				static_cast<ULONG>(iovec.iov_len),
 				static_cast<CHAR*>(iovec.iov_base)
-            });
+			});
 		}
 
 		DWORD nwritten = 0,
-            nmsg = DWORD(bufs.size());
+			nmsg = DWORD(bufs.size());
 
 		auto ret = check_ret(::WSASend(handle(), bufs.data(), nmsg, &nwritten, 0, nullptr, nullptr));
 		return ssize_t(ret == SOCKET_ERROR ? ret : nwritten);
@@ -201,14 +202,14 @@ ssize_t stream_socket::write(const std::vector<iovec>& ranges)
 
 bool stream_socket::write_timeout(const microseconds& to)
 {
-    auto tv = 
-        #if defined(_WIN32)
-            DWORD(duration_cast<milliseconds>(to).count());
-        #else
-            to_timeval(to);
-        #endif
+	auto tv = 
+		#if defined(_WIN32)
+			DWORD(duration_cast<milliseconds>(to).count());
+		#else
+			to_timeval(to);
+		#endif
 
-    return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
+	return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
 }
 
 /////////////////////////////////////////////////////////////////////////////

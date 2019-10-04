@@ -46,7 +46,7 @@
 
 using namespace sockpp;
 
-static const in_port_t TEST_PORT = 12346;
+static const in_port_t TEST_PORT = 12345;
 
 TEST_CASE("tcp_socket default constructor", "[tcp_socket]") {
 	tcp_socket sock;
@@ -92,12 +92,12 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
 	csock.set_non_blocking();
 
 	REQUIRE(csock.connect(addr));
-	auto ssock = asock.accept();
 
+	auto ssock = asock.accept();
 	REQUIRE(ssock);
 
 	SECTION("read_n/write_n") {
-		char buf[N];
+		char buf[512];  // N
 
 		REQUIRE(csock.write_n(STR.data(), N) == N);
 		REQUIRE(ssock.read_n(buf, N) == N);
@@ -105,7 +105,7 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
 		std::string str { buf, buf+N };
 		REQUIRE(str == STR);
 
-		char buf2[N];
+		char buf2[512]; // N
 
 		// string write is a write_n()
 		REQUIRE(csock.write(STR) == N);
@@ -129,9 +129,9 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
 			iovec { (void*) FOOTER.data(), N_FOOTER }
 		};
 
-		char hbuf[N_HEADER],
-			 buf[N],
-			 fbuf[N_FOOTER];
+		char hbuf[512], 	// N_HEADER
+			 buf[512],  	// N
+			 fbuf[512]; 	// N_FOOTER
 
 		std::vector<iovec> inv {
 			iovec { (void*) hbuf, N_HEADER },
@@ -140,11 +140,15 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
 		};
 
 		REQUIRE(csock.write(outv) == N_TOT);
+		REQUIRE(csock.write(outv) == N_TOT);
+		REQUIRE(csock.write(outv) == N_TOT);
+
 		REQUIRE(ssock.read(inv) == N_TOT);
 
 		REQUIRE(std::string(hbuf, N_HEADER) == HEADER);
 		REQUIRE(std::string(buf, N) == STR);
-		REQUIRE(std::string(fbuf, N_FOOTER-1) == FOOTER);
+		REQUIRE(std::string(fbuf, N_FOOTER) == FOOTER);
 	}
 }
+
 
