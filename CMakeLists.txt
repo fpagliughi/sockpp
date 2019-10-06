@@ -40,13 +40,13 @@
 cmake_minimum_required(VERSION 3.5)
 
 ## project
-project(sockpp VERSION "0.6.0")
+project(sockpp VERSION "0.7.0")
 
 ## library name
 set(SOCKPP sockpp)
 set(SOCKPP_STATIC ${SOCKPP}-static)
 
-# --- build options ---
+# --- Build Options ---
 
 if(WIN32)
 	option(SOCKPP_BUILD_STATIC "Build static library" ON)

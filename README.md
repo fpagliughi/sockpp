@@ -6,9 +6,9 @@ Simple, modern, C++ socket library.
 
 This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
-The base `socket` wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket object can be transferred from one scope (or thread) to another using `std::move()`.
+The base `socket` class wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket can be transferred from one scope (or thread) to another using `std::move()`.
 
-Currently supports: IPv4, IPv6, and Unix-Domain Sockets on Linux, Mac, and Windows.
+Currently supports: IPv4, IPv6, and Unix-Domain Sockets on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
@@ -16,7 +16,7 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
 
-On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote, embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable.
+On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable.
 
 To keep up with the latest announcements for this project, follow me at:
 
@@ -24,7 +24,7 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it's wound up!
 
-## Unreleased Features in this Branch
+## New in v0.7
 
 The next release will mainly target bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
 
@@ -34,6 +34,7 @@ The next release will mainly target bug fixes, API inconsistencies, and numerous
     - `bind()` moved into base socket (from `acceptor`)
 - Unix-domain socket pairs (stream and datagram)
 - Non-blocking I/O
+- Scatter/Gather I/O
 - `stream_socket` cloning.
 - Set and get socket options using template types.
 - `stream_socket::read_n()` and `write_n()` now properly handle EINTR return.
@@ -46,21 +47,6 @@ The next release will mainly target bug fixes, API inconsistencies, and numerous
     - Fixed bug in Windows `socket::last_error_string`.
     - Unit tests working on Windows
 - More unit tests
-
-## New in v0.6
-
-- UDP support
-    - The base `datagram_socket` added to the Windows build
-    - The `datagram_socket` cleaned up for proper parameter and return types.
-    - New `datagram_socket_tmpl` template class for defining UDP sockets for the different address families.
-    - New datagram classes for IPv4 (`udp_socket`), IPv6 (`udp6_socket`), and Unix-domain (`unix_dgram_socket`)
-- Windows support
-    - Windows support was broken in release v0.5. It is now fixed, and includes the UDP features.
-- Proper move semantics for stream sockets and connectors.
-- Separate tcp socket header files for each address family (`tcp_socket.h`, `tcp6_socket.h`, etc).
-- Proper implementation of Unix-domain streaming socket.
-- CMake auto-generates a version header file, _version.h_
-- CI dropped tests for gcc-4.9, and added support for clang-7 and 8.
 
 ## Contributing
 

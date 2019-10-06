@@ -1,5 +1,43 @@
 # Change Log
 
+## Version 0.7
+
+The next release will mainly target bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
+
+- Base `socket` class
+    - `shutdown()` added
+    - `create()` added
+    - `bind()` moved into base socket (from `acceptor`)
+- Unix-domain socket pairs (stream and datagram)
+- Non-blocking I/O
+- Scatter/Gather I/O
+- `stream_socket` cloning.
+- Set and get socket options using template types.
+- `stream_socket::read_n()` and `write_n()` now properly handle EINTR return.
+- `to_timeval()` can convert from any `std::chrono::duration` type.
+- `socket::close()` and `shutdown()` check for errors, set last error, and return a bool.
+- _tcpechomt.cpp_: Example of a client sharing a socket between read and write threads - using `clone()`.
+- Windows enhancements:
+    - Implemented socket timeouts on Windows
+    - Fixed bug in Windows socket cloning.
+    - Fixed bug in Windows `socket::last_error_string`.
+    - Unit tests working on Windows
+- More unit tests
+
+##  Version 0.6
+
+- UDP support
+    - The base `datagram_socket` added to the Windows build
+    - The `datagram_socket` cleaned up for proper parameter and return types.
+    - New `datagram_socket_tmpl` template class for defining UDP sockets for the different address families.
+    - New datagram classes for IPv4 (`udp_socket`), IPv6 (`udp6_socket`), and Unix-domain (`unix_dgram_socket`)
+- Windows support
+    - Windows support was broken in release v0.5. It is now fixed, and includes the UDP features.
+- Proper move semantics for stream sockets and connectors.
+- Separate tcp socket header files for each address family (`tcp_socket.h`, `tcp6_socket.h`, etc).
+- Proper implementation of Unix-domain streaming socket.
+- CMake auto-generates a version header file, _version.h_
+- CI dropped tests for gcc-4.9, and added support for clang-7 and 8.
 
 ## Version 0.5
 
