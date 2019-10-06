@@ -2,8 +2,6 @@
 
 ## Version 0.7
 
-The next release will mainly target bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
-
 - Base `socket` class
     - `shutdown()` added
     - `create()` added

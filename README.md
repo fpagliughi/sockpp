@@ -26,7 +26,7 @@ If you're using this library, tweet at me or send me a message, and let me know 
 
 ## New in v0.7
 
-The next release will mainly target bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
+This release mainly targeted bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
 
 - Base `socket` class
     - `shutdown()` added
