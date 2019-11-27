@@ -51,6 +51,7 @@
 #include "sockpp/tls_socket.h"
 #include <memory>
 #include <string>
+#include <functional>
 
 struct mbedtls_pk_context;
 struct mbedtls_ssl_config;
