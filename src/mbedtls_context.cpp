@@ -608,11 +608,11 @@ namespace sockpp {
 
     // mbedTLS does not have built-in support for reading the OS's trusted root certs.
 
-#if TARGET_OS_OSX
-
+#ifdef __APPLE__
     // Read system root CA certs on macOS.
     // (Sadly, SecTrustCopyAnchorCertificates() is not available on iOS)
     static string read_system_root_certs() {
+    #if TARGET_OS_OSX
         CFArrayRef roots;
         OSStatus err = SecTrustCopyAnchorCertificates(&roots);
         if (err)
@@ -625,10 +625,31 @@ namespace sockpp {
         string pem((const char*)CFDataGetBytePtr(pemData), CFDataGetLength(pemData));
         CFRelease(pemData);
         return pem;
+    #else
+        // fallback -- no certs
+        return "";
+    #endif
     }
 
-#elif !defined(_WIN32)
+#elif defined(_WIN32)
+    // Windows:
+    static string read_system_root_certs() {
+	    PCCERT_CONTEXT pContext = nullptr;
+	    HCERTSTORE hStore = CertOpenSystemStore(NULL, "ROOT");
+		if(hStore == nullptr) {
+			return "";
+		}
 
+		stringstream certs;
+		while ((pContext = CertEnumCertificatesInStore(hStore, pContext))) {
+			certs.write((const char*)pContext->pbCertEncoded, pContext->cbCertEncoded);
+		}
+
+		CertCloseStore(hStore, CERT_CLOSE_STORE_FORCE_FLAG);
+		return certs.str();
+    }
+
+#else
     // Read system root CA certs on Linux using OpenSSL's cert directory
     static string read_system_root_certs() {
         static constexpr const char* CERTS_DIR  = "/etc/ssl/certs/";
@@ -675,22 +696,6 @@ namespace sockpp {
         return certs.str();
     }
 
-#else
-    static string read_system_root_certs() {
-	    PCCERT_CONTEXT pContext = nullptr;
-	    HCERTSTORE hStore = CertOpenSystemStore(NULL, "ROOT");
-		if(hStore == nullptr) {
-			return "";
-		}
-
-		stringstream certs;
-		while ((pContext = CertEnumCertificatesInStore(hStore, pContext))) {
-			certs.write((const char*)pContext->pbCertEncoded, pContext->cbCertEncoded);
-		}
-
-		CertCloseStore(hStore, CERT_CLOSE_STORE_FORCE_FLAG);
-		return certs.str();
-    }
 #endif
 
 
