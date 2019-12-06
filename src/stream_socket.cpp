@@ -201,16 +201,13 @@ ssize_t stream_socket::write(const std::vector<iovec> &ranges) {
 		return 0;
 	}
 	
-	WSAMSG msg = {};
 	std::vector<WSABUF> buffers;
 	for(const auto& iovec : ranges) {
 		buffers.push_back({static_cast<ULONG>(iovec.iov_len), static_cast<CHAR FAR *>(iovec.iov_base)});
 	}
 
-	msg.lpBuffers = buffers.data();
-	msg.dwBufferCount = buffers.size();
 	DWORD written = 0;
-	auto ret = check_ret(WSASendMsg(handle(), &msg, 0, &written, nullptr, nullptr));
+	ssize_t ret = check_ret(WSASend(handle(), buffers.data(), buffers.size(), &written, 0, nullptr, nullptr));
 	return ret == SOCKET_ERROR ? ret : written;
 #endif
 }
