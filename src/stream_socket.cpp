@@ -237,9 +237,6 @@ ioresult stream_socket::write_n_r(const void *buf, size_t n)
 
 ssize_t stream_socket::write(const std::vector<iovec>& ranges)
 {
-	if (ranges.empty())
-		return 0;
-
 	#if !defined(_WIN32)
 		return check_ret(::writev(handle(), ranges.data(), int(ranges.size())));
 	#else
@@ -254,8 +251,8 @@ ssize_t stream_socket::write(const std::vector<iovec>& ranges)
 		DWORD nwritten = 0,
 			  nmsg = DWORD(bufs.size());
 
-		auto ret = check_ret(::WSASend(handle(), bufs.data(), nmsg,
-									   &nwritten, 0, nullptr, nullptr));
+		auto ret = check_ret(::WSASend(handle(), bufs.data(),
+									   nmsg, &nwritten, 0, nullptr, nullptr));
 		return ssize_t(ret == SOCKET_ERROR ? ret : nwritten);
 	#endif
 }
