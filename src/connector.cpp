@@ -93,12 +93,15 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
     if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
         if (last_error() == ERR_IN_PROGRESS || last_error() == ERR_WOULD_BLOCK) {
             // Non-blocking connect -- call `select` to wait until the timeout:
+        	// Note:  Windows returns errors in exceptset so check it too, the
+        	// logic afterwords doesn't change
             fd_set readset;
             FD_ZERO(&readset);
             FD_SET(handle(), &readset);
             fd_set writeset = readset;
+        	fd_set exceptset = readset;
             timeval tv = to_timeval(timeout);
-            int n = check_ret(::select(handle()+1, &readset, &writeset, nullptr, &tv));
+            int n = check_ret(::select(handle()+1, &readset, &writeset, &exceptset, &tv));
 
             if (n > 0) {
                 // Got a socket event, but it might be an error, so check:
