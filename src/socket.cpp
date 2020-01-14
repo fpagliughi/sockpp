@@ -289,7 +289,11 @@ std::string socket::error_str(int err)
 
 bool socket::shutdown(int how /*=SHUT_RDWR*/)
 {
-	return check_ret_bool(::shutdown(handle_, how));
+	if(handle_ != INVALID_SOCKET) {
+		return check_ret_bool(::shutdown(release(), how));
+	}
+
+	return false;
 }
 
 // --------------------------------------------------------------------------
