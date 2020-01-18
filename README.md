@@ -24,6 +24,12 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it's wound up!
 
+## Unreleased Features in this Branch
+
+The following updates exist in this branch in the repository, but have yet to be formally released:
+
+- [#37] socket::get_option() not returning length on Windows.
+
 ## New in v0.7
 
 This release mainly targeted bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.

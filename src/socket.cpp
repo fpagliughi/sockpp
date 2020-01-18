@@ -224,10 +224,15 @@ sock_address_any socket::peer_address() const
 bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen) const
 {
 	#if defined(_WIN32)
-		int len = static_cast<int>(*optlen);
-		return check_ret_bool(::getsockopt(handle_, level, optname,
-										   static_cast<char*>(optval), &len));
-		*optlen = static_cast<socklen_t>(len);
+        if (optval && optlen) {
+            int len = static_cast<int>(*optlen);
+            if (check_ret_bool(::getsockopt(handle_, level, optname,
+                                            static_cast<char*>(optval), &len))) {
+                *optlen = static_cast<socklen_t>(len);
+                return true;
+            }
+        }
+        return false;
 	#else
 		return check_ret_bool(::getsockopt(handle_, level, optname, optval, optlen));
 	#endif
