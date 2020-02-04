@@ -441,19 +441,23 @@ namespace sockpp {
     }
 
 
-    unique_ptr<mbedtls_context::cert> mbedtls_context::parse_cert(const std::string &cert_data) {
+    unique_ptr<mbedtls_context::cert> mbedtls_context::parse_cert(const std::string &cert_data, bool partialOk) {
         unique_ptr<cert> c(new cert);
         mbedtls_x509_crt_init(c.get());
         int ret = mbedtls_x509_crt_parse(c.get(),
                                          (const uint8_t*)cert_data.data(), cert_data.size() + 1);
-        if (ret != 0)
-            throw sys_error(ret);   //FIXME: Not an errno; use different exception?
+        if (ret != 0) {
+	        if(ret < 0 || !partialOk) {
+		        log_mbed_ret(ret, "mbedtls_x509_crt_parse");
+				throw sys_error(ret);   //FIXME: Not an errno; use different exception?
+	        }
+        }
         return c;
     }
 
 
     void mbedtls_context::set_root_certs(const std::string &cert_data) {
-        root_certs_ = parse_cert(cert_data);
+        root_certs_ = parse_cert(cert_data, true);
         mbedtls_ssl_conf_ca_chain(ssl_config_.get(), root_certs_.get(), nullptr);
     }
 
@@ -465,7 +469,7 @@ namespace sockpp {
             // One-time initialization:
             string certsPEM = read_system_root_certs();
             if (!certsPEM.empty())
-                s_system_root_certs = parse_cert(certsPEM).release();
+                s_system_root_certs = parse_cert(certsPEM, true).release();
         });
         return s_system_root_certs;
     }
@@ -522,7 +526,7 @@ namespace sockpp {
         if (cert_data.empty()) {
             mbedtls_ssl_conf_verify(ssl_config_.get(), nullptr, nullptr);
         } else {
-            pinned_cert_ = parse_cert(cert_data);
+            pinned_cert_ = parse_cert(cert_data, false);
             // Install a custom verification callback:
             mbedtls_ssl_conf_verify(
                             ssl_config_.get(),
@@ -565,7 +569,7 @@ namespace sockpp {
     void mbedtls_context::set_identity(const std::string &certificate_data,
                                        const std::string &private_key_data)
     {
-        auto ident_cert = parse_cert(certificate_data);
+        auto ident_cert = parse_cert(certificate_data, false);
 
         unique_ptr<key> ident_key(new key);
         int err = mbedtls_pk_parse_key(ident_key.get(),

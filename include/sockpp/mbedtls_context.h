@@ -100,7 +100,7 @@ namespace sockpp {
         struct key;
 
         int verify_callback(mbedtls_x509_crt *crt, int depth, uint32_t *flags);
-        static std::unique_ptr<cert> parse_cert(const std::string &cert_data);
+        static std::unique_ptr<cert> parse_cert(const std::string &cert_data, bool partialOk);
 
         std::unique_ptr<mbedtls_ssl_config> ssl_config_;
         std::unique_ptr<cert> root_certs_;
