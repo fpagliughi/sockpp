@@ -449,7 +449,11 @@ namespace sockpp {
         if (ret != 0) {
 	        if(ret < 0 || !partialOk) {
 		        log_mbed_ret(ret, "mbedtls_x509_crt_parse");
-				throw sys_error(ret);   //FIXME: Not an errno; use different exception?
+	        	if(ret > 0) {
+	        		ret = MBEDTLS_ERR_X509_CERT_VERIFY_FAILED;
+	        	}
+	        	
+				throw sys_error(ret);
 	        }
         }
         return c;
