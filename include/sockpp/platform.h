@@ -78,11 +78,7 @@
 	#ifndef _SSIZE_T_DEFINED 
 		#define _SSIZE_T_DEFINED 
 		#undef ssize_t
-		#ifdef _WIN64 
-			using ssize_t = int64_t;
-		#else 
-			using ssize_t = int;
-		#endif // _WIN64 
+        using ssize_t = SSIZE_T;
 	#endif // _SSIZE_T_DEFINED
 
     #ifndef _SUSECONDS_T
