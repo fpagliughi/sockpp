@@ -65,7 +65,7 @@ std::string sys_error::error_str(int err)
 			NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			buf, sizeof(buf), NULL);
     #else
-    	#ifdef _GNU_SOURCE
+    	#if defined(__GLIBC__)
 			auto s = strerror_r(err, buf, sizeof(buf));
 			return s ? std::string(s) : std::string();
         #else

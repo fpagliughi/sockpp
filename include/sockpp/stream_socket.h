@@ -55,6 +55,26 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
+ * Result of a thread-safe read or write
+ * (\ref read_r, \ref read_n_r, \ref write_r, \ref write_n_r)
+ */
+struct ioresult {
+    size_t count = 0;               ///< Byte count, or 0 on error or EOF
+    int error = 0;                  ///< errno value (0 if no error or EOF)
+
+    ioresult() = default;
+    
+    ioresult(size_t c, int e) :count(c), error(e) { }
+
+    explicit inline ioresult(ssize_t n) {
+        if (n >= 0)
+            count = size_t(n);
+        else
+            error = socket::get_last_error();
+    }
+};
+
+/**
  * Base class for streaming sockets, such as TCP and Unix Domain.
  * This is the streaming connection between two peers. It looks like a
  * readable/writeable device.
@@ -230,6 +250,12 @@ public:
 	bool write_timeout(const std::chrono::duration<Rep,Period>& to) {
 		return write_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
 	}
+
+    virtual ioresult read_r(void *buf, size_t n);
+    virtual ioresult read_n_r(void *buf, size_t n);
+    virtual ioresult write_r(const void *buf, size_t n);
+    virtual ioresult write_n_r(const void *buf, size_t n);
+
 };
 
 /////////////////////////////////////////////////////////////////////////////

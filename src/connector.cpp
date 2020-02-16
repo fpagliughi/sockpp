@@ -35,25 +35,91 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/connector.h"
+#include <cerrno>
 
 namespace sockpp {
+
+#ifdef _WIN32
+    // Winsock calls return non-POSIX error codes
+    #define ERR_IN_PROGRESS WSAEINPROGRESS
+    #define ERR_TIMED_OUT   WSAETIMEDOUT
+	#define ERR_WOULD_BLOCK WSAEWOULDBLOCK
+#else
+    #define ERR_IN_PROGRESS EINPROGRESS
+    #define ERR_TIMED_OUT   ETIMEDOUT
+	#define ERR_WOULD_BLOCK EWOULDBLOCK
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+
+bool connector::recreate(const sock_address& addr)
+{
+    sa_family_t domain = addr.family();
+    socket_t h = create_handle(domain);
+
+    if (!check_socket_bool(h))
+        return false;
+
+    // This will close the old connection, if any.
+    reset(h);
+    return true;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////
 
 bool connector::connect(const sock_address& addr)
 {
-    sa_family_t domain = addr.family();
-	socket_t h = create_handle(domain);
-
-	if (!check_ret_bool(h))
+	if (!recreate(addr))
 		return false;
 
-	// This will close the old connection, if any.
-	reset(h);
-
-	if (!check_ret_bool(::connect(h, addr.sockaddr_ptr(), addr.size())))
+	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
 		return close_on_err();
 
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+bool connector::connect(const sock_address& addr, std::chrono::microseconds timeout)
+{
+    if (timeout.count() <= 0)
+        return connect(addr);
+
+    if (!recreate(addr))
+        return false;
+
+    set_non_blocking(true);
+    if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
+        if (last_error() == ERR_IN_PROGRESS || last_error() == ERR_WOULD_BLOCK) {
+            // Non-blocking connect -- call `select` to wait until the timeout:
+        	// Note:  Windows returns errors in exceptset so check it too, the
+        	// logic afterwords doesn't change
+            fd_set readset;
+            FD_ZERO(&readset);
+            FD_SET(handle(), &readset);
+            fd_set writeset = readset;
+        	fd_set exceptset = readset;
+            timeval tv = to_timeval(timeout);
+            int n = check_ret(::select(handle()+1, &readset, &writeset, &exceptset, &tv));
+
+            if (n > 0) {
+                // Got a socket event, but it might be an error, so check:
+                int err;
+                if (get_option(SOL_SOCKET, SO_ERROR, &err))
+                    clear(err);
+            } else if (n == 0) {
+                clear(ERR_TIMED_OUT);
+            }
+        }
+
+        if (last_error() != 0) {
+            close();
+            return false;
+        }
+    }
+
+    set_non_blocking(false);
 	return true;
 }
 

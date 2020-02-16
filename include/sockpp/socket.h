@@ -415,7 +415,7 @@ public:
 	 * @param on Whether to turn non-blocking mode on or off.
 	 * @return @em true on success, @em false on failure.
 	 */
-	bool set_non_blocking(bool on=true);
+	virtual bool set_non_blocking(bool on=true);
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().
@@ -445,14 +445,16 @@ public:
 	 *  	@li SHUT_RDWR (2) Further reads and writes disallowed.
 	 * @return @em true on success, @em false on error.
 	 */
-	bool shutdown(int how=SHUT_RDWR);
+	virtual bool shutdown(int how=SHUT_RDWR);
 	/**
 	 * Closes the socket.
 	 * After closing the socket, the handle is @em invalid, and can not be
 	 * used again until reassigned.
 	 * @return @em true if the sock is closed, @em false on error.
 	 */
-	bool close();
+	virtual bool close();
+
+    friend struct ioresult;
 };
 
 /////////////////////////////////////////////////////////////////////////////
