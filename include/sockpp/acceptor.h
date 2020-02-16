@@ -96,15 +96,15 @@ public:
 	 * @param handle A socket handle from the operating system.
 	 */
 	explicit acceptor(socket_t handle) : base(handle) {}
-    /**
-     * Creates an acceptor socket and starts it listening to the specified
-     * address.
-     * @param addr The address to which this server should be bound.
+	/**
+	 * Creates an acceptor socket and starts it listening to the specified
+	 * address.
+	 * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
 	 */
-    acceptor(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
-        open(addr, queSize);
-    }
+	acceptor(const sock_address& addr, int queSize=DFLT_QUE_SIZE) {
+		open(addr, queSize);
+	}
 	/**
 	 * Move constructor.
 	 * Creates an acceptor by moving the other acceptor to this one.
@@ -141,9 +141,12 @@ public:
 	 * listening.
 	 * @param addr The address to which this server should be bound.
 	 * @param queSize The listener queue size.
+	 * @param reuseSock Whether the SO_REUSEPORT (or SO_REUSEADDR on Win32)
+	 *  				socket option should be used before binding and
+	 *  				listening.
 	 * @return @em true on success, @em false on error
 	 */
-	bool open(const sock_address& addr, int queSize=DFLT_QUE_SIZE);
+	bool open(const sock_address& addr, int queSize=DFLT_QUE_SIZE, bool reuseSock=true);
 	/**
 	 * Accepts an incoming TCP connection and gets the address of the client.
 	 * @param clientAddr Pointer to the variable that will get the
@@ -167,8 +170,8 @@ public:
 template <typename STREAM_SOCK, typename ADDR=typename STREAM_SOCK::addr_t>
 class acceptor_tmpl : public acceptor
 {
-    /** The base class */
-    using base = acceptor;
+	/** The base class */
+	using base = acceptor;
 
 	// Non-copyable
 	acceptor_tmpl(const acceptor_tmpl&) =delete;

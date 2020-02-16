@@ -59,7 +59,9 @@ acceptor acceptor::create(int domain)
 // If the acceptor appears to already be opened, this will quietly succeed
 // without doing anything.
 
-bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
+bool acceptor::open(const sock_address& addr,
+					int queSize /*=DFLT_QUE_SIZE*/,
+					bool reuseSock /*=true*/)
 {
 	// TODO: What to do if we are open but bound to a different address?
 	if (is_open())
@@ -73,16 +75,15 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 
 	reset(h);
 
-	#ifdef WIN32
-	const int reuseSocket = SO_REUSEADDR;
+	#if defined(_WIN32)
+		const int REUSE = SO_REUSEADDR;
 	#else
-	const int reuseSocket = SO_REUSEPORT;
+		const int REUSE = SO_REUSEPORT;
 	#endif
 	
-    // TODO: This should be an option
-	if (domain == AF_INET || domain == AF_INET6) {
+	if (reuseSock && (domain == AF_INET || domain == AF_INET6)) {
 		int reuse = 1;
-		if (!set_option(SOL_SOCKET, reuseSocket, reuse))
+		if (!set_option(SOL_SOCKET, REUSE, reuse))
 			return close_on_err();
 	}
 
@@ -97,9 +98,9 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
 {
 	sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
-    socklen_t len = clientAddr ? clientAddr->size() : 0;
+	socklen_t len = clientAddr ? clientAddr->size() : 0;
 
-    socket_t s = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr));
+	socket_t s = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr));
 	return stream_socket(s);
 }
 
