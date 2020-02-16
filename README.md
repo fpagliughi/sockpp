@@ -29,6 +29,7 @@ If you're using this library, tweet at me or send me a message, and let me know 
 The following updates exist in this branch in the repository, but have yet to be formally released:
 
 - [#37] socket::get_option() not returning length on Windows.
+- [#39] Using *SSIZE_T* for *ssize_t* in Windows 
 
 ## New in v0.7
 
