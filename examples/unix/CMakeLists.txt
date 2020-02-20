@@ -46,6 +46,7 @@ find_package(Threads REQUIRED)
 
 add_executable(unechosvr unechosvr.cpp)
 add_executable(unecho unecho.cpp)
+add_executable(unechotest unechotest.cpp)
 
 add_executable(undgramechosvr undgramechosvr.cpp)
 add_executable(undgramecho undgramecho.cpp)
@@ -56,6 +57,7 @@ message(STATUS "Using library for unix samples: ${SOCKPP_LIB}")
 
 target_link_libraries(unechosvr ${SOCKPP_LIB} Threads::Threads)
 target_link_libraries(unecho ${SOCKPP_LIB})
+target_link_libraries(unechotest ${SOCKPP_LIB})
 
 target_link_libraries(undgramechosvr ${SOCKPP_LIB} Threads::Threads)
 target_link_libraries(undgramecho ${SOCKPP_LIB})
@@ -65,6 +67,7 @@ target_link_libraries(undgramecho ${SOCKPP_LIB})
 set(INSTALL_TARGETS
 	unechosvr
 	unecho
+	unechotest
 	undgramechosvr
 	undgramecho
 )

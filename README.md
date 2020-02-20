@@ -30,6 +30,7 @@ The following updates exist in this branch in the repository, but have yet to be
 
 - [#37] socket::get_option() not returning length on Windows.
 - [#39] Using *SSIZE_T* for *ssize_t* in Windows 
+- Now `acceptor::open()` uses the *SO_REUSEPORT* option instead of *SO_REUSEADDR* on non-Windows systenms. Also made reuse optional.
 
 ## New in v0.7
 
