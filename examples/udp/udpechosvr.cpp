@@ -47,6 +47,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <array>
 #include <iostream>
 #include <thread>
 #include "sockpp/udp_socket.h"
@@ -64,15 +65,15 @@ template <typename UDPSOCK>
 void run_echo(UDPSOCK sock)
 {
 	ssize_t n;
-	char buf[512];
+	std::array<uint8_t, 512> buf;
 
 	// Each UDP socket type knows its address type as `addr_t`
 	typename UDPSOCK::addr_t srcAddr;
 
 	// Read some data, also getting the address of the sender,
 	// then just send it back.
-	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
-		sock.send_to(buf, n, srcAddr);
+	while ((n = sock.recv_from(buf.data(), buf.size(), &srcAddr)) > 0)
+		sock.send_to(buf.data(), n, srcAddr);
 }
 
 // --------------------------------------------------------------------------
