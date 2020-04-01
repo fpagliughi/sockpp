@@ -349,8 +349,12 @@ namespace sockpp {
         int check_mbed_setup(int ret, const char *fn) {
             if (ret != 0) {
                 log_mbed_ret(ret, fn);
+                int err = translate_mbed_err(ret);
+                if (ret == MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE)
+                    err = mbedtls_context::FATAL_ERROR_ALERT_BASE - ssl_.in_msg[1];
+                log("---closing socket (mbed status -0x%x, last_error %d) ---", -ret, err);
                 reset(); // marks me as closed/invalid
-                clear(translate_mbed_err(ret)); // sets last_error
+                clear(err); // sets last_error
                 stream().close();
                 open_ = false;
             }

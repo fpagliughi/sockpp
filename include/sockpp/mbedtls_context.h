@@ -95,6 +95,13 @@ namespace sockpp {
         using Logger = std::function<void(int level, const char *filename, int line, const char *message)>;
         void set_logger(int threshold, Logger);
 
+        /**
+         * TLS "fatal alert" codes are mapped into error codes returned from the socket's last_error().
+         * This mapping is done in mbedTLS style: a value of -0xF0xx, where xx is the hex value of the alert.
+         * For example, MBEDTLS_SSL_ALERT_MSG_ACCESS_DENIED (49) is mapped to error code -0xF031.
+         */
+        static constexpr int FATAL_ERROR_ALERT_BASE = -0xF000;
+
     private:
         struct cert;
         struct key;
