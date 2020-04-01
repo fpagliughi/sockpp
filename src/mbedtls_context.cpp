@@ -151,11 +151,10 @@ namespace sockpp {
             setup_bio(blocking);
 
             // Run the TLS handshake:
+            open_ = true;
             int status;
             do {
-                open_ = true;  // temporarily, so BIO methods won't fail
                 status = mbedtls_ssl_handshake(&ssl_);
-                open_ = false;
             } while (status == MBEDTLS_ERR_SSL_WANT_READ || status == MBEDTLS_ERR_SSL_WANT_WRITE
                             || status == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS);
             if (check_mbed_setup(status, "mbedtls_ssl_handshake") != 0)
@@ -171,7 +170,6 @@ namespace sockpp {
                 clear(MBEDTLS_ERR_X509_CERT_VERIFY_FAILED);
                 return;
             }
-            open_ = true;
         }
 
 
@@ -355,6 +353,7 @@ namespace sockpp {
                 log("---closing socket (mbed status -0x%x, last_error %d) ---", -ret, err);
                 reset(); // marks me as closed/invalid
                 clear(err); // sets last_error
+                stream().shutdown();
                 stream().close();
                 open_ = false;
             }
@@ -500,7 +499,7 @@ namespace sockpp {
         if (roots)
             mbedtls_ssl_conf_ca_chain(ssl_config_.get(), roots, nullptr);
 
-        // Install a custom verification callback:
+        // Install a custom verification callback that will call my verify_callback():
         mbedtls_ssl_conf_verify(
                         ssl_config_.get(),
                         [](void *ctx, mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
@@ -572,7 +571,7 @@ namespace sockpp {
         if (status > 0) {
             *flags &= ~(MBEDTLS_X509_BADCERT_NOT_TRUSTED | MBEDTLS_X509_BADCERT_CN_MISMATCH);
         } else if (status == 0) {
-            *flags |= MBEDTLS_X509_BADCERT_NOT_TRUSTED;
+            *flags |= MBEDTLS_X509_BADCERT_OTHER;
         }
         return 0;
     }
