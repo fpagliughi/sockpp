@@ -495,6 +495,14 @@ namespace sockpp {
         auto roots = get_system_root_certs();
         if (roots)
             mbedtls_ssl_conf_ca_chain(ssl_config_.get(), roots, nullptr);
+
+        // Install a custom verification callback:
+        mbedtls_ssl_conf_verify(
+                        ssl_config_.get(),
+                        [](void *ctx, mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
+                            return ((mbedtls_context*)ctx)->verify_callback(crt,depth,flags);
+                        },
+                        this);
     }
 
 
@@ -526,45 +534,41 @@ namespace sockpp {
 
 
     void mbedtls_context::allow_only_certificate(const std::string &cert_data) {
-        pinned_cert_.reset();
         if (cert_data.empty()) {
-            mbedtls_ssl_conf_verify(ssl_config_.get(), nullptr, nullptr);
+            pinned_cert_.reset();
         } else {
             pinned_cert_ = parse_cert(cert_data, false);
-            // Install a custom verification callback:
-            mbedtls_ssl_conf_verify(
-                            ssl_config_.get(),
-                            [](void *ctx, mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
-                                return ((mbedtls_context*)ctx)->verify_callback(crt,depth,flags);
-                            },
-                            this);
         }
     }
 
 
     void mbedtls_context::allow_only_certificate(mbedtls_x509_crt *certificate) {
-        pinned_cert_.reset();
+        string cert_data;
         if (certificate) {
-            string cert_data((const char*)certificate->raw.p, certificate->raw.len);
-            allow_only_certificate(cert_data);
-        } else {
-            mbedtls_ssl_conf_verify(ssl_config_.get(), nullptr, nullptr);
+            cert_data = string((const char*)certificate->raw.p, certificate->raw.len);
         }
+        allow_only_certificate(cert_data);
     }
 
 
     // callback from mbedTLS cert validation (see above)
     int mbedtls_context::verify_callback(mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
-        if (depth == 0) {
-            if (crt->raw.len == pinned_cert_->raw.len
-                        && 0 == memcmp(crt->raw.p, pinned_cert_->raw.p, crt->raw.len)) {
-                // The cert matches our pinned cert, so mark it as trusted.
-                // (It might still be invalid if it's expired or revoked...)
-                *flags &= ~(MBEDTLS_X509_BADCERT_NOT_TRUSTED | MBEDTLS_X509_BADCERT_CN_MISMATCH);
-            } else {
-                // If cert doesn't match pinned cert, mark it as untrusted.
-                *flags |= MBEDTLS_X509_BADCERT_OTHER;
-            }
+        if (depth != 0)
+            return 0;
+
+        int status = -1;
+        if (pinned_cert_) {
+            status = (crt->raw.len == pinned_cert_->raw.len
+                      && 0 == memcmp(crt->raw.p, pinned_cert_->raw.p, crt->raw.len));
+        } else if (auto &callback = get_auth_callback(); callback) {
+            string certData((const char*)crt->raw.p, crt->raw.len);
+            status = callback(certData);
+        }
+        
+        if (status > 0) {
+            *flags &= ~(MBEDTLS_X509_BADCERT_NOT_TRUSTED | MBEDTLS_X509_BADCERT_CN_MISMATCH);
+        } else if (status == 0) {
+            *flags |= MBEDTLS_X509_BADCERT_NOT_TRUSTED;
         }
         return 0;
     }

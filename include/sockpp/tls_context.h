@@ -48,6 +48,7 @@
 #define __sockpp_tls_context_h
 
 #include "sockpp/platform.h"
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -118,6 +119,28 @@ namespace sockpp {
          */
         virtual void allow_only_certificate(const std::string &certData) =0;
 
+        /**
+         * A function that can be called during the TLS handshake to examine the peer's certificate.
+         * @param certData  The certificate's data, in DER encoding.
+         * @return  True to accept the cert, false to reject it and abort the connection.
+         */
+        using auth_callback = std::function<bool(const std::string &certData)>;
+
+        /**
+         * Registers a callback to be invoked during the TLS handshake, that can examine
+         * the peer cert (if any) and accept or reject it.
+         */
+        void set_auth_callback(auth_callback cb) {
+            auth_callback_ = std::move(cb);
+        }
+
+        /**
+         * Returns the authentication callback, if any.
+         */
+        const auth_callback& get_auth_callback() const {
+            return auth_callback_;
+        }
+
         virtual void set_identity(const std::string &certificate_data,
                                   const std::string &private_key_data) =0;
 
@@ -151,6 +174,7 @@ namespace sockpp {
         tls_context(const tls_context&) =delete;
 
         mutable int status_ =0;
+        std::function<bool(const std::string&)> auth_callback_;
     };
 
 }
