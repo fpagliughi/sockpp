@@ -455,7 +455,7 @@ namespace sockpp {
 	        	if(ret > 0) {
 	        		ret = MBEDTLS_ERR_X509_CERT_VERIFY_FAILED;
 	        	}
-	        	
+
 				throw sys_error(ret);
 	        }
         }
@@ -649,19 +649,28 @@ namespace sockpp {
 #elif defined(_WIN32)
     // Windows:
     static string read_system_root_certs() {
-	    PCCERT_CONTEXT pContext = nullptr;
-	    HCERTSTORE hStore = CertOpenSystemStore(NULL, "ROOT");
-		if(hStore == nullptr) {
-			return "";
-		}
+        PCCERT_CONTEXT pContext = nullptr;
+        HCERTSTORE hStore = CertOpenSystemStore(NULL, "ROOT");
+        if(hStore == nullptr) {
+            return "";
+        }
 
-		stringstream certs;
-		while ((pContext = CertEnumCertificatesInStore(hStore, pContext))) {
-			certs.write((const char*)pContext->pbCertEncoded, pContext->cbCertEncoded);
-		}
+        stringstream certs;
+        while ((pContext = CertEnumCertificatesInStore(hStore, pContext))) {
+            DWORD pCertPEMSize = 0;
+            if (!CryptBinaryToStringA(pContext->pbCertEncoded, pContext->cbCertEncoded, CRYPT_STRING_BASE64HEADER, NULL, &pCertPEMSize)) {
+                return "";
+            }
+            LPSTR pCertPEM = (LPSTR)malloc(pCertPEMSize);
+            if (!CryptBinaryToStringA(pContext->pbCertEncoded, pContext->cbCertEncoded, CRYPT_STRING_BASE64HEADER, pCertPEM, &pCertPEMSize)) {
+                return "";
+            }
+            certs.write(pCertPEM, pCertPEMSize);
+            free(pCertPEM);
+        }
 
-		CertCloseStore(hStore, CERT_CLOSE_STORE_FORCE_FLAG);
-		return certs.str();
+        CertCloseStore(hStore, CERT_CLOSE_STORE_FORCE_FLAG);
+        return certs.str();
     }
 
 #else
