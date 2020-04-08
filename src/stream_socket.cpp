@@ -207,7 +207,7 @@ ssize_t stream_socket::write(const std::vector<iovec> &ranges) {
 	}
 
 	DWORD written = 0;
-	ssize_t ret = check_ret(WSASend(handle(), buffers.data(), buffers.size(), &written, 0, nullptr, nullptr));
+	ssize_t ret = check_ret(WSASend(handle(), buffers.data(), ULONG(buffers.size()), &written, 0, nullptr, nullptr));
 	return ret == SOCKET_ERROR ? ret : written;
 #endif
 }
