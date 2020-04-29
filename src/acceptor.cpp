@@ -72,6 +72,14 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 		return false;
 
 	reset(h);
+
+    // TODO: This should be an option
+	if (domain == AF_INET || domain == AF_INET6) {
+		int reuse = 1;
+		if (!set_option(SOL_SOCKET, SO_REUSEADDR, reuse))
+			return close_on_err();
+	}
+
 	if (!bind(addr) || !listen(queSize))
 		return close_on_err();
 
