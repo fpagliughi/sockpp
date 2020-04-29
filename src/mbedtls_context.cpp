@@ -350,11 +350,21 @@ namespace sockpp {
                 int err = translate_mbed_err(ret);
                 if (ret == MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE)
                     err = mbedtls_context::FATAL_ERROR_ALERT_BASE - ssl_.in_msg[1];
-                log("---closing socket (mbed status -0x%x, last_error %d) ---", -ret, err);
+                log("---closing mbedtls_socket with error (mbed status -0x%x, last_error %d) ---", -ret, err);
                 reset(); // marks me as closed/invalid
                 clear(err); // sets last_error
-                stream().shutdown();
+
+                // Signal we're done by shutting down the socket's write stream. That lets the
+                // client finish sending any data and receive our error alert. Wait until the
+                // client closes, by reading data until we get 0 bytes, then finally close.
+                stream().shutdown(SHUT_WR);
+                stream().read_timeout(2000ms);
+                char buf[100];
+                while (stream().read(buf, sizeof(buf)) > 0)
+                    ;
                 stream().close();
+                log("--- closed mbedtls_socket ---");
+
                 open_ = false;
             }
             return ret;
@@ -614,7 +624,7 @@ namespace sockpp {
                                                         const std::string &peer_name)
     {
         assert(socketRole == role());
-        return unique_ptr<tls_socket>(new mbedtls_socket(move(socket), *this, peer_name));
+        return make_unique<mbedtls_socket>(move(socket), *this, peer_name);
     }
 
 
