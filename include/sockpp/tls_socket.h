@@ -124,6 +124,14 @@ namespace sockpp {
             return ok;
         }
 
+        /**
+         * The underlying socket stream that this socket wraps.
+         * The TLS code reads and writes this stream.
+         */
+        stream_socket &stream() const {
+            return *stream_;
+        }
+
         virtual ~tls_socket() {
             close();
         }
@@ -142,12 +150,6 @@ namespace sockpp {
          * specified socket object and transfers ownership of the socket.
          */
         tls_socket(tls_socket&& sock) : tls_socket(std::move(sock.stream_)) {}
-
-        /**
-         * The underlying socket stream that this socket wraps.
-         * The TLS code reads and writes this stream.
-         */
-        stream_socket &stream()  {return *stream_;}
 
     private:
         std::unique_ptr<stream_socket> stream_;
