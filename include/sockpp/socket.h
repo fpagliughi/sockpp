@@ -87,6 +87,8 @@ class socket
 	socket_t handle_;
 	/** Cache of the last error (errno) */
 	mutable int lastErr_;
+    /** What modes have been shut down so far (read / write) */
+    int shutdown_{-1};
 	/**
 	 * The OS-specific function to close a socket handle/
 	 * @param h The OS socket handle.
@@ -236,6 +238,8 @@ public:
 	 * @return @em true if the socket is open, @em false otherwise.
 	 */
 	bool is_open() const { return handle_ != INVALID_SOCKET; }
+    
+    bool is_shutdown() const { return !is_open() || shutdown_ >= 0; }
 	/**
 	 * Determines if the socket is closed or in an error state.
 	 * @return @em true if the socket is closed or in an error state, @em
