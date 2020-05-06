@@ -37,7 +37,7 @@
 # ---------------------------------------------------------------------------
 
 add_library(sockpp-objs OBJECT
-  acceptor.cpp
+	acceptor.cpp
 	connector.cpp
 	datagram_socket.cpp
 	exception.cpp
@@ -55,7 +55,6 @@ endif()
 
 # This is only necessary for older compilers, but doesn't hurt
 set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
-
 
 # --- Warnings ---
 
