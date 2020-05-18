@@ -129,7 +129,9 @@ else()
 		message(STATUS "Creating shared library: ${SOCKPP_SHARED_LIBRARY}")
 		add_library(${SOCKPP_SHARED_LIBRARY} SHARED $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
 		target_include_directories(${SOCKPP_SHARED_LIBRARY}
-			PUBLIC $<INSTALL_INTERFACE:include>
+			PUBLIC
+				$<BUILD_INTERFACE:${SOCKPP_INCLUDES}>
+				$<INSTALL_INTERFACE:include>
 			PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
 		target_link_libraries(${SOCKPP_SHARED_LIBRARY} ${LIBS_SYSTEM})
 		
@@ -143,7 +145,9 @@ else()
 		message(STATUS "Creating static library: ${SOCKPP_STATIC_LIBRARY}")
 		add_library(${SOCKPP_STATIC_LIBRARY} STATIC $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
 		target_include_directories(${SOCKPP_STATIC_LIBRARY}
-			PUBLIC $<INSTALL_INTERFACE:include>
+			PUBLIC
+				$<BUILD_INTERFACE:${SOCKPP_INCLUDES}>
+				$<INSTALL_INTERFACE:include>
 			PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
 		target_link_libraries(${SOCKPP_STATIC_LIBRARY} ${LIBS_SYSTEM})
 		
