@@ -78,7 +78,11 @@ std::string sys_error::error_str(int err)
 /////////////////////////////////////////////////////////////////////////////
 
 getaddrinfo_error::getaddrinfo_error(int err, const string& hostname)
-    : runtime_error(gai_strerrorA(err)), error_(err), hostname_(hostname)
+#if defined(_WIN32)
+	: runtime_error(gai_strerrorA(err)), error_(err), hostname_(hostname)
+#else
+    : runtime_error(gai_strerror(err)), error_(err), hostname_(hostname)
+#endif
 {
 }
 
