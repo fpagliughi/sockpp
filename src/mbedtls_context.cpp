@@ -660,7 +660,8 @@ namespace sockpp {
     // Windows:
     static string read_system_root_certs() {
         PCCERT_CONTEXT pContext = nullptr;
-        HCERTSTORE hStore = CertOpenSystemStore(NULL, "ROOT");
+    	HCERTSTORE hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, NULL,
+			CERT_SYSTEM_STORE_CURRENT_USER, "ROOT");
         if(hStore == nullptr) {
             return "";
         }
