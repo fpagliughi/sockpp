@@ -169,7 +169,7 @@ public:
 	 * @return A string representation of the address in the form
 	 *  	   "unix:<path>"
 	 */
-	std::string to_string() const {
+	std::string to_string() const override {
 		return std::string("unix:") + std::string(addr_.sun_path);
 	}
 };
