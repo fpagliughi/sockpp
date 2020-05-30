@@ -72,25 +72,11 @@
 #endif
 
 
-// TODO: Better logging(?)
-#define log(FMT,...) fprintf(stderr, "TLS: " FMT "\n", ## __VA_ARGS__)
-
-
 namespace sockpp {
     using namespace std;
 
 
     static std::string read_system_root_certs();
-
-
-    static int log_mbed_ret(int ret, const char *fn) {
-        if (ret != 0) {
-            char msg[100];
-            mbedtls_strerror(ret, msg, sizeof(msg));
-            log("mbedtls error -0x%04X from %s: %s", -ret, fn, msg);
-        }
-        return ret;
-    }
 
 
     // Simple RAII helper for mbedTLS cert struct
@@ -121,6 +107,22 @@ namespace sockpp {
         bool open_ = false;
 
     public:
+
+        #define log(LEVEL, FMT,...) do { \
+            auto ssl = &ssl_; \
+            MBEDTLS_SSL_DEBUG_MSG(LEVEL, ("SockPP: " FMT, ## __VA_ARGS__)); \
+        }while(0)
+
+
+        int log_mbed_ret(int ret, const char *fn) {
+            if (ret != 0) {
+                char msg[100];
+                mbedtls_strerror(ret, msg, sizeof(msg));
+                log(1, "mbedtls error -0x%04X from %s: %s", -ret, fn, msg);
+            }
+            return ret;
+        }
+
 
         mbedtls_socket(unique_ptr<stream_socket> base,
                        mbedtls_context &context,
@@ -165,7 +167,7 @@ namespace sockpp {
                                   && !(verify_flags & MBEDTLS_X509_BADCERT_SKIP_VERIFY)) {
                 char vrfy_buf[512];
                 mbedtls_x509_crt_verify_info(vrfy_buf, sizeof( vrfy_buf ), "", verify_flags);
-                log("Cert verify failed: %s", vrfy_buf );
+                log(1, "Cert verify failed: %s", vrfy_buf );
                 reset();
                 clear(MBEDTLS_ERR_X509_CERT_VERIFY_FAILED);
                 return;
@@ -324,13 +326,13 @@ namespace sockpp {
 
 
         // Translates mbedTLS error code to POSIX (errno)
-        static int translate_mbed_err(int mbedErr) {
+        int translate_mbed_err(int mbedErr) {
             switch (mbedErr) {
                 case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
                     return 0;
                 case MBEDTLS_ERR_SSL_WANT_READ:
                 case MBEDTLS_ERR_SSL_WANT_WRITE:
-                    log(">>> mbedtls_socket returning EWOULDBLOCK");
+                    log(3, "mbedtls_socket returning EWOULDBLOCK");
                     return EWOULDBLOCK;
                 case MBEDTLS_ERR_NET_CONN_RESET:
                     return ECONNRESET;
@@ -350,7 +352,7 @@ namespace sockpp {
                 int err = translate_mbed_err(ret);
                 if (ret == MBEDTLS_ERR_SSL_FATAL_ALERT_MESSAGE)
                     err = mbedtls_context::FATAL_ERROR_ALERT_BASE - ssl_.in_msg[1];
-                log("---closing mbedtls_socket with error (mbed status -0x%x, last_error %d) ---", -ret, err);
+                log(1, "---closing mbedtls_socket with error (mbed status -0x%x, last_error %d) ---", -ret, err);
                 reset(); // marks me as closed/invalid
                 clear(err); // sets last_error
 
@@ -363,7 +365,7 @@ namespace sockpp {
                 while (stream().read(buf, sizeof(buf)) > 0)
                     ;
                 stream().close();
-                log("--- closed mbedtls_socket ---");
+                log(2, "--- closed mbedtls_socket ---");
 
                 open_ = false;
             }
@@ -382,7 +384,7 @@ namespace sockpp {
 
 
         // Handles an mbedTLS read/write return value, converting it to an ioresult.
-        static inline ioresult ioresult_from_mbed(int mbedResult) {
+        inline ioresult ioresult_from_mbed(int mbedResult) {
             if (mbedResult < 0)
                 return ioresult(0, translate_mbed_err(mbedResult));
             else
@@ -392,7 +394,7 @@ namespace sockpp {
 
         // Translates ioresult to an mbedTLS error code to return from a BIO function.
         template <bool reading>
-        static int bio_return_value(ioresult result) {
+        int bio_return_value(ioresult result) {
             if (result.error == 0)
                 return (int)result.count;
             switch (result.error) {
@@ -404,7 +406,7 @@ namespace sockpp {
 #if defined(EAGAIN) && EAGAIN != EWOULDBLOCK    // these are usually synonyms
                 case EAGAIN:
 #endif
-                    log(">>> BIO returning MBEDTLS_ERR_SSL_WANT_%s", reading ?"READ":"WRITE");
+                    log(3, ">>> BIO returning MBEDTLS_ERR_SSL_WANT_%s", reading ?"READ":"WRITE");
                     return reading ? MBEDTLS_ERR_SSL_WANT_READ
                                    : MBEDTLS_ERR_SSL_WANT_WRITE;
                 default:
@@ -412,12 +414,23 @@ namespace sockpp {
                                    : MBEDTLS_ERR_NET_SEND_FAILED;
             }
         }
-
-
     };
+
+    
+    #undef log
 
 
 #pragma mark - CONTEXT:
+
+
+    static int log_mbed_ret(int ret, const char *fn) {
+        if (ret != 0) {
+            char msg[100];
+            mbedtls_strerror(ret, msg, sizeof(msg));
+            fprintf(stderr, "TLS: mbedtls error -0x%04X from %s: %s\n", -ret, fn, msg);
+        }
+        return ret;
+    }
 
 
     static tls_context *s_default_context = nullptr;
