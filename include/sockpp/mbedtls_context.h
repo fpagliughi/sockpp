@@ -70,6 +70,17 @@ namespace sockpp {
         ~mbedtls_context() override;
 
         void set_root_certs(const std::string &certData) override;
+
+        /**
+         * Callback function that looks up the trusted root certificate that signed a given cert.
+         * If found, the root certificate should be stored in `root`; else leave `root` empty.
+         * The function should return false if and only if a fatal error occurs.
+         */
+        using RootCertLocator = std::function<bool(std::string cert, std::string &root)>;
+
+        void set_root_cert_locator(RootCertLocator loc);
+        RootCertLocator root_cert_locator() const           {return root_cert_locator_;}
+
         void require_peer_cert(role_t, bool) override;
         void allow_only_certificate(const std::string &certData) override;
 
@@ -107,9 +118,12 @@ namespace sockpp {
         struct key;
 
         int verify_callback(mbedtls_x509_crt *crt, int depth, uint32_t *flags);
+        int trusted_cert_callback(void *context, mbedtls_x509_crt const *child,
+                                  mbedtls_x509_crt **candidates);
         static std::unique_ptr<cert> parse_cert(const std::string &cert_data, bool partialOk);
 
         std::unique_ptr<mbedtls_ssl_config> ssl_config_;
+        RootCertLocator root_cert_locator_;
         std::unique_ptr<cert> root_certs_;
         std::unique_ptr<cert> pinned_cert_;
 

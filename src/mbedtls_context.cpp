@@ -524,6 +524,47 @@ namespace sockpp {
     }
 
 
+    int mbedtls_context::trusted_cert_callback(void *context,
+                                               mbedtls_x509_crt const *child,
+                                               mbedtls_x509_crt **candidates)
+    {
+        if (!root_cert_locator_)
+            return -1;
+        string certData((const char*)child->raw.p, child->raw.len);
+        string rootData;
+        if (!root_cert_locator_(certData, rootData))
+            return -1;//TEMP
+        if (rootData.empty()) {
+            *candidates = nullptr;
+        } else {
+            // (can't use parse_cert() here because its return value uses RAII and will free itself)
+            auto root = (mbedtls_x509_crt*)malloc(sizeof(mbedtls_x509_crt));
+            mbedtls_x509_crt_init(root);
+            int err = mbedtls_x509_crt_parse(root,
+                                             (const uint8_t*)rootData.data(), rootData.size() + 1);
+            if (err != 0) {
+                mbedtls_x509_crt_free(root);
+                free(root);
+                return err;
+            }
+            *candidates = root;
+        }
+        return 0;
+    }
+
+
+    void mbedtls_context::set_root_cert_locator(RootCertLocator loc) {
+        root_cert_locator_ = loc;
+        mbedtls_x509_crt_ca_cb_t callback = nullptr;
+        if (loc) {
+            callback = [](void *ctx, mbedtls_x509_crt const *child, mbedtls_x509_crt **cand) {
+                return ((mbedtls_context*)ctx)->trusted_cert_callback(ctx, child, cand);
+            };
+        }
+        mbedtls_ssl_conf_ca_cb(ssl_config_.get(), callback, this);
+    }
+
+
     void mbedtls_context::set_logger(int threshold, Logger logger) {
         if (!logger_) {
             mbedtls_ssl_conf_dbg(ssl_config_.get(), [](void *ctx, int level, const char *file, int line,
