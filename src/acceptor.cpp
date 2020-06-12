@@ -82,6 +82,10 @@ bool acceptor::open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/)
 	}
 #endif
 
+	// TODO: So should this
+	if(domain == AF_INET6 && !set_option(IPPROTO_IPV6, IPV6_V6ONLY, 0))
+		return close_on_err();
+
 	if (!bind(addr) || !listen(queSize))
 		return close_on_err();
 
