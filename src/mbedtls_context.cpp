@@ -573,8 +573,13 @@ namespace sockpp {
             callback = [](void *ctx, mbedtls_x509_crt const *child, mbedtls_x509_crt **cand) {
                 return ((mbedtls_context*)ctx)->trusted_cert_callback(ctx, child, cand);
             };
+            mbedtls_ssl_conf_ca_cb(ssl_config_.get(), callback, this);
+        } else {
+            // Resetting this automatically clears the callback
+            auto roots = get_system_root_certs();
+            if (roots)
+                mbedtls_ssl_conf_ca_chain(ssl_config_.get(), roots, nullptr);
         }
-        mbedtls_ssl_conf_ca_cb(ssl_config_.get(), callback, this);
     }
 
 
@@ -620,8 +625,14 @@ namespace sockpp {
 
     // callback from mbedTLS cert validation (see above)
     int mbedtls_context::verify_callback(mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
-        if (depth != 0)
+        if (depth != 0) {
+            if(pinned_cert_) {
+                // We only care that the end cert matches, clear all other errors
+                *flags = 0;
+            }
+            
             return 0;
+        }
 
         int status = -1;
         if (pinned_cert_) {
