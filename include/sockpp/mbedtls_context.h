@@ -106,7 +106,7 @@ namespace sockpp {
         using Logger = std::function<void(int level, const char *filename, int line, const char *message)>;
         void set_logger(int threshold, Logger);
         
-        std::string get_peer_certificate() const;
+        const std::string& get_peer_certificate() const { return received_cert_data_; }
 
         /**
          * TLS "fatal alert" codes are mapped into error codes returned from the socket's last_error().
@@ -128,7 +128,7 @@ namespace sockpp {
         RootCertLocator root_cert_locator_;
         std::unique_ptr<cert> root_certs_;
         std::unique_ptr<cert> pinned_cert_;
-        std::unique_ptr<cert> received_cert_;
+        std::string received_cert_data_;
 
         std::unique_ptr<cert> identity_cert_;
         std::unique_ptr<key> identity_key_;

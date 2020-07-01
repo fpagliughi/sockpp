@@ -639,11 +639,7 @@ namespace sockpp {
         }
 
         int status = -1;
-        
-        // Is there a better way to do this then parsing everything again?
-        received_cert_.reset(new cert);
-        mbedtls_x509_crt_parse(received_cert_.get(), crt->raw.p, crt->raw.len);
-        
+        received_cert_data_ = string((const char *)crt->raw.p, crt->raw.len);
         
         if (pinned_cert_) {
             status = (crt->raw.len == pinned_cert_->raw.len
@@ -700,14 +696,6 @@ namespace sockpp {
     {
         assert(socketRole == role());
         return make_unique<mbedtls_socket>(move(socket), *this, peer_name);
-    }
-
-    string mbedtls_context::get_peer_certificate() const {
-        if(!received_cert_) {
-            return "";
-        }
-        
-        return string((const char *)received_cert_->raw.p, received_cert_->raw.len);
     }
 
 
