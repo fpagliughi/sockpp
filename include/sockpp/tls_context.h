@@ -107,8 +107,10 @@ namespace sockpp {
          *   client certificate authentication.
          * @param role  The role you are configuring this setting for
          * @param require Pass true to require a valid peer certificate, false to not require.
+         * @param sendCAList Pass true to automatically generate a list of trusted CAs for
+         *                   the received client cert, if possible (only applies when role == SERVER)
          */
-        virtual void require_peer_cert(role_t role, bool require) =0;
+        virtual void require_peer_cert(role_t role, bool require, bool sendCAList) =0;
 
         /**
          * Requires that the peer have the exact certificate given.

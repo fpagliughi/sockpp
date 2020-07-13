@@ -601,11 +601,17 @@ namespace sockpp {
     }
 
 
-    void mbedtls_context::require_peer_cert(role_t forRole, bool require) {
+    void mbedtls_context::require_peer_cert(role_t forRole, bool require, bool sendCAList) {
         if (forRole != role())
             return;
         int authMode = (require ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_OPTIONAL);
         mbedtls_ssl_conf_authmode(ssl_config_.get(), authMode);
+
+    	if(role() == SERVER) {
+    		mbedtls_ssl_conf_cert_req_ca_list(ssl_config_.get(), sendCAList
+				? MBEDTLS_SSL_CERT_REQ_CA_LIST_ENABLED
+				: MBEDTLS_SSL_CERT_REQ_CA_LIST_DISABLED);
+		}
     }
 
 

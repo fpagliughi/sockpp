@@ -81,7 +81,7 @@ namespace sockpp {
         void set_root_cert_locator(RootCertLocator loc);
         RootCertLocator root_cert_locator() const           {return root_cert_locator_;}
 
-        void require_peer_cert(role_t, bool) override;
+        void require_peer_cert(role_t, bool, bool) override;
         void allow_only_certificate(const std::string &certData) override;
 
         void allow_only_certificate(mbedtls_x509_crt *certificate);
