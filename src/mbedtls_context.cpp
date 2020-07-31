@@ -764,8 +764,12 @@ namespace sockpp {
 #else
     // Read system root CA certs on Linux using OpenSSL's cert directory
     static string read_system_root_certs() {
+#ifdef __ANDROID__
+        static constexpr const char* CERTS_DIR  = "/system/etc/security/cacerts/";
+#else
         static constexpr const char* CERTS_DIR  = "/etc/ssl/certs/";
         static constexpr const char* CERTS_FILE = "ca-certificates.crt";
+#endif
 
         stringstream certs;
         char buf[1024];
@@ -787,18 +791,23 @@ namespace sockpp {
 
         struct stat s;
         if (stat(CERTS_DIR, &s) == 0 && S_ISDIR(s.st_mode)) {
+#ifndef __ANDROID__
             string certs_file = string(CERTS_DIR) + CERTS_FILE;
             if (stat(certs_file.c_str(), &s) == 0) {
                 // If there is a file containing all the certs, just read it:
                 read_file(certs_file);
-            } else {
+            } else
+#endif
+            {
                 // Otherwise concatenate all the certs found in the dir:
                 auto dir = opendir(CERTS_DIR);
                 if (dir) {
                     struct dirent *ent;
                     while (nullptr != (ent = readdir(dir))) {
+#ifndef __ANDROID__
                         if (fnmatch("?*.pem", ent->d_name, FNM_PERIOD) == 0
                                     || fnmatch("?*.crt", ent->d_name, FNM_PERIOD) == 0)
+#endif
                             read_file(string(CERTS_DIR) + ent->d_name);
                     }
                     closedir(dir);
