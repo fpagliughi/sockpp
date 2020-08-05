@@ -458,6 +458,23 @@ namespace sockpp {
         static once_flag once;
         call_once(once, []() {
             mbedtls_entropy_init( &s_entropy );
+
+            #if defined(_MSC_VER) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+            auto uwp_entropy_poll = [](void *data, unsigned char *output, size_t len,
+                                       size_t *olen) -> int
+            {
+                NTSTATUS status = BCryptGenRandom(NULL, output, (ULONG)len, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+                if (status < 0) {
+                    return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
+                }
+
+                *olen = len;
+                return 0;
+            };
+            mbedtls_entropy_add_source(&s_entropy, uwp_entropy_poll, NULL, 32,
+                                       MBEDTLS_ENTROPY_SOURCE_STRONG);
+            #endif
+        
             mbedtls_ctr_drbg_init( &s_random_ctx );
             int ret = mbedtls_ctr_drbg_seed(&s_random_ctx, mbedtls_entropy_func, &s_entropy,
                                             (const uint8_t *)k_entropy_personalization,
