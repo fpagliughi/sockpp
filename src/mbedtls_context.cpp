@@ -459,7 +459,8 @@ namespace sockpp {
         call_once(once, []() {
             mbedtls_entropy_init( &s_entropy );
 
-            #if defined(_MSC_VER) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+            #if defined(_MSC_VER)
+            #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
             auto uwp_entropy_poll = [](void *data, unsigned char *output, size_t len,
                                        size_t *olen) -> int
             {
@@ -473,6 +474,7 @@ namespace sockpp {
             };
             mbedtls_entropy_add_source(&s_entropy, uwp_entropy_poll, NULL, 32,
                                        MBEDTLS_ENTROPY_SOURCE_STRONG);
+            #endif
             #endif
         
             mbedtls_ctr_drbg_init( &s_random_ctx );
