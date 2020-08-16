@@ -65,9 +65,11 @@ if(UNIX)
 	)
 endif()
 
-# --- Link for executables ---
+target_include_directories(unit_tests
+	PUBLIC ${SOCKPP_INCLUDES}
+	PRIVATE ${SOCKPP_GENERATED})
 
-message(STATUS "Using library for unit tests: ${SOCKPP_LIB}")
+# --- Link for executables ---
 
 target_link_libraries(unit_tests ${SOCKPP_LIB} 
 	Catch2::Catch2

@@ -44,36 +44,33 @@ find_package(Threads REQUIRED)
 
 # --- Executables ---
 
-add_executable(unechosvr unechosvr.cpp)
-add_executable(unecho unecho.cpp)
-add_executable(unechotest unechotest.cpp)
+list(APPEND EXECUTABLES unechosvr)
+list(APPEND EXECUTABLES unecho)
+list(APPEND EXECUTABLES unechotest)
+list(APPEND EXECUTABLES undgramechosvr)
+list(APPEND EXECUTABLES undgramecho)
 
-add_executable(undgramechosvr undgramechosvr.cpp)
-add_executable(undgramecho undgramecho.cpp)
+# --- Executables ---
 
-# --- Link for executables ---
+foreach(EXECUTABLE ${EXECUTABLES})
+	# --- Executables ---
+	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+	
+	# --- Includes ---
+	target_include_directories(${EXECUTABLE}
+		PUBLIC ${SOCKPP_INCLUDES}
+		PRIVATE ${SOCKPP_GENERATED})
+	
+	# --- Link for executables ---
+	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+endforeach()
 
-message(STATUS "Using library for unix samples: ${SOCKPP_LIB}")
+# --- Additional linkage to Threads ---
 
-target_link_libraries(unechosvr ${SOCKPP_LIB} Threads::Threads)
-target_link_libraries(unecho ${SOCKPP_LIB})
-target_link_libraries(unechotest ${SOCKPP_LIB})
+target_link_libraries(unechosvr Threads::Threads)
+target_link_libraries(undgramechosvr Threads::Threads)
 
-target_link_libraries(undgramechosvr ${SOCKPP_LIB} Threads::Threads)
-target_link_libraries(undgramecho ${SOCKPP_LIB})
-
-# --- Install ---
-
-set(INSTALL_TARGETS
-	unechosvr
-	unecho
-	unechotest
-	undgramechosvr
-	undgramecho
+install(TARGETS ${EXECUTABLES}
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
 )
-
-install(TARGETS ${INSTALL_TARGETS}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-)
-

@@ -36,21 +36,23 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-## CMake required version
+# --- CMake required version ---
 cmake_minimum_required(VERSION 3.5)
 
-## project
-project(sockpp VERSION "0.7.0")
+# --- Project wide names ---
 
-## library name
 set(SOCKPP sockpp)
-set(SOCKPP_STATIC ${SOCKPP}-static)
+set(SOCKPP_NAMESPACE ${SOCKPP}::)
+
+# --- Project setup ---
+project(${SOCKPP} VERSION "0.7.0")
 
 # --- Build Options ---
 
 if(WIN32)
 	option(SOCKPP_BUILD_STATIC "Build static library" ON)
 	option(SOCKPP_BUILD_SHARED "Build shared library (DLL)" OFF)
+	include(GenerateExportHeader)
 else()
 	option(SOCKPP_BUILD_STATIC "Build static library" OFF)
 	option(SOCKPP_BUILD_SHARED "Build shared library" ON)
@@ -60,17 +62,26 @@ option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 
+# --- Setting naming variables ---
+
+set(SOCKPP_SHARED_LIBRARY ${SOCKPP})
+set(SOCKPP_STATIC_LIBRARY ${SOCKPP}-static)
+set(SOCKPP_OBJECT_LIBRARY ${SOCKPP}-objs)
+set(SOCKPP_INCLUDES ${CMAKE_SOURCE_DIR}/include)
+set(SOCKPP_GENERATED ${CMAKE_BINARY_DIR}/generated)
+
 # --- C++14 build flags ---
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # --- Generate a version header ---
 
 configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/version.h.in  
-	generated/${SOCKPP}/version.h
+	${CMAKE_SOURCE_DIR}/cmake/version.h.in  
+	${CMAKE_BINARY_DIR}/generated/${SOCKPP}/version.h
 	@ONLY
 )
 
@@ -80,13 +91,13 @@ add_subdirectory(src)
 
 # --- Header Locations ---
 
-target_include_directories(sockpp-objs 
+target_include_directories(${SOCKPP_OBJECT_LIBRARY}
 	PUBLIC
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+		$<BUILD_INTERFACE:${SOCKPP_INCLUDES}>
 		$<INSTALL_INTERFACE:include>
 	PRIVATE 
-		${CMAKE_CURRENT_BINARY_DIR}/generated
-		src
+		${SOCKPP_GENERATED}
+		${CMAKE_SOURCE_DIR}/src
 )
 
 # --- System libraries ---
@@ -99,71 +110,75 @@ elseif(UNIX)
 	set(LIBS_SYSTEM c stdc++)
 endif()
 
+# --- Collect the targets names ---
 
-## --- create the shared library ---
+if(${SOCKPP_BUILD_SHARED})
+	list(APPEND SOCKPP_TARGETS ${SOCKPP_SHARED_LIBRARY})
+endif()
 
-if(SOCKPP_BUILD_SHARED)
-	message(STATUS "Creating shared library: ${SOCKPP}")
+if(${SOCKPP_BUILD_STATIC})
+	list(APPEND SOCKPP_TARGETS ${SOCKPP_STATIC_LIBRARY})
+endif()
 
-	add_library(${SOCKPP} SHARED $<TARGET_OBJECTS:sockpp-objs>)
+# --- Create the libraries and exporting them ---
 
-    ## add dependencies to the shared library
-    target_link_libraries(${SOCKPP} ${LIBS_SYSTEM})
-
-	target_include_directories(${SOCKPP} 
-		PUBLIC 
-			$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>
-		PRIVATE
-			${CMAKE_CURRENT_BINARY_DIR}/generated
-	)
-
-	set_target_properties(${SOCKPP} PROPERTIES
-		VERSION ${PROJECT_VERSION}
-		SOVERSION ${PROJECT_VERSION_MAJOR})
-
-	install(TARGETS ${SOCKPP}
+if(NOT SOCKPP_TARGETS)
+	message(FATAL_ERROR "No targets are specified")
+else()
+	if(${SOCKPP_BUILD_SHARED})
+		message(STATUS "Creating shared library: ${SOCKPP_SHARED_LIBRARY}")
+		add_library(${SOCKPP_SHARED_LIBRARY} SHARED $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
+		target_include_directories(${SOCKPP_SHARED_LIBRARY}
+			PUBLIC
+				$<BUILD_INTERFACE:${SOCKPP_INCLUDES}>
+				$<INSTALL_INTERFACE:include>
+			PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+		target_link_libraries(${SOCKPP_SHARED_LIBRARY} ${LIBS_SYSTEM})
+		
+		set_target_properties(${SOCKPP_SHARED_LIBRARY} PROPERTIES
+			VERSION ${PROJECT_VERSION}
+			SOVERSION ${PROJECT_VERSION_MAJOR})
+		list(APPEND TARGET_FILES ${SOCKPP_SHARED_LIBRARY})
+	endif()
+	
+	if(${SOCKPP_BUILD_STATIC})
+		message(STATUS "Creating static library: ${SOCKPP_STATIC_LIBRARY}")
+		add_library(${SOCKPP_STATIC_LIBRARY} STATIC $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
+		target_include_directories(${SOCKPP_STATIC_LIBRARY}
+			PUBLIC
+				$<BUILD_INTERFACE:${SOCKPP_INCLUDES}>
+				$<INSTALL_INTERFACE:include>
+			PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+		target_link_libraries(${SOCKPP_STATIC_LIBRARY} ${LIBS_SYSTEM})
+		
+		set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES
+			VERSION ${PROJECT_VERSION}
+			SOVERSION ${PROJECT_VERSION_MAJOR})
+	
+		if(UNIX)
+			set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES OUTPUT_NAME ${SOCKPP_SHARED_LIBRARY})
+		endif()
+		
+		list(APPEND TARGET_FILES ${SOCKPP_STATIC_LIBRARY})
+	endif()
+		
+	install(TARGETS ${TARGET_FILES}
+		EXPORT sockppConfig
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-endif()
-
-# --- Create the static library ---
-
-if(SOCKPP_BUILD_STATIC)
-	message(STATUS "Creating static library: ${SOCKPP_STATIC}")
-
-	add_library(${SOCKPP_STATIC} STATIC $<TARGET_OBJECTS:sockpp-objs>)
-
-    ## add dependencies to the static library
-    target_link_libraries(${SOCKPP_STATIC} ${LIBS_SYSTEM})
-
-	target_include_directories(${SOCKPP_STATIC} 
-		PUBLIC 
-			$<TARGET_PROPERTY:sockpp-objs,INCLUDE_DIRECTORIES>
-		PRIVATE
-			${CMAKE_CURRENT_BINARY_DIR}/generated
+	
+	export(TARGETS ${SOCKPP_TARGETS}
+		NAMESPACE ${SOCKPP_NAMESPACE}
+		FILE "${CMAKE_BINARY_DIR}/sockppConfig.cmake"
 	)
-
-	install(TARGETS ${SOCKPP}-static
-		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-	# Let the archive use the same name as the shared library
-	if(UNIX)
-		set_target_properties(${SOCKPP_STATIC} PROPERTIES OUTPUT_NAME ${SOCKPP})
-	endif()
+	
+	install(EXPORT
+			sockppConfig
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/sockpp/cmake"
+		NAMESPACE ${SOCKPP_NAMESPACE}
+	)
 endif()
-
-# --- Install the library ---
-
-install(DIRECTORY include/${SOCKPP}/
-	DESTINATION include/${SOCKPP}
-	FILES_MATCHING PATTERN "*.h*")
-
-install(DIRECTORY ${CMAKE_BINARY_DIR}/generated/${SOCKPP}/
-	DESTINATION include/${SOCKPP}
-	FILES_MATCHING PATTERN "*.h*")
 
 # --- Documentation ---
 
@@ -174,9 +189,9 @@ endif()
 # --- Default library for examples and unit tests ---
 
 if(SOCKPP_BUILD_SHARED)
-	set(SOCKPP_LIB ${SOCKPP})
+	set(SOCKPP_LIB ${SOCKPP_SHARED_LIBRARY})
 else()
-	set(SOCKPP_LIB ${SOCKPP_STATIC})
+	set(SOCKPP_LIB ${SOCKPP_STATIC_LIBRARY})
 endif()
 
 
@@ -195,4 +210,3 @@ endif()
 if(SOCKPP_BUILD_TESTS)
 	add_subdirectory(tests/unit)
 endif()
-

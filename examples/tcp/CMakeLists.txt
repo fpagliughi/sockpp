@@ -42,47 +42,38 @@
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# --- Executables ---
-
 # IPv4
 
-add_executable(tcpechosvr tcpechosvr.cpp)
-add_executable(tcpecho tcpecho.cpp)
-add_executable(tcpechotest tcpechotest.cpp)
-add_executable(tcpechomt tcpechomt.cpp)
+list(APPEND EXECUTABLES tcpechosvr)
+list(APPEND EXECUTABLES tcpecho)
+list(APPEND EXECUTABLES tcpechotest)
+list(APPEND EXECUTABLES tcpechomt)
 
 # IPv6
 
-add_executable(tcp6echosvr tcp6echosvr.cpp)
-add_executable(tcp6echo tcp6echo.cpp)
+list(APPEND EXECUTABLES tcp6echosvr)
+list(APPEND EXECUTABLES tcp6echo)
 
-# --- Link for executables ---
+foreach(EXECUTABLE ${EXECUTABLES})
+	# --- Executables ---
+	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+	
+	# --- Includes ---
+	target_include_directories(${EXECUTABLE}
+		PUBLIC ${SOCKPP_INCLUDES}
+		PRIVATE ${SOCKPP_GENERATED})
+	
+	# --- Link for executables ---
+	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+endforeach()
 
-message(STATUS "Using library for samples: ${SOCKPP_LIB}")
+# --- Additional linkage to Threads ---
 
-target_link_libraries(tcpechosvr ${SOCKPP_LIB} Threads::Threads)
-target_link_libraries(tcpecho ${SOCKPP_LIB})
-target_link_libraries(tcpechotest ${SOCKPP_LIB})
-target_link_libraries(tcpechomt ${SOCKPP_LIB} Threads::Threads)
+target_link_libraries(tcpechosvr Threads::Threads)
+target_link_libraries(tcpechomt Threads::Threads)
+target_link_libraries(tcp6echosvr Threads::Threads)
 
-target_link_libraries(tcp6echosvr ${SOCKPP_LIB} Threads::Threads)
-target_link_libraries(tcp6echo ${SOCKPP_LIB})
-
-
-# --- Install ---
-
-set(INSTALL_TARGETS
-	tcpechosvr
-	tcpecho
-	tcpechotest
-	tcpechomt
-	tcp6echosvr
-	tcp6echo
-)
-
-
-install(TARGETS ${INSTALL_TARGETS}
+install(TARGETS ${EXECUTABLES}
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib
 )
-
