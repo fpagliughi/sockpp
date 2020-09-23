@@ -8,6 +8,7 @@ class Sockpp(ConanFile):
     license = "BSD-3-Clause License"
     author = "fpagliughi"
     settings = "os", "compiler", "build_type", "arch"
+    exports = "CMakeLists.txt", "src/*", "include/*", "doc/*", "tests/*", "examples/*", "Doxyfile", "version.h.in"
     options = {
         "shared" : [True, False, None],
         "examples" : [True, False, None],
@@ -20,12 +21,6 @@ class Sockpp(ConanFile):
         "examples" : None,
         "tests" : None,
         "docs" : None
-    }
-    scm = {
-        "type": "git",
-        "url": "https://github.com/fpagliughi/sockpp.git",
-        # TODO: Not sure if should be master, specific tag or develop
-        "revision": "develop"
     }
 
     def configure_cmake(self):
