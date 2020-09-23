@@ -58,12 +58,6 @@ class Sockpp(ConanFile):
     def package(self):
         cmake = self.configure_cmake()
         cmake.install()
-#        self.copy("*", "include", "include")
-#        if self.settings.os == "Windows":
-#            self.copy("*", "lib", "%s" % self.settings.build_type)
-#        if self.settings.os == "Linux":
-#            self.copy("*.so*", "lib", ".")
-#            self.copy("*.a*", "lib", ".")
 
     def package_info(self):
         self.cpp_info.includedirs = ["include"]
