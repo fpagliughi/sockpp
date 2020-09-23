@@ -1,9 +1,7 @@
-import os
-from conans import ConanFile, CMake
+from conans import ConanFile, CMake, tools
 
 class Sockpp(ConanFile):
     name = "sockpp"
-    version = "0.7"
     description = """Modern C++ socket library."""
     license = "BSD-3-Clause License"
     author = "fpagliughi"
@@ -22,6 +20,10 @@ class Sockpp(ConanFile):
         "tests" : None,
         "docs" : None
     }
+
+    def set_version(self):
+        git = tools.Git(folder=self.recipe_folder)
+        self.version = git.get_branch()
 
     def configure_cmake(self):
         cmake = CMake(self)
