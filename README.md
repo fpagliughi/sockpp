@@ -1,4 +1,4 @@
-# sockpp
+# Socklib
 
 [![Build Status](https://travis-ci.org/fpagliughi/sockpp.svg?branch=master)](https://travis-ci.org/fpagliughi/sockpp)
 
