@@ -422,9 +422,9 @@ namespace sockpp {
                                    : MBEDTLS_ERR_SSL_WANT_WRITE;
                 default:
 #ifdef _WIN32
-                    log(">>> BIO WSA error code %d results in a transfer error", result.error);
+                    log(3, ">>> BIO WSA error code %d results in a transfer error", result.error);
 #else
-                    log(">>> BIO Error code %d results in a transfer error", result.error);
+                    log(3, ">>> BIO Error code %d results in a transfer error", result.error);
 #endif
                     return reading ? MBEDTLS_ERR_NET_RECV_FAILED
                                    : MBEDTLS_ERR_NET_SEND_FAILED;
