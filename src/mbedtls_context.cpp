@@ -108,10 +108,14 @@ namespace sockpp {
 
     public:
 
+#ifdef MBEDTLS_DEBUG_C
         #define log(LEVEL, FMT,...) do { \
             auto ssl = &ssl_; \
             MBEDTLS_SSL_DEBUG_MSG(LEVEL, ("SockPP: " FMT, ## __VA_ARGS__)); \
         }while(0)
+#else
+    #define log(LEVEL, FMT,...) do { } while(0)
+#endif
 
 
         int log_mbed_ret(int ret, const char *fn) {
@@ -628,7 +632,9 @@ namespace sockpp {
             }, this);
         }
         logger_ = logger;
+#ifdef MBEDTLS_DEBUG_C
         mbedtls_debug_set_threshold(threshold);
+#endif
     }
 
 
