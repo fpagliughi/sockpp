@@ -67,7 +67,7 @@ std::string sys_error::error_str(int err)
     #else
     	#ifdef _GNU_SOURCE
 			auto s = strerror_r(err, buf, sizeof(buf));
-			return s ? std::string(s) : std::string();
+			return s ? std::to_string(s) : std::string();
         #else
             ignore_result(strerror_r(err, buf, sizeof(buf)));
         #endif
