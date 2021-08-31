@@ -47,9 +47,17 @@ add_library(sockpp-objs OBJECT
 	stream_socket.cpp
 )
 
-if(UNIX)
+if(UNIX AND NOT MINGW)
+	message(STATUS "Creating UNIX")
 	target_sources(sockpp-objs PUBLIC
 		unix/unix_address.cpp
+	)
+endif()
+
+if (MINGW)
+	message(STATUS "Creating MINGW")
+	target_sources(sockpp-objs PUBLIC
+		mingw/mingw_address.cpp
 	)
 endif()
 

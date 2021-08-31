@@ -1,13 +1,11 @@
 /**
- * @file platform.h
+ * @file mingw_address.h
  *
- * Platform-specific definitions for the sockpp library.
+ * MinGW specific address handling.
  *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
+ * @author Tal Regev
  *
- * @date	December 2014
+ * @date February 2021
  */
 
 // --------------------------------------------------------------------------
@@ -44,74 +42,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_platform_h
-#define __sockpp_platform_h
+#ifndef __sockpp_minge_addr_h
+#define __sockpp_minge_addr_h
 
-#include <cstdint>
+#include <ws2tcpip.h>
+#include <cstdio>
 
-#if defined(MINGW32) || defined(__MINGW32__)
-	#include "sockpp/mingw_address.h"
-#endif
+char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
 
-#if defined(_WIN32)
-	//#pragma warning(4 : 4996)	// Deprecated functions (CRT & all)
-	//#pragma warning(4 : 4250)	// Inheritance via dominance
-
-	#if !defined(WIN32_LEAN_AND_MEAN)
-		#define WIN32_LEAN_AND_MEAN
-	#endif
-
-	#if !defined(_CRT_SECURE_NO_DEPRECATE)
-		#define _CRT_SECURE_NO_DEPRECATE
-	#endif
-
-	//#include <cstddef>
-	//#include <windows.h>
-	#include <winsock2.h>
-	#include <ws2tcpip.h>
-
-	#define SOCKPP_SOCKET_T_DEFINED
-	using socket_t = SOCKET;
-
-	using socklen_t = int;
-	using in_port_t = uint16_t;
-	using in_addr_t = uint32_t;
-
-	using sa_family_t = u_short;
-
-	#ifndef _SSIZE_T_DEFINED 
-		#define _SSIZE_T_DEFINED 
-		#undef ssize_t
-        using ssize_t = SSIZE_T;
-	#endif // _SSIZE_T_DEFINED
-
-    #ifndef _SUSECONDS_T
-        #define _SUSECONDS_T
-        typedef long suseconds_t;	// signed # of microseconds in timeval
-    #endif	// _SUSECONDS_T
- 
-    #define SHUT_RD SD_RECEIVE
-    #define SHUT_WR SD_SEND
-    #define SHUT_RDWR SD_BOTH
-
-    struct iovec
-    {
-        void* iov_base;
-		size_t iov_len;
-    };
-
-#else
-	#include <unistd.h>
-	#include <sys/socket.h>
-	#include <sys/uio.h>
-	#include <arpa/inet.h>
-	#ifdef __FreeBSD__
-		#include <netinet/in.h>
-	#endif
-	#include <netdb.h>
-	#include <signal.h>
-	#include <cerrno>
-#endif
-
-#endif
-
+#endif //__sockpp_minge_addr_h
