@@ -388,7 +388,7 @@ namespace sockpp {
         inline ssize_t check_mbed_io(int mbedResult) {
             if (mbedResult < 0) {
                 clear(translate_mbed_err(mbedResult));     // sets last_error
-                return -1;
+                return last_error() ? -1 : 0;
             }
             return mbedResult;
         }
