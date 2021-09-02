@@ -149,12 +149,12 @@ namespace sockpp {
 
 #if defined(_WIN32)
             // Winsock does not allow us to tell if a socket is nonblocking, so assume it isn't
-            bool blocking = true;
+            bool nonblocking = false;
 #else
             int flags = fcntl(stream().handle(), F_GETFL, 0);
-            bool blocking = (flags < 0 || (flags & O_NONBLOCK) == 0);
+            bool nonblocking = (flags >= 0 && (flags & O_NONBLOCK) != 0);
 #endif
-            setup_bio(blocking);
+            setup_bio(nonblocking);
 
             // Run the TLS handshake:
             open_ = true;
@@ -184,6 +184,9 @@ namespace sockpp {
                 return ((mbedtls_socket*)ctx)->bio_send(buf, len); };
             mbedtls_ssl_recv_t *f_recv = nullptr;
             mbedtls_ssl_recv_timeout_t *f_recv_timeout = nullptr;
+            // "The two most common use cases are:
+            //  - non-blocking I/O, f_recv != NULL, f_recv_timeout == NULL
+            //  - blocking I/O, f_recv == NULL, f_recv_timout != NULL"
             if (nonblocking)
                 f_recv = [](void *ctx, uint8_t *buf, size_t len) {
                     return ((mbedtls_socket*)ctx)->bio_recv(buf, len); };
