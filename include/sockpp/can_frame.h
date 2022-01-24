@@ -1,9 +1,19 @@
-// datagram_socket.cpp
-//
+/**
+ * @file can_frame.h
+ *
+ * Class for the Linux SocketCAN frames.
+ *
+ * @author Frank Pagliughi
+ * @author SoRo Systems, Inc.
+ * @author www.sorosys.com
+ *
+ * @date March 2021
+ */
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2021 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,48 +44,60 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/datagram_socket.h"
-#include "sockpp/exception.h"
-#include <algorithm>
+#ifndef __sockpp_can_frame_h
+#define __sockpp_can_frame_h
 
-using namespace std::chrono;
+#include "sockpp/platform.h"
+#include <string>
+#include <cstring>
+//#include <sys/un.h>
+#include <linux/can.h>
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-//								datagram_socket
-/////////////////////////////////////////////////////////////////////////////
 
-datagram_socket::datagram_socket(const sock_address& addr)
+/**
+ * Class that represents a Linux SocketCAN frame.
+ * This inherits from the Linux CAN frame struct, just providing easier
+   construction.
+ */
+class can_frame : public ::can_frame
 {
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
+	using base = ::can_frame;
 
-	if (check_socket_bool(h)) {
-		reset(h);
-		// TODO: If the bind fails, should we close the socket and fail completely?
-		bind(addr);
+	/** The size of the underlying address struct, in bytes */
+	static constexpr size_t SZ = sizeof(::can_frame);
+
+public:
+	/**
+	 * Constructs an empty frame.
+	 * The frame is initialized to all zeroes.
+	 */
+	can_frame() : base{} {}
+	/**
+	 * Constructs a frame with the specified ID and data.
+	 * @param canID The CAN identifier for the frame
+	 * @param data The data field for the frame
+	 */
+	can_frame(canid_t canID, const std::string& data)
+		: can_frame{ canID, data.data(), data.length() } {}
+	/**
+	 * Constructs a frame with the specified ID and data.
+	 * @param canID The CAN identifier for the frame
+	 * @param data The data field for the frame
+	 * @param n The number of bytes in the data field
+	 */
+	can_frame(canid_t canID, const void* data, size_t n) : base{} {
+		this->can_id = canID;
+		this->can_dlc = n;
+		::memcpy(&this->data, data, n);
 	}
-}
-
-// --------------------------------------------------------------------------
-
-ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
-								   sock_address* srcAddr /*=nullptr*/)
-{
-	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
-    socklen_t len = srcAddr ? srcAddr->size() : 0;
-
-	// TODO: Check returned length
-    #if defined(_WIN32)
-        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
-                                    int(n), flags, p, &len));
-    #else
-        return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
-    #endif
-}
+};
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
+// end namespace sockpp
 }
+
+#endif		// __sockpp_can_frame_h
 

@@ -1,9 +1,9 @@
-// datagram_socket.cpp
+// can_socket.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2021 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,48 +34,59 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/datagram_socket.h"
-#include "sockpp/exception.h"
-#include <algorithm>
+#include "sockpp/can_socket.h"
+#include "sockpp/socket.h"
+#include <sys/ioctl.h>
 
+using namespace std;
 using namespace std::chrono;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-//								datagram_socket
-/////////////////////////////////////////////////////////////////////////////
 
-datagram_socket::datagram_socket(const sock_address& addr)
+can_socket::can_socket(const can_address& addr)
 {
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
+	socket_t h = create_handle(SOCK_RAW, CAN_RAW);
 
 	if (check_socket_bool(h)) {
 		reset(h);
-		// TODO: If the bind fails, should we close the socket and fail completely?
 		bind(addr);
 	}
 }
 
+system_clock::time_point can_socket::last_frame_time()
+{
+	timeval tv {};
+
+	// TODO: Handle error
+	::ioctl(handle(), SIOCGSTAMP, &tv);
+	return to_timepoint(tv);
+}
+
+double can_socket::last_frame_timestamp()
+{
+	timeval tv {};
+
+	// TODO: Handle error
+	::ioctl(handle(), SIOCGSTAMP, &tv);
+	return double(tv.tv_sec) + 1.0e-6 * tv.tv_usec;
+}
+
+
 // --------------------------------------------------------------------------
 
-ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
-								   sock_address* srcAddr /*=nullptr*/)
+ssize_t can_socket::recv_from(can_frame *frame, int flags,
+							  can_address* srcAddr /*=nullptr*/)
 {
 	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
     socklen_t len = srcAddr ? srcAddr->size() : 0;
 
 	// TODO: Check returned length
-    #if defined(_WIN32)
-        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
-                                    int(n), flags, p, &len));
-    #else
-        return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
-    #endif
+	return check_ret(::recvfrom(handle(), frame, sizeof(can_frame),
+								flags, p, &len));
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp
 }
-

@@ -1,9 +1,9 @@
-// datagram_socket.cpp
+// can_address.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2021 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,48 +34,71 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/datagram_socket.h"
-#include "sockpp/exception.h"
-#include <algorithm>
+#include "sockpp/can_address.h"
+#include "sockpp/socket.h"
+#include <cstring>
+#include <stdexcept>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
-using namespace std::chrono;
+using namespace std;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-//								datagram_socket
-/////////////////////////////////////////////////////////////////////////////
 
-datagram_socket::datagram_socket(const sock_address& addr)
-{
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
-
-	if (check_socket_bool(h)) {
-		reset(h);
-		// TODO: If the bind fails, should we close the socket and fail completely?
-		bind(addr);
-	}
-}
+constexpr sa_family_t can_address::ADDRESS_FAMILY;
 
 // --------------------------------------------------------------------------
 
-ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
-								   sock_address* srcAddr /*=nullptr*/)
+can_address::can_address(unsigned ifindex) : addr_{}
 {
-	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
-    socklen_t len = srcAddr ? srcAddr->size() : 0;
+	addr_.can_family = AF_CAN;
+	addr_.can_ifindex = ifindex;
+}
 
-	// TODO: Check returned length
-    #if defined(_WIN32)
-        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
-                                    int(n), flags, p, &len));
-    #else
-        return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
-    #endif
+can_address::can_address(const string& iface) : addr_{}
+{
+	unsigned idx = if_nametoindex(iface.c_str());
+
+	if (idx != 0) {
+		addr_.can_family = AF_CAN;
+		addr_.can_ifindex = idx;
+	}
+}
+
+can_address::can_address(const sockaddr& addr)
+{
+    auto domain = addr.sa_family;
+    if (domain != AF_CAN)
+        throw std::invalid_argument("Not a SocketCAN address");
+
+    std::memcpy(&addr_, &addr, sizeof(sockaddr));
+}
+
+string can_address::iface() const
+{
+	if (addr_.can_family == AF_UNSPEC)
+		return string("none");
+
+	if (addr_.can_ifindex == 0)
+		return string("any");
+
+	char buf[IF_NAMESIZE];
+	const char* iface = if_indextoname(addr_.can_ifindex, buf);
+
+	return string(iface ? iface : "unknown");
+}
+
+
+// --------------------------------------------------------------------------
+
+ostream& operator<<(ostream& os, const can_address& addr)
+{
+	os << "can:" << addr.iface();
+	return os;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp
 }
-

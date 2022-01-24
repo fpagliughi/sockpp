@@ -59,6 +59,7 @@ endif()
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
+option(SOCKPP_BUILD_CAN "Build the Linux SocketCAN components" OFF)
 
 # --- C++14 build flags ---
 
@@ -107,8 +108,8 @@ if(SOCKPP_BUILD_SHARED)
 
 	add_library(${SOCKPP} SHARED $<TARGET_OBJECTS:sockpp-objs>)
 
-    ## add dependencies to the shared library
-    target_link_libraries(${SOCKPP} ${LIBS_SYSTEM})
+	## add dependencies to the shared library
+	target_link_libraries(${SOCKPP} ${LIBS_SYSTEM})
 
 	target_include_directories(${SOCKPP} 
 		PUBLIC 
@@ -116,6 +117,11 @@ if(SOCKPP_BUILD_SHARED)
 		PRIVATE
 			${CMAKE_CURRENT_BINARY_DIR}/generated
 	)
+
+	target_compile_options(${SOCKPP} PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:/W3>
+		$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+	 )
 
 	set_target_properties(${SOCKPP} PROPERTIES
 		VERSION ${PROJECT_VERSION}
@@ -135,8 +141,8 @@ if(SOCKPP_BUILD_STATIC)
 
 	add_library(${SOCKPP_STATIC} STATIC $<TARGET_OBJECTS:sockpp-objs>)
 
-    ## add dependencies to the static library
-    target_link_libraries(${SOCKPP_STATIC} ${LIBS_SYSTEM})
+	## add dependencies to the static library
+	target_link_libraries(${SOCKPP_STATIC} ${LIBS_SYSTEM})
 
 	target_include_directories(${SOCKPP_STATIC} 
 		PUBLIC 
@@ -144,6 +150,11 @@ if(SOCKPP_BUILD_STATIC)
 		PRIVATE
 			${CMAKE_CURRENT_BINARY_DIR}/generated
 	)
+
+	target_compile_options(${SOCKPP_STATIC} PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:/W3>
+		$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+	 )
 
 	install(TARGETS ${SOCKPP}-static
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -187,6 +198,9 @@ if(SOCKPP_BUILD_EXAMPLES)
 	add_subdirectory(examples/udp)
 	if(UNIX)
 		add_subdirectory(examples/unix)
+		if(SOCKPP_BUILD_CAN)
+			add_subdirectory(examples/linux)
+		endif()
 	endif()
 endif()
 

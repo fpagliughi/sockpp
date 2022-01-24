@@ -1,9 +1,12 @@
-// datagram_socket.cpp
+// canrecv.cpp
+//
+// Linux SoxketCAN reader example.
+//
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2021 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,48 +37,60 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/datagram_socket.h"
-#include "sockpp/exception.h"
-#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <chrono>
+#include <thread>
+#include "sockpp/can_socket.h"
+#include "sockpp/can_frame.h"
+#include "sockpp/version.h"
 
-using namespace std::chrono;
+#include <net/if.h>
+#include <sys/ioctl.h>
 
-namespace sockpp {
+using namespace std;
 
-/////////////////////////////////////////////////////////////////////////////
-//								datagram_socket
-/////////////////////////////////////////////////////////////////////////////
-
-datagram_socket::datagram_socket(const sock_address& addr)
-{
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
-
-	if (check_socket_bool(h)) {
-		reset(h);
-		// TODO: If the bind fails, should we close the socket and fail completely?
-		bind(addr);
-	}
-}
+// The clock to use to get time and pace the app.
+using sysclock = chrono::system_clock;
 
 // --------------------------------------------------------------------------
 
-ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
-								   sock_address* srcAddr /*=nullptr*/)
+int main(int argc, char* argv[])
 {
-	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
-    socklen_t len = srcAddr ? srcAddr->size() : 0;
+	cout << "Sample SocketCAN writer for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << endl;
 
-	// TODO: Check returned length
-    #if defined(_WIN32)
-        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
-                                    int(n), flags, p, &len));
-    #else
-        return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
-    #endif
+	string canIface = (argc > 1) ? argv[1] : "can0";
+	canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
+
+	sockpp::socket_initializer sockInit;
+
+	sockpp::can_address addr(canIface);
+	sockpp::can_socket sock(addr);
+
+	if (!sock) {
+		cerr << "Error binding to the CAN interface " << canIface << "\n\t"
+			<< sock.last_error_str() << endl;
+		return 1;
+	}
+
+	cout << "Created CAN socket on " << sock.address() << endl;
+	time_t t = sysclock::to_time_t(sysclock::now());
+
+	cout.setf(ios::fixed, ios::floatfield);
+	cout << setfill('0');
+
+	while (true) {
+		sockpp::can_frame frame;
+		sock.recv(&frame);
+		auto t = sock.last_frame_timestamp();
+
+		cout << t << "  ";
+		for (uint8_t i=0; i<frame.can_dlc; ++i)
+			cout << hex << uppercase << setw(2) << unsigned(frame.data[i]) << " ";
+		cout << endl;
+	}
+
+	return (!sock) ? 1 : 0;
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
-}
-

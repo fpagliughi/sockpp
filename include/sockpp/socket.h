@@ -62,12 +62,45 @@ namespace sockpp {
 	#define SOCKPP_SOCKET_T_DEFINED
 #endif
 
-
+/**
+ * Converts a number of microseconds to a relative timeval.
+ * @param dur A chrono duration of microseconds.
+ * @return A timeval
+ */
 timeval to_timeval(const std::chrono::microseconds& dur);
 
+/**
+ * Converts a chrono duration to a relative timeval.
+ * @param dur A chrono duration.
+ * @return A timeval.
+ */
 template<class Rep, class Period>
 timeval to_timeval(const std::chrono::duration<Rep,Period>& dur) {
 	return to_timeval(std::chrono::duration_cast<std::chrono::microseconds>(dur));
+}
+
+/**
+ * Converts a relative timeval to a chrono duration.
+ * @param tv A timeval.
+ * @return A chrono duration.
+ */
+inline std::chrono::microseconds to_duration(const timeval& tv)
+{
+    auto dur = std::chrono::seconds{tv.tv_sec}
+				+ std::chrono::microseconds{tv.tv_usec};
+    return std::chrono::duration_cast<std::chrono::microseconds>(dur);
+}
+
+/**
+ * Converts an absolute timeval to a chrono time_point.
+ * @param tv A timeval.
+ * @return A chrono time_point.
+ */
+inline std::chrono::system_clock::time_point to_timepoint(const timeval& tv)
+{
+	return std::chrono::system_clock::time_point {
+        std::chrono::duration_cast<std::chrono::system_clock::duration>(to_duration(tv))
+	};
 }
 
 /////////////////////////////////////////////////////////////////////////////
