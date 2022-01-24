@@ -40,7 +40,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 ## project
-project(sockpp VERSION "0.7.0")
+project(sockpp VERSION "0.7.1")
 
 ## library name
 set(SOCKPP sockpp)

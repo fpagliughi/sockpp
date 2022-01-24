@@ -26,9 +26,7 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
-## Unreleased Features in this Branch
-
-The following updates exist in this branch in the repository, but have yet to be formally released:
+## New in 0.7.1
 
 - [Experimental] **SocketCAN**, CAN bus support on Linux
 - [#37](https://github.com/fpagliughi/sockpp/pull/37) socket::get_option() not returning length on Windows
@@ -37,30 +35,6 @@ The following updates exist in this branch in the repository, but have yet to be
 - [#55](https://github.com/fpagliughi/sockpp/pull/55) Fix Android strerror
 - [#60](https://github.com/fpagliughi/sockpp/pull/60) Add missing move constructor for connector template.
 - Now `acceptor::open()` uses the *SO_REUSEPORT* option instead of *SO_REUSEADDR* on non-Windows systems. Also made reuse optional.
-
-## New in v0.7
-
-This release mainly targeted bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
-
-- Base `socket` class
-    - `shutdown()` added
-    - `create()` added
-    - `bind()` moved into base socket (from `acceptor`)
-- Unix-domain socket pairs (stream and datagram)
-- Non-blocking I/O
-- Scatter/Gather I/O
-- `stream_socket` cloning.
-- Set and get socket options using template types.
-- `stream_socket::read_n()` and `write_n()` now properly handle EINTR return.
-- `to_timeval()` can convert from any `std::chrono::duration` type.
-- `socket::close()` and `shutdown()` check for errors, set last error, and return a bool.
-- _tcpechomt.cpp_: Example of a client sharing a socket between read and write threads - using `clone()`.
-- Windows enhancements:
-    - Implemented socket timeouts on Windows
-    - Fixed bug in Windows socket cloning.
-    - Fixed bug in Windows `socket::last_error_string`.
-    - Unit tests working on Windows
-- More unit tests
 
 ## Contributing
 
