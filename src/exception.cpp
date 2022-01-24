@@ -66,8 +66,16 @@ std::string sys_error::error_str(int err)
 			buf, sizeof(buf), NULL);
     #else
     	#ifdef _GNU_SOURCE
-			auto s = strerror_r(err, buf, sizeof(buf));
-			return s ? std::string(s) : std::string();
+			#if !defined(__GLIBC__)
+			// use the XSI standard behavior.
+				int e = strerror_r(err, buf, sizeof(buf));
+				auto s = strerror(e);
+				return s ? std::string(s) : std::string();
+			#else
+			// assume GNU exception
+				auto s = strerror_r(err, buf, sizeof(buf));
+				return s ? std::string(s) : std::string();
+			#endif
         #else
             ignore_result(strerror_r(err, buf, sizeof(buf)));
         #endif
