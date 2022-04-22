@@ -148,7 +148,7 @@ public:
 	/**
 	 * Move constructor.
 	 * Creates a connector by moving the other connector to this one.
-	 * @param conn Another connector.
+	 * @param rhs Another connector.
 	 */
 	connector_tmpl(connector_tmpl&& rhs) : base(std::move(rhs)) {}
 	/**
