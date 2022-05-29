@@ -10,6 +10,8 @@ The base `socket` class wraps a system socket handle, and maintains its lifetime
 
 Currently supports: IPv4, IPv6, and Unix-Domain Sockets on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
 
+There is also some experimental support for CAN bus programming using the SocketCAN package on Linux. This gives CAN bus adaters a network interface, with limitations dictated by the CAN message protocol.
+
 All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
@@ -22,39 +24,17 @@ To keep up with the latest announcements for this project, follow me at:
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
 
-If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it's wound up!
+If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
-## Unreleased Features in this Branch
+## New in 0.7.1
 
-The following updates exist in this branch in the repository, but have yet to be formally released:
-
-- [#37] socket::get_option() not returning length on Windows.
-- [#39] Using *SSIZE_T* for *ssize_t* in Windows 
-- Now `acceptor::open()` uses the *SO_REUSEPORT* option instead of *SO_REUSEADDR* on non-Windows systenms. Also made reuse optional.
-
-## New in v0.7
-
-This release mainly targeted bug fixes, API inconsistencies, and numerous small features that had been overlooked previously.
-
-- Base `socket` class
-    - `shutdown()` added
-    - `create()` added
-    - `bind()` moved into base socket (from `acceptor`)
-- Unix-domain socket pairs (stream and datagram)
-- Non-blocking I/O
-- Scatter/Gather I/O
-- `stream_socket` cloning.
-- Set and get socket options using template types.
-- `stream_socket::read_n()` and `write_n()` now properly handle EINTR return.
-- `to_timeval()` can convert from any `std::chrono::duration` type.
-- `socket::close()` and `shutdown()` check for errors, set last error, and return a bool.
-- _tcpechomt.cpp_: Example of a client sharing a socket between read and write threads - using `clone()`.
-- Windows enhancements:
-    - Implemented socket timeouts on Windows
-    - Fixed bug in Windows socket cloning.
-    - Fixed bug in Windows `socket::last_error_string`.
-    - Unit tests working on Windows
-- More unit tests
+- [Experimental] **SocketCAN**, CAN bus support on Linux
+- [#37](https://github.com/fpagliughi/sockpp/pull/37) socket::get_option() not returning length on Windows
+- [#39](https://github.com/fpagliughi/sockpp/pull/39) Using *SSIZE_T* for *ssize_t* in Windows
+- [#53](https://github.com/fpagliughi/sockpp/pull/53) Add Conan support
+- [#55](https://github.com/fpagliughi/sockpp/pull/55) Fix Android strerror
+- [#60](https://github.com/fpagliughi/sockpp/pull/60) Add missing move constructor for connector template.
+- Now `acceptor::open()` uses the *SO_REUSEPORT* option instead of *SO_REUSEADDR* on non-Windows systems. Also made reuse optional.
 
 ## Contributing
 
@@ -82,14 +62,18 @@ CMake is the supported build system.
 - _Doxygen_ (optional) to generate API docs.
 - _Catch2_ (optional) to build and run unit tests.
 
-Build like this on Linux:
+To build with default options:
 
 ```
 $ cd sockpp
-$ mkdir build ; cd build
-$ cmake ..
-$ make
-$ sudo make install
+$ cmake -Bbuild .
+$ cmake --build build/
+```
+
+To install:
+
+```
+$ cmake --build build/ --target install
 ```
 
 ### Build Options
@@ -103,7 +87,15 @@ SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
 SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires _Doxygen)_
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
+SOCKPP_BUILD_CAN | OFF | Build SocketCAN support. (Linux only)
 
+Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:
+
+```
+$ cd sockpp
+$ cmake -Bbuild -DSOCKPP_BUILD_DOCUMENTATION=ON -DSOCKPP_BUILD_EXAMPLES=ON .
+$ cmake --build build/
+```
 
 ## TCP Sockets
 
@@ -203,6 +195,42 @@ The same is true for local connection on *nix systems that implement Unix Domain
     unix_dgram_socket
 
 Examples are in the [examples/unix](https://github.com/fpagliughi/sockpp/tree/master/examples/unix) directory.
+
+### SocketCAN (CAN bus on Linux)
+
+The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine. Linux has the _SocketCAN_ package which allows processes to share acces to a physical CAN bus interface using sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
+
+At the lowest level, CAN devices write individual packets, called "frames" to a specific numeric addresses on the bus. 
+
+For examle a device with a temperature sensor might read the temperature persoidically and write it to the bus as a raw 32-bit integer, like:
+
+```
+can_address addr("CAN0");
+can_socket sock(addr);
+
+// The agreed ID to broadcast temperature on the bus
+canid_t canID = 0x40;
+
+while (true) {
+    this_thread::sleep_for(1s);
+
+    // Write the time to the CAN bus as a 32-bit int
+    int32_t t = read_temperature();
+
+    can_frame frame { canID, &t, sizeof(t) };
+    sock.send(frame);
+}
+```
+
+A receiver to get a frame might look like this:
+
+```
+can_address addr("CAN0");
+can_socket sock(addr);
+
+can_frame frame;
+sock.recv(&frame);
+```
 
 ## Implementation Details
 

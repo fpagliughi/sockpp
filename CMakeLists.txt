@@ -37,6 +37,7 @@
 # ---------------------------------------------------------------------------
 
 # --- CMake required version ---
+
 cmake_minimum_required(VERSION 3.5)
 
 # --- Project wide names ---
@@ -45,7 +46,8 @@ set(SOCKPP sockpp)
 set(SOCKPP_NAMESPACE ${SOCKPP}::)
 
 # --- Project setup ---
-project(${SOCKPP} VERSION "0.7.0")
+
+project(${SOCKPP} VERSION "0.7.2")
 
 # --- Build Options ---
 
@@ -61,6 +63,7 @@ endif()
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
+option(SOCKPP_BUILD_CAN "Build the Linux SocketCAN components" OFF)
 
 # --- Setting naming variables ---
 
@@ -75,6 +78,7 @@ set(SOCKPP_GENERATED ${CMAKE_BINARY_DIR}/generated)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # --- Generate a version header ---
@@ -85,7 +89,7 @@ configure_file(
 	@ONLY
 )
 
-# --- Common Library Sources, etc ---
+# --- Common library sources, etc ---
 
 add_subdirectory(src)
 
@@ -120,7 +124,7 @@ if(${SOCKPP_BUILD_STATIC})
 	list(APPEND SOCKPP_TARGETS ${SOCKPP_STATIC_LIBRARY})
 endif()
 
-# --- Create the libraries and exporting them ---
+# --- Create the libraries and export them ---
 
 if(NOT SOCKPP_TARGETS)
 	message(FATAL_ERROR "No targets are specified")
@@ -166,7 +170,8 @@ else()
 		EXPORT sockppConfig
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
 	
 	export(TARGETS ${SOCKPP_TARGETS}
 		NAMESPACE ${SOCKPP_NAMESPACE}
@@ -202,6 +207,9 @@ if(SOCKPP_BUILD_EXAMPLES)
 	add_subdirectory(examples/udp)
 	if(UNIX)
 		add_subdirectory(examples/unix)
+		if(SOCKPP_BUILD_CAN)
+			add_subdirectory(examples/linux)
+		endif()
 	endif()
 endif()
 
@@ -210,3 +218,4 @@ endif()
 if(SOCKPP_BUILD_TESTS)
 	add_subdirectory(tests/unit)
 endif()
+

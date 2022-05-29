@@ -77,7 +77,7 @@ public:
 	/**
 	 * Creates the connector and attempts to connect to the specified
 	 * address.
-	 * @param addr The remote server address. 
+	 * @param addr The remote server address.
 	 */
 	connector(const sock_address& addr) { connect(addr); }
 	/**
@@ -145,6 +145,12 @@ public:
 	 * @param addr The remote server address.
 	 */
 	connector_tmpl(const addr_t& addr) : base(addr) {}
+	/**
+	 * Move constructor.
+	 * Creates a connector by moving the other connector to this one.
+	 * @param rhs Another connector.
+	 */
+	connector_tmpl(connector_tmpl&& rhs) : base(std::move(rhs)) {}
 	/**
 	 * Move assignment.
 	 * @param rhs The other connector to move into this one.

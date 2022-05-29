@@ -1,19 +1,15 @@
-/**
- * @file tcp6_connector.h
- *
- * Class for creating client-side TCP connections
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	May 2019
- */
-
+// cantime.cpp
+//
+// Linux SoxketCAN writer example.
+//
+// This writes the 1-sec, 32-bit, Linux time_t value to the CAN bus each
+// time it ticks. This is a simple (though not overly precise) way to
+// synchronize the time for nodes on the bus
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2021 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,23 +40,59 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <iostream>
+#include <string>
+#include <chrono>
+#include <thread>
+#include "sockpp/can_socket.h"
+#include "sockpp/can_frame.h"
+#include "sockpp/version.h"
 
-#ifndef __sockpp_tcp6_connector_h
-#define __sockpp_tcp6_connector_h
+#include <net/if.h>
+#include <sys/ioctl.h>
 
-#include "sockpp/connector.h"
-#include "sockpp/tcp6_socket.h"
+using namespace std;
 
-namespace sockpp {
+// The clock to use to get time and pace the app.
+using sysclock = chrono::system_clock;
 
-/////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
 
-/** IPv6 active, connector (client) socket. */
-using tcp6_connector = connector_tmpl<tcp6_socket>;
+int main(int argc, char* argv[])
+{
+	cout << "Sample SocketCAN writer for 'sockpp' "
+		<< sockpp::SOCKPP_VERSION << endl;
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+	string canIface = (argc > 1) ? argv[1] : "can0";
+	canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
+
+	sockpp::socket_initializer sockInit;
+
+	sockpp::can_address addr(canIface);
+	sockpp::can_socket sock(addr);
+
+	if (!sock) {
+		cerr << "Error binding to the CAN interface " << canIface << "\n\t"
+			<< sock.last_error_str() << endl;
+		return 1;
+	}
+
+	cout << "Created CAN socket on " << sock.address() << endl;
+	time_t t = sysclock::to_time_t(sysclock::now());
+
+	while (true) {
+		// Sleep until the clock ticks to the next second
+		this_thread::sleep_until(sysclock::from_time_t(t+1));
+
+		// Re-read the time in case we fell behind
+		t = sysclock::to_time_t(sysclock::now());
+
+		// Write the time to the CAN bus as a 32-bit int
+		auto nt = uint32_t(t);
+
+		sockpp::can_frame frame { canID, &nt, sizeof(nt) };
+		sock.send(frame);
+	}
+
+	return (!sock) ? 1 : 0;
 }
-
-#endif		// __sockpp_tcp6_connector_h
-

@@ -198,7 +198,7 @@ public:
 	/**
 	 * Best effort attempt to write a string to the socket.
 	 * @param s The string to write.
-	 * @return The number of bytes written, or @em 1 on error. On success,
+	 * @return The number of bytes written, or @em -1 on error. On success,
 	 *  	   the number of bytes written should always be the length of
 	 *  	   the string.
 	 */

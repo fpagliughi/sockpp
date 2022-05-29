@@ -1,4 +1,16 @@
-# Change Log
+# Change Log for _sockpp_
+
+## [Version 0.7.1](https://github.com/fpagliughi/sockpp/compare/v0.7..v0.7.1)
+
+Released: 2022-01-24
+
+- [Experimental] **SocketCAN**, CAN bus support on Linux
+- [#37](https://github.com/fpagliughi/sockpp/pull/37) socket::get_option() not returning length on Windows
+- [#39](https://github.com/fpagliughi/sockpp/pull/39) Using *SSIZE_T* for *ssize_t* in Windows
+- [#53](https://github.com/fpagliughi/sockpp/pull/53) Add Conan support
+- [#55](https://github.com/fpagliughi/sockpp/pull/55) Fix Android strerror
+- [#60](https://github.com/fpagliughi/sockpp/pull/60) Add missing move constructor for connector template.
+- Now `acceptor::open()` uses the *SO_REUSEPORT* option instead of *SO_REUSEADDR* on non-Windows systems. Also made reuse optional.
 
 ## Version 0.7
 

@@ -43,7 +43,7 @@ using namespace std::chrono;
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-//								udp_socket
+//								datagram_socket
 /////////////////////////////////////////////////////////////////////////////
 
 datagram_socket::datagram_socket(const sock_address& addr)
@@ -53,6 +53,7 @@ datagram_socket::datagram_socket(const sock_address& addr)
 
 	if (check_socket_bool(h)) {
 		reset(h);
+		// TODO: If the bind fails, should we close the socket and fail completely?
 		bind(addr);
 	}
 }

@@ -1,19 +1,9 @@
-/**
- * @file tcp6_connector.h
- *
- * Class for creating client-side TCP connections
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	May 2019
- */
-
+// can_address.cpp
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2014-2021 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,23 +34,71 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include "sockpp/can_address.h"
+#include "sockpp/socket.h"
+#include <cstring>
+#include <stdexcept>
+#include <sys/ioctl.h>
+#include <net/if.h>
 
-#ifndef __sockpp_tcp6_connector_h
-#define __sockpp_tcp6_connector_h
-
-#include "sockpp/connector.h"
-#include "sockpp/tcp6_socket.h"
+using namespace std;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** IPv6 active, connector (client) socket. */
-using tcp6_connector = connector_tmpl<tcp6_socket>;
+constexpr sa_family_t can_address::ADDRESS_FAMILY;
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+// --------------------------------------------------------------------------
+
+can_address::can_address(unsigned ifindex) : addr_{}
+{
+	addr_.can_family = AF_CAN;
+	addr_.can_ifindex = ifindex;
 }
 
-#endif		// __sockpp_tcp6_connector_h
+can_address::can_address(const string& iface) : addr_{}
+{
+	unsigned idx = if_nametoindex(iface.c_str());
 
+	if (idx != 0) {
+		addr_.can_family = AF_CAN;
+		addr_.can_ifindex = idx;
+	}
+}
+
+can_address::can_address(const sockaddr& addr)
+{
+    auto domain = addr.sa_family;
+    if (domain != AF_CAN)
+        throw std::invalid_argument("Not a SocketCAN address");
+
+    std::memcpy(&addr_, &addr, sizeof(sockaddr));
+}
+
+string can_address::iface() const
+{
+	if (addr_.can_family == AF_UNSPEC)
+		return string("none");
+
+	if (addr_.can_ifindex == 0)
+		return string("any");
+
+	char buf[IF_NAMESIZE];
+	const char* iface = if_indextoname(addr_.can_ifindex, buf);
+
+	return string(iface ? iface : "unknown");
+}
+
+
+// --------------------------------------------------------------------------
+
+ostream& operator<<(ostream& os, const can_address& addr)
+{
+	os << "can:" << addr.iface();
+	return os;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// End namespace sockpp
+}

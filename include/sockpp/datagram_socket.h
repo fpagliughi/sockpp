@@ -69,8 +69,12 @@ class datagram_socket : public socket
 	datagram_socket& operator=(const datagram_socket&) =delete;
 
 protected:
-	static socket_t create_handle(int domain) {
-		return socket_t(::socket(domain, COMM_TYPE, 0));
+	static socket_t create_handle(int domain, int protocol=0) {
+		return socket_t(::socket(domain, COMM_TYPE, protocol));
+	}
+
+	static socket_t create_handle(int domain, int type, int protocol) {
+		return socket_t(::socket(domain, type, protocol));
 	}
 
 public:
@@ -265,7 +269,7 @@ public:
 	 */
 	datagram_socket_tmpl(socket_t handle) : base(handle) {}
 	/**
-	 * Creates a UDP socket and binds it to the address.
+	 * Creates a datagram socket and binds it to the address.
 	 * @param addr The address to bind.
 	 */
 	datagram_socket_tmpl(const ADDR& addr) : base(addr) {}

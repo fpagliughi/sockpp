@@ -1,19 +1,9 @@
-/**
- * @file tcp6_connector.h
- *
- * Class for creating client-side TCP connections
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	May 2019
- */
-
+// can_socket.cpp
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2021 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,23 +34,59 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include "sockpp/can_socket.h"
+#include "sockpp/socket.h"
+#include <sys/ioctl.h>
 
-#ifndef __sockpp_tcp6_connector_h
-#define __sockpp_tcp6_connector_h
-
-#include "sockpp/connector.h"
-#include "sockpp/tcp6_socket.h"
+using namespace std;
+using namespace std::chrono;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** IPv6 active, connector (client) socket. */
-using tcp6_connector = connector_tmpl<tcp6_socket>;
+can_socket::can_socket(const can_address& addr)
+{
+	socket_t h = create_handle(SOCK_RAW, CAN_RAW);
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+	if (check_socket_bool(h)) {
+		reset(h);
+		bind(addr);
+	}
 }
 
-#endif		// __sockpp_tcp6_connector_h
+system_clock::time_point can_socket::last_frame_time()
+{
+	timeval tv {};
 
+	// TODO: Handle error
+	::ioctl(handle(), SIOCGSTAMP, &tv);
+	return to_timepoint(tv);
+}
+
+double can_socket::last_frame_timestamp()
+{
+	timeval tv {};
+
+	// TODO: Handle error
+	::ioctl(handle(), SIOCGSTAMP, &tv);
+	return double(tv.tv_sec) + 1.0e-6 * tv.tv_usec;
+}
+
+
+// --------------------------------------------------------------------------
+
+ssize_t can_socket::recv_from(can_frame *frame, int flags,
+							  can_address* srcAddr /*=nullptr*/)
+{
+	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
+    socklen_t len = srcAddr ? srcAddr->size() : 0;
+
+	// TODO: Check returned length
+	return check_ret(::recvfrom(handle(), frame, sizeof(can_frame),
+								flags, p, &len));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// End namespace sockpp
+}

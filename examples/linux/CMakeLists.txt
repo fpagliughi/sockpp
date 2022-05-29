@@ -1,11 +1,12 @@
 # CMakeLists.txt
 #
-# Source CMake build file (src/) for the 'sockpp' library.
+# CMake file for the Linux SocketCAN sample applications in the 
+# 'sockpp' library.
 #
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017-2018 Frank Pagliughi
+# Copyright (c) 2021 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,47 +37,33 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-add_library(sockpp-objs OBJECT
-	acceptor.cpp
-	connector.cpp
-	datagram_socket.cpp
-	exception.cpp
-	inet_address.cpp
-	inet6_address.cpp
-	socket.cpp
-	stream_socket.cpp
+# --- For apps that use threads ---
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+# --- Executables ---
+
+add_executable(cantime cantime.cpp)
+add_executable(canrecv canrecv.cpp)
+
+# --- Link for executables ---
+
+message(STATUS "Using library for SocketCAN samples: ${SOCKPP_LIB}")
+
+target_link_libraries(cantime ${SOCKPP_LIB})
+target_link_libraries(canrecv ${SOCKPP_LIB})
+#target_link_libraries(unechosvr ${SOCKPP_LIB} Threads::Threads)
+
+# --- Install ---
+
+set(INSTALL_TARGETS
+  cantime
+  canrecv
 )
 
-if(UNIX)
-	target_sources(sockpp-objs PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/unix/unix_address.cpp
-	)
-	if(SOCKPP_BUILD_CAN)
-		target_sources(sockpp-objs PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
-		)
-	endif()
-endif()
-
-# This is only necessary for older compilers, but doesn't hurt
-set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
-
-# --- Warnings ---
-
-if(NOT MSVC)
-	# Maybe set '-Werror' for Release builds?
-	if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
-		target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic -Wdocumentation)
-	else()
-		target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)
-	endif()
-endif()
-
-#if(MSVC)
-#  target_compile_options(sockpp-objs PRIVATE /W4 /WX)
-#else()
-#  target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)	# -Werror)
-#endif()
-
+install(TARGETS ${INSTALL_TARGETS}
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+)
 
