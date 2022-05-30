@@ -43,7 +43,6 @@ cmake_minimum_required(VERSION 3.5)
 # --- Project wide names ---
 
 set(SOCKPP sockpp)
-set(SOCKPP_NAMESPACE Sockpp::)
 
 # --- Project setup ---
 
@@ -180,24 +179,27 @@ if(${SOCKPP_BUILD_STATIC})
 endif()
 	
 install(TARGETS ${TARGET_FILES}
-	EXPORT sockppConfig
+	EXPORT sockpp-targets
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-export(TARGETS ${SOCKPP_TARGETS}
-	NAMESPACE ${SOCKPP_NAMESPACE}
-	FILE "${CMAKE_BINARY_DIR}/sockppConfig.cmake"
-)
-
-install(EXPORT sockppConfig
-	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sockpp"
-	NAMESPACE ${SOCKPP_NAMESPACE}
+install(EXPORT sockpp-targets
+	FILE
+		sockppTargets.cmake
+	NAMESPACE
+		Sockpp::
+	DESTINATION
+		"${CMAKE_INSTALL_LIBDIR}/cmake/sockpp"
 )
 
 install(DIRECTORY include/ ${SOCKPP_GENERATED_DIR}/
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/sockppConfig.cmake
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sockpp"
 )
 
 # --- Documentation ---
