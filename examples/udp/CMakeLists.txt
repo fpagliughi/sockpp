@@ -59,7 +59,7 @@ foreach(EXECUTABLE ${EXECUTABLES})
 		PUBLIC
 			${SOCKPP_INCLUDE_DIR}
 		PRIVATE
-			${SOCKPP_GENERATED_DIR}
+			${SOCKPP_GENERATED_DIR}/include
 	)
 	
 	# --- Link for executables ---

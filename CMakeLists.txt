@@ -71,7 +71,7 @@ set(SOCKPP_STATIC_LIBRARY ${SOCKPP}-static)
 set(SOCKPP_OBJECT_LIBRARY ${SOCKPP}-objs)
 
 set(SOCKPP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-set(SOCKPP_GENERATED_DIR ${CMAKE_BINARY_DIR}/generated)
+set(SOCKPP_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 # --- C++14 build flags ---
 
@@ -85,7 +85,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 configure_file(
 	${PROJECT_SOURCE_DIR}/cmake/version.h.in  
-	${SOCKPP_GENERATED_DIR}/${SOCKPP}/version.h
+	${SOCKPP_GENERATED_DIR}/include/${SOCKPP}/version.h
 	@ONLY
 )
 
@@ -100,13 +100,14 @@ target_include_directories(${SOCKPP_OBJECT_LIBRARY}
 		$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
 		$<INSTALL_INTERFACE:include>
 	PRIVATE 
-		${SOCKPP_GENERATED_DIR}
+		${SOCKPP_GENERATED_DIR}/include
 		${CMAKE_SOURCE_DIR}/src
 )
 
 # --- System libraries ---
 
 include(GNUInstallDirs)
+set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/sockpp)
 
 if(WIN32)
 	set(LIBS_SYSTEM ws2_32)
@@ -139,7 +140,7 @@ if(${SOCKPP_BUILD_SHARED})
 			$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
 			$<INSTALL_INTERFACE:include>
 		PRIVATE
-			${SOCKPP_GENERATED_DIR}
+			${SOCKPP_GENERATED_DIR}/include
 	)
 
 	target_link_libraries(${SOCKPP_SHARED_LIBRARY} ${LIBS_SYSTEM})
@@ -161,7 +162,7 @@ if(${SOCKPP_BUILD_STATIC})
 			$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
 			$<INSTALL_INTERFACE:include>
 		PRIVATE
-			${SOCKPP_GENERATED_DIR}
+			${SOCKPP_GENERATED_DIR}/include
 	)
 
 	target_link_libraries(${SOCKPP_STATIC_LIBRARY} ${LIBS_SYSTEM})
@@ -191,15 +192,26 @@ install(EXPORT sockpp-targets
 	NAMESPACE
 		Sockpp::
 	DESTINATION
-		"${CMAKE_INSTALL_LIBDIR}/cmake/sockpp"
+		${INSTALL_CONFIGDIR}
 )
 
-install(DIRECTORY include/ ${SOCKPP_GENERATED_DIR}/
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    ${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+install(DIRECTORY include/ ${SOCKPP_GENERATED_DIR}/include/
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/sockppConfig.cmake
-	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/sockpp"
+install(
+	FILES
+		${PROJECT_SOURCE_DIR}/cmake/sockppConfig.cmake
+		${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
+	DESTINATION
+		${INSTALL_CONFIGDIR}
 )
 
 # --- Documentation ---

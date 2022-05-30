@@ -70,7 +70,7 @@ target_include_directories(unit_tests
 	PUBLIC
 		${SOCKPP_INCLUDE_DIR}
 	PRIVATE 
-		${SOCKPP_GENERATED_DIR}
+		${SOCKPP_GENERATED_DIR}/include
 )
 
 # --- Link for executables ---
