@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017-2018 Frank Pagliughi
+# Copyright (c) 2017-2022 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,17 +42,16 @@
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# IPv4
+# --- Executables ---
 
-list(APPEND EXECUTABLES tcpechosvr)
-list(APPEND EXECUTABLES tcpecho)
-list(APPEND EXECUTABLES tcpechotest)
-list(APPEND EXECUTABLES tcpechomt)
-
-# IPv6
-
-list(APPEND EXECUTABLES tcp6echosvr)
-list(APPEND EXECUTABLES tcp6echo)
+set(EXECUTABLES
+	tcpechosvr
+	tcpecho
+	tcpechotest
+	tcpechomt
+	tcp6echosvr
+	tcp6echo
+)
 
 foreach(EXECUTABLE ${EXECUTABLES})
 	# --- Executables ---
@@ -60,8 +59,11 @@ foreach(EXECUTABLE ${EXECUTABLES})
 	
 	# --- Includes ---
 	target_include_directories(${EXECUTABLE}
-		PUBLIC ${SOCKPP_INCLUDES}
-		PRIVATE ${SOCKPP_GENERATED})
+		PUBLIC
+			${SOCKPP_INCLUDE_DIR}
+		PRIVATE
+			${SOCKPP_GENERATED_DIR}
+	)
 	
 	# --- Link for executables ---
 	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
@@ -73,7 +75,7 @@ target_link_libraries(tcpechosvr Threads::Threads)
 target_link_libraries(tcpechomt Threads::Threads)
 target_link_libraries(tcp6echosvr Threads::Threads)
 
-install(TARGETS ${EXECUTABLES}
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION lib
-)
+# --- Install examples ---
+
+install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
+

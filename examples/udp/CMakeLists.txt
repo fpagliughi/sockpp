@@ -44,9 +44,11 @@ find_package(Threads REQUIRED)
 
 # --- Executables ---
 
-list(APPEND EXECUTABLES udpechosvr)
-list(APPEND EXECUTABLES udpecho)
-list(APPEND EXECUTABLES udp6echo)
+set(EXECUTABLES
+	udpechosvr
+	udpecho
+	udp6echo
+)
 
 foreach(EXECUTABLE ${EXECUTABLES})
 	# --- Executables ---
@@ -54,8 +56,11 @@ foreach(EXECUTABLE ${EXECUTABLES})
 	
 	# --- Includes ---
 	target_include_directories(${EXECUTABLE}
-		PUBLIC ${SOCKPP_INCLUDES}
-		PRIVATE ${SOCKPP_GENERATED})
+		PUBLIC
+			${SOCKPP_INCLUDE_DIR}
+		PRIVATE
+			${SOCKPP_GENERATED_DIR}
+	)
 	
 	# --- Link for executables ---
 	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
@@ -65,7 +70,6 @@ endforeach()
 
 target_link_libraries(udpechosvr Threads::Threads)
 
-install(TARGETS ${EXECUTABLES}
-	RUNTIME DESTINATION bin
-	LIBRARY DESTINATION lib
-)
+# --- Install examples ---
+
+install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)

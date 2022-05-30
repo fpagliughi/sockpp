@@ -37,33 +37,30 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-# --- For apps that use threads ---
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
 # --- Executables ---
 
-add_executable(cantime cantime.cpp)
-add_executable(canrecv canrecv.cpp)
-
-# --- Link for executables ---
-
-message(STATUS "Using library for SocketCAN samples: ${SOCKPP_LIB}")
-
-target_link_libraries(cantime ${SOCKPP_LIB})
-target_link_libraries(canrecv ${SOCKPP_LIB})
-#target_link_libraries(unechosvr ${SOCKPP_LIB} Threads::Threads)
-
-# --- Install ---
-
-set(INSTALL_TARGETS
-  cantime
-  canrecv
+set(EXECUTABLES 
+	cantime
+	canrecv
 )
 
-install(TARGETS ${INSTALL_TARGETS}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-)
+foreach(EXECUTABLE ${EXECUTABLES})
+	# --- Executables ---
+	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+	
+	# --- Includes ---
+	target_include_directories(${EXECUTABLE}
+		PUBLIC
+			${SOCKPP_INCLUDE_DIR}
+		PRIVATE
+			${SOCKPP_GENERATED_DIR}
+	)
+	
+	# --- Link for executables ---
+	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+endforeach()
+
+# --- Install examples ---
+
+install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
 

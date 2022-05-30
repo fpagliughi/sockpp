@@ -36,6 +36,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # --------------------------------------------------------------------------
 
+set(UNIT_TEST_DIR ${PROJECT_SOURCE_DIR})
 find_package(Catch2 REQUIRED)
 
 # --- For apps that use threads ---
@@ -59,19 +60,23 @@ add_executable(unit_tests
 if(UNIX)
 	target_sources(unit_tests 
 		PUBLIC
-			test_unix_address.cpp
-			test_unix_stream_socket.cpp
-			test_unix_dgram_socket.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_address.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_stream_socket.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_dgram_socket.cpp
 	)
 endif()
 
 target_include_directories(unit_tests
-	PUBLIC ${SOCKPP_INCLUDES}
-	PRIVATE ${SOCKPP_GENERATED})
+	PUBLIC
+		${SOCKPP_INCLUDE_DIR}
+	PRIVATE 
+		${SOCKPP_GENERATED_DIR}
+)
 
 # --- Link for executables ---
 
-target_link_libraries(unit_tests ${SOCKPP_LIB} 
+target_link_libraries(unit_tests 
+	${SOCKPP_LIB} 
 	Catch2::Catch2
 	Threads::Threads
 )

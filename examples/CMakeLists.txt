@@ -1,12 +1,11 @@
 # CMakeLists.txt
 #
-# CMake file for the Unix socket sample applications
-# in the 'sockpp' library.
+# CMake build file for the examples in the 'sockpp' library.
 #
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2018 Frank Pagliughi
+# Copyright (c) 2022 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,43 +36,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-# --- For apps that use threads ---
+add_subdirectory(tcp)
+add_subdirectory(udp)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
-# --- Executables ---
-
-list(APPEND EXECUTABLES unechosvr)
-list(APPEND EXECUTABLES unecho)
-list(APPEND EXECUTABLES unechotest)
-list(APPEND EXECUTABLES undgramechosvr)
-list(APPEND EXECUTABLES undgramecho)
-
-# --- Executables ---
-
-foreach(EXECUTABLE ${EXECUTABLES})
-	# --- Executables ---
-	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-	
-	# --- Includes ---
-	target_include_directories(${EXECUTABLE}
-		PUBLIC
-			${SOCKPP_INCLUDE_DIR}
-		PRIVATE
-			${SOCKPP_GENERATED_DIR}
-	)
-	
-	# --- Link for executables ---
-	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
-endforeach()
-
-# --- Additional linkage to Threads ---
-
-target_link_libraries(unechosvr Threads::Threads)
-target_link_libraries(undgramechosvr Threads::Threads)
-
-# --- Install examples ---
-
-install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
-
+if(UNIX)
+	add_subdirectory(unix)
+	if(SOCKPP_BUILD_CAN)
+		add_subdirectory(linux)
+	endif()
+endif()
