@@ -46,7 +46,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 
 	string	cliAddr { "/tmp/undgramecho.sock" },
 			svrAddr { "/tmp/undgramechosvr.sock" };

@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
 	string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
 
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 
 	sockpp::unix_connector conn;
 

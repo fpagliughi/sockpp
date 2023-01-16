@@ -65,6 +65,35 @@ timeval to_timeval(const microseconds& dur)
 }
 
 /////////////////////////////////////////////////////////////////////////////
+//							socket_initializer
+/////////////////////////////////////////////////////////////////////////////
+
+socket_initializer::socket_initializer()
+{
+	#if defined(_WIN32)
+		WSADATA wsadata;
+		::WSAStartup(MAKEWORD(2, 0), &wsadata);
+	#else
+		// Don't signal on socket write errors.
+		::signal(SIGPIPE, SIG_IGN);
+	#endif
+}
+
+socket_initializer::~socket_initializer()
+{
+	#if defined(_WIN32)
+		::WSACleanup();
+	#endif
+}
+
+// --------------------------------------------------------------------------
+
+void initialize()
+{
+	socket_initializer::initialize();
+}
+
+/////////////////////////////////////////////////////////////////////////////
 //									socket
 /////////////////////////////////////////////////////////////////////////////
 
@@ -86,31 +115,6 @@ bool socket::close(socket_t h)
 		return ::closesocket(h) >= 0;
 	#else
 		return ::close(h) >= 0;
-	#endif
-}
-
-// --------------------------------------------------------------------------
-// Closes the socket and updates the last error on failure.
-
-// --------------------------------------------------------------------------
-
-void socket::initialize()
-{
-	#if defined(_WIN32)
-		WSADATA wsadata;
-		::WSAStartup(MAKEWORD(2, 0), &wsadata);
-	#else
-		// Don't signal on socket write errors.
-		::signal(SIGPIPE, SIG_IGN);
-	#endif
-}
-
-// --------------------------------------------------------------------------
-
-void socket::destroy()
-{
-	#if defined(_WIN32)
-		::WSACleanup();
 	#endif
 }
 
@@ -310,6 +314,7 @@ bool socket::close()
 	}
 	return true;
 }
+
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp

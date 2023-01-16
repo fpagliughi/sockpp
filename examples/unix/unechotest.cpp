@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 	size_t n  = (argc > 2) ? size_t(atoll(argv[2])) : DFLT_N;
 	size_t sz = (argc > 3) ? size_t(atoll(argv[3])) : DFLT_SZ;
 
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 
 	auto t_start = high_resolution_clock::now();
 	sockpp::unix_connector conn;

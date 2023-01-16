@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 		path = argv[1];
 	}
 
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 	sockpp::unix_acceptor acc;
 
 	bool ok = acc.open(sockpp::unix_address(path));

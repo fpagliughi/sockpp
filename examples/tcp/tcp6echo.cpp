@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	std::string host = (argc > 1) ? argv[1] : "::1";
 	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 
 	// Implicitly creates an inet6_address from {host,port}
 	// and then tries the connection.

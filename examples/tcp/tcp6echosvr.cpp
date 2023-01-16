@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 
 	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 	sockpp::tcp6_acceptor acc(port);
 
 	if (!acc) {

@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 	cout << "Sample Unix-domain datagram echo server for 'sockpp' "
 		<< sockpp::SOCKPP_VERSION << '\n' << endl;
 
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 
 	sockpp::unix_dgram_socket sock;
 	if (!sock) {

@@ -103,6 +103,67 @@ inline std::chrono::system_clock::time_point to_timepoint(const timeval& tv)
 	};
 }
 
+
+/////////////////////////////////////////////////////////////////////////////
+//							socket_initializer
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * RAII singleton class to initialize and then shut down the library.
+ *
+ * The singleton object of this class should be created before any other
+ * classes in the library are used.
+ *
+ * This is only required on some platforms, particularly Windows, but is
+ * harmless on other platforms. On some, such as POSIX, the initializer sets
+ * optional parameters for the library, and the destructor does nothing.
+ */
+class socket_initializer
+{
+	/** Initializes the sockpp library */
+	socket_initializer();
+
+	socket_initializer(const socket_initializer&) =delete;
+	socket_initializer& operator=(const socket_initializer&) =delete;
+
+	friend class socket;
+
+public:
+	/**
+	 * Creates the initializer singleton on the first call as a static
+	 * object which will get destructed on program termination with the
+	 * other static objects in reverse order as they were created,
+	 */
+	static void initialize() {
+		static socket_initializer sock_init;
+	}
+	/**
+	 * Destructor shuts down the sockpp library.
+	 */
+	~socket_initializer();
+};
+
+/**
+ * Initializes the sockpp library.
+ *
+ * This initializes the library by creating a static singleton
+ * RAII object which does any platform-specific initialization the first
+ * time it's call in a process, and then performs cleanup automatically
+ * when the object is destroyed at program termination.
+ *
+ * This should be call at least once before any other sockpp objects are
+ * created or used. It can be called repeatedly with subsequent calls
+ * having no effect
+ *
+ * This is primarily required for Win32, to startup the WinSock DLL.
+ *
+ * On Unix-style platforms it disables SIGPIPE signals. Errors are handled
+ * by functon return values and exceptions.
+ */
+void initialize();
+
+/////////////////////////////////////////////////////////////////////////////
+//									socket
 /////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -234,18 +295,6 @@ public:
 	 * Destructor closes the socket.
 	 */
 	virtual ~socket() { close(); }
-	/**
-	 * Initializes the socket (sockpp) library.
-	 * This is only required for Win32. On platforms that use a standard
-	 * socket implementation this is an empty call.
-	 */
-	static void initialize();
-	/**
-	 * Shuts down the socket library.
-	 * This is only required for Win32. On platforms that use a standard
-	 * socket implementation this is an empty call.
-	 */
-	static void destroy();
 	/**
 	 * Creates a socket with the specified communications characterics.
 	 * Not that this is not normally how a socket is creates in the sockpp
@@ -486,25 +535,6 @@ public:
 	 * @return @em true if the sock is closed, @em false on error.
 	 */
 	bool close();
-};
-
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * RAII class to initialize and then shut down the library.
- * A single object of this class can be declared before any other classes in
- * the library are used. The lifetime of the object should span the use of
- * the other classes in the library, so declaring an object at the top of
- * main() is usually the best choice.
- * This is only required on some platforms, particularly Windows, but is
- * harmless on other platforms. On some, such as POSIX, the initializer sets
- * optional parameters for the library, and the destructor does nothing.
- */
-class socket_initializer
-{
-public:
-	socket_initializer() { socket::initialize(); }
-	~socket_initializer() { socket::destroy(); }
 };
 
 /////////////////////////////////////////////////////////////////////////////

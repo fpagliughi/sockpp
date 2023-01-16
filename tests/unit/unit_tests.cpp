@@ -61,7 +61,7 @@
 int main(int argc, char* argv[]) 
 {
     // global setup...
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 
     int result = Catch::Session().run(argc, argv);
 

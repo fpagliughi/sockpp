@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 	string canIface = (argc > 1) ? argv[1] : "can0";
 	canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
 
-	sockpp::socket_initializer sockInit;
+	sockpp::initialize();
 
 	sockpp::can_address addr(canIface);
 	sockpp::can_socket sock(addr);
