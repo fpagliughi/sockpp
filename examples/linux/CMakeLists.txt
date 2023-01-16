@@ -45,10 +45,8 @@ set(EXECUTABLES
 )
 
 foreach(EXECUTABLE ${EXECUTABLES})
-	# --- Executables ---
 	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
 	
-	# --- Includes ---
 	target_include_directories(${EXECUTABLE}
 		PUBLIC
 			${SOCKPP_INCLUDE_DIR}
@@ -56,8 +54,7 @@ foreach(EXECUTABLE ${EXECUTABLES})
 			${SOCKPP_GENERATED_DIR}/include
 	)
 	
-	# --- Link for executables ---
-	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+  target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
 endforeach()
 
 # --- Install examples ---

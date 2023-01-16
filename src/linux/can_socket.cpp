@@ -37,6 +37,7 @@
 #include "sockpp/can_socket.h"
 #include "sockpp/socket.h"
 #include <sys/ioctl.h>
+#include <linux/sockios.h>
 
 using namespace std;
 using namespace std::chrono;

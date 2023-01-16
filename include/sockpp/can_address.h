@@ -53,7 +53,6 @@
 #include <string>
 #include <cstring>
 #include <sys/un.h>
-
 #include <linux/can.h>
 
 namespace sockpp {

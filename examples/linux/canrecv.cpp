@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021 Frank Pagliughi
+// Copyright (c) 2021-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@ using sysclock = chrono::system_clock;
 
 int main(int argc, char* argv[])
 {
-	cout << "Sample SocketCAN writer for 'sockpp' "
+	cout << "Sample SocketCAN reader for 'sockpp' "
 		<< sockpp::SOCKPP_VERSION << endl;
 
 	string canIface = (argc > 1) ? argv[1] : "can0";
@@ -70,14 +70,12 @@ int main(int argc, char* argv[])
 	sockpp::can_socket sock(addr);
 
 	if (!sock) {
-		cerr << "Error binding to the CAN interface " << canIface << "\n\t"
+		cerr << "Error binding to the CAN interface '" << canIface << "'\n\t"
 			<< sock.last_error_str() << endl;
 		return 1;
 	}
 
 	cout << "Created CAN socket on " << sock.address() << endl;
-	time_t t = sysclock::to_time_t(sysclock::now());
-
 	cout.setf(ios::fixed, ios::floatfield);
 	cout << setfill('0');
 
