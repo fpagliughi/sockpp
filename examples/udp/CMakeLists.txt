@@ -44,10 +44,14 @@ find_package(Threads REQUIRED)
 
 # --- Executables ---
 
+set(THREADED_EXECUTABLES
+  udpechosvr
+)
+
 set(EXECUTABLES
-	udpechosvr
 	udpecho
 	udp6echo
+  ${THREADED_EXECUTABLES}
 )
 
 foreach(EXECUTABLE ${EXECUTABLES})
@@ -69,7 +73,9 @@ endforeach()
 
 # --- Additional linkage to Threads ---
 
-target_link_libraries(udpechosvr Threads::Threads)
+foreach(EXECUTABLE ${THREADED_EXECUTABLES})
+  target_link_libraries(${EXECUTABLE} Threads::Threads)
+endforeach()
 
 # --- Install examples ---
 

@@ -68,21 +68,21 @@ set_target_properties(sockpp-objs
 		CXX_EXTENSIONS OFF
 )
 
+target_include_directories(sockpp-objs
+	PUBLIC
+		$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
+		$<INSTALL_INTERFACE:include>
+	PRIVATE 
+		${SOCKPP_GENERATED_DIR}/include
+		${CMAKE_SOURCE_DIR}/src
+)
+
 # --- Warnings ---
 
-if(NOT MSVC)
-	# Maybe set '-Werror' for Release builds?
-	if (CMAKE_CXX_COMPILER_ID MATCHES Clang)
-		target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic -Wdocumentation)
-	else()
-		target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)
-	endif()
-endif()
-
-#if(MSVC)
-#  target_compile_options(sockpp-objs PRIVATE /W4 /WX)
-#else()
-#  target_compile_options(sockpp-objs PRIVATE -Wall -Wextra -pedantic)	# -Werror)
-#endif()
-
+# Maybe set '-Werror' for Release builds?
+target_compile_options(sockpp-objs PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W3>
+  $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Wdocumentation>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC,Clang>>:-Wall -Wextra -Wpedantic>
+)
 

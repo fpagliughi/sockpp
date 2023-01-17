@@ -40,13 +40,9 @@
 
 cmake_minimum_required(VERSION 3.12)
 
-# --- Project wide names ---
-
-set(SOCKPP sockpp)
-
 # --- Project setup ---
 
-project(${SOCKPP} VERSION "0.8.0")
+project(sockpp VERSION "0.8.0")
 
 # --- Build Options ---
 
@@ -63,9 +59,9 @@ endif()
 
 # --- Setting naming variables ---
 
-set(SOCKPP_SHARED_LIBRARY ${SOCKPP})
-set(SOCKPP_STATIC_LIBRARY ${SOCKPP}-static)
-set(SOCKPP_OBJECT_LIBRARY ${SOCKPP}-objs)
+set(SOCKPP_SHARED_LIBRARY sockpp)
+set(SOCKPP_STATIC_LIBRARY sockpp-static)
+set(SOCKPP_OBJECT_LIBRARY sockpp-objs)
 
 set(SOCKPP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(SOCKPP_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
@@ -74,7 +70,7 @@ set(SOCKPP_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 configure_file(
 	${PROJECT_SOURCE_DIR}/cmake/version.h.in  
-	${SOCKPP_GENERATED_DIR}/include/${SOCKPP}/version.h
+	${SOCKPP_GENERATED_DIR}/include/sockpp/version.h
 	@ONLY
 )
 
@@ -84,24 +80,10 @@ add_subdirectory(src)
 
 # --- Header Locations ---
 
-target_include_directories(${SOCKPP_OBJECT_LIBRARY}
-	PUBLIC
-		$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
-		$<INSTALL_INTERFACE:include>
-	PRIVATE 
-		${SOCKPP_GENERATED_DIR}/include
-		${CMAKE_SOURCE_DIR}/src
-)
-
 # --- System libraries ---
-
-include(GNUInstallDirs)
-set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/sockpp)
 
 if(WIN32)
 	set(LIBS_SYSTEM ws2_32)
-elseif(UNIX)
-	set(LIBS_SYSTEM c stdc++)
 endif()
 
 # --- Collect the targets names ---
@@ -162,11 +144,13 @@ if(${SOCKPP_BUILD_STATIC})
 	target_link_libraries(${SOCKPP_STATIC_LIBRARY} ${LIBS_SYSTEM})
 	
 	set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES
-		VERSION ${PROJECT_VERSION}
-		SOVERSION ${PROJECT_VERSION_MAJOR}
 		CXX_EXTENSIONS OFF
 	)
 
+  # On *nix systems, the static library can have the same base filename
+  # as the shared library, thus 'libsockpp.a' for the static lib.
+  # On Windows they need different names to tell the static lib from the
+  # DLL import library.
 	if(UNIX)
 		set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES 
 			OUTPUT_NAME ${SOCKPP_SHARED_LIBRARY}
@@ -175,7 +159,11 @@ if(${SOCKPP_BUILD_STATIC})
 	
 	list(APPEND TARGET_FILES ${SOCKPP_STATIC_LIBRARY})
 endif()
-	
+
+# --- Install Targets ---
+ 
+include(GNUInstallDirs)
+
 install(TARGETS ${TARGET_FILES}
 	EXPORT sockpp-targets
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -189,10 +177,11 @@ install(EXPORT sockpp-targets
 	NAMESPACE
 		Sockpp::
 	DESTINATION
-		${INSTALL_CONFIGDIR}
+		${CMAKE_INSTALL_LIBDIR}/cmake/sockpp
 )
 
 include(CMakePackageConfigHelpers)
+
 write_basic_package_version_file(
     ${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
     VERSION ${PROJECT_VERSION}
@@ -208,7 +197,7 @@ install(
 		${PROJECT_SOURCE_DIR}/cmake/sockppConfig.cmake
 		${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
 	DESTINATION
-		${INSTALL_CONFIGDIR}
+		${CMAKE_INSTALL_LIBDIR}/cmake/sockpp
 )
 
 # --- Documentation ---
@@ -225,7 +214,7 @@ else()
 	set(SOCKPP_LIB ${SOCKPP_STATIC_LIBRARY})
 endif()
 
-# --- Examples applications ---
+# --- Example applications ---
 
 if(SOCKPP_BUILD_EXAMPLES)
 	add_subdirectory(examples)

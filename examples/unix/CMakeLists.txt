@@ -44,11 +44,17 @@ find_package(Threads REQUIRED)
 
 # --- Executables ---
 
-list(APPEND EXECUTABLES unechosvr)
-list(APPEND EXECUTABLES unecho)
-list(APPEND EXECUTABLES unechotest)
-list(APPEND EXECUTABLES undgramechosvr)
-list(APPEND EXECUTABLES undgramecho)
+set(THREADED_EXECUTABLES
+  unechosvr
+  undgramechosvr
+)
+
+set(EXECUTABLES
+  unecho
+  unechotest
+  undgramecho
+  ${THREADED_EXECUTABLES}
+)
 
 # --- Executables ---
 
@@ -71,8 +77,9 @@ endforeach()
 
 # --- Additional linkage to Threads ---
 
-target_link_libraries(unechosvr Threads::Threads)
-target_link_libraries(undgramechosvr Threads::Threads)
+foreach(EXECUTABLE ${THREADED_EXECUTABLES})
+  target_link_libraries(${EXECUTABLE} Threads::Threads)
+endforeach()
 
 # --- Install examples ---
 

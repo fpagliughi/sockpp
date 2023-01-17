@@ -44,13 +44,17 @@ find_package(Threads REQUIRED)
 
 # --- Executables ---
 
+set(THREADED_EXECUTABLES
+  tcpechosvr
+  tcpechomt
+  tcp6echosvr
+)
+
 set(EXECUTABLES
-	tcpechosvr
 	tcpecho
 	tcpechotest
-	tcpechomt
-	tcp6echosvr
 	tcp6echo
+  ${THREADED_EXECUTABLES}
 )
 
 foreach(EXECUTABLE ${EXECUTABLES})
@@ -72,9 +76,9 @@ endforeach()
 
 # --- Additional linkage to Threads ---
 
-target_link_libraries(tcpechosvr Threads::Threads)
-target_link_libraries(tcpechomt Threads::Threads)
-target_link_libraries(tcp6echosvr Threads::Threads)
+foreach(EXECUTABLE ${THREADED_EXECUTABLES})
+  target_link_libraries(${EXECUTABLE} Threads::Threads)
+endforeach()
 
 # --- Install examples ---
 

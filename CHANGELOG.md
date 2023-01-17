@@ -2,11 +2,14 @@
 
 ## [Version 0.8.0](https://github.com/fpagliughi/sockpp/compare/v0.7.1..v0.8.0)
 
-Released: 2023-01-xx
+Released: 2023-01-17
 
 - [Breaking] Library initializer now uses a static singleton created via `socket_initializer::initialize()` call, which can be called repeatedly with no ill effect. Also added global `socketpp::initialize()` function as shortcut.
 - Improvements to CMake to better follow modern standards.
-
+    - CMake required version bumped up to 3.12
+    - Generating CMake files for downstream projects (config, target, version)
+    - Windows builds default to shared DLL, not static library
+    - Lots of cleanup
 
 ## [Version 0.7.1](https://github.com/fpagliughi/sockpp/compare/v0.7..v0.7.1)
 

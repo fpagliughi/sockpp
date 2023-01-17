@@ -18,7 +18,7 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
 
-On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable.
+On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable, and if not, please report an issue!
 
 To keep up with the latest announcements for this project, follow me at:
 
@@ -26,15 +26,17 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
-## New in 0.7.1
+## New in 0.8.0
 
-- [Experimental] **SocketCAN**, CAN bus support on Linux
-- [#37](https://github.com/fpagliughi/sockpp/pull/37) socket::get_option() not returning length on Windows
-- [#39](https://github.com/fpagliughi/sockpp/pull/39) Using *SSIZE_T* for *ssize_t* in Windows
-- [#53](https://github.com/fpagliughi/sockpp/pull/53) Add Conan support
-- [#55](https://github.com/fpagliughi/sockpp/pull/55) Fix Android strerror
-- [#60](https://github.com/fpagliughi/sockpp/pull/60) Add missing move constructor for connector template.
-- Now `acceptor::open()` uses the *SO_REUSEPORT* option instead of *SO_REUSEADDR* on non-Windows systems. Also made reuse optional.
+This was primarily a release of code that had been sitting in the develop branch for nearly a year to improve CMake functionality for downstream projects.
+
+- [Breaking] Library initializer now uses a static singleton created via `socket_initializer::initialize()` call, which can be called repeatedly with no ill effect. Also added global `socketpp::initialize()` function as shortcut.
+- Improvements to CMake to better follow modern standards.
+    - CMake required version bumped up to 3.12
+    - Generating CMake files for downstream projects (config, target, version)
+    - Windows builds default to shared DLL, not static library
+    - Lots of cleanup
+
 
 ## Contributing
 
