@@ -38,7 +38,7 @@
 
 # --- CMake required version ---
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
 # --- Project wide names ---
 
@@ -46,23 +46,20 @@ set(SOCKPP sockpp)
 
 # --- Project setup ---
 
-project(${SOCKPP} VERSION "0.7.2")
+project(${SOCKPP} VERSION "0.8.0")
 
 # --- Build Options ---
 
-if(WIN32)
-	option(SOCKPP_BUILD_STATIC "Build static library" ON)
-	option(SOCKPP_BUILD_SHARED "Build shared library (DLL)" OFF)
-	include(GenerateExportHeader)
-else()
-	option(SOCKPP_BUILD_STATIC "Build static library" OFF)
-	option(SOCKPP_BUILD_SHARED "Build shared library" ON)
-endif()
-
+option(SOCKPP_BUILD_SHARED "Build shared library" ON)
+option(SOCKPP_BUILD_STATIC "Build static library" OFF)
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 option(SOCKPP_BUILD_CAN "Build the Linux SocketCAN components" OFF)
+
+if(WIN32)
+	include(GenerateExportHeader)
+endif()
 
 # --- Setting naming variables ---
 
@@ -72,14 +69,6 @@ set(SOCKPP_OBJECT_LIBRARY ${SOCKPP}-objs)
 
 set(SOCKPP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(SOCKPP_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
-
-# --- C++14 build flags ---
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # --- Generate a version header ---
 
@@ -135,6 +124,8 @@ if(${SOCKPP_BUILD_SHARED})
 	message(STATUS "Creating shared library: ${SOCKPP_SHARED_LIBRARY}")
 	add_library(${SOCKPP_SHARED_LIBRARY} SHARED $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
 
+	target_compile_features(${SOCKPP_SHARED_LIBRARY} PUBLIC cxx_std_14)
+
 	target_include_directories(${SOCKPP_SHARED_LIBRARY}
 		PUBLIC
 			$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
@@ -148,6 +139,7 @@ if(${SOCKPP_BUILD_SHARED})
 	set_target_properties(${SOCKPP_SHARED_LIBRARY} PROPERTIES
 		VERSION ${PROJECT_VERSION}
 		SOVERSION ${PROJECT_VERSION_MAJOR}
+		CXX_EXTENSIONS OFF
 	)
 
 	list(APPEND TARGET_FILES ${SOCKPP_SHARED_LIBRARY})
@@ -156,6 +148,8 @@ endif()
 if(${SOCKPP_BUILD_STATIC})
 	message(STATUS "Creating static library: ${SOCKPP_STATIC_LIBRARY}")
 	add_library(${SOCKPP_STATIC_LIBRARY} STATIC $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
+
+	target_compile_features(${SOCKPP_STATIC_LIBRARY} PUBLIC cxx_std_14)
 
 	target_include_directories(${SOCKPP_STATIC_LIBRARY}
 		PUBLIC
@@ -170,10 +164,13 @@ if(${SOCKPP_BUILD_STATIC})
 	set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES
 		VERSION ${PROJECT_VERSION}
 		SOVERSION ${PROJECT_VERSION_MAJOR}
+		CXX_EXTENSIONS OFF
 	)
 
 	if(UNIX)
-		set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES OUTPUT_NAME ${SOCKPP_SHARED_LIBRARY})
+		set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES 
+			OUTPUT_NAME ${SOCKPP_SHARED_LIBRARY}
+		)
 	endif()
 	
 	list(APPEND TARGET_FILES ${SOCKPP_STATIC_LIBRARY})

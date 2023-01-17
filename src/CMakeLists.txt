@@ -59,8 +59,14 @@ if(UNIX)
 	endif()
 endif()
 
-# This is only necessary for older compilers, but doesn't hurt
-set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
+target_compile_features(sockpp-objs PUBLIC cxx_std_14)
+
+# Position indepence is only necessary for older compilers, but doesn't hurt
+set_target_properties(sockpp-objs 
+	PROPERTIES 
+		POSITION_INDEPENDENT_CODE 1
+		CXX_EXTENSIONS OFF
+)
 
 # --- Warnings ---
 

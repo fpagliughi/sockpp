@@ -73,6 +73,10 @@ target_include_directories(unit_tests
 		${SOCKPP_GENERATED_DIR}/include
 )
 
+set_target_properties(unit_tests PROPERTIES
+  CXX_EXTENSIONS OFF
+)
+
 # --- Link for executables ---
 
 target_link_libraries(unit_tests 
