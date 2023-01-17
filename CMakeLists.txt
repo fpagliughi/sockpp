@@ -53,10 +53,6 @@ option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 option(SOCKPP_BUILD_CAN "Build the Linux SocketCAN components" OFF)
 
-if(WIN32)
-	include(GenerateExportHeader)
-endif()
-
 # --- Setting naming variables ---
 
 set(SOCKPP_SHARED_LIBRARY sockpp)
@@ -78,11 +74,10 @@ configure_file(
 
 add_subdirectory(src)
 
-# --- Header Locations ---
-
 # --- System libraries ---
 
 if(WIN32)
+	set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 	set(LIBS_SYSTEM ws2_32)
 endif()
 
