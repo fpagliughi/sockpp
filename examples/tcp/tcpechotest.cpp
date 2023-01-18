@@ -68,7 +68,6 @@ int main(int argc, char* argv[])
 
 	auto t_start = high_resolution_clock::now();
 
-
 	sockpp::tcp_connector conn({host, port});
 	if (!conn) {
 		cerr << "Error connecting to server at "
@@ -103,9 +102,9 @@ int main(int argc, char* argv[])
 		}
 
 		sret.resize(s.length());
-		int n = conn.read_n(&sret[0], s.length());
+		ssize_t n = conn.read_n(&sret[0], s.length());
 
-		if (n != (int) s.length()) {
+		if (n != (ssize_t) s.length()) {
 			cerr << "Error reading from UNIX stream" << endl;
 			break;
 		}

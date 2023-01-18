@@ -134,10 +134,10 @@ socket socket::clone() const
 {
 	socket_t h = INVALID_SOCKET;
 	#if defined(_WIN32)
-		WSAPROTOCOL_INFO protInfo;
-		if (::WSADuplicateSocket(handle_, ::GetCurrentProcessId(), &protInfo) == 0)
-			h = ::WSASocket(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED);
-		// TODO: Set lastErr_ on failure
+		WSAPROTOCOL_INFOW protInfo;
+		if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0)
+			h = check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo,
+                                          0, WSA_FLAG_OVERLAPPED));
 	#else
 		h = ::dup(handle_);
 	#endif
