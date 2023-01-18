@@ -89,6 +89,10 @@ void inet6_address::create(const in6_addr& addr, in_port_t port)
     addr_.sin6_flowinfo = 0;
     addr_.sin6_addr = addr;
     addr_.sin6_port = htons(port);
+	#if defined(__APPLE__) || defined(BSD)
+		addr_.sin6_len = (uint8_t) SZ;
+	#endif
+
 }
 
 // --------------------------------------------------------------------------
@@ -100,6 +104,9 @@ void inet6_address::create(const string& saddr, in_port_t port)
     addr_.sin6_flowinfo = 0;
 	addr_.sin6_addr = resolve_name(saddr.c_str());
 	addr_.sin6_port = htons(port);
+	#if defined(__APPLE__) || defined(BSD)
+		addr_.sin6_len = (uint8_t) SZ;
+	#endif
 }
 
 // --------------------------------------------------------------------------
