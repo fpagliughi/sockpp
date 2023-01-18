@@ -10,7 +10,7 @@ The base `socket` class wraps a system socket handle, and maintains its lifetime
 
 Currently supports: IPv4, IPv6, and Unix-Domain Sockets on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
 
-There is also some experimental support for CAN bus programming using the SocketCAN package on Linux. This gives CAN bus adaters a network interface, with limitations dictated by the CAN message protocol.
+There is also some experimental support for CAN bus programming on Linux using the SocketCAN package. This gives CAN bus adapters a network interface, with limitations dictated by the CAN message protocol.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
@@ -26,9 +26,9 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
-## New in 0.8.0
+## New in v0.8.0
 
-This was primarily a release of code that had been sitting in the develop branch for nearly a year to improve CMake functionality for downstream projects.
+This was primarily a release of code that had been sitting in the develop branch for nearly a year. That code mostly improved CMake functionality for downstream projects.
 
 - [Breaking] Library initializer now uses a static singleton created via `socket_initializer::initialize()` call, which can be called repeatedly with no ill effect. Also added global `socketpp::initialize()` function as shortcut.
 - Improvements to CMake to better follow modern standards.
@@ -60,7 +60,7 @@ CMake is the supported build system.
 - A conforming C++-14 compiler.
     - _gcc_ v5.0 or later (or) _clang_ v3.8 or later.
     - _Visual Studio 2015_, or later on WIndows.
-- _CMake_ v3.5 or newer.
+- _CMake_ v3.12 or newer.
 - _Doxygen_ (optional) to generate API docs.
 - _Catch2_ (optional) to build and run unit tests.
 
