@@ -94,6 +94,14 @@ public:
 		auto p = sockaddr_ptr();
 		return p ? p->sa_family : AF_UNSPEC;
 	}
+
+	/**
+	 * Gets a printable string for the address.
+	 * @return A string representation of the address
+	 */
+	virtual std::string to_string() const {
+		return std::string();
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////

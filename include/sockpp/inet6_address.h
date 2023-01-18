@@ -227,7 +227,7 @@ public:
 	 * @return A string representation of the address in the form 
 	 *  	   '[address]:port'
 	 */
-	std::string to_string() const;
+	std::string to_string() const override;
 };
 
 // --------------------------------------------------------------------------
