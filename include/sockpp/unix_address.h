@@ -74,8 +74,8 @@ public:
     /** The address family for this type of address */
 	static constexpr sa_family_t ADDRESS_FAMILY = AF_UNIX;
 
-    // TODO: This only applies to Linux
-	static constexpr size_t MAX_PATH_NAME = 108;
+	/** The max length of the file path */
+	static constexpr size_t MAX_PATH_NAME = sizeof(sockaddr_un::sun_path);
 
 	/**
 	 * Constructs an empty address.
@@ -83,8 +83,8 @@ public:
 	 */
 	unix_address() : addr_() {}
 	/**
-	 * Constructs an address for the specified path.
-	 * @param path The
+	 * Constructs an address given the specified path.
+	 * @param path The path to the socket file.
 	 */
 	unix_address(const std::string& path);
 	/**
@@ -108,7 +108,7 @@ public:
      *            initialized as a UNIX-domain address (i.e. family is not
      *            AF_UNIX)
 	 */
-	unix_address(const sockaddr_un& addr) : addr_(addr) {}
+	unix_address(const sockaddr_un& addr);
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
@@ -125,7 +125,9 @@ public:
 	 * Gets the path to which this address refers.
 	 * @return The path to which this address refers.
 	 */
-	std::string path() const { return std::string(addr_.sun_path); }
+	std::string path() const {
+		return std::string(addr_.sun_path, strnlen(addr_.sun_path, MAX_PATH_NAME));
+	}
 	/**
 	 * Gets the size of the address structure.
 	 * Note: In this implementation, this should return sizeof(this) but
@@ -170,7 +172,7 @@ public:
 	 *  	   "unix:<path>"
 	 */
 	std::string to_string() const {
-		return std::string("unix:") + std::string(addr_.sun_path);
+		return std::string("unix:") + path();
 	}
 };
 

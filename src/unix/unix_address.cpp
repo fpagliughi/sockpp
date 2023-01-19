@@ -55,15 +55,18 @@ unix_address::unix_address(const string& path)
 	::strncpy(addr_.sun_path, path.c_str(), MAX_PATH_NAME);
 }
 
-unix_address::unix_address(const sockaddr& addr)
+unix_address::unix_address(const sockaddr& addr) : addr_{}
 {
-    auto domain = addr.sa_family;
-    if (domain != AF_UNIX)
+	if (addr.sa_family != ADDRESS_FAMILY)
         throw std::invalid_argument("Not a UNIX-domain address");
 
-    // TODO: We should check the path, or at least see that it has
-    // proper NUL termination.
     std::memcpy(&addr_, &addr, sizeof(sockaddr));
+}
+
+unix_address::unix_address(const sockaddr_un& addr) : addr_(addr)
+{
+    if (addr.sun_family != ADDRESS_FAMILY)
+        throw std::invalid_argument("Not a UNIX-domain address");
 }
 
 // --------------------------------------------------------------------------
