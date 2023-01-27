@@ -191,6 +191,8 @@ class socket
 	socket(const socket&) =delete;
 	socket& operator=(const socket&) =delete;
 
+    friend class ioresult;
+
 protected:
 	/**
 	 * Closes the socket without checking for errors or updating the last
@@ -534,8 +536,6 @@ public:
 	 * @return @em true if the sock is closed, @em false on error.
 	 */
 	virtual bool close();
-
-    friend struct ioresult;
 };
 
 /////////////////////////////////////////////////////////////////////////////

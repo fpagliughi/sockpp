@@ -101,7 +101,7 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
             fd_set writeset = readset;
         	fd_set exceptset = readset;
             timeval tv = to_timeval(timeout);
-            int n = check_ret(::select(handle()+1, &readset, &writeset, &exceptset, &tv));
+            int n = check_ret(::select(int(handle())+1, &readset, &writeset, &exceptset, &tv));
 
             if (n > 0) {
                 // Got a socket event, but it might be an error, so check:
