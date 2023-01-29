@@ -99,6 +99,7 @@
 #else
 	#include <unistd.h>
 	#include <sys/socket.h>
+	#include <sys/time.h>
 	#include <sys/uio.h>
 	#include <arpa/inet.h>
 	#ifdef __FreeBSD__
