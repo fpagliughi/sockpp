@@ -111,7 +111,7 @@ if(${SOCKPP_BUILD_SHARED})
 			${SOCKPP_GENERATED_DIR}/include
 	)
 
-	target_link_libraries(${SOCKPP_SHARED_LIBRARY} ${LIBS_SYSTEM})
+	target_link_libraries(${SOCKPP_SHARED_LIBRARY} PRIVATE ${LIBS_SYSTEM})
 	
 	set_target_properties(${SOCKPP_SHARED_LIBRARY} PROPERTIES
 		VERSION ${PROJECT_VERSION}
@@ -136,7 +136,7 @@ if(${SOCKPP_BUILD_STATIC})
 			${SOCKPP_GENERATED_DIR}/include
 	)
 
-	target_link_libraries(${SOCKPP_STATIC_LIBRARY} ${LIBS_SYSTEM})
+	target_link_libraries(${SOCKPP_STATIC_LIBRARY} PUBLIC ${LIBS_SYSTEM})
 	
 	set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES
 		CXX_EXTENSIONS OFF
