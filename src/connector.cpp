@@ -37,21 +37,33 @@
 #include "sockpp/connector.h"
 #include <cerrno>
 
+#if defined(_WIN32)
+	// Winsock calls return non-POSIX error codes
+	#undef  EINPROGRESS
+	#define EINPROGRESS WSAEINPROGRESS
+
+	#undef  ETIMEDOUT
+	#define ETIMEDOUT   WSAETIMEDOUT
+
+	#undef  EWOULDBLOCK
+	#define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
+
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 bool connector::recreate(const sock_address& addr)
 {
-    sa_family_t domain = addr.family();
-    socket_t h = create_handle(domain);
+	sa_family_t domain = addr.family();
+	socket_t h = create_handle(domain);
 
-    if (!check_socket_bool(h))
-        return false;
+	if (!check_socket_bool(h))
+		return false;
 
-    // This will close the old connection, if any.
-    reset(h);
-    return true;
+	// This will close the old connection, if any.
+	reset(h);
+	return true;
 }
 
 
@@ -72,43 +84,44 @@ bool connector::connect(const sock_address& addr)
 
 bool connector::connect(const sock_address& addr, std::chrono::microseconds timeout)
 {
-    if (timeout.count() <= 0)
-        return connect(addr);
+	if (timeout.count() <= 0)
+		return connect(addr);
 
-    if (!recreate(addr))
-        return false;
+	if (!recreate(addr))
+		return false;
 
-    set_non_blocking(true);
-    if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
-        if (last_error() == EINPROGRESS || last_error() == EWOULDBLOCK) {
-            // Non-blocking connect -- call `select` to wait until the timeout:
-        	// Note:  Windows returns errors in exceptset so check it too, the
-        	// logic afterwords doesn't change
-            fd_set readset;
-            FD_ZERO(&readset);
-            FD_SET(handle(), &readset);
-            fd_set writeset = readset;
-        	fd_set exceptset = readset;
-            timeval tv = to_timeval(timeout);
-            int n = check_ret(::select(int(handle())+1, &readset, &writeset, &exceptset, &tv));
+	set_non_blocking(true);
+	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
+		if (last_error() == EINPROGRESS || last_error() == EWOULDBLOCK) {
+			// Non-blocking connect -- call `select` to wait until the timeout:
+			// Note:  Windows returns errors in exceptset so check it too, the
+			// logic afterwords doesn't change
+			fd_set readset;
+			FD_ZERO(&readset);
+			FD_SET(handle(), &readset);
+			fd_set writeset = readset;
+			fd_set exceptset = readset;
+			timeval tv = to_timeval(timeout);
+			int n = check_ret(::select(int(handle())+1, &readset, &writeset, &exceptset, &tv));
 
-            if (n > 0) {
-                // Got a socket event, but it might be an error, so check:
-                int err;
-                if (get_option(SOL_SOCKET, SO_ERROR, &err))
-                    clear(err);
-            } else if (n == 0) {
-                clear(ETIMEDOUT);
-            }
-        }
+			if (n > 0) {
+				// Got a socket event, but it might be an error, so check:
+				int err;
+				if (get_option(SOL_SOCKET, SO_ERROR, &err))
+					clear(err);
+			}
+			else if (n == 0) {
+				clear(ETIMEDOUT);
+			}
+		}
 
-        if (last_error() != 0) {
-            close();
-            return false;
-        }
-    }
+		if (last_error() != 0) {
+			close();
+			return false;
+		}
+	}
 
-    set_non_blocking(false);
+	set_non_blocking(false);
 	return true;
 }
 

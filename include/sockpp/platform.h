@@ -76,33 +76,23 @@
 	#ifndef _SSIZE_T_DEFINED 
 		#define _SSIZE_T_DEFINED 
 		#undef ssize_t
-        using ssize_t = SSIZE_T;
+		using ssize_t = SSIZE_T;
 	#endif // _SSIZE_T_DEFINED
 
-    #ifndef _SUSECONDS_T
-        #define _SUSECONDS_T
-        typedef long suseconds_t;	// signed # of microseconds in timeval
-    #endif	// _SUSECONDS_T
+	#ifndef _SUSECONDS_T
+		#define _SUSECONDS_T
+		typedef long suseconds_t;	// signed # of microseconds in timeval
+	#endif	// _SUSECONDS_T
  
-    #define SHUT_RD SD_RECEIVE
-    #define SHUT_WR SD_SEND
-    #define SHUT_RDWR SD_BOTH
+	#define SHUT_RD SD_RECEIVE
+	#define SHUT_WR SD_SEND
+	#define SHUT_RDWR SD_BOTH
 
-    // Winsock calls return non-POSIX error codes
-	// These are just a few common ones.
-    #define EINPROGRESS WSAEINPROGRESS
-    #define ETIMEDOUT   WSAETIMEDOUT
-	#define EWOULDBLOCK WSAEWOULDBLOCK
-	#define EAGAIN      WSAEWOULDBLOCK
-	#define EINTR       WSAEINTR
-	#define ENOTCONN    WSAENOTCONN
-	#define ECONNRESET  WSAECONNRESET
-
-    struct iovec
-    {
-        void* iov_base;
+	struct iovec
+	{
+		void* iov_base;
 		size_t iov_len;
-    };
+	};
 
 #else
 	#include <unistd.h>
