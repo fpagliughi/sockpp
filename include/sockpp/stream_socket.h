@@ -55,51 +55,6 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Result of a thread-safe read or write.
- * (@ref read_r, @ref read_n_r, @ref write_r, @ref write_n_r)
- */
-class ioresult {
-	size_t cnt_ = 0;		///< Byte count, or 0 on error or EOF
-	int err_ = 0;			///< errno value (0 if no error or EOF)
-
-public:
-	/** Creates an empty result */
-	ioresult() = default;
-
-	/**
-	 * Creates a result from the return value of a low-level I/O function.
-	 * @param n The number of bytes read or written. If <0, then an error is
-	 *  		assumed and obtained from socket::get_last_error().
-	 *
-	 */
-	explicit inline ioresult(ssize_t n) {
-		if (n < 0)
-			err_ = socket::get_last_error();
-		else
-			cnt_ = size_t(n);
-	}
-
-	/** Sets the error value */
-	void set_error(int e) { err_ = e; }
-
-	/** Increments the count */
-	void incr(size_t n) { cnt_ += n; }
-
-	/** Determines if the result is OK (not an error) */
-	bool is_ok() const { return err_ == 0; }
-	/** Determines if the result is an error */
-	bool is_err() const { return err_ != 0; }
-
-	/** Gets the count */
-	size_t count() const { return cnt_; }
-
-	/** Gets the error */
-	int error() const { return err_; }
-};
-
-/////////////////////////////////////////////////////////////////////////////
-
-/**
  * Base class for streaming sockets, such as TCP and Unix Domain.
  * This is the streaming connection between two peers. It looks like a
  * readable/writeable device.

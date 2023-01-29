@@ -97,18 +97,6 @@ void initialize()
 //									socket
 /////////////////////////////////////////////////////////////////////////////
 
-int socket::get_last_error()
-{
-	#if defined(_WIN32)
-		return ::WSAGetLastError();
-	#else
-		int err = errno;
-		return err;
-	#endif
-}
-
-// --------------------------------------------------------------------------
-
 bool socket::close(socket_t h)
 {
 	#if defined(_WIN32)

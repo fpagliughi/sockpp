@@ -48,6 +48,7 @@
 #define __sockpp_socket_h
 
 #include "sockpp/sock_address.h"
+#include "sockpp/result.h"
 #include <chrono>
 #include <string>
 #include <tuple>
@@ -213,7 +214,9 @@ protected:
 	 * lastErr_ member variable. Normally this would be called from
 	 * @ref check_ret.
 	 */
-	static int get_last_error();
+	static int get_last_error() {
+		return ioresult::get_last_error();
+	}
 	/**
 	 * Cache the last system error code into this object.
 	 * This should be called after a failed system call to store the error

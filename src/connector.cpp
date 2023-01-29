@@ -39,17 +39,6 @@
 
 namespace sockpp {
 
-#ifdef _WIN32
-    // Winsock calls return non-POSIX error codes
-    #define ERR_IN_PROGRESS WSAEINPROGRESS
-    #define ERR_TIMED_OUT   WSAETIMEDOUT
-	#define ERR_WOULD_BLOCK WSAEWOULDBLOCK
-#else
-    #define ERR_IN_PROGRESS EINPROGRESS
-    #define ERR_TIMED_OUT   ETIMEDOUT
-	#define ERR_WOULD_BLOCK EWOULDBLOCK
-#endif
-
 /////////////////////////////////////////////////////////////////////////////
 
 bool connector::recreate(const sock_address& addr)
@@ -91,7 +80,7 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 
     set_non_blocking(true);
     if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
-        if (last_error() == ERR_IN_PROGRESS || last_error() == ERR_WOULD_BLOCK) {
+        if (last_error() == EINPROGRESS || last_error() == EWOULDBLOCK) {
             // Non-blocking connect -- call `select` to wait until the timeout:
         	// Note:  Windows returns errors in exceptset so check it too, the
         	// logic afterwords doesn't change
@@ -109,7 +98,7 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
                 if (get_option(SOL_SOCKET, SO_ERROR, &err))
                     clear(err);
             } else if (n == 0) {
-                clear(ERR_TIMED_OUT);
+                clear(ETIMEDOUT);
             }
         }
 

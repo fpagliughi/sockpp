@@ -43,6 +43,7 @@ add_library(sockpp-objs OBJECT
 	exception.cpp
 	inet_address.cpp
 	inet6_address.cpp
+  result.cpp
 	socket.cpp
 	stream_socket.cpp
 )

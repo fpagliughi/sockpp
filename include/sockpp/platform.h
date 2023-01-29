@@ -61,8 +61,6 @@
 		#define _CRT_SECURE_NO_DEPRECATE
 	#endif
 
-	//#include <cstddef>
-	//#include <windows.h>
 	#include <winsock2.h>
 	#include <ws2tcpip.h>
 
@@ -89,6 +87,16 @@
     #define SHUT_RD SD_RECEIVE
     #define SHUT_WR SD_SEND
     #define SHUT_RDWR SD_BOTH
+
+    // Winsock calls return non-POSIX error codes
+	// These are just a few common ones.
+    #define EINPROGRESS WSAEINPROGRESS
+    #define ETIMEDOUT   WSAETIMEDOUT
+	#define EWOULDBLOCK WSAEWOULDBLOCK
+	#define EAGAIN      WSAEWOULDBLOCK
+	#define EINTR       WSAEINTR
+	#define ENOTCONN    WSAENOTCONN
+	#define ECONNRESET  WSAECONNRESET
 
     struct iovec
     {
