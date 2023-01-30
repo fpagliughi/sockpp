@@ -26,6 +26,22 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
+## New in v0.8.1
+
+This release attempts to fix some of the outstanding build issues on Windows with MSVC and resolv some old issues and PR commits.
+
+- Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
+    - Connector timeouts
+    - Stateless reads & writes for streaming sockets w/ functions returning `ioresult`
+    - Some small bug fixes
+    - No shutdown on invalid sockets
+- [#38](https://github.com/fpagliughi/sockpp/issues/38) Made system libs public for static builds to fix Windows
+- [#73](https://github.com/fpagliughi/sockpp/issue/73) Clone a datagram (UDP) socket
+- [#74](https://github.com/fpagliughi/sockpp/issue/74) Added `<sys/time.h>` to properly get `timeval` in *nix builds.
+- [#56](https://github.com/fpagliughi/sockpp/issue/56) handling unix paths with maximum length (no NUL term)
+- Fixed outstanding build warnings on Windows when using MSVC
+
+
 ## New in v0.8.0
 
 This was primarily a release of code that had been sitting in the develop branch for nearly a year. That code mostly improved CMake functionality for downstream projects.
@@ -46,8 +62,6 @@ For more information, refer to: [CONTRIBUTING.md](https://github.com/fpagliughi/
 
 ## TODO
 
-- **Unit Tests** - The framework for unit and regression tests is in place (using _Catch2_), along with the GitHub Travis CI integration. But the library could use a lot more tests.
-- **Consolidate Header Files** - The last round of refactoring left a large number of header files with a single line of code in each. This may be OK, in that it separates all the protocols and families, but seems a waste of space.
 - **Secure Sockets** - It would be extremely handy to have support for SSL/TLS built right into the library as an optional feature.
 - **SCTP** - The _SCTP_ protocol never caught on, but it seems intriguing, and might be nice to have in the library for experimentation, if not for some internal applications.
 
@@ -183,7 +197,7 @@ The same style of  connectors and acceptors can be used for TCP connections over
     tcp6_acceptor
     tcp6_socket
     udp6_socket
-    
+
 Examples are in the [examples/tcp](https://github.com/fpagliughi/sockpp/tree/master/examples/tcp) directory.
 
 ### Unix Domain Sockets
@@ -236,7 +250,7 @@ sock.recv(&frame);
 
 ## Implementation Details
 
-The socket class hierarchy is built upon a base `socket` class. Most simple applications will probably not use `socket` directly, but rather use top-level classes defined for a specific address family like `tcp_connector` and `tcp_acceptor`.
+The socket class hierarchy is built upon a base `socket` class. Most simple applications will probably not use `socket` directly, but rather use derived classes defined for a specific address family like `tcp_connector` and `tcp_acceptor`.
 
 The socket objects keep a handle to an underlying OS socket handle and a cached value for the last error that occurred for that socket. The socket handle is typically an integer file descriptor, with values >=0 for open sockets, and -1 for an unopened or invalid socket. The value used for unopened sockets is defined as a constant, `INVALID_SOCKET`, although it usually doesn't need to be tested directly, as the object itself will evaluate to _false_ if it's uninitialized or in an error state. A typical error check would be like this:
 
@@ -273,10 +287,10 @@ It is a common patern, especially in client applications, to have one thread to 
 The solution for this case is to use the `socket::clone()` method to make a copy of the socket. This will use the system's `dup()` function or similar create another socket with a duplicated copy of the socket handle. This has the added benefit that each copy of the socket can maintain an independent lifetime. The underlying socket will not be closed until both objects go out of scope.
 
     sockpp::tcp_connector conn({host, port});
-    
+
     auto rdSock = conn.clone();
     std::thread rdThr(read_thread_func, std::move(rdSock));
 
-The `socket::shutdown()` method can be used to communicate the intent to close the socket from one of these objects to the other without needing another thread signaling mechanism. 
+The `socket::shutdown()` method can be used to communicate the intent to close the socket from one of these objects to the other without needing another thread signaling mechanism.
 
 See the [tcpechomt.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/tcp/tcpechomt.cpp) example.

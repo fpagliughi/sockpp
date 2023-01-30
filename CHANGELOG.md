@@ -1,5 +1,20 @@
 # Change Log for _sockpp_
 
+## [Version 0.8.1](https://github.com/fpagliughi/sockpp/compare/v0.8.0..v0.8.1)
+
+Released: 2023-01-30
+
+- Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
+    - Connector timeouts
+    - Stateless reads & writes for streaming sockets w/ functions returning `ioresult`
+    - Some small bug fixes
+    - No shutdown on invalid sockets
+- [#38](https://github.com/fpagliughi/sockpp/issues/38) Made system libs public for static builds to fix Windows
+- [#73](https://github.com/fpagliughi/sockpp/issue/73) Clone a datagram (UDP) socket
+- [#74](https://github.com/fpagliughi/sockpp/issue/74) Added `<sys/time.h>` to properly get `timeval` in *nix builds.
+- [#56](https://github.com/fpagliughi/sockpp/issue/56) handling unix paths with maximum length (no NUL term)
+- Fixed outstanding build warnings on Windows when using MSVC
+
 ## [Version 0.8.0](https://github.com/fpagliughi/sockpp/compare/v0.7.1..v0.8.0)
 
 Released: 2023-01-17
