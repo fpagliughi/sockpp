@@ -69,6 +69,7 @@ class connector : public stream_socket
 	connector(const connector&) =delete;
 	connector& operator=(const connector&) =delete;
 
+	/** Recreate the socket with a new handle, closing any old one. */
     bool recreate(const sock_address& addr);
 
 public:
@@ -82,6 +83,16 @@ public:
 	 * @param addr The remote server address.
 	 */
 	connector(const sock_address& addr) { connect(addr); }
+	/**
+	 * Creates the connector and attempts to connect to the specified
+	 * server, with a timeout.
+	 * @param addr The remote server address.
+     * @param relTime The duration after which to give up. Zero means never.
+	 */
+	template <class Rep, class Period>
+	connector(const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime) {
+		connect(addr, std::chrono::microseconds(relTime));
+	}
 	/**
 	 * Creates the connector and attempts to connect to the specified
 	 * address, with a timeout.
@@ -126,12 +137,27 @@ public:
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
-     * If the operation times out, the \ref last_error will be set to ETIMEOUT.
+	 * If the operation times out, the @ref last_error will be set to
+	 * ETIMEDOUT.
 	 * @param addr The remote server address.
      * @param timeout The duration after which to give up. Zero means never.
 	 * @return @em true on success, @em false on error
 	 */
 	bool connect(const sock_address& addr, std::chrono::microseconds timeout);
+	/**
+     * Attempts to connect to the specified server, with a timeout.
+     * If the socket is currently connected, this will close the current
+     * connection and open the new one.
+	 * If the operation times out, the @ref last_error will be set to
+	 * ETIMEDOUT.
+	 * @param addr The remote server address.
+     * @param relTime The duration after which to give up. Zero means never.
+	 * @return @em true on success, @em false on error
+	 */
+	template <class Rep, class Period>
+	bool connect(const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime) {
+		return connect(addr, std::chrono::microseconds(relTime));
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -165,6 +191,16 @@ public:
 	 * @param addr The remote server address.
 	 */
 	connector_tmpl(const addr_t& addr) : base(addr) {}
+	/**
+	 * Creates the connector and attempts to connect to the specified
+	 * server, with a timeout.
+	 * @param addr The remote server address.
+     * @param relTime The duration after which to give up. Zero means never.
+	 */
+	template <class Rep, class Period>
+	connector_tmpl(const addr_t& addr, const std::chrono::duration<Rep, Period>& relTime)
+		: base(addr, relTime)
+	{}
 	/**
 	 * Move constructor.
 	 * Creates a connector by moving the other connector to this one.
@@ -212,14 +248,16 @@ public:
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
-     * If the operation times out, the \ref last_error will be set to ETIMEOUT.
+	 * If the operation times out, the @ref last_error will be set to
+	 * ETIMEDOUT.
 	 * @param addr The remote server address.
-     * @param timeout The duration after which to give up. Zero means never.
+     * @param relTime The duration after which to give up. Zero means never.
 	 * @return @em true on success, @em false on error
 	 */
-	bool connect(const addr_t& addr, std::chrono::microseconds timeout) {
-        return base::connect(addr, timeout);
-    }
+	template <class Rep, class Period>
+	bool connect(const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime) {
+		return base::connect(addr, std::chrono::microseconds(relTime));
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////

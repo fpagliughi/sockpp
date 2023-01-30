@@ -135,6 +135,45 @@ socket socket::clone() const
 
 // --------------------------------------------------------------------------
 
+#if !defined(_WIN32)
+
+int socket::get_flags() const
+{
+	int flags = ::fcntl(handle_, F_GETFL, 0);
+	lastErr_ = (flags == -1) ? get_last_error() : 0;
+	return flags;
+}
+
+bool socket::set_flags(int flags)
+{
+	if (::fcntl(handle_, F_SETFL, flags) == -1) {
+		set_last_error();
+		return false;
+	}
+	return true;
+}
+
+bool socket::set_flag(int flag, bool on /*=true*/)
+{
+	int flags = get_flags();
+	if (flags == -1) {
+		return false;
+	}
+
+	flags = on ? (flags | flag) : (flags & ~flag);
+	return set_flags(flags);
+}
+
+bool socket::is_non_blocking() const
+{
+	int flags = get_flags();
+	return (flags == -1) ? false : ((flags & O_NONBLOCK) != 0);
+}
+
+#endif
+
+// --------------------------------------------------------------------------
+
 std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*/)
 {
 	socket sock0, sock1;
@@ -251,25 +290,7 @@ bool socket::set_non_blocking(bool on /*=true*/)
 		unsigned long mode = on ? 1 : 0;
 		return check_ret_bool(::ioctlsocket(handle_, FIONBIO, &mode));
 	#else
-		/**
-		 * TODO: Consider a generic function:
-		 *   bool set_flag(int flag, bool on=true);
-		 * Used like:
-		 *   set_flag(O_NONBLOCK, on);
-		 */
-		int flags = ::fcntl(handle_, F_GETFL, 0);
-
-		if (flags == -1) {
-			set_last_error();
-			return false;
-		}
-		flags = on ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK);
-
-		if (::fcntl(handle_, F_SETFL, flags) == -1) {
-			set_last_error();
-			return false;
-		}
-		return true;
+		return set_flag(O_NONBLOCK, on);
 	#endif
 }
 

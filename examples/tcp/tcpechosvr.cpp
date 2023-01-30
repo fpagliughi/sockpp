@@ -65,8 +65,8 @@ void run_echo(sockpp::tcp_socket sock)
 
 // --------------------------------------------------------------------------
 // The main thread runs the TCP port acceptor. Each time a connection is
-// made, a new thread is spawned to handle it, leaving this main thread to
-// immediately wait for the next connection.
+// made a new thread is spawned to handle it leaving this main thread to
+// immediately wait for the next incoming connection.
 
 int main(int argc, char* argv[])
 {
@@ -83,7 +83,6 @@ int main(int argc, char* argv[])
 		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
 		return 1;
 	}
-    //cout << "Acceptor bound to address: " << acc.address() << endl;
 	cout << "Awaiting connections on port " << port << "..." << endl;
 
 	while (true) {

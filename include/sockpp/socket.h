@@ -274,6 +274,15 @@ protected:
 		return ret != INVALID_SOCKET;
 	}
 
+	#if !defined(_WIN32)
+		/** Gets the flags on the file handle.  */
+		int get_flags() const;
+		/** Sets the flags on the file descriptor */
+		bool set_flags(int flags);
+		/** Sets a single flag on or off */
+		bool set_flag(int flag, bool on=true);
+	#endif
+
 public:
 	/**
 	 * Creates an unconnected (invalid) socket
@@ -299,6 +308,23 @@ public:
 	 * Destructor closes the socket.
 	 */
 	virtual ~socket() { close(); }
+	/**
+	 * Creates an OS handle to a socket.
+	 *
+	 * This is normally only required for internal or diagnostics code.
+	 *
+	 * @param domain The communications domain for the sockets (i.e. the
+	 *  			 address family)
+	 * @param type The communication semantics for the sockets (SOCK_STREAM,
+	 *  		   SOCK_DGRAM, etc).
+	 * @param protocol The particular protocol to be used with the sockets
+	 *
+	 * @return An OS socket handle with the requested communications
+	 *  	   characteristics, or INVALID_SOCKET on failure.
+	 */
+	static socket_t create_handle(int domain, int type, int protocol=0) {
+		return socket_t(::socket(domain, type, protocol));
+	}
 	/**
 	 * Creates a socket with the specified communications characterics.
 	 * Not that this is not normally how a socket is creates in the sockpp
@@ -493,6 +519,12 @@ public:
     bool set_option(int level, int optname, const T& val) {
 		return set_option(level, optname, (void*) &val, sizeof(T));
 	}
+	#if !defined(_WIN32)
+		/**
+		 * Determines if the socket is non-blocking
+		 */
+		bool is_non_blocking() const;
+	#endif
 	/**
 	 * Places the socket into or out of non-blocking mode.
 	 * When in non-blocking mode, a call that is not immediately ready to

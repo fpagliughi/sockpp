@@ -275,6 +275,25 @@ TEST_CASE("failed socket pair", "[socket]") {
 	REQUIRE(sock1.last_error() == sock2.last_error());
 }
 
+// Test putting the socket into and out of non-blocking mode
+TEST_CASE("socket non-blocking mode", "[socket]") {
+	auto sock = socket::create(AF_INET, SOCK_STREAM);
+
+	#if !defined(_WIN32)
+		REQUIRE(!sock.is_non_blocking());
+	#endif
+
+	REQUIRE(sock.set_non_blocking());
+	#if !defined(_WIN32)
+		REQUIRE(sock.is_non_blocking());
+	#endif
+
+	REQUIRE(sock.set_non_blocking(false));
+	#if !defined(_WIN32)
+		REQUIRE(!sock.is_non_blocking());
+	#endif
+}
+
 // --------------------------------------------------------------------------
 
 // Test that the "last error" call to a socket gives the proper result

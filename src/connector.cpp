@@ -66,7 +66,6 @@ bool connector::recreate(const sock_address& addr)
 	return true;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 bool connector::connect(const sock_address& addr)
@@ -90,7 +89,12 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 	if (!recreate(addr))
 		return false;
 
+	// Out new socket is definitely in blocking mode;
+	// make it non-blocking to do this
 	set_non_blocking(true);
+
+	// TODO: Reimplement with poll() for systems with lots of sockets.
+
 	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
 		if (last_error() == EINPROGRESS || last_error() == EWOULDBLOCK) {
 			// Non-blocking connect -- call `select` to wait until the timeout:
@@ -121,6 +125,7 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 		}
 	}
 
+	// Restore the default (blocking) mode for a new socket.
 	set_non_blocking(false);
 	return true;
 }

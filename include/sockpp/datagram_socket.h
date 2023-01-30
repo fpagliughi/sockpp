@@ -69,12 +69,12 @@ class datagram_socket : public socket
 	datagram_socket& operator=(const datagram_socket&) =delete;
 
 protected:
+	/**
+	 * Creates a datagram socket.
+	 * @return An OS handle to a datagram socket.
+	 */
 	static socket_t create_handle(int domain, int protocol=0) {
 		return socket_t(::socket(domain, COMM_TYPE, protocol));
-	}
-
-	static socket_t create_handle(int domain, int type, int protocol) {
-		return socket_t(::socket(domain, type, protocol));
 	}
 
 public:

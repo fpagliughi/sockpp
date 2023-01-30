@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 	// Implicitly creates an inet_address from {host,port}
 	// and then tries the connection.
 
-	sockpp::tcp_connector conn({host, port});
+	sockpp::tcp_connector conn({host, port}, seconds{5});
 	if (!conn) {
 		cerr << "Error connecting to server at "
 			<< sockpp::inet_address(host, port)
