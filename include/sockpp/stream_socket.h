@@ -120,13 +120,12 @@ public:
 		return *this;
 	}
 	/**
-	 * Creates a new stream_socket that refers to this one.
+	 * Creates a new stream socket that refers to this one.
 	 * This creates a new object with an independent lifetime, but refers
 	 * back to this same socket. On most systems, this duplicates the file
-	 * handle using the dup() call.
-	 * A typical use of this is to have separate threads for reading and
-	 * writing the socket. One thread would get the original socket and the
-	 * other would get the cloned one.
+	 * handle using the dup() call. A typical use of this is to have
+	 * separate threads for reading and writing the socket. One thread would
+	 * get the original socket and the other would get the cloned one.
 	 * @return A new stream socket object that refers to the same socket as
 	 *  	   this one.
 	 */

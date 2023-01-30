@@ -61,7 +61,7 @@ namespace sockpp {
  */
 class datagram_socket : public socket
 {
-	/** The base class   */
+	/** The base class */
 	using base = socket;
 
 	// Non-copyable
@@ -110,6 +110,20 @@ public:
 	datagram_socket& operator=(datagram_socket&& rhs) {
 		base::operator=(std::move(rhs));
 		return *this;
+	}
+	/**
+	 * Creates a new datagram socket that refers to this one.
+	 * This creates a new object with an independent lifetime, but refers
+	 * back to this same socket. On most systems, this duplicates the file
+	 * handle using the dup() call. A typical use of this is to have
+	 * separate threads for reading and writing the socket. One thread would
+	 * get the original socket and the other would get the cloned one.
+	 * @return A new datagram socket object that refers to the same socket
+	 *  	   as this one.
+	 */
+	datagram_socket clone() const {
+		auto h = base::clone().release();
+		return datagram_socket(h);
 	}
 	/**
 	 * Connects the socket to the remote address.
@@ -275,6 +289,13 @@ public:
 	datagram_socket_tmpl(const ADDR& addr) : base(addr) {}
 	/**
 	 * Move constructor.
+	 * Creates a datagram socket by moving the other socket to this one.
+	 * @param sock Another datagram socket.
+	 */
+	datagram_socket_tmpl(datagram_socket&& sock)
+			: base(std::move(sock)) {}
+	/**
+	 * Move constructor.
 	 * @param other The other socket to move to this one
 	 */
 	datagram_socket_tmpl(datagram_socket_tmpl&& other)
@@ -288,7 +309,6 @@ public:
 		base::operator=(std::move(rhs));
 		return *this;
 	}
-
 	/**
 	 * Creates a pair of connected stream sockets.
 	 *
