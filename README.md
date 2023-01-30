@@ -28,7 +28,7 @@ If you're using this library, tweet at me or send me a message, and let me know 
 
 ## New in v0.8.1
 
-This release attempts to fix some of the outstanding build issues on Windows with MSVC and resolv some old issues and PR commits.
+This release attempts to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
 
 - Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
     - Connector timeouts

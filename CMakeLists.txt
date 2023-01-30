@@ -111,8 +111,8 @@ if(${SOCKPP_BUILD_SHARED})
 			${SOCKPP_GENERATED_DIR}/include
 	)
 
-	target_link_libraries(${SOCKPP_SHARED_LIBRARY} PRIVATE ${LIBS_SYSTEM})
-	
+	target_link_libraries(${SOCKPP_SHARED_LIBRARY} PUBLIC ${LIBS_SYSTEM})
+
 	set_target_properties(${SOCKPP_SHARED_LIBRARY} PROPERTIES
 		VERSION ${PROJECT_VERSION}
 		SOVERSION ${PROJECT_VERSION_MAJOR}
@@ -137,7 +137,7 @@ if(${SOCKPP_BUILD_STATIC})
 	)
 
 	target_link_libraries(${SOCKPP_STATIC_LIBRARY} PUBLIC ${LIBS_SYSTEM})
-	
+
 	set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES
 		CXX_EXTENSIONS OFF
 	)
@@ -151,12 +151,12 @@ if(${SOCKPP_BUILD_STATIC})
 			OUTPUT_NAME ${SOCKPP_SHARED_LIBRARY}
 		)
 	endif()
-	
+
 	list(APPEND TARGET_FILES ${SOCKPP_STATIC_LIBRARY})
 endif()
 
 # --- Install Targets ---
- 
+
 include(GNUInstallDirs)
 
 install(TARGETS ${TARGET_FILES}
