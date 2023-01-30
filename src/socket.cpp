@@ -196,8 +196,6 @@ std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*
 		sock1.clear(ENOTSUP);
 	#endif
 
-	// TODO: Should we set an "unsupported" error on Windows?
-
 	return std::make_tuple<socket, socket>(std::move(sock0), std::move(sock1));
 }
 

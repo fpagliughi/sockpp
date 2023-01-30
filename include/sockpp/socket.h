@@ -275,9 +275,9 @@ protected:
 	}
 
 	#if !defined(_WIN32)
-		/** Gets the flags on the file handle.  */
+		/** Gets the flags on the socket handle. */
 		int get_flags() const;
-		/** Sets the flags on the file descriptor */
+		/** Sets the flags on the socket handle. */
 		bool set_flags(int flags);
 		/** Sets a single flag on or off */
 		bool set_flag(int flag, bool on=true);
@@ -519,12 +519,6 @@ public:
     bool set_option(int level, int optname, const T& val) {
 		return set_option(level, optname, (void*) &val, sizeof(T));
 	}
-	#if !defined(_WIN32)
-		/**
-		 * Determines if the socket is non-blocking
-		 */
-		bool is_non_blocking() const;
-	#endif
 	/**
 	 * Places the socket into or out of non-blocking mode.
 	 * When in non-blocking mode, a call that is not immediately ready to
@@ -534,6 +528,12 @@ public:
 	 * @return @em true on success, @em false on failure.
 	 */
 	bool set_non_blocking(bool on=true);
+	#if !defined(_WIN32)
+		/**
+		 * Determines if the socket is non-blocking
+		 */
+		bool is_non_blocking() const;
+	#endif
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().
