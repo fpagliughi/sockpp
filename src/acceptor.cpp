@@ -75,7 +75,7 @@ bool acceptor::open(const sock_address& addr,
 
 	reset(h);
 
-	#if defined(_WIN32)
+	#if defined(_WIN32) || defined(__CYGWIN__)
 		const int REUSE = SO_REUSEADDR;
 	#else
 		const int REUSE = SO_REUSEPORT;
