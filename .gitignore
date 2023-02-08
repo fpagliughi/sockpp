@@ -1,4 +1,5 @@
 # Directories for temporaries & build targets
+build/
 obj/
 lib/
 
