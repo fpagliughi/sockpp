@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,29 +64,29 @@ std::string sys_error::error_str(int err)
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 			NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			buf, sizeof(buf), NULL);
-    #else
-    	#ifdef _GNU_SOURCE
+	#else
+		#ifdef _GNU_SOURCE
 			#if !defined(__GLIBC__)
-			// use the XSI standard behavior.
+				// use the XSI standard behavior.
 				int e = strerror_r(err, buf, sizeof(buf));
 				auto s = strerror(e);
 				return s ? std::string(s) : std::string();
 			#else
-			// assume GNU exception
+				// assume GNU exception
 				auto s = strerror_r(err, buf, sizeof(buf));
 				return s ? std::string(s) : std::string();
 			#endif
-        #else
-            ignore_result(strerror_r(err, buf, sizeof(buf)));
-        #endif
-    #endif
+		#else
+			ignore_result(strerror_r(err, buf, sizeof(buf)));
+		#endif
+	#endif
 	return std::string(buf);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 getaddrinfo_error::getaddrinfo_error(int err, const string& hostname)
-    : runtime_error(gai_strerror(err)), error_(err), hostname_(hostname)
+	: runtime_error(gai_strerror(err)), error_(err), hostname_(hostname)
 {
 }
 
