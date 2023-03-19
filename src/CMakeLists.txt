@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017-2018 Frank Pagliughi
+# Copyright (c) 2017-2023 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ add_library(sockpp-objs OBJECT
 	exception.cpp
 	inet_address.cpp
 	inet6_address.cpp
-  result.cpp
+	result.cpp
 	socket.cpp
 	stream_socket.cpp
 )
@@ -52,13 +52,39 @@ if(UNIX)
 	target_sources(sockpp-objs PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/unix/unix_address.cpp
 	)
-	if(SOCKPP_BUILD_CAN)
+	if(SOCKPP_WITH_CAN)
 		target_sources(sockpp-objs PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
+			${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
 		)
 	endif()
 endif()
+
+# Secure TLS library, is one selected
+
+if(SOCKPP_WITH_OPENSSL)
+	target_sources(sockpp-objs PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl/openssl_context.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl/openssl_socket.cpp
+	)
+	target_link_libraries(sockpp-objs 
+		PUBLIC
+			OpenSSL::SSL 
+			OpenSSL::Crypto
+	)
+elseif(SOCKPP_WITH_MBEDTLS)
+	target_sources(sockpp-objs PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls/mbedtls_context.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls/mbedtls_socket.cpp
+	)
+	target_link_libraries(sockpp-objs 
+		PUBLIC 
+			MbedTLS::mbedtls
+			MbedTLS::mbedcrypto
+			MbedTLS::mbedx509
+	)
+endif()
+
 
 target_compile_features(sockpp-objs PUBLIC cxx_std_14)
 
@@ -82,8 +108,8 @@ target_include_directories(sockpp-objs
 
 # Maybe set '-Werror' for Release builds?
 target_compile_options(sockpp-objs PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W3>
-  $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Wdocumentation>
-  $<$<NOT:$<CXX_COMPILER_ID:MSVC,Clang>>:-Wall -Wextra -Wpedantic>
+	$<$<CXX_COMPILER_ID:MSVC>:/W3>
+	$<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Wdocumentation>
+	$<$<NOT:$<CXX_COMPILER_ID:MSVC,Clang>>:-Wall -Wextra -Wpedantic>
 )
 

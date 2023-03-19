@@ -8,13 +8,23 @@ This is a fairly low-level C++ wrapper around the Berkeley sockets library using
 
 The base `socket` class wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket can be transferred from one scope (or thread) to another using `std::move()`.
 
-Currently supports: IPv4, IPv6, and Unix-Domain Sockets on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
+The library currently supports: IPv4 and IPv6 on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
+
+Unix-Domain Sockets are available on *nix systems that have an OS implementation for them.
+
+Support for secure sockets using either the OpenSSL or MbedTLS libraries was recently added with basic coverage. This will continue to be expanded in the near future.
 
 There is also some experimental support for CAN bus programming on Linux using the SocketCAN package. This gives CAN bus adapters a network interface, with limitations dictated by the CAN message protocol.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
+
+The API is changing (slightly)!
+
+The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which was never fully merged is coming into the API with a `result<T>` class. This will be generic over the return type, though typically use an int for I/O operations, but the error state will be represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors. This may even take over the whole of the API to make _all_ operations stateless by default.
+
+Work has has begun on incorporating Secure Sockets into the library using either OpenSSL or MbedTLS libraries.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years in being merged and updated, along with new work to do something compatible with OpenSSL. You will be ablt to chose one library or the other when building `sockpp`.
 
 The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
 
@@ -26,6 +36,12 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
+## Unrelased Features in this Branch
+
+- Secure Socket Support
+    - [PR #17](https://github.com/fpagliughi/sockpp/pull/17) was (finally!) merged and updated.
+    - New support added for _OpenSSL_.
+    
 ## New in v0.8.1
 
 This release attempts to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
@@ -42,18 +58,6 @@ This release attempts to fix some of the outstanding build issues on Windows wit
 - Fixed outstanding build warnings on Windows when using MSVC
 
 
-## New in v0.8.0
-
-This was primarily a release of code that had been sitting in the develop branch for nearly a year. That code mostly improved CMake functionality for downstream projects.
-
-- [Breaking] Library initializer now uses a static singleton created via `socket_initializer::initialize()` call, which can be called repeatedly with no ill effect. Also added global `socketpp::initialize()` function as shortcut.
-- Improvements to CMake to better follow modern standards.
-    - CMake required version bumped up to 3.12
-    - Generating CMake files for downstream projects (config, target, version)
-    - Windows builds default to shared DLL, not static library
-    - Lots of cleanup
-
-
 ## Contributing
 
 Contributions are accepted and appreciated. New and unstable work is done in the `develop` branch Please submit all pull requests against that branch, not _master_.
@@ -62,7 +66,6 @@ For more information, refer to: [CONTRIBUTING.md](https://github.com/fpagliughi/
 
 ## TODO
 
-- **Secure Sockets** - It would be extremely handy to have support for SSL/TLS built right into the library as an optional feature.
 - **SCTP** - The _SCTP_ protocol never caught on, but it seems intriguing, and might be nice to have in the library for experimentation, if not for some internal applications.
 
 ## Building the Library
@@ -104,6 +107,8 @@ SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documen
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
 SOCKPP_BUILD_CAN | OFF | Build SocketCAN support. (Linux only)
+SOCKPP_WITH_MBEDTLS | OFF | Secure Sockets with MbedTLS
+SOCKPP_WITH_OPENSSL | OFF | Secure Sockets with OpenSSL
 
 Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:
 
@@ -112,6 +117,43 @@ $ cd sockpp
 $ cmake -Bbuild -DSOCKPP_BUILD_DOCUMENTATION=ON -DSOCKPP_BUILD_EXAMPLES=ON .
 $ cmake --build build/
 ```
+
+### Secure Sockets
+
+To build the library with secure socket support, a TLS library needs to be chosen to provide support. Currently _OpenSSL_ or _MbedTLS_ can be used. 
+
+Chose _one_ of the following when configuring the build:
+
+Variable | Default Value | Description
+------------ | ------------- | -------------
+SOCKPP_WITH_MBEDTLS | OFF | Secure Sockets with MbedTLS
+SOCKPP_WITH_OPENSSL | OFF | Secure Sockets with OpenSSL
+
+#### MbedTLS
+
+The `sockpp` library currently supports MbedTLS v3.3. When building that library, the following configuration options should be defined in the config file, _include/mbedtls/mbedtls_config.h_
+
+```
+#define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK 
+```
+To support threading:
+
+```
+#define MBEDTLS_THREADING_PTHREAD
+#define MBEDTLS_THREADING_C
+```
+
+and set the CMake build option:
+
+```
+LINK_WITH_PTHREAD:BOOL=ON
+```
+
+Note that the options in the config file should already be present in the file but commented out by default. Simply uncomment them, save, and build.
+
+#### OpenSSL
+
+The `sockpp` OpenSSL wrapper is currenly being built and tested with OpenSSL v3.0
 
 ## TCP Sockets
 
@@ -218,7 +260,7 @@ The Controller Area Network (CAN bus) is a relatively simple protocol typically 
 
 At the lowest level, CAN devices write individual packets, called "frames" to a specific numeric addresses on the bus. 
 
-For examle a device with a temperature sensor might read the temperature persoidically and write it to the bus as a raw 32-bit integer, like:
+For examle a device with a temperature sensor might read the temperature peroidically and write it to the bus as a raw 32-bit integer, like:
 
 ```
 can_address addr("CAN0");

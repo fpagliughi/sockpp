@@ -42,11 +42,108 @@
 #define __sockpp_result_h
 
 #include "sockpp/platform.h"
+#include <system_error>
+#include <iostream>
 
 namespace sockpp {
 
+/** A sockpp error_code is a std error_code. */
+using error_code = std::error_code;
+
+/** A sockpp error_category is a std error_category. */
+using error_category = std::error_category;
+
+using errc = std::errc;
+
 /////////////////////////////////////////////////////////////////////////////
 
+/**
+ * A result type that can contain a value of any type on successful
+ * completion of an operation, or a std::error_code on failure.
+ *
+ * @param <T> The type for a successful result
+ */
+template <typename T>
+class result {
+	/** The return value of an operation, if successful */
+	T val_;
+	/** The error returned from an operation, if failed */
+	error_code err_;
+
+	result(const T& val, const error_code& err) : val_{val}, err_{err} {}
+
+	/**
+	 * OS-specific means to retrieve the last error from an operation.
+	 * This should be called after a failed system call to get the caue of
+	 * the error.
+	 */
+	static int get_last_error() {
+		#if defined(_WIN32)
+			return ::WSAGetLastError();
+		#else
+			int err = errno;
+			return err;
+		#endif
+	}
+
+	friend class socket;
+
+public:
+	result() =default;
+	result(const T& val) : val_{val} {}
+
+	static result from_error(const error_code& err) {
+		return result{ T{}, err };
+	}
+
+	static result from_error(
+		int ec,
+		const error_category& ecat=std::system_category()
+    ) {
+		return result{ T{}, {ec, ecat} };
+	}
+
+	bool is_error() const { return bool(err_); }
+	bool is_ok() const { return !is_error(); }
+
+	operator bool() const { return is_ok(); }
+
+	const T& value() const { return val_; };
+	const error_code& error() const { return err_; }
+};
+
+template <typename T>
+result<T> success(const T& val) {
+	return result<T>(val);
+}
+
+template <typename T>
+result<T> error(const error_code& err) {
+	return result<T>::from_error(err);
+}
+
+template <typename T>
+result<T> error(int ec, const error_category& ecat=std::system_category()) {
+	return result<T>::from_error(ec, ecat);
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const result<T>& res) {
+	if (res.is_ok()) {
+		os << res.val();
+	}
+	else {
+		os << res.err().message();
+	}
+	return os;
+}
+
+/** The result of an I/O operation that should return an int. */
+using ioresult = result<int>;
+
+/////////////////////////////////////////////////////////////////////////////
+
+#if 0
 /**
  * Result of a thread-safe I/O operation.
  *
@@ -84,6 +181,8 @@ class ioresult {
 public:
 	/** Creates an empty result */
 	ioresult() = default;
+
+	ioresult(size_t c, int e) : cnt_{c}, err_{e} {}
 	/**
 	 * Creates a result from the return value of a low-level I/O function.
 	 * @param n The number of bytes read or written. If <0, then an error is
@@ -117,6 +216,7 @@ public:
 	/** Gets the error */
 	int error() const { return err_; }
 };
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

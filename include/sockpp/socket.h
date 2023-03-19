@@ -87,9 +87,9 @@ timeval to_timeval(const std::chrono::duration<Rep,Period>& dur) {
  */
 inline std::chrono::microseconds to_duration(const timeval& tv)
 {
-    auto dur = std::chrono::seconds{tv.tv_sec}
+	auto dur = std::chrono::seconds{tv.tv_sec}
 				+ std::chrono::microseconds{tv.tv_usec};
-    return std::chrono::duration_cast<std::chrono::microseconds>(dur);
+	return std::chrono::duration_cast<std::chrono::microseconds>(dur);
 }
 
 /**
@@ -100,7 +100,7 @@ inline std::chrono::microseconds to_duration(const timeval& tv)
 inline std::chrono::system_clock::time_point to_timepoint(const timeval& tv)
 {
 	return std::chrono::system_clock::time_point {
-        std::chrono::duration_cast<std::chrono::system_clock::duration>(to_duration(tv))
+		std::chrono::duration_cast<std::chrono::system_clock::duration>(to_duration(tv))
 	};
 }
 
@@ -192,7 +192,7 @@ class socket
 	socket(const socket&) =delete;
 	socket& operator=(const socket&) =delete;
 
-    friend class ioresult;
+	//friend class result;
 
 protected:
 	/**
@@ -227,26 +227,42 @@ protected:
 	}
 	/**
 	 * Checks the value and if less than zero, sets last error.
-     * @tparam T A signed integer type of any size
+	 * @tparam T A signed integer type of any size
 	 * @param ret The return value from a library or system call.
 	 * @return Returns the value sent to it, `ret`.
 	 */
-    template <typename T>
+	template <typename T>
 	T check_ret(T ret) const{
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
 		return ret;
 	}
 	/**
-     * Checks the value and if less than zero, sets last error. 
-     * @tparam T A signed integer type of any size
+	 * Checks the value and if less than zero, sets last error.
+	 * @tparam T A signed integer type of any size
 	 * @param ret The return value from a library or system call.
 	 * @return @em true if the value is a typical system success value (>=0)
 	 *  	   or @em false is is an error (<0)
 	 */
-    template <typename T>
+	template <typename T>
 	bool check_ret_bool(T ret) const{
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
 		return ret >= 0;
+	}
+	/**
+	 * Checks the value and if less than zero, sets last error.
+	 * @tparam T A signed integer type of any size
+	 * @param ret The return value from a library or system call.
+	 * @return An ioresult indicating the success or error value of the
+	 *  	   operation.
+	 */
+	template <typename T>
+	bool check_ret_res(T ret) const{
+		if (ret < 0) {
+			lastErr_ = get_last_error();
+			return ioresult::from_error(lastErr_);
+		}
+		lastErr_ = 0;
+		return ioresult(int(ret));
 	}
 	/**
 	 * Checks the value and if it is not a valid socket, sets last error.
@@ -260,8 +276,8 @@ protected:
 		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
 		return ret;
 	}
-    /**
-     * Checks the value and if it is INVALID_SOCKET, sets last error. 
+	/**
+	 * Checks the value and if it is INVALID_SOCKET, sets last error.
 	 * This is specifically required for Windows which uses an unsigned type
 	 * for its SOCKET.
 	 * @param ret The return value from a library or system call that returns
@@ -458,65 +474,65 @@ public:
 	 * @return The address of the remote peer, if this socket is connected.
 	 */
 	sock_address_any peer_address() const;
-    /**
-     * Gets the value of a socket option.
-     *
-     * This is a thin wrapper for the system `getsockopt`.
-     *
-     * @param level The protocol level at which the option resides, such as
-     *              SOL_SOCKET.
-     * @param optname The option passed directly to the protocol module.
-     * @param optval The buffer for the value to retrieve
-     * @param optlen Initially contains the lenth of the buffer, and on return
-     *               contains the length of the value retrieved.
-     *
-     * @return bool @em true if the value was retrieved, @em false if an error
-     *         occurred.
-     */
-    bool get_option(int level, int optname, void* optval, socklen_t* optlen) const;
-    /**
-     * Gets the value of a socket option.
-     *
-     * @param level The protocol level at which the option resides, such as
-     *              SOL_SOCKET.
-     * @param optname The option passed directly to the protocol module.
-     * @param val The value to retrieve
-     * @return bool @em true if the value was retrieved, @em false if an error
-     *         occurred.
-     */
+	/**
+	 * Gets the value of a socket option.
+	 *
+	 * This is a thin wrapper for the system `getsockopt`.
+	 *
+	 * @param level The protocol level at which the option resides, such as
+	 *  			SOL_SOCKET.
+	 * @param optname The option passed directly to the protocol module.
+	 * @param optval The buffer for the value to retrieve
+	 * @param optlen Initially contains the lenth of the buffer, and on return
+	 *  			 contains the length of the value retrieved.
+	 *
+	 * @return bool @em true if the value was retrieved, @em false if an error
+	 *  	   occurred.
+	 */
+	bool get_option(int level, int optname, void* optval, socklen_t* optlen) const;
+	/**
+	 * Gets the value of a socket option.
+	 *
+	 * @param level The protocol level at which the option resides, such as
+	 *  			SOL_SOCKET.
+	 * @param optname The option passed directly to the protocol module.
+	 * @param val The value to retrieve
+	 * @return bool @em true if the value was retrieved, @em false if an error
+	 *  	   occurred.
+	 */
 	template <typename T>
-    bool get_option(int level, int optname, T* val) const {
+	bool get_option(int level, int optname, T* val) const {
 		socklen_t len = sizeof(T);
 		return get_option(level, optname, (void*) val, &len);
 	}
-    /**
-     * Sets the value of a socket option.
-     *
-     * This is a thin wrapper for the system `setsockopt`.
-     *
-     * @param level The protocol level at which the option resides, such as
-     *              SOL_SOCKET.
-     * @param optname The option passed directly to the protocol module.
-     * @param optval The buffer with the value to set.
-     * @param optlen Contains the lenth of the value buffer.
-     *
-     * @return bool @em true if the value was set, @em false if an error
-     *         occurred.
-     */
-    bool set_option(int level, int optname, const void* optval, socklen_t optlen);
-    /**
-     * Sets the value of a socket option.
-     *
-     * @param level The protocol level at which the option resides, such as
-     *              SOL_SOCKET.
-     * @param optname The option passed directly to the protocol module.
-     * @param val The value to set.
-     *
-     * @return bool @em true if the value was set, @em false if an error
-     *         occurred.
-     */
+	/**
+	 * Sets the value of a socket option.
+	 *
+	 * This is a thin wrapper for the system `setsockopt`.
+	 *
+	 * @param level The protocol level at which the option resides, such as
+	 *  			SOL_SOCKET.
+	 * @param optname The option passed directly to the protocol module.
+	 * @param optval The buffer with the value to set.
+	 * @param optlen Contains the lenth of the value buffer.
+	 *
+	 * @return bool @em true if the value was set, @em false if an error
+	 *  	   occurred.
+	 */
+	bool set_option(int level, int optname, const void* optval, socklen_t optlen);
+	/**
+	 * Sets the value of a socket option.
+	 *
+	 * @param level The protocol level at which the option resides, such as
+	 *  			SOL_SOCKET.
+	 * @param optname The option passed directly to the protocol module.
+	 * @param val The value to set.
+	 *
+	 * @return bool @em true if the value was set, @em false if an error
+	 *  	   occurred.
+	 */
 	template <typename T>
-    bool set_option(int level, int optname, const T& val) {
+	bool set_option(int level, int optname, const T& val) {
 		return set_option(level, optname, (void*) &val, sizeof(T));
 	}
 	/**
@@ -527,20 +543,20 @@ public:
 	 * @param on Whether to turn non-blocking mode on or off.
 	 * @return @em true on success, @em false on failure.
 	 */
-	bool set_non_blocking(bool on=true);
+	virtual bool set_non_blocking(bool on=true);
 	#if !defined(_WIN32)
 		/**
 		 * Determines if the socket is non-blocking
 		 */
-		bool is_non_blocking() const;
+		virtual bool is_non_blocking() const;
 	#endif
-    /**
-     * Gets a string describing the specified error.
-     * This is typically the returned message from the system strerror().
-     * @param errNum The error number.
-     * @return A string describing the specified error.
-     */
-    static std::string error_str(int errNum);
+	/**
+	 * Gets a string describing the specified error.
+	 * This is typically the returned message from the system strerror().
+	 * @param errNum The error number.
+	 * @return A string describing the specified error.
+	 */
+	static std::string error_str(int errNum);
 	/**
 	 * Gets the code for the last errror.
 	 * This is typically the code from the underlying OS operation.
@@ -553,8 +569,8 @@ public:
 	 * @return A string describing the last errror.
 	 */
 	std::string last_error_str() const {
-        return error_str(lastErr_);
-    }
+		return error_str(lastErr_);
+	}
 	/**
 	 * Shuts down all or part of the full-duplex connection.
 	 * @param how Which part of the connection should be shut:

@@ -42,7 +42,7 @@ cmake_minimum_required(VERSION 3.12)
 
 # --- Project setup ---
 
-project(sockpp VERSION "0.8.1")
+project(sockpp VERSION "0.9.0")
 
 # --- Build Options ---
 
@@ -51,7 +51,20 @@ option(SOCKPP_BUILD_STATIC "Build static library" OFF)
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
-option(SOCKPP_BUILD_CAN "Build the Linux SocketCAN components" OFF)
+#option(SOCKPP_WITH_OPENSSL "Include support for TLS Secure Sockets with OpenSSL" OFF)
+#option(SOCKPP_WITH_MBEDTLS "Include support for TLS Secure Sockets with Mbed TLS" OFF)
+option(SOCKPP_WITH_CAN "Include support for Linux SocketCAN components" OFF)
+
+
+# ----- Find any dependencies -----
+
+if(SOCKPP_WITH_OPENSSL)
+	set(SOCKPP_WITH_TLS ON)
+	find_package(OpenSSL REQUIRED)
+elseif(SOCKPP_WITH_MBEDTLS)
+	set(SOCKPP_WITH_TLS ON)
+	find_package(MbedTLS REQUIRED)
+endif()
 
 # --- Setting naming variables ---
 
@@ -65,7 +78,7 @@ set(SOCKPP_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 # --- Generate a version header ---
 
 configure_file(
-	${PROJECT_SOURCE_DIR}/cmake/version.h.in  
+	${PROJECT_SOURCE_DIR}/cmake/version.h.in	
 	${SOCKPP_GENERATED_DIR}/include/sockpp/version.h
 	@ONLY
 )
@@ -112,6 +125,9 @@ if(${SOCKPP_BUILD_SHARED})
 	)
 
 	target_link_libraries(${SOCKPP_SHARED_LIBRARY} PUBLIC ${LIBS_SYSTEM})
+	if(SOCKPP_WITH_OPENSSL)
+		target_link_libraries(${SOCKPP_SHARED_LIBRARY} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+	endif()
 
 	set_target_properties(${SOCKPP_SHARED_LIBRARY} PROPERTIES
 		VERSION ${PROJECT_VERSION}
@@ -137,15 +153,18 @@ if(${SOCKPP_BUILD_STATIC})
 	)
 
 	target_link_libraries(${SOCKPP_STATIC_LIBRARY} PUBLIC ${LIBS_SYSTEM})
+	if(SOCKPP_WITH_OPENSSL)
+		target_link_libraries(${SOCKPP_STATIC_LIBRARY} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+	endif()
 
 	set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES
 		CXX_EXTENSIONS OFF
 	)
 
-  # On *nix systems, the static library can have the same base filename
-  # as the shared library, thus 'libsockpp.a' for the static lib.
-  # On Windows they need different names to tell the static lib from the
-  # DLL import library.
+	# On *nix systems, the static library can have the same base filename
+	# as the shared library, thus 'libsockpp.a' for the static lib.
+	# On Windows they need different names to tell the static lib from the
+	# DLL import library.
 	if(UNIX)
 		set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES 
 			OUTPUT_NAME ${SOCKPP_SHARED_LIBRARY}
@@ -178,9 +197,9 @@ install(EXPORT sockpp-targets
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
-    ${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
+		${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
+		VERSION ${PROJECT_VERSION}
+		COMPATIBILITY AnyNewerVersion
 )
 
 install(DIRECTORY include/ ${SOCKPP_GENERATED_DIR}/include/

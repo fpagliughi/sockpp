@@ -74,10 +74,10 @@ ssize_t stream_socket::read(void *buf, size_t n)
 ioresult stream_socket::read_r(void *buf, size_t n)
 {
     #if defined(_WIN32)
-        return ioresult(::recv(handle(), reinterpret_cast<char*>(buf),
-                               int(n), 0));
+        return check_ret_res(::recv(handle(), reinterpret_cast<char*>(buf),
+									int(n), 0));
     #else
-        return ioresult(::recv(handle(), buf, n, 0));
+        return check_ret_res(::recv(handle(), buf, n, 0));
     #endif
 }
 
@@ -110,19 +110,18 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 
 ioresult stream_socket::read_n_r(void *buf, size_t n)
 {
-    ioresult res;
 	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
+	size_t nx = 0;
 
-	while (res.count() < n) {
-        ioresult r = read_r(b + res.count(), n - res.count());
-		if (r.is_err() && r.error() != EINTR) {
-            res.set_error(r.error());
-			break;
+	while (nx < n) {
+        ioresult r = read_r(b+nx, n-nx);
+		if (!r && r.error() != errc::interrupted) {
+			return r;
         }
-		res.incr(r.count());
+		nx += size_t(r.value());
 	}
 
-	return res;
+	return ioresult{ int(nx) };
 }
 
 // --------------------------------------------------------------------------
@@ -183,10 +182,10 @@ ssize_t stream_socket::write(const void *buf, size_t n)
 ioresult stream_socket::write_r(const void *buf, size_t n)
 {
     #if defined(_WIN32)
-        return ioresult(::send(handle(), reinterpret_cast<const char*>(buf),
-                               int(n) , 0));
+        return check_ret_res(::send(handle(), reinterpret_cast<const char*>(buf),
+										  int(n) , 0));
     #else
-        return ioresult(::send(handle(), buf, n, 0));
+        return check_ret_res(::send(handle(), buf, n, 0));
     #endif
 }
 
@@ -218,19 +217,18 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 
 ioresult stream_socket::write_n_r(const void *buf, size_t n)
 {
-    ioresult res;
 	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
+	size_t nx = 0;
 
-	while (res.count() < n) {
-        ioresult r = write_r(b + res.count(), n - res.count());
-		if (r.is_err() && r.error() != EINTR) {
-			res.set_error(r.error());
-			break;
+	while (nx < n) {
+        ioresult r = write_r(b+nx, n-nx);
+		if (!r && r.error() != errc::interrupted) {
+			return r;
 		}
-		res.incr(r.count());
+		nx += size_t(r.value());
 	}
 
-	return res;
+	return ioresult{ int(nx) };
 }
 
 // --------------------------------------------------------------------------

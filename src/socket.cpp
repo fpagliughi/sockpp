@@ -125,7 +125,7 @@ socket socket::clone() const
 		WSAPROTOCOL_INFOW protInfo;
 		if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0)
 			h = check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo,
-                                          0, WSA_FLAG_OVERLAPPED));
+										  0, WSA_FLAG_OVERLAPPED));
 	#else
 		h = ::dup(handle_);
 	#endif
@@ -253,15 +253,15 @@ sock_address_any socket::peer_address() const
 bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen) const
 {
 	#if defined(_WIN32)
-        if (optval && optlen) {
-            int len = static_cast<int>(*optlen);
-            if (check_ret_bool(::getsockopt(handle_, level, optname,
-                                            static_cast<char*>(optval), &len))) {
-                *optlen = static_cast<socklen_t>(len);
-                return true;
-            }
-        }
-        return false;
+		if (optval && optlen) {
+			int len = static_cast<int>(*optlen);
+			if (check_ret_bool(::getsockopt(handle_, level, optname,
+											static_cast<char*>(optval), &len))) {
+				*optlen = static_cast<socklen_t>(len);
+				return true;
+			}
+		}
+		return false;
 	#else
 		return check_ret_bool(::getsockopt(handle_, level, optname, optval, optlen));
 	#endif

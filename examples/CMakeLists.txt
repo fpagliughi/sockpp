@@ -45,3 +45,8 @@ if(UNIX)
 		add_subdirectory(linux)
 	endif()
 endif()
+
+if(SOCKPP_WITH_TLS)
+  add_subdirectory(tls)
+endif()
+
