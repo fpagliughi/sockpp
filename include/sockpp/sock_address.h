@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,8 @@ namespace sockpp {
  * Generic socket address.
  * Abstract base class for socket addresses. The underlying C socket
  * functions typically take or return an address as a `sockaddr` pointer and
- * length. So derived classes that wrap the
+ * length. So derived classes that wrap this to convert themselves to
+ * pointers that can be ued in the C API calls.
  */
 class sock_address
 {
@@ -67,7 +68,7 @@ public:
 	/**
 	 * Virtual destructor.
 	 */
-	virtual ~sock_address() {}
+	virtual ~sock_address() noexcept {}
 	/**
 	 * Gets the size of this structure.
 	 * This is equivalent to sizeof(this) but more convenient in some

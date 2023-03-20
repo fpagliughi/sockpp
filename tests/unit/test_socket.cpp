@@ -100,7 +100,6 @@ TEST_CASE("socket constructors", "[socket]") {
 		REQUIRE(sock.last_error() == 0);
 	}
 
-
 	SECTION("move constructor") {
 		constexpr auto HANDLE = socket_t(3);
 		sockpp::socket org_sock(HANDLE);

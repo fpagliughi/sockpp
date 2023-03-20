@@ -60,8 +60,6 @@ using errc = std::errc;
 /**
  * A result type that can contain a value of any type on successful
  * completion of an operation, or a std::error_code on failure.
- *
- * @param <T> The type for a successful result
  */
 template <typename T>
 class result {
@@ -74,7 +72,7 @@ class result {
 
 	/**
 	 * OS-specific means to retrieve the last error from an operation.
-	 * This should be called after a failed system call to get the caue of
+	 * This should be called after a failed system call to get the cause of
 	 * the error.
 	 */
 	static int get_last_error() {
@@ -89,44 +87,126 @@ class result {
 	friend class socket;
 
 public:
+	/**
+	 * Default result is considered a success with default value.
+	 */
 	result() =default;
+	/**
+	 * Construct a "success" result with the specified value.
+	 * @param val The success return value
+	 */
 	result(const T& val) : val_{val} {}
-
+	/**
+	 * Creates an unsuccessful result from an error code.
+	 * @param err The error code from an operation.
+	 * @return The result of an unsucessful operation.
+	 */
 	static result from_error(const error_code& err) {
 		return result{ T{}, err };
 	}
-
+	/**
+	 * Creates an unsuccessful result from an platform-specific integer
+	 * error code and an optional category.
+	 * @param ec The platform-specific error code.
+	 * @param ecat The error category.
+	 * @return The result of an unsuccessful operation.
+	 */
 	static result from_error(
 		int ec,
 		const error_category& ecat=std::system_category()
     ) {
 		return result{ T{}, {ec, ecat} };
 	}
-
+	/**
+	 * Determines if the result represents a failed operation.
+	 *
+	 * If true, then the error variant of the result is valid.
+	 * @return @em true if the result is from a failed operation, @em false
+	 *  	   if the operation succeeded.
+	 */
 	bool is_error() const { return bool(err_); }
+	/**
+	 * Determines if the result represents a successful operation.
+	 *
+	 * If true, then the success (value) variant of the result is valid.
+	 * @return @em true if the result is from a successful operation, @em
+	 *  	   false if the operation failed.
+	 */
 	bool is_ok() const { return !is_error(); }
-
+	/**
+	 * Determines if the result represents a successful operation.
+	 *
+	 * If true, then the success (value) variant of the result is valid.
+	 * @sa is_ok()
+	 * @return @em true if the result is from a successful operation, @em
+	 *  	   false if the operation failed.
+	 */
 	operator bool() const { return is_ok(); }
-
+	/**
+	 * Gets the value from a successful operation.
+	 *
+	 * This is only valid if the operation was a success. If not, it returns
+	 * the default value for type T.
+	 * @return A const reference to the success value.
+	 */
 	const T& value() const { return val_; };
+	/**
+	 * Gets the error code from a failed operation.
+	 *
+	 * This is only valid if the operation failed. If not, it returns the
+	 * default error code which should have a value of zero (success).
+	 * @return A const reference to the error code.
+	 */
 	const error_code& error() const { return err_; }
 };
 
+/**
+ * Create a successful result with the specified value.
+ *
+ * @param val The succesful return value from the operation.
+ * @return A success result.
+ */
 template <typename T>
 result<T> success(const T& val) {
 	return result<T>(val);
 }
 
+/**
+ * Create a failed result with the specified error code.
+ *
+ * @param err The error code from the operation.
+ * @return A failed result.
+ */
 template <typename T>
 result<T> error(const error_code& err) {
 	return result<T>::from_error(err);
 }
 
+/**
+ * Create a failed result with the specified platform-specific integer
+ * error code.
+ *
+ * @param ec The platform-specific error code.
+ * @param ecat The error category.
+ * @return A failed result.
+ */
 template <typename T>
 result<T> error(int ec, const error_category& ecat=std::system_category()) {
 	return result<T>::from_error(ec, ecat);
 }
 
+/**
+ * Writes out the result.
+ *
+ * For a successful operation, writes out the result value. For a failed
+ * operation, writes out the error message.
+ *
+ * This requires type T to have a stream inserter.
+ *
+ * @param os The output stream.
+ * @param res The result to output.
+ * @return A reference to the output stream.
+ */
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const result<T>& res) {
 	if (res.is_ok()) {

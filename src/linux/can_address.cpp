@@ -51,13 +51,13 @@ constexpr sa_family_t can_address::ADDRESS_FAMILY;
 
 // --------------------------------------------------------------------------
 
-can_address::can_address(unsigned ifindex) : addr_{}
+can_address::can_address(unsigned ifindex) noexcept
 {
 	addr_.can_family = AF_CAN;
 	addr_.can_ifindex = ifindex;
 }
 
-can_address::can_address(const string& iface) : addr_{}
+can_address::can_address(const string& iface) noexcept
 {
 	unsigned idx = if_nametoindex(iface.c_str());
 
@@ -67,16 +67,7 @@ can_address::can_address(const string& iface) : addr_{}
 	}
 }
 
-can_address::can_address(const sockaddr& addr)
-{
-    auto domain = addr.sa_family;
-    if (domain != AF_CAN)
-        throw std::invalid_argument("Not a SocketCAN address");
-
-    std::memcpy(&addr_, &addr, sizeof(sockaddr));
-}
-
-string can_address::iface() const
+string can_address::iface() const noexcept
 {
 	if (addr_.can_family == AF_UNSPEC)
 		return string("none");

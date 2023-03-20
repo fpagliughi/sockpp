@@ -66,7 +66,7 @@ namespace sockpp {
 class can_address : public sock_address
 {
 	/** The underlying C struct for SocketCAN addresses  */
-	sockaddr_can addr_;
+	sockaddr_can addr_ = sockaddr_can{};
 
 	/** The size of the underlying address struct, in bytes */
 	static constexpr size_t SZ = sizeof(sockaddr_can);
@@ -82,58 +82,64 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	can_address() : addr_() {}
+	can_address() noexcept {}
 	/**
 	 * Creates an address for binding to a specific CAN interface
 	 * @param ifindex The interface index to use. This must, obviously, be
 	 *  			  an index to a CAN interface.
 	 */
-	explicit can_address(unsigned ifindex);
+	explicit can_address(unsigned ifindex) noexcept;
 	/**
 	 * Constructs an address for the specified CAN interface.
 	 * The interface might be "can0", "can1", "vcan0", etc.
 	 * @param iface The name of the CAN interface
 	 */
-	can_address(const std::string& iface);
+	can_address(const std::string& iface) noexcept;
 	/**
 	 * Constructs the address by copying the specified structure.
-     * @param addr The generic address
-     * @throws std::invalid_argument if the address is not a SocketCAN
-     *            address (i.e. family is not AF_CAN)
+	 * @param addr The generic address. This must be an AF_CAN address to be
+	 *  		   a valid CANbus address.
 	 */
-	explicit can_address(const sockaddr& addr);
+	explicit can_address(const sockaddr& addr) noexcept {
+		std::memcpy(&addr_, &addr, sizeof(sockaddr));
+	}
 	/**
 	 * Constructs the address by copying the specified structure.
-	 * @param addr The other address
+	 * @param addr The other address. This must be an AF_CAN address to be
+	 *  		   a valid CANbus address.
 	 */
-	can_address(const sock_address& addr) {
+	can_address(const sock_address& addr) noexcept {
 		std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
-     * @param addr The other address
-     * @throws std::invalid_argument if the address is not properly
-     *            initialized as a SocketCAN address (i.e. family is not
-     *            AF_CAN)
+	 * @param addr The other address. This must be initialized to a proper
+	 *  		   AF_CAN address to be valid.
 	 */
-	can_address(const sockaddr_can& addr) : addr_(addr) {}
+	can_address(const sockaddr_can& addr) noexcept : addr_(addr) {}
 	/**
 	 * Constructs the address by copying the specified address.
-	 * @param addr The other address
+	 * @param addr The other address.
 	 */
-	can_address(const can_address& addr) : addr_(addr.addr_) {}
+	can_address(const can_address& addr) noexcept : addr_(addr.addr_) {}
 	/**
 	 * Checks if the address is set to some value.
 	 * This doesn't attempt to determine if the address is valid, simply
 	 * that it's not all zero.
 	 * @return @em true if the address has been set, @em false otherwise.
 	 */
-	bool is_set() const { return family() != AF_UNSPEC; }
+	bool is_set() const noexcept { return family() != AF_UNSPEC; }
+	/**
+	 * Determines if the address is valid or a CAN bus interface.
+	 * @return @em true if the address is valid or a CAN bus interface,
+	 *  	   @false otherwise.
+	 */
+	operator bool() const noexcept { return family() == AF_CAN; }
 	/**
 	 * Gets the name of the CAN interface to which this address refers.
 	 * @return The name of the CAN interface to which this address refers.
 	 */
-	std::string iface() const;
+	std::string iface() const noexcept;
 	/**
 	 * Gets the size of the address structure.
 	 * Note: In this implementation, this should return sizeof(this) but
@@ -171,13 +177,13 @@ public:
 	 * Gets a pointer to this object cast to a @em sockaddr_can.
 	 * @return sockaddr_can pointer to this object.
 	 */
-	sockaddr_can* sockaddr_can_ptr() { return &addr_; }
+	sockaddr_can* sockaddr_can_ptr() noexcept { return &addr_; }
 	/**
 	 * Gets a printable string for the address.
 	 * @return A string representation of the address in the form
 	 *  	   "unix:<path>"
 	 */
-	std::string to_string() const {
+	std::string to_string() const noexcept {
 		return std::string("can:") + iface();
 	}
 };

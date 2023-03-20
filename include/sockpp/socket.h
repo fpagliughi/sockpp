@@ -178,9 +178,9 @@ void initialize();
 class socket
 {
 	/** The OS integer socket handle */
-	socket_t handle_;
+	socket_t handle_ = INVALID_SOCKET;
 	/** Cache of the last error (errno) */
-	mutable int lastErr_;
+	mutable int lastErr_ = 0;
 	/**
 	 * The OS-specific function to close a socket handle/
 	 * @param h The OS socket handle.
@@ -191,8 +191,6 @@ class socket
 	// Non-copyable.
 	socket(const socket&) =delete;
 	socket& operator=(const socket&) =delete;
-
-	//friend class result;
 
 protected:
 	/**
@@ -221,9 +219,10 @@ protected:
 	 * Cache the last system error code into this object.
 	 * This should be called after a failed system call to store the error
 	 * value.
+	 * @return The error value set.
 	 */
-	void set_last_error() {
-		lastErr_ = get_last_error();
+	int set_last_error() const {
+		return lastErr_ = get_last_error();
 	}
 	/**
 	 * Checks the value and if less than zero, sets last error.
@@ -232,7 +231,7 @@ protected:
 	 * @return Returns the value sent to it, `ret`.
 	 */
 	template <typename T>
-	T check_ret(T ret) const{
+	T check_ret(T ret) const {
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
 		return ret;
 	}
@@ -244,7 +243,7 @@ protected:
 	 *  	   or @em false is is an error (<0)
 	 */
 	template <typename T>
-	bool check_ret_bool(T ret) const{
+	bool check_ret_bool(T ret) const {
 		lastErr_ = (ret < 0) ? get_last_error() : 0;
 		return ret >= 0;
 	}
@@ -256,10 +255,9 @@ protected:
 	 *  	   operation.
 	 */
 	template <typename T>
-	bool check_ret_res(T ret) const{
+	ioresult check_ret_res(T ret) const {
 		if (ret < 0) {
-			lastErr_ = get_last_error();
-			return ioresult::from_error(lastErr_);
+			return ioresult::from_error(set_last_error());
 		}
 		lastErr_ = 0;
 		return ioresult(int(ret));
@@ -289,7 +287,25 @@ protected:
 		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
 		return ret != INVALID_SOCKET;
 	}
+	/**
+	 * Checks the value and if it is INVALID_SOCKET, sets last error.
+	 * This is specifically required for Windows which uses an unsigned type
+	 * for its SOCKET.
+	 * @param ret The return value from a library or system call that returns
+	 *  		  a socket such as socket() or accept().
+	 * @return An ioresult indicating the success or error value of the
+	 *  	   operation.
+	 */
+	result<socket_t> check_socket_res(socket_t ret) const{
+		if (ret == INVALID_SOCKET) {
+			return result<socket_t>::from_error(set_last_error());
+		}
+		lastErr_ = 0;
+		return result<socket_t>(ret);
+	}
 
+	// For non-Windows systems, routines to manipulate flags on the socket
+	// handle.
 	#if !defined(_WIN32)
 		/** Gets the flags on the socket handle. */
 		int get_flags() const;
@@ -303,14 +319,14 @@ public:
 	/**
 	 * Creates an unconnected (invalid) socket
 	 */
-	socket() : handle_(INVALID_SOCKET), lastErr_(0) {}
+	socket() =default;
 	/**
 	 * Creates a socket from an existing OS socket handle.
 	 * The object takes ownership of the handle and will close it when
 	 * destroyed.
 	 * @param h An OS socket handle.
 	 */
-	explicit socket(socket_t h) : handle_(h), lastErr_(0) {}
+	explicit socket(socket_t h) : handle_(h) {}
 	/**
 	 * Move constructor.
 	 * This takes ownership of the underlying handle in sock.
