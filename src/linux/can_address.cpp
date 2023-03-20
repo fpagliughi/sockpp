@@ -51,10 +51,10 @@ constexpr sa_family_t can_address::ADDRESS_FAMILY;
 
 // --------------------------------------------------------------------------
 
-can_address::can_address(unsigned ifindex) noexcept
+can_address::can_address(unsigned idx) noexcept
 {
-	addr_.can_family = AF_CAN;
-	addr_.can_ifindex = ifindex;
+	addr_.can_family = ADDRESS_FAMILY;
+	addr_.can_ifindex = idx;
 }
 
 can_address::can_address(const string& iface) noexcept
@@ -62,7 +62,7 @@ can_address::can_address(const string& iface) noexcept
 	unsigned idx = if_nametoindex(iface.c_str());
 
 	if (idx != 0) {
-		addr_.can_family = AF_CAN;
+		addr_.can_family = ADDRESS_FAMILY;
 		addr_.can_ifindex = idx;
 	}
 }

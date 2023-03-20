@@ -65,7 +65,7 @@ namespace sockpp {
 class unix_address : public sock_address
 {
 	/** The underlying C struct for unix-domain addresses  */
-	sockaddr_un addr_;
+	sockaddr_un addr_ = sockaddr_un{};
 
 	/** The size of the underlying address struct, in bytes */
 	static constexpr size_t SZ = sizeof(sockaddr_un);
@@ -81,7 +81,7 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	unix_address() : addr_() {}
+	unix_address() noexcept {}
 	/**
 	 * Constructs an address given the specified path.
 	 * @param path The path to the socket file.
@@ -89,26 +89,25 @@ public:
 	unix_address(const std::string& path);
 	/**
 	 * Constructs the address by copying the specified structure.
-     * @param addr The generic address
-     * @throws std::invalid_argument if the address is not a UNIX-domain
-     *            address (i.e. family is not AF_UNIX)
+	 * @param addr The generic address. This must be a proper AF_UNIX
+	 *  		   address to be valid.
 	 */
-	explicit unix_address(const sockaddr& addr);
+	explicit unix_address(const sockaddr& addr) {
+		std::memcpy(&addr_, &addr, sizeof(sockaddr));
+	}
 	/**
 	 * Constructs the address by copying the specified structure.
-	 * @param addr The other address
+	 * @param addr The other address. This must be a proper AF_UNIX address
+	 *  		   to be valid.
 	 */
-	unix_address(const sock_address& addr) {
+	unix_address(const sock_address& addr) noexcept {
 		std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
 	}
 	/**
 	 * Constructs the address by copying the specified structure.
      * @param addr The other address
-     * @throws std::invalid_argument if the address is not properly
-     *            initialized as a UNIX-domain address (i.e. family is not
-     *            AF_UNIX)
 	 */
-	unix_address(const sockaddr_un& addr);
+	unix_address(const sockaddr_un& addr) noexcept : addr_(addr) {}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
@@ -121,6 +120,14 @@ public:
 	 * @return @em true if the address has been set, @em false otherwise.
 	 */
 	bool is_set() const { return addr_.sun_path[0] != '\0'; }
+	/**
+	 * Determines if the address is valid for a UNIX socket.
+	 * @return @em true if the address is valid for a UNIX socket,
+	 *  	   @false otherwise.
+	 */
+	operator bool() const noexcept {
+		return family() == ADDRESS_FAMILY && is_set();
+	}
 	/**
 	 * Gets the path to which this address refers.
 	 * @return The path to which this address refers.

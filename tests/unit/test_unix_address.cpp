@@ -148,10 +148,7 @@ TEST_CASE("unix_address sockaddr_un constructor", "[address]") {
                          (const char*) &addr.sockaddr_un_ptr()->sun_path,
                          unix_address::MAX_PATH_NAME));
 
-    SECTION("reject bad sockaddr_un") {
-        unaddr.sun_family = AF_INET;
-        REQUIRE_THROWS_AS([&] {
-            unix_address addr2(unaddr);
-        }(), std::invalid_argument);
-    }
+	unaddr.sun_family = AF_INET;
+	unix_address addr2(unaddr);
+	REQUIRE(!addr2);
 }

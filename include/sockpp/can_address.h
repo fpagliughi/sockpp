@@ -85,10 +85,10 @@ public:
 	can_address() noexcept {}
 	/**
 	 * Creates an address for binding to a specific CAN interface
-	 * @param ifindex The interface index to use. This must, obviously, be
+	 * @param idx The interface index to use. This must, obviously, be
 	 *  			  an index to a CAN interface.
 	 */
-	explicit can_address(unsigned ifindex) noexcept;
+	explicit can_address(unsigned idx) noexcept;
 	/**
 	 * Constructs an address for the specified CAN interface.
 	 * The interface might be "can0", "can1", "vcan0", etc.
@@ -130,7 +130,7 @@ public:
 	 */
 	bool is_set() const noexcept { return family() != AF_UNSPEC; }
 	/**
-	 * Determines if the address is valid or a CAN bus interface.
+	 * Determines if the address is valid for a CAN bus interface.
 	 * @return @em true if the address is valid or a CAN bus interface,
 	 *  	   @false otherwise.
 	 */
