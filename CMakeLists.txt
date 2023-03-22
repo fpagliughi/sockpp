@@ -52,6 +52,7 @@ option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 option(SOCKPP_BUILD_CAN "Build the Linux SocketCAN components" OFF)
+option(ADD_DEBUG_POSTFIX "Add debug postfix for debug output targets" OFF)
 
 # --- Setting naming variables ---
 
@@ -61,6 +62,13 @@ set(SOCKPP_OBJECT_LIBRARY sockpp-objs)
 
 set(SOCKPP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(SOCKPP_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
+if (${ADD_DEBUG_POSTFIX})
+	set(DEBUG_POSTFIX "d" CACHE STRING "Debug postfix")
+	if(NOT CMAKE_DEBUG_POSTFIX)
+	  set(CMAKE_DEBUG_POSTFIX ${DEBUG_POSTFIX})
+	endif()
+endif()
 
 # --- Generate a version header ---
 
