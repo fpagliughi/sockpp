@@ -59,21 +59,23 @@ can_address::can_address(unsigned ifindex) : addr_{}
 
 can_address::can_address(const string& iface) : addr_{}
 {
-	unsigned idx = if_nametoindex(iface.c_str());
+    if (iface.length() >= IF_NAMESIZE)
+        throw std::invalid_argument("Interface name too long");
 
-	if (idx != 0) {
-		addr_.can_family = AF_CAN;
-		addr_.can_ifindex = idx;
-	}
+    unsigned idx = if_nametoindex(iface.c_str());
+
+    if (idx != 0) {
+        addr_.can_family = AF_CAN;
+        addr_.can_ifindex = idx;
+    }
 }
 
 can_address::can_address(const sockaddr& addr)
 {
-    auto domain = addr.sa_family;
-    if (domain != AF_CAN)
+    if (addr.sa_family != AF_CAN)
         throw std::invalid_argument("Not a SocketCAN address");
 
-    std::memcpy(&addr_, &addr, sizeof(sockaddr));
+    std::memcpy(&addr_, &addr, std::min(sizeof(addr_), sizeof(can_address)));
 }
 
 string can_address::iface() const
@@ -89,7 +91,6 @@ string can_address::iface() const
 
 	return string(iface ? iface : "unknown");
 }
-
 
 // --------------------------------------------------------------------------
 

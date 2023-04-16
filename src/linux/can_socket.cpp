@@ -77,15 +77,19 @@ double can_socket::last_frame_timestamp()
 
 // --------------------------------------------------------------------------
 
-ssize_t can_socket::recv_from(can_frame *frame, int flags,
-							  can_address* srcAddr /*=nullptr*/)
+ssize_t can_socket::recv_from(can_frame *frame, int flags, can_address* srcAddr /*=nullptr*/)
 {
-	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
+    sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
     socklen_t len = srcAddr ? srcAddr->size() : 0;
 
-	// TODO: Check returned length
-	return check_ret(::recvfrom(handle(), frame, sizeof(can_frame),
-								flags, p, &len));
+    // Only receive the exact size of the can_frame object
+    ssize_t ret = ::recvfrom(handle(), frame, sizeof(*frame), flags, p, &len);
+
+    if (ret == -1) {
+        throw std::system_error(errno, std::system_category(), "recvfrom failed");
+    }
+
+    return ret;
 }
 
 /////////////////////////////////////////////////////////////////////////////
