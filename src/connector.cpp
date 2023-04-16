@@ -55,15 +55,20 @@ namespace sockpp {
 
 bool connector::recreate(const sock_address& addr)
 {
-	sa_family_t domain = addr.family();
-	socket_t h = create_handle(domain);
+    sa_family_t domain = addr.family();
+    socket_t h = create_handle(domain);
 
-	if (!check_socket_bool(h))
-		return false;
+    if (!check_socket_bool(h))
+        return false;
 
-	// This will close the old connection, if any.
-	reset(h);
-	return true;
+    //This will close the old socket if it was connected
+    if (is_open() && is_connected()) {
+        close();
+    }
+
+    //This will reset the socket with the new handle
+    reset(h);
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -93,36 +98,28 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 	// make it non-blocking to do this
 	set_non_blocking(true);
 
-	// TODO: Reimplement with poll() for systems with lots of sockets.
+	// Use poll() instead of select() for better performance with many sockets.
+	struct pollfd pfd;
+	pfd.fd = handle();
+	pfd.events = POLLOUT;
 
-	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
-		if (last_error() == EINPROGRESS || last_error() == EWOULDBLOCK) {
-			// Non-blocking connect -- call `select` to wait until the timeout:
-			// Note:  Windows returns errors in exceptset so check it too, the
-			// logic afterwords doesn't change
-			fd_set readset;
-			FD_ZERO(&readset);
-			FD_SET(handle(), &readset);
-			fd_set writeset = readset;
-			fd_set exceptset = readset;
-			timeval tv = to_timeval(timeout);
-			int n = check_ret(::select(int(handle())+1, &readset, &writeset, &exceptset, &tv));
+	int poll_timeout = static_cast<int>(timeout.count() / 1000);
+	int n = check_ret(::poll(&pfd, 1, poll_timeout));
 
-			if (n > 0) {
-				// Got a socket event, but it might be an error, so check:
-				int err;
-				if (get_option(SOL_SOCKET, SO_ERROR, &err))
-					clear(err);
-			}
-			else if (n == 0) {
-				clear(ETIMEDOUT);
-			}
-		}
+	if (n > 0) {
+		// Got a socket event, but it might be an error, so check:
+		int err;
+		if (get_option(SOL_SOCKET, SO_ERROR, &err))
+			clear(err);
+	}
+	
+	else if (n == 0) {
+		clear(ETIMEDOUT);
+	}
 
-		if (last_error() != 0) {
-			close();
-			return false;
-		}
+	if (last_error() != 0) {
+		close();
+		return false;
 	}
 
 	// Restore the default (blocking) mode for a new socket.
@@ -133,4 +130,3 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
 }
-

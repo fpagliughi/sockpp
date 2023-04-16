@@ -97,11 +97,15 @@ bool acceptor::open(const sock_address& addr,
 
 stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
 {
-	sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
-	socklen_t len = clientAddr ? clientAddr->size() : 0;
+    sockaddr_storage addrStorage;
+    sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
+    socklen_t len = clientAddr ? clientAddr->size() : 0;
 
-	socket_t s = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr));
-	return stream_socket(s);
+    socket_t s = check_socket(::accept(handle(), (sockaddr*)&addrStorage, &len));
+    if (clientAddr) {
+        clientAddr->set_sockaddr(addrStorage);
+    }
+    return stream_socket(s);
 }
 
 /////////////////////////////////////////////////////////////////////////////

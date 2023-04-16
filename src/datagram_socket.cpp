@@ -48,34 +48,56 @@ namespace sockpp {
 
 datagram_socket::datagram_socket(const sock_address& addr)
 {
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
+    auto domain = addr.family();
+    socket_t h = create_handle(domain);
 
-	if (check_socket_bool(h)) {
-		reset(h);
-		// TODO: If the bind fails, should we close the socket and fail completely?
-		bind(addr);
-	}
+    if (check_socket_bool(h)) {
+        reset(h);
+        if (!bind(addr)) {
+            close();
+            throw std::runtime_error("Failed to bind the socket");
+        }
+    }
 }
 
 // --------------------------------------------------------------------------
 
-ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
-								   sock_address* srcAddr /*=nullptr*/)
+ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags, sock_address* srcAddr /*=nullptr*/)
 {
-	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
+    sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
     socklen_t len = srcAddr ? srcAddr->size() : 0;
 
-	// TODO: Check returned length
-    #if defined(_WIN32)
-        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
-                                    int(n), flags, p, &len));
-    #else
-        return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
-    #endif
+    ssize_t ret;
+    do {
+        #if defined(_WIN32)
+        ret = ::recvfrom(handle(), reinterpret_cast<char*>(buf), int(n), flags, p, &len);
+        #else
+        ret = ::recvfrom(handle(), buf, n, flags, p, &len);
+        #endif
+    } while (ret == -1 && last_error() == EINTR);
+
+    if (ret > 0 && static_cast<size_t>(ret) < n) {
+        // The received data is smaller than the buffer, so fill the rest of the buffer with zeroes.
+        // This is to ensure that the remaining buffer is zeroed out.
+        std::memset(static_cast<char*>(buf) + ret, 0, n - ret);
+    }
+
+    if (ret == -1) {
+        // Handle the case where the receive call failed.
+        int err = last_error();
+        if (err == EAGAIN || err == EWOULDBLOCK) {
+            // If the receive operation would block, return 0 to indicate that no data was received.
+            return 0;
+        } else {
+            // If the error is not a blocking error, return -1 to indicate that an error occurred.
+            return -1;
+        }
+    }
+
+    return ret;
 }
+
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp
 }
-
