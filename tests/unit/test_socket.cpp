@@ -47,7 +47,7 @@ using namespace sockpp;
 using namespace std::chrono;
 
 /////////////////////////////////////////////////////////////////////////////
-// Aux functions
+// Test aux functions
 
 TEST_CASE("test to_timeval", "aux") {
 	SECTION("concrete function") {
@@ -76,7 +76,7 @@ TEST_CASE("test to_timeval", "aux") {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// socket class
+// Test socket class
 
 constexpr in_port_t INET_TEST_PORT = 12346;
 

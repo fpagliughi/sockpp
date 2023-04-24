@@ -55,6 +55,7 @@ add_executable(unit_tests
 	test_datagram_socket.cpp
 	test_acceptor.cpp
 	test_connector.cpp
+  test_result.cpp
 )
 
 if(UNIX)

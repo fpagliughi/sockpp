@@ -1,11 +1,12 @@
-
-// acceptor.cpp
+// test_result.cpp
 //
+// Unit tests for the result class.
+//
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
-// All rights reserved.
+// Copyright (c) 2023 Frank Pagliughi All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -34,16 +35,37 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
 #include "sockpp/result.h"
+#include "catch2/catch.hpp"
 
-using namespace std;
+using namespace sockpp;
 
-namespace sockpp {
+TEST_CASE("test result success", "[result]") {
+	const int VAL = 42;
+	auto res = result<int>(VAL);
 
-/////////////////////////////////////////////////////////////////////////////
+	REQUIRE(res);
+	REQUIRE(res.is_ok());
+	REQUIRE(!res.is_error());
+	REQUIRE(res.value() == VAL);
+	REQUIRE(res.error() == error_code{});
+	REQUIRE(res.error().value() == 0);
+	REQUIRE(res == success(VAL));
+	REQUIRE(res == error_code{});
+}
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
+TEST_CASE("test result error", "[result]") {
+	const auto ERR = errc::interrupted;
+	auto res = result<int>::from_error(ERR);
+
+	REQUIRE(!res);
+	REQUIRE(!res.is_ok());
+	REQUIRE(res.is_error());
+	REQUIRE(res.error() == ERR);
+	REQUIRE(res == ERR);
+	REQUIRE(res == std::make_error_code(ERR));
+	REQUIRE(res == error<int>(ERR));
 }
 

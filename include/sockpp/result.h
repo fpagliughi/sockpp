@@ -64,10 +64,15 @@ using errc = std::errc;
 template <typename T>
 class result {
 	/** The return value of an operation, if successful */
-	T val_;
+	T val_ {};
 	/** The error returned from an operation, if failed */
-	error_code err_;
+	error_code err_ {};
 
+	/**
+	 * Private helper constructor to build a result.
+	 * @param val The value
+	 * @param err The error
+	 */
 	result(const T& val, const error_code& err) : val_{val}, err_{err} {}
 
 	/**
@@ -97,6 +102,24 @@ public:
 	 */
 	result(const T& val) : val_{val} {}
 	/**
+	 * Creates an unsuccesful result from a portable error condition.
+	 * @param err The error
+	 * @return The result of an unsuccessful operation.
+	 */
+	result(errc err) : err_{std::make_error_code(err)} {}
+	/**
+	 * Creates an unsuccesful result from a portable error condition.
+	 * @param err The error
+	 * @return The result of an unsuccessful operation.
+	 */
+	result(const error_code& err) : err_{err} {}
+	/**
+	 * Creates an unsuccesful result from a portable error condition.
+	 * @param err The error
+	 * @return The result of an unsuccessful operation.
+	 */
+	result(error_code&& err) : err_{std::move(err)} {}
+	/**
 	 * Creates an unsuccessful result from an error code.
 	 * @param err The error code from an operation.
 	 * @return The result of an unsucessful operation.
@@ -116,6 +139,14 @@ public:
 		const error_category& ecat=std::system_category()
     ) {
 		return result{ T{}, {ec, ecat} };
+	}
+	/**
+	 * Creates an unsuccesful result from a portable error condition.
+	 * @param err The error
+	 * @return The result of an unsuccessful operation.
+	 */
+	static result from_error(errc err) {
+		return result(err);
 	}
 	/**
 	 * Determines if the result represents a failed operation.
@@ -158,6 +189,8 @@ public:
 	 * @return A const reference to the error code.
 	 */
 	const error_code& error() const { return err_; }
+
+
 };
 
 /**
@@ -195,6 +228,39 @@ result<T> error(int ec, const error_category& ecat=std::system_category()) {
 	return result<T>::from_error(ec, ecat);
 }
 
+template <typename T>
+bool operator==(const result<T>& lhs, const error_code& rhs) noexcept {
+	return lhs.error() == rhs;
+}
+
+template <typename T>
+bool operator==(const error_code& lhs, const result<T>& rhs) noexcept {
+	return lhs == rhs.error();
+}
+
+template <typename T>
+bool operator==(const result<T>& lhs, const errc& rhs) noexcept {
+	return lhs.error() == rhs;
+}
+
+template <typename T>
+bool operator==(const errc& lhs, const result<T>& rhs) noexcept {
+	return lhs == rhs.error();
+}
+
+/**
+ * Create a failed result with the specified platform-specific integer
+ * error code.
+ *
+ * @param err The portable error condition.
+ * @param ecat The error category.
+ * @return A failed result.
+ */
+template <typename T>
+result<T> error(errc err) {
+	return result<T>{err};
+}
+
 /**
  * Writes out the result.
  *
@@ -210,93 +276,16 @@ result<T> error(int ec, const error_category& ecat=std::system_category()) {
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const result<T>& res) {
 	if (res.is_ok()) {
-		os << res.val();
+		os << res.value();
 	}
 	else {
-		os << res.err().message();
+		os << res.error().message();
 	}
 	return os;
 }
 
 /** The result of an I/O operation that should return an int. */
 using ioresult = result<int>;
-
-/////////////////////////////////////////////////////////////////////////////
-
-#if 0
-/**
- * Result of a thread-safe I/O operation.
- *
- * Most I/O operations in the OS will return >=0 on sccess and -1 on error.
- * In the case of an error, the calling thread must read an `errno` variable
- * immediately, before any other system calls, to get the cause of an error
- * as an integer value defined by the constants ENOENT, EINTR, EBUSY, etc.
- *
- * Most sockpp calls retain this known behavior, but will cache this errno
- * value to be read later by a call to @ref socket::last_error() or similar.
- * But this makes the @ref socket classes themselves non-thread-safe since
- * the cached errno variable can't be shared across threads.
- *
- * Several new "thread-safe" variants of I/O functions simply retrieve the
- * errno immediately on a failed I/O call and instead of caching the value,
- * return it immediately in this ioresult.
- * See: @ref stream_socket::read_r, @ref stream_socket::read_n_r, @ref
- * stream_socket::write_r, etc.
- */
-class ioresult {
-	/** Byte count, or 0 on error or EOF */
-	size_t cnt_ = 0;
-	/** errno value (0 if no error or EOF) */
-	int err_ = 0;
-
-	/**
-	 * OS-specific means to retrieve the last error from an operation.
-	 * This should be called after a failed system call to get the caue of
-	 * the error.
-	 */
-	static int get_last_error();
-
-	friend class socket;
-
-public:
-	/** Creates an empty result */
-	ioresult() = default;
-
-	ioresult(size_t c, int e) : cnt_{c}, err_{e} {}
-	/**
-	 * Creates a result from the return value of a low-level I/O function.
-	 * @param n The number of bytes read or written. If <0, then an error is
-	 *  		assumed and obtained from socket::get_last_error().
-	 *
-	 */
-	explicit inline ioresult(ssize_t n) {
-		if (n < 0)
-			err_ = get_last_error();
-		else
-			cnt_ = size_t(n);
-	}
-
-	/** Sets the error value */
-	void set_error(int e) { err_ = e; }
-
-	/** Increments the count */
-	void incr(size_t n) { cnt_ += n; }
-
-	/** Determines if the result is OK (not an error) */
-	bool is_ok() const { return err_ == 0; }
-	/** Determines if the result is an error */
-	bool is_err() const { return err_ != 0; }
-
-	/** Determines if the result is OK */
-	explicit operator bool() const { return is_ok(); }
-
-	/** Gets the count */
-	size_t count() const { return cnt_; }
-
-	/** Gets the error */
-	int error() const { return err_; }
-};
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
