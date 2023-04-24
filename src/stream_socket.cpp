@@ -114,11 +114,11 @@ ioresult stream_socket::read_n_r(void *buf, size_t n)
 	size_t nx = 0;
 
 	while (nx < n) {
-        ioresult r = read_r(b+nx, n-nx);
-		if (!r && r.error() != errc::interrupted) {
-			return r;
+        ioresult res = read_r(b+nx, n-nx);
+		if (!res && res != errc::interrupted) {
+			return res;
         }
-		nx += size_t(r.value());
+		nx += size_t(res.value());
 	}
 
 	return ioresult{ int(nx) };
@@ -221,11 +221,11 @@ ioresult stream_socket::write_n_r(const void *buf, size_t n)
 	size_t nx = 0;
 
 	while (nx < n) {
-        ioresult r = write_r(b+nx, n-nx);
-		if (!r && r.error() != errc::interrupted) {
-			return r;
+        ioresult res = write_r(b+nx, n-nx);
+		if (!res && res != errc::interrupted) {
+			return res;
 		}
-		nx += size_t(r.value());
+		nx += size_t(res.value());
 	}
 
 	return ioresult{ int(nx) };

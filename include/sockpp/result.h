@@ -189,8 +189,6 @@ public:
 	 * @return A const reference to the error code.
 	 */
 	const error_code& error() const { return err_; }
-
-
 };
 
 /**
@@ -228,24 +226,108 @@ result<T> error(int ec, const error_category& ecat=std::system_category()) {
 	return result<T>::from_error(ec, ecat);
 }
 
+/**
+ * Compare the result to an error code.
+ *
+ * @param lhs A result.
+ * @param rhs An error code
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
 template <typename T>
 bool operator==(const result<T>& lhs, const error_code& rhs) noexcept {
 	return lhs.error() == rhs;
 }
 
+/**
+ * Compare the result to an error code.
+ *
+ * @param lhs An error code
+ * @param rhs A result.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
 template <typename T>
 bool operator==(const error_code& lhs, const result<T>& rhs) noexcept {
 	return lhs == rhs.error();
 }
 
+/**
+ * Compare the result to an error.
+ *
+ * @param lhs A result.
+ * @param rhs A portable error condition.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
 template <typename T>
 bool operator==(const result<T>& lhs, const errc& rhs) noexcept {
 	return lhs.error() == rhs;
 }
 
+/**
+ * Compare the result to an error.
+ *
+ * @param lhs A portable error condition.
+ * @param rhs A result.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
 template <typename T>
 bool operator==(const errc& lhs, const result<T>& rhs) noexcept {
 	return lhs == rhs.error();
+}
+
+/**
+ * Compare the result to an error code.
+ *
+ * @param lhs A result.
+ * @param rhs An error code
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator!=(const result<T>& lhs, const error_code& rhs) noexcept {
+	return !operator==(lhs, rhs);
+}
+
+/**
+ * Compare the result to an error code.
+ *
+ * @param lhs An error code
+ * @param rhs A result.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator!=(const error_code& lhs, const result<T>& rhs) noexcept {
+	return !operator==(lhs, rhs);
+}
+
+/**
+ * Compare the result to an error.
+ *
+ * @param lhs A result.
+ * @param rhs A portable error condition.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator!=(const result<T>& lhs, const errc& rhs) noexcept {
+	return !operator==(lhs, rhs);
+}
+
+/**
+ * Compare the result to an error.
+ *
+ * @param lhs A portable error condition.
+ * @param rhs A result.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator!=(const errc& lhs, const result<T>& rhs) noexcept {
+	return !operator==(lhs, rhs);
 }
 
 /**
