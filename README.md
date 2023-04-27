@@ -38,9 +38,9 @@ If you're using this library, tweet at me or send me a message, and let me know 
 
 ## Unrelased Features in this Branch
 
-- Secure Socket Support
-    - [PR #17](https://github.com/fpagliughi/sockpp/pull/17) was (finally!) merged and updated.
-    - New support added for _OpenSSL_.
+- [#72](https://github.com/fpagliughi/sockpp/issues/72) Removed exceptions
+- Added `raw_socket` class.
+- [#77](https://github.com/fpagliughi/sockpp/issues/77) Added `result<T>` tempate class for success/error return values using `std::error_code` for errors.
     
 ## New in v0.8.1
 
