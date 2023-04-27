@@ -58,23 +58,6 @@ datagram_socket::datagram_socket(const sock_address& addr)
 	}
 }
 
-// --------------------------------------------------------------------------
-
-ssize_t datagram_socket::recv_from(void* buf, size_t n, int flags,
-								   sock_address* srcAddr /*=nullptr*/)
-{
-	sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
-    socklen_t len = srcAddr ? srcAddr->size() : 0;
-
-	// TODO: Check returned length
-    #if defined(_WIN32)
-        return check_ret(::recvfrom(handle(), reinterpret_cast<char*>(buf),
-                                    int(n), flags, p, &len));
-    #else
-        return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
-    #endif
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp
 }

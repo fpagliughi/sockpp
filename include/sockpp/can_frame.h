@@ -50,7 +50,6 @@
 #include "sockpp/platform.h"
 #include <string>
 #include <cstring>
-//#include <sys/un.h>
 #include <linux/can.h>
 
 namespace sockpp {
@@ -64,6 +63,7 @@ namespace sockpp {
  */
 class can_frame : public ::can_frame
 {
+	/** The base class is the C library CAN frame struct. */
 	using base = ::can_frame;
 
 	/** The size of the underlying address struct, in bytes */
@@ -93,6 +93,11 @@ public:
 		this->can_dlc = n;
 		::memcpy(&this->data, data, n);
 	}
+	/**
+	 * Construct a frame from a C library CAN frame.
+	 * @param frame A C lib CAN frame.
+	 */
+	can_frame(const base& frame) : base{frame} {}
 };
 
 /////////////////////////////////////////////////////////////////////////////

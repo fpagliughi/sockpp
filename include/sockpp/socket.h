@@ -560,6 +560,7 @@ public:
 	 * @return @em true on success, @em false on failure.
 	 */
 	virtual bool set_non_blocking(bool on=true);
+
 	#if !defined(_WIN32)
 		/**
 		 * Determines if the socket is non-blocking
@@ -603,6 +604,117 @@ public:
 	 * @return @em true if the sock is closed, @em false on error.
 	 */
 	virtual bool close();
+
+	// ----- I/O -----
+
+	/**
+	 * Sends a message to the socket at the specified address.
+	 * @param buf The data to send.
+	 * @param n The number of bytes in the data buffer.
+	 * @param flags The flags. See send(2).
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const void* buf, size_t n, int flags, const sock_address& addr) {
+        #if defined(_WIN32)
+            return check_ret(::sendto(handle(), reinterpret_cast<const char*>(buf), int(n),
+                                      flags, addr.sockaddr_ptr(), addr.size()));
+        #else
+            return check_ret(::sendto(handle(), buf, n, flags,
+                                      addr.sockaddr_ptr(), addr.size()));
+        #endif
+	}
+	/**
+	 * Sends a string to the socket at the specified address.
+	 * @param s The string to send.
+	 * @param flags The flags. See send(2).
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const std::string& s, int flags, const sock_address& addr) {
+		return send_to(s.data(), s.length(), flags, addr);
+	}
+	/**
+	 * Sends a message to another socket.
+	 * @param buf The data to send.
+	 * @param n The number of bytes in the data buffer.
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const void* buf, size_t n, const sock_address& addr) {
+		return send_to(buf, n, 0, addr);
+	}
+	/**
+	 * Sends a string to another socket.
+	 * @param s The string to send.
+	 * @param addr The remote destination of the data.
+	 * @return the number of bytes sent on success or, @em -1 on failure.
+	 */
+	ssize_t send_to(const std::string& s, const sock_address& addr) {
+		return send_to(s.data(), s.length(), 0, addr);
+	}
+	/**
+	 * Sends a message to the socket at the default address.
+	 * The socket should be connected before calling this.
+	 * @param buf The date to send.
+	 * @param n The number of bytes in the data buffer.
+	 * @param flags The option bit flags. See send(2).
+	 * @return @em zero on success, @em -1 on failure.
+	 */
+	ssize_t send(const void* buf, size_t n, int flags=0) {
+        #if defined(_WIN32)
+            return check_ret(::send(handle(), reinterpret_cast<const char*>(buf),
+                                    int(n), flags));
+        #else
+            return check_ret(::send(handle(), buf, n, flags));
+        #endif
+	}
+	/**
+	 * Sends a string to the socket at the default address.
+	 * The socket should be connected before calling this
+	 * @param s The string to send.
+	 * @param flags The option bit flags. See send(2).
+	 * @return @em zero on success, @em -1 on failure.
+	 */
+	ssize_t send(const std::string& s, int flags=0) {
+		return send(s.data(), s.length(), flags);
+	}
+	/**
+	 * Receives a message on the socket.
+	 * @param buf Buffer to get the incoming data.
+	 * @param n The number of bytes to read.
+	 * @param flags The option bit flags. See send(2).
+	 * @param srcAddr Receives the address of the peer that sent the
+	 *  			   message
+	 * @return The number of bytes read or @em -1 on error.
+	 */
+	ssize_t recv_from(void* buf, size_t n, int flags, sock_address* srcAddr=nullptr);
+	/**
+	 * Receives a message on the socket.
+	 * @param buf Buffer to get the incoming data.
+	 * @param n The number of bytes to read.
+	 * @param srcAddr Receives the address of the peer that sent the
+	 *  			   message
+	 * @return The number of bytes read or @em -1 on error.
+	 */
+	ssize_t recv_from(void* buf, size_t n, sock_address* srcAddr=nullptr) {
+		return recv_from(buf, n, 0, srcAddr);
+	}
+	/**
+	 * Receives a message on the socket.
+	 * @param buf Buffer to get the incoming data.
+	 * @param n The number of bytes to read.
+	 * @param flags The option bit flags. See send(2).
+	 * @return The number of bytes read or @em -1 on error.
+	 */
+	ssize_t recv(void* buf, size_t n, int flags=0) {
+        #if defined(_WIN32)
+            return check_ret(::recv(handle(), reinterpret_cast<char*>(buf),
+                                    int(n), flags));
+        #else
+            return check_ret(::recv(handle(), buf, n, flags));
+        #endif
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////

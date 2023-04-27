@@ -47,27 +47,37 @@
 #ifndef __sockpp_can_socket_h
 #define __sockpp_can_socket_h
 
-#include "sockpp/datagram_socket.h"
+#include "sockpp/raw_socket.h"
 #include "sockpp/can_address.h"
 #include "sockpp/can_frame.h"
+#include <vector>
+#include <linux/can/raw.h>
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Socket type for Linux SocketCAN.
+ * Raw Linux CANbus (SocketCAN) sockets.
  *
- * Note that technically these are RAW sockets, not DGRAM. We can/should
- * organize the underlying hierarch to properly indicate this, but for
- * practical usge, it doesn't matter too MUCH.
- * The BCM CAN sockets are DGRAM sockets, but those aren't implemented yet.
- * It wouldn't take too much to add them, though.
+ * Raw CAN sockets are comparable to using the old character drivers to send
+ * and receive individual CAN frames to one or more interfaces.
+ *
+ * According to the SocketCAN notes: defaults are set at RAW socket binding
+ * time:
+ * @li The filters are set to exactly one filter receiving everything
+ * @li The socket only receives valid data frames (=> no error message
+ * frames)
+ * @li The loopback of sent CAN frames is enabled (see Local Loopback of
+ * Sent Frames)
+ * @li The socket does not receive its own sent frames (in loopback mode)
+ *
+ * These can all be changed by setting options on the socket.
  */
-class can_socket : public datagram_socket
+class can_socket : public raw_socket
 {
 	/** The base class */
-	using base = datagram_socket;
+	using base = raw_socket;
 
 	// Non-copyable
 	can_socket(const can_socket&) =delete;
@@ -140,6 +150,40 @@ public:
 	 */
 	double last_frame_timestamp();
 
+	// ----- Filters -----
+
+	/**
+	 * Sets the filters for receiving CAN frames on this socket.
+	 *
+	 * A filter matches when:
+	 * \verbatim
+	 * <received_can_id> & mask == can_id & mask
+	 * \endverbatim
+	 *
+	 * @param filters The CAN filters
+	 * @param n The number of CAN filters.
+	 * @return @em true if the filters were set, @em false otherwise.
+	 */
+	bool set_filters(const can_filter* filters, size_t n) {
+		return set_option(SOL_CAN_RAW, CAN_RAW_FILTER, filters, socklen_t(n));
+	}
+
+	/**
+	 * Sets the filters for receiving CAN frames on this socket.
+	 *
+	 * A filter matches when:
+	 * \verbatim
+	 * <received_can_id> & mask == can_id & mask
+	 * \endverbatim
+	 *
+	 * @param filters The CAN filters
+	 * @param n The number of CAN filters.
+	 * @return @em true if the filters were set, @em false otherwise.
+	 */
+	bool set_filters(const std::vector<can_filter>& filters) {
+		return set_filters(filters.data(), filters.size());
+	}
+
 	// ----- I/O -----
 
 	/**
@@ -155,7 +199,6 @@ public:
 					 addr.sockaddr_ptr(), addr.size())
 	    );
 	}
-
 	/**
 	 * Sends a frame to the CAN interface at the specified address.
 	 * @param frame The CAN frame to send.
@@ -179,7 +222,7 @@ public:
 		return check_ret(::send(handle(), &frame, sizeof(can_frame), flags));
 	}
 	/**
-	 * Receives a message from the CAN interface at the specified address.
+	 * Receives a message from the CAN interface with the specified address.
 	 * @param frame CAN frame to get the incoming data.
 	 * @param flags The option bit flags. See send(2).
 	 * @param srcAddr Receives the address of the peer that sent the

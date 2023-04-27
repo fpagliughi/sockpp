@@ -1,19 +1,19 @@
 /**
- * @file datagram_socket.h
+ * @file raw_socket.h
  *
- * Classes for datagram sockets.
+ * Classes for raw sockets.
  *
  * @author Frank Pagliughi
  * @author SoRo Systems, Inc.
  * @author www.sorosys.com
  *
- * @date December 2014
+ * @date April 2023
  */
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,8 +44,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_datagram_socket_h
-#define __sockpp_datagram_socket_h
+#ifndef __sockpp_raw_socket_h
+#define __sockpp_raw_socket_h
 
 #include "sockpp/socket.h"
 
@@ -54,24 +54,21 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Base class for datagram sockets.
- *
- * Datagram sockets are normally connectionless, where each packet is
- * individually routed and delivered.
+ * Base class for raw sockets.
  */
-class datagram_socket : public socket
+class raw_socket : public socket
 {
 	/** The base class */
 	using base = socket;
 
 	// Non-copyable
-	datagram_socket(const datagram_socket&) =delete;
-	datagram_socket& operator=(const datagram_socket&) =delete;
+	raw_socket(const raw_socket&) =delete;
+	raw_socket& operator=(const raw_socket&) =delete;
 
 protected:
 	/**
-	 * Creates a datagram socket.
-	 * @return An OS handle to a datagram socket.
+	 * Creates a raw socket.
+	 * @return An OS handle to a raw socket.
 	 */
 	static socket_t create_handle(int domain, int protocol=0) {
 		return socket_t(::socket(domain, COMM_TYPE, protocol));
@@ -79,56 +76,56 @@ protected:
 
 public:
 	/** The socket 'type' for communications semantics. */
-	static constexpr int COMM_TYPE = SOCK_DGRAM;
+	static constexpr int COMM_TYPE = SOCK_RAW;
 
 	/**
-	 * Creates an uninitialized datagram socket.
+	 * Creates an uninitialized raw socket.
 	 */
-	datagram_socket() {}
+	raw_socket() {}
 	/**
-     * Creates a datagram socket from an existing OS socket handle and
+     * Creates a raw socket from an existing OS socket handle and
      * claims ownership of the handle.
 	 * @param handle A socket handle from the operating system.
 	 */
-	explicit datagram_socket(socket_t handle) : base(handle) {}
+	explicit raw_socket(socket_t handle) : base(handle) {}
 	/**
 	 * Creates a UDP socket and binds it to the address.
 	 * @param addr The address to bind.
 	 */
-	explicit datagram_socket(const sock_address& addr);
+	explicit raw_socket(const sock_address& addr);
 	/**
 	 * Move constructor.
 	 * @param other The other socket to move to this one
 	 */
-	datagram_socket(datagram_socket&& other)
+	raw_socket(raw_socket&& other)
 		: base(std::move(other)) {}
 	/**
 	 * Move assignment.
 	 * @param rhs The other socket to move into this one.
 	 * @return A reference to this object.
 	 */
-	datagram_socket& operator=(datagram_socket&& rhs) {
+	raw_socket& operator=(raw_socket&& rhs) {
 		base::operator=(std::move(rhs));
 		return *this;
 	}
 	/**
-	 * Creates a new datagram socket that refers to this one.
+	 * Creates a new raw socket that refers to this one.
 	 * This creates a new object with an independent lifetime, but refers
 	 * back to this same socket. On most systems, this duplicates the file
 	 * handle using the dup() call. A typical use of this is to have
 	 * separate threads for reading and writing the socket. One thread would
 	 * get the original socket and the other would get the cloned one.
-	 * @return A new datagram socket object that refers to the same socket
+	 * @return A new raw socket object that refers to the same socket
 	 *  	   as this one.
 	 */
-	datagram_socket clone() const {
+	raw_socket clone() const {
 		auto h = base::clone().release();
-		return datagram_socket(h);
+		return raw_socket(h);
 	}
 	/**
 	 * Connects the socket to the remote address.
-	 * In the case of datagram sockets, this does not create an actual
-	 * connection, but rather specifies the address to which datagrams are
+	 * In the case of raw sockets, this does not create an actual
+	 * connection, but rather specifies the address to which raws are
 	 * sent by default and the only address from which packets are
 	 * received.
 	 * @param addr The address on which to "connect".
@@ -143,16 +140,16 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * Base class for datagram sockets.
+ * Base class for raw sockets.
  *
  * Datagram sockets are normally connectionless, where each packet is
  * individually routed and delivered.
  */
 template <typename ADDR>
-class datagram_socket_tmpl : public datagram_socket
+class raw_socket_tmpl : public raw_socket
 {
     /** The base class */
-    using base = datagram_socket;
+    using base = raw_socket;
 
 public:
     /** The address family for this type of address */
@@ -161,40 +158,40 @@ public:
 	using addr_t = ADDR;
 
 	/**
-	 * Creates an unbound datagram socket.
+	 * Creates an unbound raw socket.
 	 * This can be used as a client or later bound as a server socket.
 	 */
-	datagram_socket_tmpl() : base(create_handle(ADDRESS_FAMILY)) {}
+	raw_socket_tmpl() : base(create_handle(ADDRESS_FAMILY)) {}
 	/**
-     * Creates a datagram socket from an existing OS socket handle and
+     * Creates a raw socket from an existing OS socket handle and
      * claims ownership of the handle.
 	 * @param handle A socket handle from the operating system.
 	 */
-	datagram_socket_tmpl(socket_t handle) : base(handle) {}
+	raw_socket_tmpl(socket_t handle) : base(handle) {}
 	/**
-	 * Creates a datagram socket and binds it to the address.
+	 * Creates a raw socket and binds it to the address.
 	 * @param addr The address to bind.
 	 */
-	datagram_socket_tmpl(const ADDR& addr) : base(addr) {}
+	raw_socket_tmpl(const ADDR& addr) : base(addr) {}
 	/**
 	 * Move constructor.
-	 * Creates a datagram socket by moving the other socket to this one.
-	 * @param sock Another datagram socket.
+	 * Creates a raw socket by moving the other socket to this one.
+	 * @param sock Another raw socket.
 	 */
-	datagram_socket_tmpl(datagram_socket&& sock)
+	raw_socket_tmpl(raw_socket&& sock)
 			: base(std::move(sock)) {}
 	/**
 	 * Move constructor.
 	 * @param other The other socket to move to this one
 	 */
-	datagram_socket_tmpl(datagram_socket_tmpl&& other)
+	raw_socket_tmpl(raw_socket_tmpl&& other)
 		: base(std::move(other)) {}
 	/**
 	 * Move assignment.
 	 * @param rhs The other socket to move into this one.
 	 * @return A reference to this object.
 	 */
-	datagram_socket_tmpl& operator=(datagram_socket_tmpl&& rhs) {
+	raw_socket_tmpl& operator=(raw_socket_tmpl&& rhs) {
 		base::operator=(std::move(rhs));
 		return *this;
 	}
@@ -210,11 +207,11 @@ public:
 	 * @return A std::tuple of stream sockets. On error both sockets will be
 	 *  	   in an error state with the last error set.
 	 */
-	static std::tuple<datagram_socket_tmpl, datagram_socket_tmpl> pair(int protocol=0) {
+	static std::tuple<raw_socket_tmpl, raw_socket_tmpl> pair(int protocol=0) {
 		auto pr = base::pair(addr_t::ADDRESS_FAMILY, COMM_TYPE, protocol);
-		return std::make_tuple<datagram_socket_tmpl, datagram_socket_tmpl>(
-			datagram_socket_tmpl{std::get<0>(pr).release()},
-			datagram_socket_tmpl{std::get<1>(pr).release()});
+		return std::make_tuple<raw_socket_tmpl, raw_socket_tmpl>(
+			raw_socket_tmpl{std::get<0>(pr).release()},
+			raw_socket_tmpl{std::get<1>(pr).release()});
 	}
 	/**
 	 * Binds the socket to the local address.
@@ -226,8 +223,8 @@ public:
 	bool bind(const ADDR& addr) { return base::bind(addr); }
 	/**
 	 * Connects the socket to the remote address.
-	 * In the case of datagram sockets, this does not create an actual
-	 * connection, but rather specifies the address to which datagrams are
+	 * In the case of raw sockets, this does not create an actual
+	 * connection, but rather specifies the address to which raws are
 	 * sent by default and the only address from which packets are
 	 * received.
 	 * @param addr The address on which to "connect".
@@ -306,5 +303,5 @@ public:
 // end namespace sockpp
 }
 
-#endif		// __sockpp_datagram_socket_h
+#endif		// __sockpp_raw_socket_h
 
