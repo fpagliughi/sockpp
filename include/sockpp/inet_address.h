@@ -65,7 +65,7 @@ namespace sockpp {
 class inet_address : public sock_address
 {
 	/** The underlying C struct for IPv4 addresses */
-	sockaddr_in addr_;
+	sockaddr_in addr_{};
 
 	/** The size of the underlying address struct, in bytes */
 	static constexpr size_t SZ = sizeof(sockaddr_in);
@@ -78,7 +78,7 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	inet_address() : addr_() {}
+	inet_address() =default;
 	/**
      * Constructs an address for any iface using the specified port.
      * This is a convenient way for a server to specify an address that will
@@ -123,19 +123,27 @@ public:
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
 	 */
-	inet_address(const sockaddr_in& addr) : addr_(addr) {}
+	inet_address(const sockaddr_in& addr) : addr_{addr} {}
 	/**
 	 * Constructs the address by copying the specified address.
 	 * @param addr The other address
 	 */
-	inet_address(const inet_address& addr) : addr_(addr.addr_) {}
+	inet_address(const inet_address& addr) : addr_{addr.addr_} {}
 	/**
 	 * Checks if the address is set to some value.
-	 * This doesn't attempt to determine if the address is valid, simply
-	 * that it's not all zero.
+ 	 * This doesn't attempt to determine if the address is valid, simply
+ 	 * that it's not all zero.
 	 * @return bool
 	 */
 	bool is_set() const;
+	/**
+	 * Determines if the address is set to some value.
+	 * This doesn't attempt to determine if the address is valid, simply
+	 * that the family has been set properly.
+	 * @return @em true if this has been set as some AF_INET address,
+	 *  	   whether or not is is valid.
+	 */
+	operator bool() const { return addr_.sin_family == ADDRESS_FAMILY; }
 	/**
 	 * Attempts to resolve the host name into a 32-bit internet address.
 	 * @param saddr The string host name.

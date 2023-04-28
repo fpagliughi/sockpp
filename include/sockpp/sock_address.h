@@ -57,6 +57,7 @@ namespace sockpp {
 
 /**
  * Generic socket address.
+ *
  * Abstract base class for socket addresses. The underlying C socket
  * functions typically take or return an address as a `sockaddr` pointer and
  * length. So derived classes that wrap this to convert themselves to

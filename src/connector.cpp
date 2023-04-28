@@ -1,9 +1,9 @@
-// stream_connector.cpp
+// connector.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@
 
 #include "sockpp/connector.h"
 #include <cerrno>
-
 #if defined(_WIN32)
 	// Winsock calls return non-POSIX error codes
 	#undef  EINPROGRESS
@@ -47,7 +46,14 @@
 
 	#undef  EWOULDBLOCK
 	#define EWOULDBLOCK WSAEWOULDBLOCK
+#else
+	#include <sys/poll.h>
+	#if defined(__APPLE__)
+		#include <net/if.h>
+	#endif
 #endif
+
+using namespace std::chrono;
 
 namespace sockpp {
 
@@ -89,24 +95,37 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 	if (!recreate(addr))
 		return false;
 
-	// Out new socket is definitely in blocking mode;
-	// make it non-blocking to do this
-	set_non_blocking(true);
+	bool non_blocking =
+		#if defined(_WIN32)
+			false;
+		#else
+			is_non_blocking();
+		#endif
+
+	if (!non_blocking)
+		set_non_blocking(true);
 
 	// TODO: Reimplement with poll() for systems with lots of sockets.
 
 	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
 		if (last_error() == EINPROGRESS || last_error() == EWOULDBLOCK) {
-			// Non-blocking connect -- call `select` to wait until the timeout:
-			// Note:  Windows returns errors in exceptset so check it too, the
-			// logic afterwords doesn't change
-			fd_set readset;
-			FD_ZERO(&readset);
-			FD_SET(handle(), &readset);
-			fd_set writeset = readset;
-			fd_set exceptset = readset;
-			timeval tv = to_timeval(timeout);
-			int n = check_ret(::select(int(handle())+1, &readset, &writeset, &exceptset, &tv));
+			// TODO: Windows has a WSAPoll() function we can use.
+			#if defined(_WIN32)
+    			// Non-blocking connect -- call `select` to wait until the timeout:
+    			// Note:  Windows returns errors in exceptset so check it too, the
+    			// logic afterwords doesn't change
+    			fd_set readset;
+    			FD_ZERO(&readset);
+    			FD_SET(handle(), &readset);
+    			fd_set writeset = readset;
+    			fd_set exceptset = readset;
+    			timeval tv = to_timeval(timeout);
+    			int n = check_ret(::select(int(handle())+1, &readset, &writeset, &exceptset, &tv));
+			#else
+				pollfd fds = { handle(), POLLIN|POLLOUT, 0 };
+				int ms = int(duration_cast<milliseconds>(timeout).count());
+				int n = check_ret(::poll(&fds, 1, ms));
+			#endif
 
 			if (n > 0) {
 				// Got a socket event, but it might be an error, so check:
@@ -125,8 +144,10 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 		}
 	}
 
-	// Restore the default (blocking) mode for a new socket.
-	set_non_blocking(false);
+	// Restore blocking mode for socket, if needed.
+	if (!non_blocking)
+		set_non_blocking(false);
+
 	return true;
 }
 
