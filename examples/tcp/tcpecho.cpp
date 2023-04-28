@@ -55,9 +55,9 @@ int main(int argc, char* argv[])
 	sockpp::initialize();
 
 	// Implicitly creates an inet_address from {host,port}
-	// and then tries the connection.
+	// and then tries the connection using a timeout of 5sec.
 
-	sockpp::tcp_connector conn({host, port}, seconds{5});
+	sockpp::tcp_connector conn({host, port}, 5s);
 	if (!conn) {
 		cerr << "Error connecting to server at "
 			<< sockpp::inet_address(host, port)
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 	cout << "Created a connection from " << conn.address() << endl;
 
     // Set a timeout for the responses
-    if (!conn.read_timeout(seconds(5))) {
+    if (!conn.read_timeout(5s)) {
         cerr << "Error setting timeout on TCP stream: "
                 << conn.last_error_str() << endl;
     }

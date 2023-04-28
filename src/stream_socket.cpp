@@ -49,9 +49,9 @@ namespace sockpp {
 
 stream_socket stream_socket::create(int domain, int protocol /*=0*/)
 {
-	stream_socket sock(::socket(domain, COMM_TYPE, protocol));
+	stream_socket sock(create_handle(domain, protocol));
 	if (!sock)
-		sock.clear(get_last_error());
+		sock.set_last_error();
 	return sock;
 }
 
@@ -94,7 +94,7 @@ ssize_t stream_socket::read_n(void *buf, size_t n)
 	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
 
 	while (nr < n) {
-		if ((nx = read(b+nr, n-nr)) < 0 && last_error() == EINTR)
+		if ((nx = read(b + nr, n - nr)) < 0 && last_error() == errc::interrupted)
 			continue;
 
 		if (nx <= 0)
@@ -201,7 +201,7 @@ ssize_t stream_socket::write_n(const void *buf, size_t n)
 	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
 
 	while (nw < n) {
-		if ((nx = write(b+nw, n-nw)) < 0 && last_error() == EINTR)
+		if ((nx = write(b + nw, n - nw)) < 0 && last_error() == errc::interrupted)
 			continue;
 
 		if (nx <= 0)

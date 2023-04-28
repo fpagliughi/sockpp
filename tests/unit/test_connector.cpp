@@ -59,7 +59,7 @@ TEST_CASE("connector unspecified address", "[connector]") {
     #if defined(_WIN32)
         REQUIRE(conn.last_error() == WSAENOTSOCK);
     #else
-        REQUIRE(conn.last_error() == EAFNOSUPPORT);
+        REQUIRE(conn.last_error() == errc::address_family_not_supported);
     #endif
 }
 

@@ -36,17 +36,7 @@
 
 #include "sockpp/connector.h"
 #include <cerrno>
-#if defined(_WIN32)
-	// Winsock calls return non-POSIX error codes
-	#undef  EINPROGRESS
-	#define EINPROGRESS WSAEINPROGRESS
-
-	#undef  ETIMEDOUT
-	#define ETIMEDOUT   WSAETIMEDOUT
-
-	#undef  EWOULDBLOCK
-	#define EWOULDBLOCK WSAEWOULDBLOCK
-#else
+#if !defined(_WIN32)
 	#include <sys/poll.h>
 	#if defined(__APPLE__)
 		#include <net/if.h>
@@ -87,7 +77,7 @@ bool connector::connect(const sock_address& addr)
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::connect(const sock_address& addr, std::chrono::microseconds timeout)
+bool connector::connect(const sock_address& addr, microseconds timeout)
 {
 	if (timeout.count() <= 0)
 		return connect(addr);
@@ -105,10 +95,9 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 	if (!non_blocking)
 		set_non_blocking(true);
 
-	// TODO: Reimplement with poll() for systems with lots of sockets.
-
 	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
-		if (last_error() == EINPROGRESS || last_error() == EWOULDBLOCK) {
+		auto err = last_error();
+		if (err == errc::operation_in_progress || err == errc::operation_would_block) {
 			// TODO: Windows has a WSAPoll() function we can use.
 			#if defined(_WIN32)
     			// Non-blocking connect -- call `select` to wait until the timeout:
@@ -138,7 +127,7 @@ bool connector::connect(const sock_address& addr, std::chrono::microseconds time
 			}
 		}
 
-		if (last_error() != 0) {
+		if (last_error()) {
 			close();
 			return false;
 		}

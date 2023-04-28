@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 	string s, sret;
 	while (getline(cin, s) && !s.empty()) {
 		if (conn.write(s) != (int) s.length()) {
-			if (conn.last_error() == EPIPE) {
+			if (conn.last_error() == errc::broken_pipe) {
 				cerr << "It appears that the socket was closed." << endl;
 			}
 			else {

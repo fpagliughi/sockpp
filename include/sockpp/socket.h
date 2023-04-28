@@ -207,22 +207,13 @@ protected:
 		return false;
 	}
 	/**
-	 * OS-specific means to retrieve the last error from an operation.
-	 * This should be called after a failed system call to set the
-	 * lastErr_ member variable. Normally this would be called from
-	 * @ref check_ret.
-	 */
-	static int get_last_error() {
-		return ioresult::get_last_error();
-	}
-	/**
 	 * Cache the last system error code into this object.
 	 * This should be called after a failed system call to store the error
 	 * value.
 	 * @return The error value set.
 	 */
 	int set_last_error() const {
-		return lastErr_ = get_last_error();
+		return lastErr_ = ioresult::get_last_errno();
 	}
 	/**
 	 * Checks the value and if less than zero, sets last error.
@@ -232,7 +223,7 @@ protected:
 	 */
 	template <typename T>
 	T check_ret(T ret) const {
-		lastErr_ = (ret < 0) ? get_last_error() : 0;
+		lastErr_ = (ret < 0) ? ioresult::get_last_errno() : 0;
 		return ret;
 	}
 	/**
@@ -244,7 +235,7 @@ protected:
 	 */
 	template <typename T>
 	bool check_ret_bool(T ret) const {
-		lastErr_ = (ret < 0) ? get_last_error() : 0;
+		lastErr_ = (ret < 0) ? ioresult::get_last_errno() : 0;
 		return ret >= 0;
 	}
 	/**
@@ -271,7 +262,7 @@ protected:
 	 * @return Returns the value sent to it, `ret`.
 	 */
 	socket_t check_socket(socket_t ret) const {
-		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
+		lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_errno() : 0;
 		return ret;
 	}
 	/**
@@ -283,8 +274,8 @@ protected:
 	 * @return @em true if the value is a valid socket (not INVALID_SOCKET)
 	 *  	   or @em false is is an error (INVALID_SOCKET)
 	 */
-	bool check_socket_bool(socket_t ret) const{
-		lastErr_ = (ret == INVALID_SOCKET) ? get_last_error() : 0;
+	bool check_socket_bool(socket_t ret) const {
+		lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_errno() : 0;
 		return ret != INVALID_SOCKET;
 	}
 	/**
@@ -579,7 +570,17 @@ public:
 	 * This is typically the code from the underlying OS operation.
 	 * @return The code for the last errror.
 	 */
-	int last_error() const { return lastErr_; }
+	std::error_code last_error() const {
+		return std::error_code{ lastErr_, std::system_category() };
+	}
+	/**
+	 * Gets the platform-specific errror from the last failed operation.
+	 * This is integer the code from the OS:
+	 * @li On *nix systems, this is the `errno` for the current thread.
+	 * @li On Windows, this is the value returned by `WSAGetLastError()`.
+	 * @return The platform-specific for the last errror.
+	 */
+	int last_errno() const { return lastErr_; }
 	/**
 	 * Gets a string describing the last errror.
 	 * This is typically the returned message from the system strerror().

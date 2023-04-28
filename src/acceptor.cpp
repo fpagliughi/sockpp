@@ -47,7 +47,7 @@ acceptor acceptor::create(int domain)
 {
 	acceptor acc(create_handle(domain));
 	if (!acc)
-		acc.clear(get_last_error());
+		acc.set_last_error();
 	return acc;
 }
 

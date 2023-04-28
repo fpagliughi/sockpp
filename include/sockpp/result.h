@@ -80,13 +80,23 @@ class result {
 	 * This should be called after a failed system call to get the cause of
 	 * the error.
 	 */
-	static int get_last_error() {
+	static int get_last_errno() {
 		#if defined(_WIN32)
 			return ::WSAGetLastError();
 		#else
 			int err = errno;
 			return err;
 		#endif
+	}
+
+	/**
+	 * Retrieves the last error from an operation.
+	 * This should be called after a failed system call to get the cause of
+	 * the error.
+	 */
+	static std::error_code get_last_error() {
+		int ec = get_last_errno();
+		return error_code{ ec, std::system_category() };
 	}
 
 	friend class socket;
@@ -147,6 +157,16 @@ public:
 	 */
 	static result from_error(errc err) {
 		return result(err);
+	}
+	/**
+	 * Creates an unsuccessful result from an platform-specific integer
+	 * error code and an optional category.
+	 * @param ec The platform-specific error code.
+	 * @param ecat The error category.
+	 * @return The result of an unsuccessful operation.
+	 */
+	static result from_last_error() {
+		return from_error(get_last_errno());
 	}
 	/**
 	 * Determines if the result represents a failed operation.

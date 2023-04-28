@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ TEST_CASE("stream_socket handle constructor", "[stream_socket]") {
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
 		// TODO: Should this set an error?
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 	}
 }
 
@@ -77,7 +77,7 @@ TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 		stream_socket sock(ADDR);
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 		REQUIRE(sock.address() == ADDR);
 	}
 
@@ -87,7 +87,7 @@ TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 		stream_socket sock(ADDR);
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
-		REQUIRE(sock.last_error() == EAFNOSUPPORT);
+		REQUIRE(sock.last_error() == errc::address_family_not_supported);
 	}
 }
 #endif

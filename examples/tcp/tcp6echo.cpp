@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 	cout << "Created a connection from " << conn.address() << endl;
 
     // Set a timeout for the responses
-    if (!conn.read_timeout(seconds(5))) {
+    if (!conn.read_timeout(5s)) {
         cerr << "Error setting timeout on TCP stream: "
                 << conn.last_error_str() << endl;
     }

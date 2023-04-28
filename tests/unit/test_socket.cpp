@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -87,7 +87,7 @@ TEST_CASE("socket constructors", "[socket]") {
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
 		REQUIRE(sock.handle() == INVALID_SOCKET);
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 	}
 
 	SECTION("handle constructor") {
@@ -97,7 +97,7 @@ TEST_CASE("socket constructors", "[socket]") {
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
 		REQUIRE(sock.handle() == HANDLE);
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 	}
 
 	SECTION("move constructor") {
@@ -109,7 +109,7 @@ TEST_CASE("socket constructors", "[socket]") {
 		// Make sure the new socket got the handle
 		REQUIRE(sock);
 		REQUIRE(sock.handle() == HANDLE);
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 
 		// Make sure the handle was moved out of the org_sock
 		REQUIRE(!org_sock);
@@ -131,19 +131,19 @@ TEST_CASE("socket errors", "[socket]") {
 		REQUIRE(!ok);
 		REQUIRE(!sock);
 
-		int err = sock.last_error();
-		REQUIRE(err != 0);
+		auto err = sock.last_error();
+		REQUIRE(err);
 
 		// last_error() is sticky, unlike `errno`
 		REQUIRE(sock.last_error() == err);
 
 		// We can clear the error
 		sock.clear();
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 
 		// Test arbitrary clear value
 		sock.clear(42);
-		REQUIRE(sock.last_error() == 42);
+		REQUIRE(sock.last_error().value() == 42);
 		REQUIRE(!sock);
 	}
 
@@ -270,7 +270,7 @@ TEST_CASE("failed socket pair", "[socket]") {
 	REQUIRE(!sock1);
 	REQUIRE(!sock2);
 
-	REQUIRE(sock1.last_error() != 0);
+	REQUIRE(sock1.last_error());
 	REQUIRE(sock1.last_error() == sock2.last_error());
 }
 
@@ -311,7 +311,7 @@ TEST_CASE("thread-safe last error", "[socket]") {
 
 	std::thread thr([&] {
 		// Test #1
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 		{
 			// Wait for Test #2
 			std::unique_lock<std::mutex> lk(m);
@@ -321,7 +321,7 @@ TEST_CASE("thread-safe last error", "[socket]") {
 		}
 
 		// Test #3
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 	});
 
 	{
@@ -337,7 +337,7 @@ TEST_CASE("thread-safe last error", "[socket]") {
 	bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
 
 	REQUIRE(!ok);
-	REQUIRE(sock.last_error() != 0);
+	REQUIRE(sock.last_error());
 
 	{
 		std::unique_lock<std::mutex> lk(m);

@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ TEST_CASE("acceptor handle constructor", "[acceptor]") {
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
 		// TODO: Should this set an error?
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 	}
 }
 
@@ -76,7 +76,7 @@ TEST_CASE("acceptor address constructor", "[acceptor]") {
 		acceptor sock(ADDR);
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 		REQUIRE(sock.address() == ADDR);
 	}
 
@@ -91,7 +91,7 @@ TEST_CASE("acceptor address constructor", "[acceptor]") {
         #if defined(_WIN32)
             REQUIRE(sock.last_error() == WSAEINVAL);
         #else
-            REQUIRE(sock.last_error() == EAFNOSUPPORT);
+            REQUIRE(sock.last_error() == errc::address_family_not_supported);
         #endif
 	}
 }
@@ -102,7 +102,7 @@ TEST_CASE("acceptor create", "[acceptor]") {
 
 		REQUIRE(sock);
 		REQUIRE(sock.is_open());
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 
         // Windows returns unknown family for unbound socket
         // Windows returns a different error code than *nix
@@ -123,7 +123,7 @@ TEST_CASE("acceptor create", "[acceptor]") {
         #if defined(_WIN32)
             REQUIRE(sock.last_error() == WSAEINVAL);
         #else
-            REQUIRE(sock.last_error() == EAFNOSUPPORT);
+            REQUIRE(sock.last_error() == errc::address_family_not_supported);
         #endif
 	}
 }

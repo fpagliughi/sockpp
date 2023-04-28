@@ -112,7 +112,7 @@ socket socket::create(int domain, int type, int protocol /*=0*/)
 {
 	socket sock(::socket(domain, type, protocol));
 	if (!sock)
-		sock.clear(get_last_error());
+		sock.set_last_error();
 	return sock;
 }
 
@@ -140,7 +140,7 @@ socket socket::clone() const
 int socket::get_flags() const
 {
 	int flags = ::fcntl(handle_, F_GETFL, 0);
-	lastErr_ = (flags == -1) ? get_last_error() : 0;
+	lastErr_ = (flags == -1) ? ioresult::get_last_errno() : 0;
 	return flags;
 }
 
@@ -187,7 +187,7 @@ std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*
 			sock1.reset(sv[1]);
 		}
 		else {
-			int err = get_last_error();
+			int err = ioresult::get_last_errno();
 			sock0.clear(err);
 			sock1.clear(err);
 		}

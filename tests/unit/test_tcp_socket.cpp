@@ -72,7 +72,7 @@ TEST_CASE("tcp_socket handle constructor", "[tcp_socket]") {
 		REQUIRE(!sock);
 		REQUIRE(!sock.is_open());
 		// TODO: Should this set an error?
-		REQUIRE(sock.last_error() == 0);
+		REQUIRE(!sock.last_error());
 
 		//REQUIRE(sock.family() == AF_INET);
 	}
