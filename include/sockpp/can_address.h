@@ -128,13 +128,7 @@ public:
 	 * that it's not all zero.
 	 * @return @em true if the address has been set, @em false otherwise.
 	 */
-	bool is_set() const noexcept { return family() != AF_UNSPEC; }
-	/**
-	 * Determines if the address is valid for a CAN bus interface.
-	 * @return @em true if the address is valid or a CAN bus interface,
-	 *  	   @false otherwise.
-	 */
-	operator bool() const noexcept { return family() == AF_CAN; }
+	bool is_set() const noexcept override { return addr_.can_family == ADDRESS_FAMILY; }
 	/**
 	 * Gets the name of the CAN interface to which this address refers.
 	 * @return The name of the CAN interface to which this address refers.

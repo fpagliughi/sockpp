@@ -96,6 +96,23 @@ public:
 		auto p = sockaddr_ptr();
 		return p ? p->sa_family : AF_UNSPEC;
 	}
+	/**
+	 * Checks if the address is set to some value.
+ 	 * This doesn't attempt to determine if the address is valid, simply
+ 	 * that it has set an address family.
+	 * @return @em true if at least the address family has been set, @em
+	 *  	   false otherwise.
+	 */
+	virtual bool is_set() const noexcept { return family() != AF_UNSPEC; }
+	/**
+	 * Determines if the address is set to some value.
+	 * This doesn't attempt to determine if the address is valid, simply
+	 * that the family has been set properly.
+	 * @return @em true if this has been set as some address, whether or not
+	 *  	   is is valid.
+	 */
+	virtual operator bool() const noexcept { return is_set(); }
+
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -109,20 +126,20 @@ public:
  */
 class sock_address_any : public sock_address
 {
-    /** Storage for any kind of socket address */
-    sockaddr_storage addr_;
-	/** Length of the address (in bytes) */
-	socklen_t sz_;
-
 	/** The maximum size of an address, in bytes */
 	static constexpr size_t MAX_SZ = sizeof(sockaddr_storage);
+
+    /** Storage for any kind of socket address */
+    sockaddr_storage addr_{};
+	/** Length of the address (in bytes) */
+	socklen_t sz_{MAX_SZ};
 
 public:
 	/**
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	sock_address_any() : addr_{}, sz_{MAX_SZ} {}
+	sock_address_any() =default;
 	/**
 	 * Constructs an address.
 	 * @param addr Pointer to a buffer holding the address.
@@ -131,8 +148,13 @@ public:
 	 *  		  an address.
 	 */
 	sock_address_any(const sockaddr* addr, socklen_t n) {
-		if (size_t(n) > MAX_SZ)
-			throw std::length_error("Address length out of range");
+		if (size_t(n) > MAX_SZ) {
+			#if defined(SOCKPP_WITH_EXCEPTIONS)
+				throw std::length_error("Address length out of range");
+			#else
+				return;
+			#endif
+		}
         std::memcpy(&addr_, addr, sz_ = n);
     }
 	/**
@@ -143,8 +165,13 @@ public:
 	 *  		  an address.
 	 */
 	sock_address_any(const sockaddr_storage& addr, socklen_t n) {
-		if (size_t(n) > MAX_SZ)
-			throw std::length_error("Address length out of range");
+		if (size_t(n) > MAX_SZ) {
+			#if defined(SOCKPP_WITH_EXCEPTIONS)
+				throw std::length_error("Address length out of range");
+			#else
+				return;
+			#endif
+		}
         std::memcpy(&addr_, &addr, sz_ = n);
     }
 	/**

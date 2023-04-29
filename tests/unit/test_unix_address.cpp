@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2018 Frank Pagliughi
+// Copyright (c) 2018-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,7 @@ TEST_CASE("unix_address default constructor", "[address]") {
 TEST_CASE("unix_address path constructor", "[address]") {
     unix_address addr(PATH);
 
+	REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(PATH == addr.path());
     REQUIRE(sizeof(sockaddr_un) == addr.size());
@@ -81,6 +82,7 @@ TEST_CASE("unix_address path constructor", "[address]") {
     SECTION("copy constructor") {
         unix_address addr2(addr);
 
+        REQUIRE(addr2);
         REQUIRE(addr2.is_set());
         REQUIRE(PATH == addr2.path());
         REQUIRE(sizeof(sockaddr_un) == addr2.size());
@@ -96,6 +98,7 @@ TEST_CASE("unix_address path constructor", "[address]") {
         auto sa = addr.sockaddr_ptr();
         unix_address addr2(*sa);
 
+        REQUIRE(addr2);
         REQUIRE(addr2.is_set());
         REQUIRE(PATH == addr2.path());
         REQUIRE(sizeof(sockaddr_un) == addr2.size());
@@ -138,6 +141,7 @@ TEST_CASE("unix_address sockaddr_un constructor", "[address]") {
 
     unix_address addr(unaddr);
 
+	REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(PATH == addr.path());
     REQUIRE(sizeof(sockaddr_un) == addr.size());

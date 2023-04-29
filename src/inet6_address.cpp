@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -43,14 +43,6 @@ namespace sockpp {
 
 // --------------------------------------------------------------------------
 
-bool inet6_address::is_set() const
-{
-	static const auto EMPTY_ADDR = sockaddr_in6{};
-	return std::memcmp(&addr_, &EMPTY_ADDR, SZ) != 0;
-}
-
-// --------------------------------------------------------------------------
-
 in6_addr inet6_address::resolve_name(const string& saddr)
 {
 	#if !defined(_WIN32)
@@ -66,13 +58,22 @@ in6_addr inet6_address::resolve_name(const string& saddr)
     int gai_err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
 
     #if !defined(_WIN32)
-        if (gai_err == EAI_SYSTEM)
-            throw sys_error();
+        if (gai_err == EAI_SYSTEM) {
+			#if defined(SOCKPP_WITH_EXCEPTIONS)
+				throw sys_error();
+			#else
+				return in6_addr{};
+			#endif
+		}
     #endif
 
-    if (gai_err != 0)
-        throw getaddrinfo_error(gai_err, saddr);
-
+	if (gai_err != 0) {
+		#if defined(SOCKPP_WITH_EXCEPTIONS)
+			throw getaddrinfo_error(gai_err, saddr);
+		#else
+			return in6_addr{};
+		#endif
+	}
 
     auto ipv6 = reinterpret_cast<sockaddr_in6*>(res->ai_addr);
     auto addr = ipv6->sin6_addr;

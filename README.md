@@ -1,7 +1,5 @@
 # sockpp
 
-[![Build Status](https://travis-ci.org/fpagliughi/sockpp.svg?branch=master)](https://travis-ci.org/fpagliughi/sockpp)
-
 Simple, modern, C++ socket library.
 
 This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
@@ -24,7 +22,7 @@ The API is changing (slightly)!
 
 The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which was never fully merged is coming into the API with a `result<T>` class. This will be generic over the return type, though typically use an int for I/O operations, but the error state will be represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors. This may even take over the whole of the API to make _all_ operations stateless by default.
 
-Work has has begun on incorporating Secure Sockets into the library using either OpenSSL or MbedTLS libraries.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years in being merged and updated, along with new work to do something compatible with OpenSSL. You will be ablt to chose one library or the other when building `sockpp`.
+Work has has begun on incorporating Secure Sockets into the library using either OpenSSL or MbedTLS libraries.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years in being merged and updated, along with new work to do something compatible with OpenSSL. You will be ablt to chose one library or the other when building `sockpp`. This probably won't be in the next release, but the following one.
 
 The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
 
@@ -38,9 +36,15 @@ If you're using this library, tweet at me or send me a message, and let me know 
 
 ## Unrelased Features in this Branch
 
-- [#72](https://github.com/fpagliughi/sockpp/issues/72) Removed exceptions
+- [#72](https://github.com/fpagliughi/sockpp/issues/72) Removed some exceptions and made the others optional by build option.
 - Added `raw_socket` class.
-- [#77](https://github.com/fpagliughi/sockpp/issues/77) Added `result<T>` tempate class for success/error return values using `std::error_code` for errors.
+- [#77](https://github.com/fpagliughi/sockpp/issues/77) 
+    - Exceptions can now be removed through a CMake build option, `SOCKPP_WITH_EXCEPTIONS`.
+    - Added `result<T>` tempate class for success/error return values using `std::error_code` for errors.
+    - `sockpp::last_error()` now returns a `std::error_code`. This should be slightly more portable, but Windows will likely still be somewhat problematic.
+    - A new `sockpp::last_errno()` will return the platform-specific integer error code (i.e. what `last_error()` used to return).
+    - More consistent validity checks for address types with `is_set()` and `operator bool()`.
+- The `connector::connect()` with timeout now uses `poll()` for the timeout on non-Windows systems. Hopefully `WSAPoll()` on Windows will be available before the upcoming release as well.
     
 ## New in v0.8.1
 
@@ -112,7 +116,7 @@ $ cmake --build build/ --target install
 
 ### Build Options
 
-The library has several build options via CMake to choose between creating a static or shared (dynamic) library - or both. It also allows you to build the example options, and if Doxygen is
+The library has several build options via CMake to choose between creating a static or shared (dynamic) library - or both. It also allows you to build the example options, and if Doxygen is installed, it can be used to create documentation.
 
 Variable | Default Value | Description
 ------------ | ------------- | -------------
@@ -121,9 +125,8 @@ SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
 SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires _Doxygen)_
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
-SOCKPP_BUILD_CAN | OFF | Build SocketCAN support. (Linux only)
-SOCKPP_WITH_MBEDTLS | OFF | Secure Sockets with MbedTLS
-SOCKPP_WITH_OPENSSL | OFF | Secure Sockets with OpenSSL
+SOCKPP_WITH_CAN | OFF | Include SocketCAN support. (Linux only)
+SOCKPP_WITH_EXCEPTIONS | ON | Whether to use C++ exceptions
 
 Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:
 

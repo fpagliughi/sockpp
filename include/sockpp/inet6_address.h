@@ -13,7 +13,8 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi All rights reserved.
+// Copyright (c) 2019-2023 Frank Pagliughi
+// All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -55,7 +56,6 @@
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-
 
 /**
  * Class that represents an internet (IPv6) address. This inherits from the
@@ -139,11 +139,12 @@ public:
 	}
 	/**
 	 * Checks if the address is set to some value.
-	 * This doesn't attempt to determine if the address is valid, simply
-	 * that it's not all zero.
-	 * @return bool
+ 	 * This doesn't attempt to determine if the address is valid, simply
+ 	 * that it was at least set to an address of this family.
+	 * @return @em true if the address is set to some value in this family,
+	 *  	   even if not valid, @em false if the address is empty.
 	 */
-	bool is_set() const;
+	bool is_set() const noexcept override  { return addr_.sin6_family == ADDRESS_FAMILY; }
 	/**
 	 * Attempts to resolve the host name into a 32-bit internet address.
 	 * @param saddr The string host name.
@@ -175,8 +176,6 @@ public:
      * Note that the address is normally stored in network byte
      * order.
 	 * @param i The byte to read (0-7)
-{
-	return addr_ != sockaddr_in6{};
 	 * @return The specified byte in the 128-bit IPv6 Address
 	 */
 	uint8_t operator[](int i) const {

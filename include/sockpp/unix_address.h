@@ -119,14 +119,8 @@ public:
 	 * that it's not all zero.
 	 * @return @em true if the address has been set, @em false otherwise.
 	 */
-	bool is_set() const { return addr_.sun_path[0] != '\0'; }
-	/**
-	 * Determines if the address is valid for a UNIX socket.
-	 * @return @em true if the address is valid for a UNIX socket,
-	 *  	   @false otherwise.
-	 */
-	operator bool() const noexcept {
-		return family() == ADDRESS_FAMILY && is_set();
+	bool is_set() const noexcept override {
+		return addr_.sun_family == ADDRESS_FAMILY && addr_.sun_path[0] != '\0';
 	}
 	/**
 	 * Gets the path to which this address refers.

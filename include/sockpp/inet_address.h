@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -129,21 +129,15 @@ public:
 	 * @param addr The other address
 	 */
 	inet_address(const inet_address& addr) : addr_{addr.addr_} {}
+
 	/**
 	 * Checks if the address is set to some value.
  	 * This doesn't attempt to determine if the address is valid, simply
- 	 * that it's not all zero.
-	 * @return bool
+ 	 * that it was at least set to an address of this family.
+	 * @return @em true if the address is set to some value in this family,
+	 *  	   even if not valid, @em false if the address is empty.
 	 */
-	bool is_set() const;
-	/**
-	 * Determines if the address is set to some value.
-	 * This doesn't attempt to determine if the address is valid, simply
-	 * that the family has been set properly.
-	 * @return @em true if this has been set as some AF_INET address,
-	 *  	   whether or not is is valid.
-	 */
-	operator bool() const { return addr_.sin_family == ADDRESS_FAMILY; }
+	bool is_set() const noexcept override { return addr_.sin_family == ADDRESS_FAMILY; }
 	/**
 	 * Attempts to resolve the host name into a 32-bit internet address.
 	 * @param saddr The string host name.

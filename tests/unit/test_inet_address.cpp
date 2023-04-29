@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2018 Frank Pagliughi
+// Copyright (c) 2018-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,7 @@ const in_port_t     PORT { 12345 };
 TEST_CASE("inet_address default constructor", "[address]") {
     inet_address addr;
 
+    REQUIRE(!addr);
     REQUIRE(!addr.is_set());
     REQUIRE(0 == addr.address());
     REQUIRE(0 == addr.port());
@@ -60,6 +61,7 @@ TEST_CASE("inet_address default constructor", "[address]") {
     SECTION("creating address from int32") {
         addr.create(LOCALHOST_ADDR, PORT);
 
+        REQUIRE(addr);
         REQUIRE(addr.is_set());
         REQUIRE(LOCALHOST_ADDR == addr.address());
         REQUIRE(PORT == addr.port());
@@ -78,6 +80,7 @@ TEST_CASE("inet_address default constructor", "[address]") {
     SECTION("creating address from name") {
         addr.create(LOCALHOST_STR, PORT);
 
+        REQUIRE(addr);
         REQUIRE(addr.is_set());
         REQUIRE(LOCALHOST_ADDR == addr.address());
         REQUIRE(PORT == addr.port());
@@ -105,6 +108,7 @@ TEST_CASE("inet_address port-only constructor", "[address]") {
 TEST_CASE("inet_address int32_t constructor", "[address]") {
     inet_address addr(LOCALHOST_ADDR, PORT);
 
+	REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(LOCALHOST_ADDR == addr.address());
     REQUIRE(PORT == addr.port());
@@ -123,6 +127,7 @@ TEST_CASE("inet_address int32_t constructor", "[address]") {
 TEST_CASE("inet_address name constructor", "[address]") {
     inet_address addr(LOCALHOST_STR, PORT);
 
+	REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(LOCALHOST_ADDR == addr.address());
     REQUIRE(PORT == addr.port());
