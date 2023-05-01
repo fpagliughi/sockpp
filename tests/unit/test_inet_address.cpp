@@ -144,6 +144,19 @@ TEST_CASE("inet_address name constructor", "[address]") {
 }
 
 TEST_CASE("IPv4 resolve_address", "[address]") {
-	REQUIRE(inet_address::resolve_name("127.0.0.1") == htonl(LOCALHOST_ADDR));
-	REQUIRE(inet_address::resolve_name(LOCALHOST_STR) == htonl(LOCALHOST_ADDR));
+	SECTION("localhost numeric") {
+		auto addr_res = inet_address::resolve_name("127.0.0.1");
+		REQUIRE(addr_res.is_ok());
+
+		auto addr = addr_res.value();
+		REQUIRE(addr == htonl(LOCALHOST_ADDR));
+	}
+
+	SECTION("localhost name") {
+		auto addr_res = inet_address::resolve_name(LOCALHOST_STR);
+		REQUIRE(addr_res.is_ok());
+
+		auto addr = addr_res.value();
+		REQUIRE(addr == htonl(LOCALHOST_ADDR));
+	}
 }

@@ -40,7 +40,8 @@ add_library(sockpp-objs OBJECT
 	acceptor.cpp
 	connector.cpp
 	datagram_socket.cpp
-	exception.cpp
+  error.cpp
+  exception.cpp
 	inet_address.cpp
 	inet6_address.cpp
 	socket.cpp

@@ -48,6 +48,7 @@
 #define __sockpp_inet_addr_h
 
 #include "sockpp/sock_address.h"
+#include "sockpp/result.h"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -144,7 +145,7 @@ public:
 	 * @return The internet address in network byte order.
      * @throw sys_error, getaddrinfo_error
 	 */
-	static in_addr_t resolve_name(const std::string& saddr);
+	static result<in_addr_t> resolve_name(const std::string& saddr);
 	/**
 	 * Creates the socket address using the specified host address and port
 	 * number.

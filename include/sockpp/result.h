@@ -42,18 +42,10 @@
 #define __sockpp_result_h
 
 #include "sockpp/platform.h"
-#include <system_error>
+#include "sockpp/error.h"
 #include <iostream>
 
 namespace sockpp {
-
-/** A sockpp error_code is a std error_code. */
-using error_code = std::error_code;
-
-/** A sockpp error_category is a std error_category. */
-using error_category = std::error_category;
-
-using errc = std::errc;
 
 /////////////////////////////////////////////////////////////////////////////
 

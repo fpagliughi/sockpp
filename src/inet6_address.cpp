@@ -35,7 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/inet6_address.h"
-#include "sockpp/exception.h"
+#include "sockpp/error.h"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ namespace sockpp {
 
 // --------------------------------------------------------------------------
 
-in6_addr inet6_address::resolve_name(const string& saddr)
+result<in6_addr> inet6_address::resolve_name(const string& saddr)
 {
 	#if !defined(_WIN32)
 		in6_addr ia;
@@ -55,30 +55,28 @@ in6_addr inet6_address::resolve_name(const string& saddr)
     hints.ai_family = ADDRESS_FAMILY;
     hints.ai_socktype = SOCK_STREAM;
 
-    int gai_err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
+	int err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
 
-    #if !defined(_WIN32)
-        if (gai_err == EAI_SYSTEM) {
+	if (err != 0) {
+		#if defined(_WIN32)
 			#if defined(SOCKPP_WITH_EXCEPTIONS)
-				throw sys_error();
-			#else
-				return in6_addr{};
+				throw getaddrinfo_error(gai_err, saddr);
 			#endif
-		}
-    #endif
-
-	if (gai_err != 0) {
-		#if defined(SOCKPP_WITH_EXCEPTIONS)
-			throw getaddrinfo_error(gai_err, saddr);
+			return result<in6_addr>::from_last_error();
 		#else
-			return in6_addr{};
+			#if defined(SOCKPP_WITH_EXCEPTIONS)
+				if (err == EAI_SYSTEM)
+					throw sys_error();
+				throw getaddrinfo_error(err, saddr);
+			#endif
+			return make_error_code(get_addr_info_errc(err));
 		#endif
 	}
 
     auto ipv6 = reinterpret_cast<sockaddr_in6*>(res->ai_addr);
     auto addr = ipv6->sin6_addr;
     freeaddrinfo(res);
-    return addr;
+	return addr;
 }
 
 // --------------------------------------------------------------------------
@@ -101,9 +99,14 @@ void inet6_address::create(const in6_addr& addr, in_port_t port)
 void inet6_address::create(const string& saddr, in_port_t port)
 {
 	addr_ = sockaddr_in6{};
+
+	auto addr = resolve_name(saddr.c_str());
+	if (!addr)
+		return;
+
 	addr_.sin6_family = AF_INET6;
-    addr_.sin6_flowinfo = 0;
-	addr_.sin6_addr = resolve_name(saddr.c_str());
+	addr_.sin6_flowinfo = 0;
+	addr_.sin6_addr = addr.value();
 	addr_.sin6_port = htons(port);
 	#if defined(__APPLE__) || defined(BSD)
 		addr_.sin6_len = (uint8_t) SZ;

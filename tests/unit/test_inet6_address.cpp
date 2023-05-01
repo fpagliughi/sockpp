@@ -136,12 +136,16 @@ TEST_CASE("inet6_address name constructor", "[address]") {
 
 TEST_CASE("IPv6 resolve_address", "[address]") {
 	SECTION("local address") {
-		auto addr = inet6_address::resolve_name("::1");
+		auto addr_res = inet6_address::resolve_name("::1");
+		REQUIRE(addr_res.is_ok());
+		auto addr = addr_res.value();
 		REQUIRE(memcmp(LOCALHOST_ADDR.s6_addr, addr.s6_addr, 16) == 0);
 	}
 
 	SECTION("any address") {
-		auto addr = inet6_address::resolve_name("::");
+		auto addr_res = inet6_address::resolve_name("::");
+		REQUIRE(addr_res.is_ok());
+		auto addr = addr_res.value();
 		REQUIRE(memcmp(ANY_ADDR.s6_addr, addr.s6_addr, 16) == 0);
 	}
 }

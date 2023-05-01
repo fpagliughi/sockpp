@@ -35,7 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/stream_socket.h"
-#include "sockpp/exception.h"
+#include "sockpp/error.h"
 #include <algorithm>
 #include <memory>
 

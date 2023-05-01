@@ -49,6 +49,7 @@
 
 #include "sockpp/platform.h"
 #include "sockpp/sock_address.h"
+#include "sockpp/result.h"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -148,9 +149,10 @@ public:
 	/**
 	 * Attempts to resolve the host name into a 32-bit internet address.
 	 * @param saddr The string host name.
-	 * @return The internet address in network byte order.
+	 * @return On success, the internet address in network byte order, or an
+	 *  	   error_code on failure.
 	 */
-	static in6_addr resolve_name(const std::string& saddr);
+	static result<in6_addr> resolve_name(const std::string& saddr);
 	/**
 	 * Creates the socket address using the specified host address and port
 	 * number.

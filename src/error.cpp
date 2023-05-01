@@ -1,9 +1,9 @@
-// datagram_socket.cpp
+// error.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,32 +33,21 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
-#include "sockpp/datagram_socket.h"
 #include "sockpp/error.h"
-#include <algorithm>
-
-using namespace std::chrono;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
-//								datagram_socket
-/////////////////////////////////////////////////////////////////////////////
 
-datagram_socket::datagram_socket(const sock_address& addr)
-{
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
-
-	if (check_socket_bool(h)) {
-		reset(h);
-		// TODO: If the bind fails, should we close the socket and fail completely?
-		bind(addr);
-	}
+// A global function returning a static instance of the custom category
+const ::detail::gai_errc_category &gai_errc_category() {
+	static ::detail::gai_errc_category c;
+	return c;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
+// end namespace 'sockpp'
 }
 

@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/socket.h"
-#include "sockpp/exception.h"
+#include "sockpp/error.h"
 #include <algorithm>
 #include <cstring>
 #include <fcntl.h>

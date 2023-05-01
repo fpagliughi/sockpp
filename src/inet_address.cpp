@@ -35,7 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/inet_address.h"
-#include "sockpp/exception.h"
+#include "sockpp/error.h"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ namespace sockpp {
 
 // --------------------------------------------------------------------------
 
-in_addr_t inet_address::resolve_name(const std::string& saddr)
+result<in_addr_t> inet_address::resolve_name(const std::string& saddr)
 {
 	#if !defined(_WIN32)
 		in_addr ia;
@@ -55,23 +55,21 @@ in_addr_t inet_address::resolve_name(const std::string& saddr)
     hints.ai_family = ADDRESS_FAMILY;
     hints.ai_socktype = SOCK_STREAM;
 
-    int gai_err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
+    int err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
 
-    #if !defined(_WIN32)
-        if (gai_err == EAI_SYSTEM) {
+	if (err != 0) {
+		#if defined(_WIN32)
 			#if defined(SOCKPP_WITH_EXCEPTIONS)
-				throw sys_error();
-			#else
-				return in_addr_t{};
+				throw getaddrinfo_error(gai_err, saddr);
 			#endif
-		}
-    #endif
-
-    if (gai_err != 0) {
-		#if defined(SOCKPP_WITH_EXCEPTIONS)
-			throw getaddrinfo_error(gai_err, saddr);
+			return result<in6_addr>::from_last_error();
 		#else
-			return in_addr_t{};
+			#if defined(SOCKPP_WITH_EXCEPTIONS)
+				if (err == EAI_SYSTEM)
+					throw sys_error();
+				throw getaddrinfo_error(err, saddr);
+			#endif
+			return make_error_code(get_addr_info_errc(err));
 		#endif
 	}
 
@@ -99,8 +97,13 @@ void inet_address::create(uint32_t addr, in_port_t port)
 void inet_address::create(const std::string& saddr, in_port_t port)
 {
 	addr_ = sockaddr_in{};
+
+	auto addr = resolve_name(saddr.c_str());
+	if (!addr)
+		return;
+
 	addr_.sin_family = AF_INET;
-	addr_.sin_addr.s_addr = resolve_name(saddr.c_str());
+	addr_.sin_addr.s_addr = addr.value();
 	addr_.sin_port = htons(port);
 	#if defined(__APPLE__) || defined(BSD)
 		addr_.sin_len = (uint8_t) SZ;
