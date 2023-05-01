@@ -64,7 +64,7 @@ namespace sockpp {
 class inet6_address : public sock_address
 {
 	/** The underlying C IPv6 struct  */
-	sockaddr_in6 addr_;
+	sockaddr_in6 addr_{};
 
 	/** The size of the underlying address struct, in bytes */
 	static constexpr size_t SZ = sizeof(sockaddr_in6);
@@ -77,7 +77,7 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	inet6_address() : addr_() {}
+	inet6_address() =default;
 	/**
 	 * Constructs an address for any iface using the specified port.
 	 * This is a convenient way for a server to specify an address that will

@@ -215,7 +215,7 @@ inline bool operator==(const sock_address& lhs, const sock_address& rhs) {
 }
 
 /**
- * Determines if the two objects refer to the different address.
+ * Determines if the two objects refer to different addresses.
  * @param lhs A socket address
  * @param rhs A socket address
  * @return @em true if `lhs` and `rhs` refer to different address, @em false

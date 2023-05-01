@@ -48,7 +48,8 @@ find_package(Threads REQUIRED)
 
 add_executable(unit_tests 
 	unit_tests.cpp
-	test_inet_address.cpp
+  test_inet_address.cpp
+  test_inet6_address.cpp
 	test_socket.cpp
 	test_stream_socket.cpp
 	test_tcp_socket.cpp
