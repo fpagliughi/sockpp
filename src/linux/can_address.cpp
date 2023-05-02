@@ -57,30 +57,73 @@ can_address::can_address(unsigned idx) noexcept
 	addr_.can_ifindex = idx;
 }
 
-can_address::can_address(const string& iface) noexcept
+can_address::can_address(const string& iface)
 {
-	unsigned idx = if_nametoindex(iface.c_str());
+	unsigned idx = ::if_nametoindex(iface.c_str());
 
-	if (idx != 0) {
-		addr_.can_family = ADDRESS_FAMILY;
-		addr_.can_ifindex = idx;
+	if (idx == 0) {
+		#if defined(SOCKPP_WITH_EXCEPTIONS)
+			throw system_error{error_code{errno, system_category()}};
+		#else
+			return;
+		#endif
 	}
+
+	addr_.can_family = ADDRESS_FAMILY;
+	addr_.can_ifindex = idx;
 }
 
-string can_address::iface() const noexcept
+result<can_address> can_address::create(const std::string& iface)
+{
+	unsigned idx = ::if_nametoindex(iface.c_str());
+
+	if (idx == 0)
+		return error_code{errno, system_category()};
+
+	sockaddr_can addr{};
+	addr.can_family = ADDRESS_FAMILY;
+	addr.can_ifindex = idx;
+	return can_address{addr};
+}
+
+result<string> can_address::get_iface() const
 {
 	if (addr_.can_family == AF_UNSPEC)
-		return string("none");
+		return string{};
 
 	if (addr_.can_ifindex == 0)
-		return string("any");
+		return string{"any"};
 
 	char buf[IF_NAMESIZE];
 	const char* iface = if_indextoname(addr_.can_ifindex, buf);
 
-	return string(iface ? iface : "unknown");
+	if (!iface) {
+		auto ec = error_code{errno, system_category()};
+		#if defined(SOCKPP_WITH_EXCEPTIONS)
+			throw system_error{ec};
+		#else
+			return ec;
+		#endif
+	}
+
+	return string{iface};
 }
 
+// --------------------------------------------------------------------------
+
+string can_address::iface() const noexcept
+{
+	if (addr_.can_family == AF_UNSPEC)
+		return string{};
+
+	if (addr_.can_ifindex == 0)
+		return string{"any"};
+
+	char buf[IF_NAMESIZE];
+	const char* iface = if_indextoname(addr_.can_ifindex, buf);
+
+	return string{iface ? iface : "unknown"};
+}
 
 // --------------------------------------------------------------------------
 

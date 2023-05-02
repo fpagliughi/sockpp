@@ -60,12 +60,19 @@ add_executable(unit_tests
 )
 
 if(UNIX)
-	target_sources(unit_tests 
-		PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_address.cpp
+  target_sources(unit_tests 
+    PUBLIC
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_address.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_stream_socket.cpp
 			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_dgram_socket.cpp
 	)
+endif()
+
+if(SOCKPP_WITH_CAN)
+  target_sources(unit_tests 
+    PUBLIC
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_can_address.cpp
+  )
 endif()
 
 target_include_directories(unit_tests

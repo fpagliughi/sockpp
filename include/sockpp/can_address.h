@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2021 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,8 +47,9 @@
 #ifndef __sockpp_can_addr_h
 #define __sockpp_can_addr_h
 
-#include "sockpp/platform.h"
 #include "sockpp/sock_address.h"
+#include "sockpp/result.h"
+#include "sockpp/platform.h"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -66,7 +67,7 @@ namespace sockpp {
 class can_address : public sock_address
 {
 	/** The underlying C struct for SocketCAN addresses  */
-	sockaddr_can addr_ = sockaddr_can{};
+	sockaddr_can addr_ {};
 
 	/** The size of the underlying address struct, in bytes */
 	static constexpr size_t SZ = sizeof(sockaddr_can);
@@ -94,7 +95,7 @@ public:
 	 * The interface might be "can0", "can1", "vcan0", etc.
 	 * @param iface The name of the CAN interface
 	 */
-	can_address(const std::string& iface) noexcept;
+	can_address(const std::string& iface);
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The generic address. This must be an AF_CAN address to be
@@ -123,17 +124,39 @@ public:
 	 */
 	can_address(const can_address& addr) noexcept : addr_(addr.addr_) {}
 	/**
+	 * Attempts to get the address for the secified CAN interface
+	 *
+	 * @param iface The name of the CAN interface
+	 * @return A result with a CAN address, if successful, or an error code
+	 *  	   on failure.
+	 */
+	static result<can_address> create(const std::string& iface);
+	/**
 	 * Checks if the address is set to some value.
 	 * This doesn't attempt to determine if the address is valid, simply
 	 * that it's not all zero.
 	 * @return @em true if the address has been set, @em false otherwise.
 	 */
-	bool is_set() const noexcept override { return addr_.can_family == ADDRESS_FAMILY; }
+	bool is_set() const noexcept override {
+		return addr_.can_family == ADDRESS_FAMILY;
+	}
 	/**
-	 * Gets the name of the CAN interface to which this address refers.
-	 * @return The name of the CAN interface to which this address refers.
+	 * Try to get the name of the CAN interface for this address.
+	 * @return The name of the CAN interface for this address.
+	 * @throw system_error
+	 */
+	result<std::string> get_iface() const;
+	/**
+	 * Get the name of the CAN interface for this address.
+	 * If the name can not be found or there's an error, returns "unknown".
+	 * @return The name of the CAN interface for this address.
 	 */
 	std::string iface() const noexcept;
+	/**
+	 * Gets the index of the CAN interface for this address.
+	 * @return The index of the CAN interface for this address.
+	 */
+	int index() const noexcept { return addr_.can_ifindex; }
 	/**
 	 * Gets the size of the address structure.
 	 * Note: In this implementation, this should return sizeof(this) but
@@ -143,11 +166,6 @@ public:
 	 * @return The size of the address structure.
 	 */
 	socklen_t size() const override { return socklen_t(SZ); }
-
-    // TODO: Do we need a:
-    //   create(iface)
-    // to mimic the inet_address behavior?
-
     /**
 	 * Gets a pointer to this object cast to a const @em sockaddr.
 	 * @return A pointer to this object cast to a const @em sockaddr.
