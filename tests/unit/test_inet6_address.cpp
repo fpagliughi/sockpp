@@ -126,9 +126,13 @@ TEST_CASE("IPv6 resolve address", "[address]") {
 
 	// According to RFC6761, "invalid." domain should not resolve
 	SECTION("resolve failure", "[address]") {
-		auto res = inet6_address::resolve_name("invalid");
-		REQUIRE(!res);
-		REQUIRE(res.is_error());
+		#if defined(SOCKPP_WITH_EXCEPTIONS)
+			REQUIRE_THROWS(inet6_address::resolve_name("invalid"));
+		#else
+			auto res = inet6_address::resolve_name("invalid");
+			REQUIRE(!res);
+			REQUIRE(res.is_error());
+		#endif
 	}
 }
 
@@ -157,9 +161,13 @@ TEST_CASE("IPv6 create address", "[address]") {
 
 	// According to RFC6761, "invalid." domain should not resolve
 	SECTION("create failure", "[address]") {
-		auto res = inet6_address::create("invalid", PORT);
-		REQUIRE(!res);
-		REQUIRE(res.is_error());
+		#if defined(SOCKPP_WITH_EXCEPTIONS)
+			REQUIRE_THROWS(inet6_address::create("invalid", PORT));
+		#else
+			auto res = inet6_address::create("invalid", PORT);
+			REQUIRE(!res);
+			REQUIRE(res.is_error());
+		#endif
 	}
 }
 

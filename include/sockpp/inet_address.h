@@ -133,6 +133,8 @@ public:
 	 * number.
 	 * @param saddr The string host name.
 	 * @param port The port number in native/host byte order.
+	 * @return A result with the address on success, or an error code on
+	 *  	   failure.
      * @throw system_error
 	 */
 	static result<inet_address> create(const std::string& saddr, in_port_t port);

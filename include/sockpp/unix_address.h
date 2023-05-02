@@ -49,6 +49,7 @@
 
 #include "sockpp/platform.h"
 #include "sockpp/sock_address.h"
+#include "sockpp/result.h"
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -65,7 +66,7 @@ namespace sockpp {
 class unix_address : public sock_address
 {
 	/** The underlying C struct for unix-domain addresses  */
-	sockaddr_un addr_ = sockaddr_un{};
+	sockaddr_un addr_ {};
 
 	/** The size of the underlying address struct, in bytes */
 	static constexpr size_t SZ = sizeof(sockaddr_un);
@@ -81,7 +82,7 @@ public:
 	 * Constructs an empty address.
 	 * The address is initialized to all zeroes.
 	 */
-	unix_address() noexcept {}
+	unix_address() =default;
 	/**
 	 * Constructs an address given the specified path.
 	 * @param path The path to the socket file.
@@ -116,7 +117,7 @@ public:
 	/**
 	 * Checks if the address is set to some value.
 	 * This doesn't attempt to determine if the address is valid, simply
-	 * that it's not all zero.
+	 * that it's a unix-family address with some name.
 	 * @return @em true if the address has been set, @em false otherwise.
 	 */
 	bool is_set() const noexcept override {
@@ -127,6 +128,7 @@ public:
 	 * @return The path to which this address refers.
 	 */
 	std::string path() const {
+		// Remember, if len==MAX, there's no NUL terminator
 		return std::string(addr_.sun_path, strnlen(addr_.sun_path, MAX_PATH_NAME));
 	}
 	/**
@@ -138,11 +140,14 @@ public:
 	 * @return The size of the address structure.
 	 */
 	socklen_t size() const override { return socklen_t(SZ); }
-
-    // TODO: Do we need a:
-    //   create(path)
-    // to mimic the inet_address behavior?
-
+	/**
+	 * Creates an address from the specified path.
+	 *
+	 * @param path The path to the socket file.
+	 * @return A result with the address on success, or an error code on
+	 *  	   failure.
+	 */
+	static result<unix_address> create(const std::string& path);
     /**
 	 * Gets a pointer to this object cast to a const @em sockaddr.
 	 * @return A pointer to this object cast to a const @em sockaddr.

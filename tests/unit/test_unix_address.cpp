@@ -43,8 +43,11 @@
 #include <string>
 
 using namespace sockpp;
+using namespace std;
 
-std::string PATH { "/tmp/sock" };
+static const string PATH { "/tmp/sock" };
+
+// --------------------------------------------------------------------------
 
 TEST_CASE("unix_address sizes", "[address]") {
 	#if defined(__linux__)
@@ -61,8 +64,6 @@ TEST_CASE("unix_address default constructor", "[address]") {
     REQUIRE(!addr.is_set());
     REQUIRE(addr.path().empty());
     REQUIRE(sizeof(sockaddr_un) == addr.size());
-
-    // TODO: Do we have a unix_address::create() method yet?
 }
 
 TEST_CASE("unix_address path constructor", "[address]") {
@@ -111,16 +112,13 @@ TEST_CASE("unix_address path constructor", "[address]") {
     }
 
 	SECTION("full path") {
+		string path;
+		path.insert(0, unix_address::MAX_PATH_NAME, 'x');
+
 		// Test what happens if 'sun_path' is full, with no NUL termination
-		std::string path;
 		sockaddr_un unaddr;
 		unaddr.sun_family = AF_UNIX;
-
-		for (size_t i=0; i<unix_address::MAX_PATH_NAME; ++i) {
-			char c = 'a' + (i % 26);
-			unaddr.sun_path[i] = c;
-			path.push_back(c);
-		}
+		memcpy(unaddr.sun_path, path.data(), unix_address::MAX_PATH_NAME);
 
 		// sockaddr_un constructor
 		unix_address addr(unaddr);
@@ -132,10 +130,23 @@ TEST_CASE("unix_address path constructor", "[address]") {
 		REQUIRE(unix_address::MAX_PATH_NAME == addr2.path().size());
 		REQUIRE(path == addr2.path());
 	}
+
+	SECTION("too long path") {
+		string path;
+		path.insert(0, unix_address::MAX_PATH_NAME+5, 'x');
+
+		#if defined(SOCKPP_WITH_EXCEPTIONS)
+			REQUIRE_THROWS(unix_address{path});
+		#else
+			unix_address addr{path};
+			REQUIRE(!addr);
+			REQUIRE(!addr.is_set());
+		#endif
+	}
 }
 
 TEST_CASE("unix_address sockaddr_un constructor", "[address]") {
-    sockaddr_un unaddr;
+    sockaddr_un unaddr{};
     unaddr.sun_family = AF_UNIX;
     strcpy(unaddr.sun_path, PATH.c_str());
 

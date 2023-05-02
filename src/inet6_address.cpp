@@ -46,7 +46,6 @@ namespace sockpp {
 inet6_address::inet6_address(const in6_addr& addr, in_port_t port)
 {
 	addr_.sin6_family = AF_INET6;
-	addr_.sin6_flowinfo = 0;
 	addr_.sin6_addr = addr;
 	addr_.sin6_port = htons(port);
 	#if defined(__APPLE__) || defined(BSD)
@@ -100,7 +99,6 @@ result<inet6_address> inet6_address::create(const string& saddr, in_port_t port)
 
 	auto addr = sockaddr_in6{};
 	addr.sin6_family = AF_INET6;
-	addr.sin6_flowinfo = 0;
 	addr.sin6_addr = res.value();
 	addr.sin6_port = htons(port);
 	#if defined(__APPLE__) || defined(BSD)
@@ -141,6 +139,6 @@ ostream& operator<<(ostream& os, const inet6_address& addr)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
+// end namespace sockpp
 }
 
