@@ -1,11 +1,11 @@
-// tcpecho.cpp
+// tcp6echo.cpp
 //
 // Simple TCP echo client
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -56,13 +56,20 @@ int main(int argc, char* argv[])
 
 	sockpp::initialize();
 
+	// Try to resolve the address
+
+	auto addr_res = sockpp::inet6_address::create(host, port);
+	if (!addr_res) {
+		cerr << "Error resolving address for '" << host << "': " << addr_res << endl;
+		return 1;
+	}
+
 	// Implicitly creates an inet6_address from {host,port}
 	// and then tries the connection.
 
-	sockpp::tcp6_connector conn({host, port});
+	sockpp::tcp6_connector conn(addr_res.value());
 	if (!conn) {
-		cerr << "Error connecting to server at "
-			<< sockpp::inet6_address(host, port)
+		cerr << "Error connecting to server at " << addr_res.value()
 			<< "\n\t" << conn.last_error_str() << endl;
 		return 1;
 	}

@@ -50,16 +50,18 @@ const std::string   LOCALHOST_STR   { "localhost" };
 const in_port_t     PORT { 12345 };
 
 TEST_CASE("inet_address default constructor", "[address]") {
-    inet_address addr;
+	SECTION("default address") {
+		inet_address addr;
 
-    REQUIRE(!addr);
-    REQUIRE(!addr.is_set());
-    REQUIRE(0 == addr.address());
-    REQUIRE(0 == addr.port());
-    REQUIRE(sizeof(sockaddr_in) == addr.size());
+		REQUIRE(!addr);
+		REQUIRE(!addr.is_set());
+		REQUIRE(0 == addr.address());
+		REQUIRE(0 == addr.port());
+		REQUIRE(sizeof(sockaddr_in) == addr.size());
+	}
 
     SECTION("creating address from int32") {
-        addr.create(LOCALHOST_ADDR, PORT);
+        inet_address addr{LOCALHOST_ADDR, PORT};
 
         REQUIRE(addr);
         REQUIRE(addr.is_set());
@@ -78,7 +80,7 @@ TEST_CASE("inet_address default constructor", "[address]") {
     }
 
     SECTION("creating address from name") {
-        addr.create(LOCALHOST_STR, PORT);
+        inet_address addr(LOCALHOST_STR, PORT);
 
         REQUIRE(addr);
         REQUIRE(addr.is_set());
@@ -143,20 +145,57 @@ TEST_CASE("inet_address name constructor", "[address]") {
     REQUIRE(PORT == ntohs(addr.sockaddr_in_ptr()->sin_port));
 }
 
-TEST_CASE("IPv4 resolve_address", "[address]") {
+TEST_CASE("IPv4 resolve address", "[address]") {
 	SECTION("localhost numeric") {
-		auto addr_res = inet_address::resolve_name("127.0.0.1");
-		REQUIRE(addr_res.is_ok());
+		auto res = inet_address::resolve_name("127.0.0.1");
+		REQUIRE(res.is_ok());
 
-		auto addr = addr_res.value();
+		auto addr = res.value();
 		REQUIRE(addr == htonl(LOCALHOST_ADDR));
 	}
 
 	SECTION("localhost name") {
-		auto addr_res = inet_address::resolve_name(LOCALHOST_STR);
-		REQUIRE(addr_res.is_ok());
+		auto res = inet_address::resolve_name(LOCALHOST_STR);
+		REQUIRE(res.is_ok());
 
-		auto addr = addr_res.value();
+		auto addr = res.value();
 		REQUIRE(addr == htonl(LOCALHOST_ADDR));
+	}
+
+	// According to RFC6761, "invalid." domain should not resolve
+	SECTION("resolve failure", "[address]") {
+		auto res = inet_address::resolve_name("invalid");
+		REQUIRE(!res);
+		REQUIRE(res.is_error());
+	}
+}
+
+TEST_CASE("IPv4 create address", "[address]") {
+	SECTION("localhost numeric") {
+		auto res = inet_address::create("127.0.0.1", PORT);
+		REQUIRE(res.is_ok());
+
+		auto addr = res.value();
+
+		REQUIRE(PORT == addr.port());
+		REQUIRE(LOCALHOST_ADDR == addr.address());
+		REQUIRE(inet_address{LOCALHOST_ADDR, PORT} == addr);
+	}
+
+	SECTION("localhost name") {
+		auto res = inet_address::create(LOCALHOST_STR, PORT);
+		REQUIRE(res.is_ok());
+
+		auto addr = res.value();
+		REQUIRE(PORT == addr.port());
+		REQUIRE(LOCALHOST_ADDR == addr.address());
+		REQUIRE(inet_address{LOCALHOST_ADDR, PORT} == addr);
+	}
+
+	// According to RFC6761, "invalid." domain should not resolve
+	SECTION("create failure", "[address]") {
+		auto res = inet_address::create("invalid", PORT);
+		REQUIRE(!res);
+		REQUIRE(res.is_error());
 	}
 }

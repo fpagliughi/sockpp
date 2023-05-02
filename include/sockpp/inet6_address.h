@@ -80,15 +80,20 @@ public:
 	 */
 	inet6_address() =default;
 	/**
+	 * Constructs the address using the specified host address and port
+	 * number.
+	 * @param addr The host address (16-byte/128-bit IPv6 address).
+	 * @param port The host port number.
+	 */
+	inet6_address(const in6_addr& addr, in_port_t port);
+	/**
 	 * Constructs an address for any iface using the specified port.
 	 * This is a convenient way for a server to specify an address that will
 	 * bind to all interfaces.
 	 * @param port The port number in native/host byte order.
 	 */
-	explicit inet6_address(in_port_t port) {
-		const in6_addr ANY IN6ADDR_ANY_INIT;
-		create(ANY, port);
-	}
+	explicit inet6_address(in_port_t port)
+		: inet6_address(in6_addr{}, port) {}
 	/**
 	 * Constructs an address using the name of the host and the specified
 	 * port. This attempts to resolve the host name to an address.
@@ -96,9 +101,7 @@ public:
 	 * @param saddr The name of the host.
 	 * @param port The port number in native/host byte order.
 	 */
-	inet6_address(const std::string& saddr, in_port_t port) {
-		create(saddr, port);
-	}
+	inet6_address(const std::string& saddr, in_port_t port);
 	/**
      * Constructs the address by copying the specified structure.
      * TODO: Do we actually need a conversion from something that's
@@ -134,9 +137,7 @@ public:
      */
     static inet6_address loopback(in_port_t port) {
 		const in6_addr LOOPBACK IN6ADDR_LOOPBACK_INIT;
-        inet6_address addr;
-        addr.create(LOOPBACK, port);
-        return addr;
+        return inet6_address { LOOPBACK, port };
 	}
 	/**
 	 * Checks if the address is set to some value.
@@ -154,19 +155,12 @@ public:
 	 */
 	static result<in6_addr> resolve_name(const std::string& saddr);
 	/**
-	 * Creates the socket address using the specified host address and port
-	 * number.
-	 * @param addr The host address (16-byte IPv6 address).
-	 * @param port The host port number.
-	 */
-    void create(const in6_addr& addr, in_port_t port);
-	/**
 	 * Creates the socket address using the specified host name and port
 	 * number.
 	 * @param saddr The string host name.
 	 * @param port The port number in native/host byte order.
 	 */
-	void create(const std::string& saddr, in_port_t port);
+	static result<inet6_address> create(const std::string& saddr, in_port_t port);
 	/**
      * Gets 128-bit IPv6 address.
      * The address is usually stored in network byte order.
@@ -242,6 +236,28 @@ public:
  * @return A reference to the output stream.
  */
 std::ostream& operator<<(std::ostream& os, const inet6_address& addr);
+
+/**
+ * Test if two low-level C IPv6 addresses are identical.
+ *
+ * @param lhs An IPv6 address
+ * @param rhs  An IPv6 address
+ * @return @em true if the addresses match, @em false otherwise.
+ */
+inline bool operator==(const in6_addr& lhs, const in6_addr& rhs) {
+	return std::memcmp(&lhs, &rhs, sizeof(in6_addr)) == 0;
+}
+
+/**
+ * Test if two low-level C IPv6 addresses are different.
+ *
+ * @param lhs An IPv6 address
+ * @param rhs  An IPv6 address
+ * @return @em true if the addresses are different, @em false if they match.
+ */
+inline bool operator!=(const in6_addr& lhs, const in6_addr& rhs) {
+	return !operator==(lhs, rhs);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

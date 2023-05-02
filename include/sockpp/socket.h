@@ -178,9 +178,9 @@ void initialize();
 class socket
 {
 	/** The OS integer socket handle */
-	socket_t handle_ = INVALID_SOCKET;
+	socket_t handle_ { INVALID_SOCKET };
 	/** Cache of the last error (errno) */
-	mutable int lastErr_ = 0;
+	mutable error_code lastErr_ {};
 	/**
 	 * The OS-specific function to close a socket handle/
 	 * @param h The OS socket handle.
@@ -212,8 +212,8 @@ protected:
 	 * value.
 	 * @return The error value set.
 	 */
-	int set_last_error() const {
-		return lastErr_ = ioresult::get_last_errno();
+	error_code set_last_error() const {
+		return lastErr_ = ioresult::get_last_error();
 	}
 	/**
 	 * Checks the value and if less than zero, sets last error.
@@ -223,7 +223,7 @@ protected:
 	 */
 	template <typename T>
 	T check_ret(T ret) const {
-		lastErr_ = (ret < 0) ? ioresult::get_last_errno() : 0;
+		lastErr_ = (ret < 0) ? ioresult::get_last_error() : error_code{};
 		return ret;
 	}
 	/**
@@ -235,7 +235,7 @@ protected:
 	 */
 	template <typename T>
 	bool check_ret_bool(T ret) const {
-		lastErr_ = (ret < 0) ? ioresult::get_last_errno() : 0;
+		lastErr_ = (ret < 0) ? ioresult::get_last_error() : error_code{};
 		return ret >= 0;
 	}
 	/**
@@ -248,10 +248,10 @@ protected:
 	template <typename T>
 	ioresult check_ret_res(T ret) const {
 		if (ret < 0) {
-			return ioresult::from_error(set_last_error());
+			return set_last_error();
 		}
-		lastErr_ = 0;
-		return ioresult(int(ret));
+		lastErr_ = error_code{};
+		return static_cast<int>(ret);
 	}
 	/**
 	 * Checks the value and if it is not a valid socket, sets last error.
@@ -262,7 +262,7 @@ protected:
 	 * @return Returns the value sent to it, `ret`.
 	 */
 	socket_t check_socket(socket_t ret) const {
-		lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_errno() : 0;
+		lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_error() : error_code{};
 		return ret;
 	}
 	/**
@@ -275,7 +275,7 @@ protected:
 	 *  	   or @em false is is an error (INVALID_SOCKET)
 	 */
 	bool check_socket_bool(socket_t ret) const {
-		lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_errno() : 0;
+		lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_error() : error_code{};
 		return ret != INVALID_SOCKET;
 	}
 	/**
@@ -289,10 +289,10 @@ protected:
 	 */
 	result<socket_t> check_socket_res(socket_t ret) const{
 		if (ret == INVALID_SOCKET) {
-			return result<socket_t>::from_error(set_last_error());
+			return set_last_error();
 		}
-		lastErr_ = 0;
-		return result<socket_t>(ret);
+		lastErr_ = error_code{};
+		return ret;
 	}
 
 	// For non-Windows systems, routines to manipulate flags on the socket
@@ -377,7 +377,7 @@ public:
 	 *  	   false otherwise.
 	 */
 	bool operator!() const {
-		return handle_ == INVALID_SOCKET || lastErr_ != 0;
+		return handle_ == INVALID_SOCKET || lastErr_;
 	}
 	/**
 	 * Determines if the socket is open and in an error-free state.
@@ -385,7 +385,7 @@ public:
 	 *  	   @em false otherwise.
 	 */
 	explicit operator bool() const {
-		return handle_ != INVALID_SOCKET && lastErr_ == 0;
+		return handle_ != INVALID_SOCKET && !lastErr_;
 	}
 	/**
 	 * Get the underlying OS socket handle.
@@ -438,7 +438,9 @@ public:
 	 * Clears the error flag for the object.
 	 * @param val The value to set the flag, normally zero.
 	 */
-	void clear(int val=0) { lastErr_ = val; }
+	void clear(int val=0) {
+		lastErr_ = error_code{val, std::system_category()};
+	}
 	/**
 	 * Releases ownership of the underlying socket object.
 	 * @return The OS socket handle.
@@ -564,14 +566,17 @@ public:
 	 * @param errNum The error number.
 	 * @return A string describing the specified error.
 	 */
-	static std::string error_str(int errNum);
+	static std::string error_str(int errNum) {
+		auto ec = error_code { errNum, std::system_category() };
+		return ec.message();
+	}
 	/**
 	 * Gets the code for the last errror.
 	 * This is typically the code from the underlying OS operation.
 	 * @return The code for the last errror.
 	 */
 	std::error_code last_error() const {
-		return std::error_code{ lastErr_, std::system_category() };
+		return lastErr_;
 	}
 	/**
 	 * Gets the platform-specific errror from the last failed operation.
@@ -580,14 +585,14 @@ public:
 	 * @li On Windows, this is the value returned by `WSAGetLastError()`.
 	 * @return The platform-specific for the last errror.
 	 */
-	int last_errno() const { return lastErr_; }
+	int last_errno() const { return lastErr_.value(); }
 	/**
 	 * Gets a string describing the last errror.
 	 * This is typically the returned message from the system strerror().
 	 * @return A string describing the last errror.
 	 */
 	std::string last_error_str() const {
-		return error_str(lastErr_);
+		return lastErr_.message();
 	}
 	/**
 	 * Shuts down all or part of the full-duplex connection.

@@ -81,31 +81,29 @@ public:
 	 */
 	inet_address() =default;
 	/**
-     * Constructs an address for any iface using the specified port.
-     * This is a convenient way for a server to specify an address that will
-     * bind to all interfaces.
-	 * @param port The port number in native/host byte order.
-	 */
-	explicit inet_address(in_port_t port) {
-		create(in_addr_t(INADDR_ANY), port);
-	}
-	/**
 	 * Constructs an address for the specified host using the specified
 	 * port.
 	 * @param addr The 32-bit host address in native/host byte order.
 	 * @param port The port number in native/host byte order.
 	 */
-	inet_address(uint32_t addr, in_port_t port) { create(addr, port); }
+	inet_address(uint32_t addr, in_port_t port);
+	/**
+     * Constructs an address for any iface using the specified port.
+     * This is a convenient way for a server to specify an address that will
+     * bind to all interfaces.
+	 * @param port The port number in native/host byte order.
+	 */
+	explicit inet_address(in_port_t port) : inet_address(in_addr_t(INADDR_ANY), port) {}
 	/**
 	 * Constructs an address using the name of the host and the specified
 	 * port. This attempts to resolve the host name to an address.
 	 *
 	 * @param saddr The name of the host.
 	 * @param port The port number in native/host byte order.
+	 * @throw system_error if the host name can not be resolved, or any
+	 *  	  other error occurs.
 	 */
-	inet_address(const std::string& saddr, in_port_t port) {
-		create(saddr, port);
-	}
+	inet_address(const std::string& saddr, in_port_t port);
 	/**
 	 * Constructs the address by copying the specified structure.
 	 * @param addr The other address
@@ -130,7 +128,14 @@ public:
 	 * @param addr The other address
 	 */
 	inet_address(const inet_address& addr) : addr_{addr.addr_} {}
-
+	/**
+	 * Updates the socket address using the specified host name and port
+	 * number.
+	 * @param saddr The string host name.
+	 * @param port The port number in native/host byte order.
+     * @throw system_error
+	 */
+	static result<inet_address> create(const std::string& saddr, in_port_t port);
 	/**
 	 * Checks if the address is set to some value.
  	 * This doesn't attempt to determine if the address is valid, simply
@@ -143,24 +148,9 @@ public:
 	 * Attempts to resolve the host name into a 32-bit internet address.
 	 * @param saddr The string host name.
 	 * @return The internet address in network byte order.
-     * @throw sys_error, getaddrinfo_error
+     * @throw system_error
 	 */
 	static result<in_addr_t> resolve_name(const std::string& saddr);
-	/**
-	 * Creates the socket address using the specified host address and port
-	 * number.
-	 * @param addr The host address.
-	 * @param port The host port number.
-	 */
-	void create(in_addr_t addr, in_port_t port);
-	/**
-	 * Creates the socket address using the specified host name and port
-	 * number.
-	 * @param saddr The string host name.
-	 * @param port The port number in native/host byte order.
-     * @throw sys_error, getaddrinfo_error
-	 */
-	void create(const std::string& saddr, in_port_t port);
 	/**
 	 * Gets the 32-bit internet address.
 	 * @return The internet address in the local host's byte order.

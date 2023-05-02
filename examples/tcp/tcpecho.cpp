@@ -54,13 +54,21 @@ int main(int argc, char* argv[])
 
 	sockpp::initialize();
 
-	// Implicitly creates an inet_address from {host,port}
-	// and then tries the connection using a timeout of 5sec.
+	// Try to resolve the address
 
-	sockpp::tcp_connector conn({host, port}, 5s);
+	auto res = sockpp::inet_address::create(host, port);
+	if (!res) {
+		cerr << "Error resolving address for '" << host << "': " << res << endl;
+		return 1;
+	}
+
+	auto addr = res.value();
+
+	// Try the connection using a timeout of 5sec.
+
+	sockpp::tcp_connector conn(addr, 5s);
 	if (!conn) {
-		cerr << "Error connecting to server at "
-			<< sockpp::inet_address(host, port)
+		cerr << "Error connecting to server at " << addr
 			<< "\n\t" << conn.last_error_str() << endl;
 		return 1;
 	}

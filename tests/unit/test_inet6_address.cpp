@@ -57,32 +57,6 @@ TEST_CASE("inet6_address default constructor", "[address]") {
     REQUIRE(memcmp(iaddr.s6_addr, addr.address().s6_addr, 16) == 0);
     REQUIRE(0 == addr.port());
     REQUIRE(sizeof(sockaddr_in6) == addr.size());
-
-    SECTION("creating address from in6_addr") {
-        addr.create(LOCALHOST_ADDR, PORT);
-
-        REQUIRE(addr);
-        REQUIRE(addr.is_set());
-        REQUIRE(memcmp(LOCALHOST_ADDR.s6_addr, addr.address().s6_addr, 16) == 0);
-        REQUIRE(PORT == addr.port());
-
-        // Check the low-level struct
-        REQUIRE(AF_INET6 == addr.sockaddr_in6_ptr()->sin6_family);
-        REQUIRE(PORT == ntohs(addr.sockaddr_in6_ptr()->sin6_port));
-    }
-    SECTION("creating address from name") {
-        addr.create("FD80:CD00:0000:0CDE:1257:0000:211E:729C", PORT);
-
-        REQUIRE(addr);
-        REQUIRE(addr.is_set());
-        REQUIRE(0xFD == unsigned(addr[0]));
-        REQUIRE(0x9C == unsigned(addr[15]));
-        REQUIRE(PORT == addr.port());
-
-        // Check the low-level struct
-        REQUIRE(AF_INET6 == addr.sockaddr_in6_ptr()->sin6_family);
-        REQUIRE(PORT == ntohs(addr.sockaddr_in6_ptr()->sin6_port));
-    }
 }
 
 // When created using only a port number this should use the
@@ -134,11 +108,12 @@ TEST_CASE("inet6_address name constructor", "[address]") {
     REQUIRE(PORT == ntohs(addr.sockaddr_in6_ptr()->sin6_port));
 }
 
-TEST_CASE("IPv6 resolve_address", "[address]") {
+TEST_CASE("IPv6 resolve address", "[address]") {
 	SECTION("local address") {
 		auto addr_res = inet6_address::resolve_name("::1");
 		REQUIRE(addr_res.is_ok());
 		auto addr = addr_res.value();
+
 		REQUIRE(memcmp(LOCALHOST_ADDR.s6_addr, addr.s6_addr, 16) == 0);
 	}
 
@@ -148,4 +123,43 @@ TEST_CASE("IPv6 resolve_address", "[address]") {
 		auto addr = addr_res.value();
 		REQUIRE(memcmp(ANY_ADDR.s6_addr, addr.s6_addr, 16) == 0);
 	}
+
+	// According to RFC6761, "invalid." domain should not resolve
+	SECTION("resolve failure", "[address]") {
+		auto res = inet6_address::resolve_name("invalid");
+		REQUIRE(!res);
+		REQUIRE(res.is_error());
+	}
 }
+
+TEST_CASE("IPv6 create address", "[address]") {
+	SECTION("local address") {
+		auto res = inet6_address::create("::1", PORT);
+		REQUIRE(res.is_ok());
+
+		auto addr = res.value();
+
+		REQUIRE(LOCALHOST_ADDR == addr.address());
+		REQUIRE(PORT == addr.port());
+		REQUIRE(inet6_address{LOCALHOST_ADDR, PORT} == addr);
+	}
+
+	SECTION("any address") {
+		auto res = inet6_address::create("::", PORT);
+		REQUIRE(res.is_ok());
+
+		auto addr = res.value();
+
+		REQUIRE(ANY_ADDR == addr.address());
+		REQUIRE(PORT == addr.port());
+		REQUIRE(inet6_address{ANY_ADDR, PORT} == addr);
+	}
+
+	// According to RFC6761, "invalid." domain should not resolve
+	SECTION("create failure", "[address]") {
+		auto res = inet6_address::create("invalid", PORT);
+		REQUIRE(!res);
+		REQUIRE(res.is_error());
+	}
+}
+

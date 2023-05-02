@@ -140,7 +140,7 @@ socket socket::clone() const
 int socket::get_flags() const
 {
 	int flags = ::fcntl(handle_, F_GETFL, 0);
-	lastErr_ = (flags == -1) ? ioresult::get_last_errno() : 0;
+	lastErr_ = (flags == -1) ? ioresult::get_last_error() : error_code{};
 	return flags;
 }
 
@@ -290,14 +290,6 @@ bool socket::set_non_blocking(bool on /*=true*/)
 	#else
 		return set_flag(O_NONBLOCK, on);
 	#endif
-}
-
-// --------------------------------------------------------------------------
-// Gets a description of the last error encountered.
-
-std::string socket::error_str(int err)
-{
-	return sys_error::error_str(err);
 }
 
 // --------------------------------------------------------------------------

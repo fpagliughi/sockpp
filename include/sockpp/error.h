@@ -47,9 +47,6 @@
 #ifndef __sockpp_error_h
 #define __sockpp_error_h
 
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-	#include "sockpp/exception.h"
-#endif
 #include "sockpp/platform.h"
 #include <system_error>
 #include <string>
@@ -95,17 +92,6 @@ namespace sockpp {
 		socket_type_not_supported = EAI_SOCKTYPE,
 		system_error = EAI_SYSTEM,
 	};
-
-	/**
-	 * Converts an integer error value from `getaddressinfo()` into a
-	 * `gai_errc` enumeration value.
-	 *
-	 * @param c An integer error value from `getaddressinfo()`
-	 * @return The `gai_errc` from `c`
-	 */
-	inline gai_errc get_addr_info_errc(int c) {
-		return gai_errc(c);
-	}
 }
 
 namespace std

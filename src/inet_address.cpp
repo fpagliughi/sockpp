@@ -43,6 +43,27 @@ namespace sockpp {
 
 // --------------------------------------------------------------------------
 
+inet_address::inet_address(uint32_t addr, in_port_t port)
+{
+	addr_.sin_family = AF_INET;
+	addr_.sin_addr.s_addr = htonl(addr);
+	addr_.sin_port = htons(port);
+	#if defined(__APPLE__) || defined(BSD)
+		addr_.sin_len = (uint8_t) SZ;
+	#endif
+}
+
+// --------------------------------------------------------------------------
+
+inet_address::inet_address(const std::string& saddr, in_port_t port)
+{
+	auto res = create(saddr, port);
+	// If create fails, this is an un-set, default address.
+	addr_ = res.value().addr_;
+}
+
+// --------------------------------------------------------------------------
+
 result<in_addr_t> inet_address::resolve_name(const std::string& saddr)
 {
 	#if !defined(_WIN32)
@@ -58,19 +79,17 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr)
     int err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
 
 	if (err != 0) {
+		auto ec =
 		#if defined(_WIN32)
-			#if defined(SOCKPP_WITH_EXCEPTIONS)
-				throw getaddrinfo_error(gai_err, saddr);
-			#endif
-			return result<in6_addr>::from_last_error();
+			error_code{errno, system_category()};
 		#else
-			#if defined(SOCKPP_WITH_EXCEPTIONS)
-				if (err == EAI_SYSTEM)
-					throw sys_error();
-				throw getaddrinfo_error(err, saddr);
-			#endif
-			return make_error_code(get_addr_info_errc(err));
+		   make_error_code(static_cast<gai_errc>(err));
 		#endif
+
+		#if defined(SOCKPP_WITH_EXCEPTIONS)
+			throw system_error{ec};
+		#endif
+		return ec;
 	}
 
     auto ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
@@ -81,33 +100,20 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr)
 
 // --------------------------------------------------------------------------
 
-void inet_address::create(uint32_t addr, in_port_t port)
+result<inet_address> inet_address::create(const std::string& saddr, in_port_t port)
 {
-	addr_ = sockaddr_in{};
-	addr_.sin_family = AF_INET;
-	addr_.sin_addr.s_addr = htonl(addr);
-	addr_.sin_port = htons(port);
+	auto res = resolve_name(saddr.c_str());
+	if (!res)
+		return res.error();
+
+	auto addr = sockaddr_in{};
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = res.value();
+	addr.sin_port = htons(port);
 	#if defined(__APPLE__) || defined(BSD)
-		addr_.sin_len = (uint8_t) SZ;
+		addr.sin_len = (uint8_t) SZ;
 	#endif
-}
-
-// --------------------------------------------------------------------------
-
-void inet_address::create(const std::string& saddr, in_port_t port)
-{
-	addr_ = sockaddr_in{};
-
-	auto addr = resolve_name(saddr.c_str());
-	if (!addr)
-		return;
-
-	addr_.sin_family = AF_INET;
-	addr_.sin_addr.s_addr = addr.value();
-	addr_.sin_port = htons(port);
-	#if defined(__APPLE__) || defined(BSD)
-		addr_.sin_len = (uint8_t) SZ;
-	#endif
+	return inet_address{addr};
 }
 
 // --------------------------------------------------------------------------
