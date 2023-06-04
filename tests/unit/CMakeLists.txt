@@ -39,6 +39,11 @@
 set(UNIT_TEST_DIR ${PROJECT_SOURCE_DIR})
 find_package(Catch2 REQUIRED)
 
+if (Catch2_VERSION VERSION_LESS "3.0")
+    add_definitions(-DCATCH2_V2)
+    message(WARNING "catch2 version is less than in upstream")
+endif()
+
 # --- For apps that use threads ---
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -80,6 +85,7 @@ target_include_directories(unit_tests
 		${SOCKPP_INCLUDE_DIR}
 	PRIVATE 
 		${SOCKPP_GENERATED_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 set_target_properties(unit_tests PROPERTIES
