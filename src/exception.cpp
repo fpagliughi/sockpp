@@ -55,7 +55,7 @@ sys_error::sys_error(int err) : runtime_error(error_str(err)), errno_(err)
 // --------------------------------------------------------------------------
 // Get a string description of the specified system error.
 
-std::string sys_error::error_str(int err)
+string sys_error::error_str(int err)
 {
 	char buf[1024];
 	buf[0] = '\x0';
@@ -89,7 +89,6 @@ getaddrinfo_error::getaddrinfo_error(int err, const string& hostname)
     : runtime_error(gai_strerror(err)), error_(err), hostname_(hostname)
 {
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace 'sockpp'

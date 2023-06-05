@@ -1,13 +1,12 @@
-// test_connector.cpp
+// test_result.cpp
 //
-// Unit tests for the `connector` class(es).
+// Unit tests for the result class.
 //
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
-// All rights reserved.
+// Copyright (c) 2023 Frank Pagliughi All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -38,29 +37,35 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/connector.h"
-#include "sockpp/sock_address.h"
+#include "sockpp/result.h"
 #include <catch2_version.h>
-#include <string>
 
 using namespace sockpp;
 
-// Test that connector errors properly when given an empty address.
-TEST_CASE("connector unspecified address", "[connector]") {
-	connector conn;
-	REQUIRE(!conn);
+TEST_CASE("test result success", "[result]") {
+	const int VAL = 42;
+	auto res = result<int>(VAL);
 
-	sock_address_any addr;
-
-	bool ok = conn.connect(addr);
-	REQUIRE(!ok);
-
-    // Windows returns a different error code than *nix
-    #if defined(_WIN32)
-        REQUIRE(conn.last_error() == WSAENOTSOCK);
-    #else
-        REQUIRE(conn.last_error() == EAFNOSUPPORT);
-    #endif
+	REQUIRE(res);
+	REQUIRE(res.is_ok());
+	REQUIRE(!res.is_error());
+	REQUIRE(res.value() == VAL);
+	REQUIRE(res.error() == error_code{});
+	REQUIRE(res.error().value() == 0);
+	REQUIRE(res == success(VAL));
+	REQUIRE(res == error_code{});
 }
 
+TEST_CASE("test result error", "[result]") {
+	const auto ERR = errc::interrupted;
+	auto res = result<int>::from_error(ERR);
+
+	REQUIRE(!res);
+	REQUIRE(!res.is_ok());
+	REQUIRE(res.is_error());
+	REQUIRE(res.error() == ERR);
+	REQUIRE(res == ERR);
+	REQUIRE(res == std::make_error_code(ERR));
+	REQUIRE(res == error<int>(ERR));
+}
 
