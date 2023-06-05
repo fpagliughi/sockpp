@@ -39,7 +39,7 @@
 //
 
 #include "sockpp/unix_dgram_socket.h"
-#include "catch2/catch.hpp"
+#include <catch2_version.h>
 #include <string>
 
 using namespace sockpp;
