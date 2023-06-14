@@ -26,10 +26,11 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
-## New in v0.8.1 & v0.8.2
+## New in v0.8.x
 
 These releases attempt to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
 
+- [#64](https://github.com/fpagliughi/sockpp/pull/84) Added support for Catch2 v3.x for unit tests. (v2.x still supported)
 - [#89](https://github.com/fpagliughi/sockpp/issue/89) Fixed generator expression for older CMake
 - [#91](https://github.com/fpagliughi/sockpp/issue/91) Fixed uniform_int_distribution<> in UNIX socket example
 - Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
@@ -78,7 +79,7 @@ CMake is the supported build system.
     - _Visual Studio 2015_, or later on WIndows.
 - _CMake_ v3.12 or newer.
 - _Doxygen_ (optional) to generate API docs.
-- _Catch2_ (optional) to build and run unit tests.
+- _Catch2_ (optional) v2.x or v3.x to build and run unit tests.
 
 To build with default options:
 
@@ -104,7 +105,7 @@ SOCKPP_BUILD_SHARED | ON | Whether to build the shared library
 SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
 SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires _Doxygen)_
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
-SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
+SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_, v2.x or 3.x)
 SOCKPP_BUILD_CAN | OFF | Build SocketCAN support. (Linux only)
 
 Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:

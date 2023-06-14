@@ -38,7 +38,7 @@
 //
 
 #include "sockpp/result.h"
-#include <catch2_version.h>
+#include "catch2_version.h"
 
 using namespace sockpp;
 

@@ -39,9 +39,11 @@
 set(UNIT_TEST_DIR ${PROJECT_SOURCE_DIR})
 find_package(Catch2 REQUIRED)
 
+message(STATUS "Catch2 v${Catch2_VERSION}")
 if (Catch2_VERSION VERSION_LESS "3.0")
     add_definitions(-DCATCH2_V2)
-    message(WARNING "catch2 version is less than in upstream")
+    # Put this in if/when deprecating v2.
+    #message(DEPRECATION "Catch2 version 2.x is deprecated")
 endif()
 
 # --- For apps that use threads ---

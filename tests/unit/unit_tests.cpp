@@ -56,7 +56,7 @@
 #endif
 
 #define CATCH_CONFIG_RUNNER
-#include <catch2_version.h>
+#include "catch2_version.h"
 
 int main(int argc, char* argv[]) 
 {
