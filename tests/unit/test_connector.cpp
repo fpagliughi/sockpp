@@ -40,7 +40,7 @@
 
 #include "sockpp/connector.h"
 #include "sockpp/sock_address.h"
-#include <catch2_version.h>
+#include "catch2_version.h"
 #include <string>
 
 using namespace sockpp;

@@ -36,6 +36,7 @@ If you're using this library, tweet at me or send me a message, and let me know 
 
 ## Unrelased Features in this Branch
 
+- [#64](https://github.com/fpagliughi/sockpp/pull/84) Added support for Catch2 v3.x for unit tests. (v2.x still supported)
 - [#72](https://github.com/fpagliughi/sockpp/issues/72) Removed some exceptions and made the others optional by build option.
 - Added `raw_socket` class.
 - [#77](https://github.com/fpagliughi/sockpp/issues/77) 
@@ -45,7 +46,7 @@ If you're using this library, tweet at me or send me a message, and let me know 
     - A new `sockpp::last_errno()` will return the platform-specific integer error code (i.e. what `last_error()` used to return).
     - More consistent validity checks for address types with `is_set()` and `operator bool()`.
 - The `connector::connect()` with timeout now uses `poll()` for the timeout on non-Windows systems. Hopefully `WSAPoll()` on Windows will be available before the upcoming release as well.
-    
+
 ## New in v0.8.1
 
 This release attempts to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
@@ -98,7 +99,7 @@ CMake is the supported build system.
     - _Visual Studio 2015_, or later on WIndows.
 - _CMake_ v3.12 or newer.
 - _Doxygen_ (optional) to generate API docs.
-- _Catch2_ (optional) to build and run unit tests.
+- _Catch2_ (optional) v2.x or v3.x to build and run unit tests.
 
 To build with default options:
 
@@ -138,7 +139,7 @@ $ cmake --build build/
 
 ### Secure Sockets
 
-To build the library with secure socket support, a TLS library needs to be chosen to provide support. Currently _OpenSSL_ or _MbedTLS_ can be used. 
+To build the library with secure socket support, a TLS library needs to be chosen to provide support. Currently _OpenSSL_ or _MbedTLS_ can be used.
 
 Chose _one_ of the following when configuring the build:
 
