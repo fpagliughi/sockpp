@@ -66,16 +66,16 @@ std::string sys_error::error_str(int err)
 			buf, sizeof(buf), NULL);
 	#else
 		#ifdef _GNU_SOURCE
-			#if !defined(__GLIBC__)
-				// use the XSI standard behavior.
-				int e = strerror_r(err, buf, sizeof(buf));
-				auto s = strerror(e);
-				return s ? std::string(s) : std::string();
-			#else
-				// assume GNU exception
-				auto s = strerror_r(err, buf, sizeof(buf));
-				return s ? std::string(s) : std::string();
-			#endif
+            #if defined(__GLIBC__) || (defined(__ANDROID_API__) && __ANDROID_API__ >= 23)
+                // assume GNU exception
+                auto s = strerror_r(err, buf, sizeof(buf));
+                return s ? std::string(s) : std::string();
+            #else
+                // use the XSI standard behavior.
+                int e = strerror_r(err, buf, sizeof(buf));
+                auto s = strerror(e);
+                return s ? std::string(s) : std::string();
+            #endif
 		#else
 			ignore_result(strerror_r(err, buf, sizeof(buf)));
 		#endif
