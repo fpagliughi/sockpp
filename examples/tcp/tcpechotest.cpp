@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 
     random_device rd;
     mt19937 reng(rd());
-    uniform_int_distribution<int> dist(0, 25);
+    uniform_int_distribution<> dist(0, 25);
 
 	for (size_t i=0; i<sz; ++i)
 		s.push_back('a' + static_cast<char>(dist(reng)));
