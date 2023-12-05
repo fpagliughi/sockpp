@@ -80,10 +80,9 @@ target_include_directories(sockpp-objs
 
 # --- Warnings ---
 
-# Maybe set '-Werror' for Release builds?
 target_compile_options(sockpp-objs PRIVATE
   $<$<CXX_COMPILER_ID:MSVC>:/W3>
   $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Wdocumentation>
-  $<$<NOT:$<CXX_COMPILER_ID:MSVC,Clang>>:-Wall -Wextra -Wpedantic>
+  $<$<NOT:$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:Clang>>>:-Wall -Wextra -Wpedantic>
 )
 
