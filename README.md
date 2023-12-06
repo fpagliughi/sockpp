@@ -26,10 +26,12 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
-## New in v0.8.1
+## New in v0.8.1 & v0.8.2
 
-This release attempts to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
+These releases attempt to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
 
+- [#89](https://github.com/fpagliughi/sockpp/issue/89) Fixed generator expression for older CMake
+- [#91](https://github.com/fpagliughi/sockpp/issue/91) Fixed uniform_int_distribution<> in UNIX socket example
 - Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
     - Connector timeouts
     - Stateless reads & writes for streaming sockets w/ functions returning `ioresult`

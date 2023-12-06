@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017-2018 Frank Pagliughi
+# Copyright (c) 2017-2023 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ cmake_minimum_required(VERSION 3.12)
 
 # --- Project setup ---
 
-project(sockpp VERSION "0.8.1")
+project(sockpp VERSION "0.8.2")
 
 # --- Build Options ---
 
