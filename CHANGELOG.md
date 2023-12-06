@@ -1,5 +1,11 @@
 # Change Log for _sockpp_
 
+## [Version 0.8.2](https://github.com/fpagliughi/sockpp/compare/v0.8.1..v0.8.2) - (2023-12-05)
+
+- [#89](https://github.com/fpagliughi/sockpp/issue/89) Fixed generator expression for older CMake
+- [#91](https://github.com/fpagliughi/sockpp/issue/91) Fixed uniform_int_distribution<> in UNIX socket example
+
+
 ## [Version 0.8.1](https://github.com/fpagliughi/sockpp/compare/v0.8.0..v0.8.1)
 
 Released: 2023-01-30
