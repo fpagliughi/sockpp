@@ -48,6 +48,7 @@
 // --------------------------------------------------------------------------
 
 #include <iostream>
+
 #include "sockpp/unix_dgram_socket.h"
 #include "sockpp/version.h"
 
@@ -57,37 +58,36 @@ using namespace std;
 // The main thread creates the UDP socket, and then starts them running the
 // echo service in a loop.
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample Unix-domain datagram echo server for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample Unix-domain datagram echo server for 'sockpp' " << sockpp::SOCKPP_VERSION
+         << '\n'
+         << endl;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	sockpp::unix_dgram_socket sock;
-	if (!sock) {
-		cerr << "Error creating the socket: " << sock.last_error_str() << endl;
-		return 1;
-	}
+    sockpp::unix_dgram_socket sock;
+    if (!sock) {
+        cerr << "Error creating the socket: " << sock.last_error_str() << endl;
+        return 1;
+    }
 
-	if (!sock.bind(sockpp::unix_address("/tmp/undgramechosvr.sock"))) {
-		cerr << "Error binding the socket: " << sock.last_error_str() << endl;
-		return 1;
-	}
+    if (!sock.bind(sockpp::unix_address("/tmp/undgramechosvr.sock"))) {
+        cerr << "Error binding the socket: " << sock.last_error_str() << endl;
+        return 1;
+    }
 
-	// Run the socket in this thread.
-	ssize_t n;
-	char buf[512];
+    // Run the socket in this thread.
+    ssize_t n;
+    char buf[512];
 
-	sockpp::unix_address srcAddr;
+    sockpp::unix_address srcAddr;
 
-	cout << "Awaiting packets on: '" << sock.address() << "'" << endl;
+    cout << "Awaiting packets on: '" << sock.address() << "'" << endl;
 
-	// Read some data, also getting the address of the sender,
-	// then just send it back.
-	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
-		sock.send_to(buf, n, srcAddr);
+    // Read some data, also getting the address of the sender,
+    // then just send it back.
+    while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
+        sock.send_to(buf, n, srcAddr);
 
-	return 0;
+    return 0;
 }
-

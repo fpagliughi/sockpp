@@ -38,35 +38,36 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/stream_socket.h"
-#include "sockpp/inet_address.h"
-#include "catch2_version.h"
 #include <string>
+
+#include "catch2_version.h"
+#include "sockpp/inet_address.h"
+#include "sockpp/stream_socket.h"
 
 using namespace sockpp;
 
 TEST_CASE("stream_socket default constructor", "[stream_socket]") {
-	stream_socket sock;
-	REQUIRE(!sock);
-	REQUIRE(!sock.is_open());
+    stream_socket sock;
+    REQUIRE(!sock);
+    REQUIRE(!sock.is_open());
 }
 
 TEST_CASE("stream_socket handle constructor", "[stream_socket]") {
-	constexpr auto HANDLE = socket_t(3);
+    constexpr auto HANDLE = socket_t(3);
 
-	SECTION("valid handle") {
-		stream_socket sock(HANDLE);
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-	}
+    SECTION("valid handle") {
+        stream_socket sock(HANDLE);
+        REQUIRE(sock);
+        REQUIRE(sock.is_open());
+    }
 
-	SECTION("invalid handle") {
-		stream_socket sock(INVALID_SOCKET);
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
-		// TODO: Should this set an error?
-		REQUIRE(!sock.last_error());
-	}
+    SECTION("invalid handle") {
+        stream_socket sock(INVALID_SOCKET);
+        REQUIRE(!sock);
+        REQUIRE(!sock.is_open());
+        // TODO: Should this set an error?
+        REQUIRE(!sock.last_error());
+    }
 }
 
 #if 0
@@ -96,5 +97,5 @@ TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 // Connected tests
 
 TEST_CASE("stream_socket readn, writen", "[stream_socket]") {
-	//auto lsock = stream_socket::create(AF
+    // auto lsock = stream_socket::create(AF
 }

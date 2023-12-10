@@ -38,60 +38,57 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/unix_dgram_socket.h"
 
 using namespace std;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	sockpp::initialize();
+int main(int argc, char* argv[]) {
+    sockpp::initialize();
 
-	string	cliAddr { "/tmp/undgramecho.sock" },
-			svrAddr { "/tmp/undgramechosvr.sock" };
+    string cliAddr{"/tmp/undgramecho.sock"}, svrAddr{"/tmp/undgramechosvr.sock"};
 
-	sockpp::unix_dgram_socket sock;
+    sockpp::unix_dgram_socket sock;
 
-	// A Unix-domain UDP client needs to bind to its own address
-	// before it can send or receive packets
+    // A Unix-domain UDP client needs to bind to its own address
+    // before it can send or receive packets
 
-	if (!sock.bind(sockpp::unix_address(cliAddr))) {
-		cerr << "Error connecting to client address at '" << cliAddr << "'"
-			<< "\n\t" << sock.last_error_str() << endl;
-		return 1;
-	}
+    if (!sock.bind(sockpp::unix_address(cliAddr))) {
+        cerr << "Error connecting to client address at '" << cliAddr << "'"
+             << "\n\t" << sock.last_error_str() << endl;
+        return 1;
+    }
 
-	// "Connect" to the server address. This is a convenience to set the
-	// default 'send_to' address, as there is no real connection.
+    // "Connect" to the server address. This is a convenience to set the
+    // default 'send_to' address, as there is no real connection.
 
-	if (!sock.connect(sockpp::unix_address(svrAddr))) {
-		cerr << "Error connecting to server at '" << svrAddr << "'"
-			<< "\n\t" << sock.last_error_str() << endl;
-		return 1;
-	}
+    if (!sock.connect(sockpp::unix_address(svrAddr))) {
+        cerr << "Error connecting to server at '" << svrAddr << "'"
+             << "\n\t" << sock.last_error_str() << endl;
+        return 1;
+    }
 
-	cout << "Created UDP socket at: " << sock.address() << endl;
+    cout << "Created UDP socket at: " << sock.address() << endl;
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (sock.send(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        if (sock.send(s) != ssize_t(s.length())) {
+            cerr << "Error writing to the UDP socket: " << sock.last_error_str() << endl;
+            break;
+        }
 
-		sret.resize(s.length());
-		ssize_t n = sock.recv(&sret[0], s.length());
+        sret.resize(s.length());
+        ssize_t n = sock.recv(&sret[0], s.length());
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+        if (n != ssize_t(s.length())) {
+            cerr << "Error reading from UDP socket: " << sock.last_error_str() << endl;
+            break;
+        }
 
-		cout << sret << endl;
-	}
+        cout << sret << endl;
+    }
 
-	return (!sock) ? 1 : 0;
+    return (!sock) ? 1 : 0;
 }

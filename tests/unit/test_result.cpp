@@ -37,35 +37,34 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/result.h"
 #include "catch2_version.h"
+#include "sockpp/result.h"
 
 using namespace sockpp;
 
 TEST_CASE("test result success", "[result]") {
-	const int VAL = 42;
-	auto res = result<int>(VAL);
+    const int VAL = 42;
+    auto res = result<int>(VAL);
 
-	REQUIRE(res);
-	REQUIRE(res.is_ok());
-	REQUIRE(!res.is_error());
-	REQUIRE(res.value() == VAL);
-	REQUIRE(res.error() == error_code{});
-	REQUIRE(res.error().value() == 0);
-	REQUIRE(res == success(VAL));
-	REQUIRE(res == error_code{});
+    REQUIRE(res);
+    REQUIRE(res.is_ok());
+    REQUIRE(!res.is_error());
+    REQUIRE(res.value() == VAL);
+    REQUIRE(res.error() == error_code{});
+    REQUIRE(res.error().value() == 0);
+    REQUIRE(res == success(VAL));
+    REQUIRE(res == error_code{});
 }
 
 TEST_CASE("test result error", "[result]") {
-	const auto ERR = errc::interrupted;
-	auto res = result<int>::from_error(ERR);
+    const auto ERR = errc::interrupted;
+    auto res = result<int>::from_error(ERR);
 
-	REQUIRE(!res);
-	REQUIRE(!res.is_ok());
-	REQUIRE(res.is_error());
-	REQUIRE(res.error() == ERR);
-	REQUIRE(res == ERR);
-	REQUIRE(res == std::make_error_code(ERR));
-	REQUIRE(res == error<int>(ERR));
+    REQUIRE(!res);
+    REQUIRE(!res.is_ok());
+    REQUIRE(res.is_error());
+    REQUIRE(res.error() == ERR);
+    REQUIRE(res == ERR);
+    REQUIRE(res == std::make_error_code(ERR));
+    REQUIRE(res == error<int>(ERR));
 }
-

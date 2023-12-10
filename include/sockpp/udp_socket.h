@@ -58,8 +58,6 @@ namespace sockpp {
 using udp_socket = datagram_socket_tmpl<inet_address>;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_udp_socket_h
-
+#endif  // __sockpp_udp_socket_h

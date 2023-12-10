@@ -58,8 +58,6 @@ namespace sockpp {
 using unix_connector = connector_tmpl<unix_socket, unix_address>;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-};
+};  // namespace sockpp
 
-#endif		// __sockpp_unix_connector_h
-
+#endif  // __sockpp_unix_connector_h

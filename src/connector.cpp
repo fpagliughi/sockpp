@@ -35,12 +35,13 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/connector.h"
+
 #include <cerrno>
 #if !defined(_WIN32)
-	#include <sys/poll.h>
-	#if defined(__APPLE__)
-		#include <net/if.h>
-	#endif
+    #include <sys/poll.h>
+    #if defined(__APPLE__)
+        #include <net/if.h>
+    #endif
 #endif
 
 using namespace std::chrono;
@@ -49,98 +50,88 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::recreate(const sock_address& addr)
-{
-	sa_family_t domain = addr.family();
-	socket_t h = create_handle(domain);
+bool connector::recreate(const sock_address& addr) {
+    sa_family_t domain = addr.family();
+    socket_t h = create_handle(domain);
 
-	if (!check_socket_bool(h))
-		return false;
+    if (!check_socket_bool(h)) return false;
 
-	// This will close the old connection, if any.
-	reset(h);
-	return true;
+    // This will close the old connection, if any.
+    reset(h);
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::connect(const sock_address& addr)
-{
-	if (!recreate(addr))
-		return false;
+bool connector::connect(const sock_address& addr) {
+    if (!recreate(addr)) return false;
 
-	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
-		return close_on_err();
+    if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
+        return close_on_err();
 
-	return true;
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::connect(const sock_address& addr, microseconds timeout)
-{
-	if (timeout.count() <= 0)
-		return connect(addr);
+bool connector::connect(const sock_address& addr, microseconds timeout) {
+    if (timeout.count() <= 0) return connect(addr);
 
-	if (!recreate(addr))
-		return false;
+    if (!recreate(addr)) return false;
 
-	bool non_blocking =
-		#if defined(_WIN32)
-			false;
-		#else
-			is_non_blocking();
-		#endif
+    bool non_blocking =
+#if defined(_WIN32)
+        false;
+#else
+        is_non_blocking();
+#endif
 
-	if (!non_blocking)
-		set_non_blocking(true);
+    if (!non_blocking) set_non_blocking(true);
 
-	if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
-		auto err = last_error();
-		if (err == errc::operation_in_progress || err == errc::operation_would_block) {
-			// TODO: Windows has a WSAPoll() function we can use.
-			#if defined(_WIN32)
-    			// Non-blocking connect -- call `select` to wait until the timeout:
-    			// Note:  Windows returns errors in exceptset so check it too, the
-    			// logic afterwords doesn't change
-    			fd_set readset;
-    			FD_ZERO(&readset);
-    			FD_SET(handle(), &readset);
-    			fd_set writeset = readset;
-    			fd_set exceptset = readset;
-    			timeval tv = to_timeval(timeout);
-    			int n = check_ret(::select(int(handle())+1, &readset, &writeset, &exceptset, &tv));
-			#else
-				pollfd fds = { handle(), POLLIN|POLLOUT, 0 };
-				int ms = int(duration_cast<milliseconds>(timeout).count());
-				int n = check_ret(::poll(&fds, 1, ms));
-			#endif
+    if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
+        auto err = last_error();
+        if (err == errc::operation_in_progress || err == errc::operation_would_block) {
+// TODO: Windows has a WSAPoll() function we can use.
+#if defined(_WIN32)
+            // Non-blocking connect -- call `select` to wait until the timeout:
+            // Note:  Windows returns errors in exceptset so check it too, the
+            // logic afterwords doesn't change
+            fd_set readset;
+            FD_ZERO(&readset);
+            FD_SET(handle(), &readset);
+            fd_set writeset = readset;
+            fd_set exceptset = readset;
+            timeval tv = to_timeval(timeout);
+            int n =
+                check_ret(::select(int(handle()) + 1, &readset, &writeset, &exceptset, &tv));
+#else
+            pollfd fds = {handle(), POLLIN | POLLOUT, 0};
+            int ms = int(duration_cast<milliseconds>(timeout).count());
+            int n = check_ret(::poll(&fds, 1, ms));
+#endif
 
-			if (n > 0) {
-				// Got a socket event, but it might be an error, so check:
-				int err;
-				if (get_option(SOL_SOCKET, SO_ERROR, &err))
-					clear(err);
-			}
-			else if (n == 0) {
-				clear(ETIMEDOUT);
-			}
-		}
+            if (n > 0) {
+                // Got a socket event, but it might be an error, so check:
+                int err;
+                if (get_option(SOL_SOCKET, SO_ERROR, &err)) clear(err);
+            }
+            else if (n == 0) {
+                clear(ETIMEDOUT);
+            }
+        }
 
-		if (last_error()) {
-			close();
-			return false;
-		}
-	}
+        if (last_error()) {
+            close();
+            return false;
+        }
+    }
 
-	// Restore blocking mode for socket, if needed.
-	if (!non_blocking)
-		set_non_blocking(false);
+    // Restore blocking mode for socket, if needed.
+    if (!non_blocking) set_non_blocking(false);
 
-	return true;
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
-}
-
+}  // namespace sockpp

@@ -38,9 +38,10 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/can_address.h"
-#include "catch2_version.h"
 #include <string>
+
+#include "catch2_version.h"
+#include "sockpp/can_address.h"
 
 using namespace sockpp;
 using namespace std;
@@ -48,7 +49,7 @@ using namespace std;
 // *** NOTE: The "vcan0:" virtual interface must be present. Set it up:
 //   $ ip link add type vcan && ip link set up vcan0
 
-static const string IFACE { "vcan0" };
+static const string IFACE{"vcan0"};
 
 // --------------------------------------------------------------------------
 
@@ -56,32 +57,31 @@ TEST_CASE("can_address default constructor", "[address]") {
     can_address addr;
 
     REQUIRE(!addr.is_set());
-	REQUIRE(addr.iface().empty());
+    REQUIRE(addr.iface().empty());
     REQUIRE(sizeof(sockaddr_can) == addr.size());
 }
 
 TEST_CASE("can_address iface constructor", "[address]") {
-	SECTION("valid interface") {
-		can_address addr(IFACE);
+    SECTION("valid interface") {
+        can_address addr(IFACE);
 
-		REQUIRE(addr);
-		REQUIRE(addr.is_set());
-		REQUIRE(IFACE == addr.iface());
-		REQUIRE(sizeof(sockaddr_can) == addr.size());
-		REQUIRE(addr.index() > 0);
-	}
+        REQUIRE(addr);
+        REQUIRE(addr.is_set());
+        REQUIRE(IFACE == addr.iface());
+        REQUIRE(sizeof(sockaddr_can) == addr.size());
+        REQUIRE(addr.index() > 0);
+    }
 
-	SECTION("valid interface") {
-		#if defined(SOCKPP_WITH_EXCEPTIONS)
-			REQUIRE_THROWS(can_address("invalid"));
-		#else
-			can_address addr("invalid");
+    SECTION("valid interface") {
+#if defined(SOCKPP_WITH_EXCEPTIONS)
+        REQUIRE_THROWS(can_address("invalid"));
+#else
+        can_address addr("invalid");
 
-			REQUIRE(!addr);
-			REQUIRE(!addr.is_set());
-			REQUIRE(addr.iface().empty());
-			REQUIRE(addr.index() == 0);
-		#endif
-	}
+        REQUIRE(!addr);
+        REQUIRE(!addr.is_set());
+        REQUIRE(addr.iface().empty());
+        REQUIRE(addr.index() == 0);
+#endif
+    }
 }
-

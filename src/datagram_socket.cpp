@@ -35,8 +35,10 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/datagram_socket.h"
-#include "sockpp/error.h"
+
 #include <algorithm>
+
+#include "sockpp/error.h"
 
 using namespace std::chrono;
 
@@ -46,19 +48,17 @@ namespace sockpp {
 //								datagram_socket
 /////////////////////////////////////////////////////////////////////////////
 
-datagram_socket::datagram_socket(const sock_address& addr)
-{
-	auto domain = addr.family();
-	socket_t h = create_handle(domain);
+datagram_socket::datagram_socket(const sock_address& addr) {
+    auto domain = addr.family();
+    socket_t h = create_handle(domain);
 
-	if (check_socket_bool(h)) {
-		reset(h);
-		// TODO: If the bind fails, should we close the socket and fail completely?
-		bind(addr);
-	}
+    if (check_socket_bool(h)) {
+        reset(h);
+        // TODO: If the bind fails, should we close the socket and fail completely?
+        bind(addr);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp
-}
-
+}  // namespace sockpp

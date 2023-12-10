@@ -38,68 +38,64 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/tcp_connector.h"
 #include "sockpp/version.h"
 
 using namespace std;
 using namespace std::chrono;
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample TCP echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample TCP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
-	string host = (argc > 1) ? argv[1] : "localhost";
-	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+    string host = (argc > 1) ? argv[1] : "localhost";
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	// Try to resolve the address
+    // Try to resolve the address
 
-	auto res = sockpp::inet_address::create(host, port);
-	if (!res) {
-		cerr << "Error resolving address for '" << host << "': " << res << endl;
-		return 1;
-	}
+    auto res = sockpp::inet_address::create(host, port);
+    if (!res) {
+        cerr << "Error resolving address for '" << host << "': " << res << endl;
+        return 1;
+    }
 
-	auto addr = res.value();
+    auto addr = res.value();
 
-	// Try the connection using a timeout of 5sec.
+    // Try the connection using a timeout of 5sec.
 
-	sockpp::tcp_connector conn(addr, 5s);
-	if (!conn) {
-		cerr << "Error connecting to server at " << addr
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
+    sockpp::tcp_connector conn(addr, 5s);
+    if (!conn) {
+        cerr << "Error connecting to server at " << addr << "\n\t" << conn.last_error_str()
+             << endl;
+        return 1;
+    }
 
-	cout << "Created a connection from " << conn.address() << endl;
+    cout << "Created a connection from " << conn.address() << endl;
 
     // Set a timeout for the responses
     if (!conn.read_timeout(5s)) {
-        cerr << "Error setting timeout on TCP stream: "
-                << conn.last_error_str() << endl;
+        cerr << "Error setting timeout on TCP stream: " << conn.last_error_str() << endl;
     }
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        if (conn.write(s) != ssize_t(s.length())) {
+            cerr << "Error writing to the TCP stream: " << conn.last_error_str() << endl;
+            break;
+        }
 
-		sret.resize(s.length());
-		ssize_t n = conn.read_n(&sret[0], s.length());
+        sret.resize(s.length());
+        ssize_t n = conn.read_n(&sret[0], s.length());
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+        if (n != ssize_t(s.length())) {
+            cerr << "Error reading from TCP stream: " << conn.last_error_str() << endl;
+            break;
+        }
 
-		cout << sret << endl;
-	}
+        cout << sret << endl;
+    }
 
-	return (!conn) ? 1 : 0;
+    return (!conn) ? 1 : 0;
 }

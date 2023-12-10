@@ -61,8 +61,6 @@ using unix_stream_socket = stream_socket_tmpl<unix_address>;
 using unix_socket = unix_stream_socket;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_unix_stream_socket_h
-
+#endif  // __sockpp_unix_stream_socket_h

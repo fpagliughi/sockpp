@@ -47,9 +47,10 @@
 #ifndef __sockpp_sock_address_h
 #define __sockpp_sock_address_h
 
-#include "sockpp/platform.h"
 #include <cstring>
 #include <stdexcept>
+
+#include "sockpp/platform.h"
 
 namespace sockpp {
 
@@ -66,53 +67,52 @@ namespace sockpp {
 class sock_address
 {
 public:
-	/**
-	 * Virtual destructor.
-	 */
-	virtual ~sock_address() noexcept {}
-	/**
-	 * Gets the size of this structure.
-	 * This is equivalent to sizeof(this) but more convenient in some
-	 * places.
-	 * @return The size of this structure.
-	 */
-	virtual socklen_t size() const =0;
-	/**
-	 * Gets a pointer to this object cast to a @em sockaddr.
-	 * @return A pointer to this object cast to a @em sockaddr.
-	 */
-	virtual sockaddr* sockaddr_ptr() =0;
-	/**
-	 * Gets a pointer to this object cast to a @em sockaddr.
-	 * @return A pointer to this object cast to a @em sockaddr.
-	 */
-	virtual const sockaddr* sockaddr_ptr() const =0;
-	/**
-	 * Gets the network family of the address.
-	 * @return The network family of the address (AF_INET, etc). If the
-	 *  	   address is not known, returns AF_UNSPEC.
-	 */
-	virtual sa_family_t family() const {
-		auto p = sockaddr_ptr();
-		return p ? p->sa_family : AF_UNSPEC;
-	}
-	/**
-	 * Checks if the address is set to some value.
- 	 * This doesn't attempt to determine if the address is valid, simply
- 	 * that it has set an address family.
-	 * @return @em true if at least the address family has been set, @em
-	 *  	   false otherwise.
-	 */
-	virtual bool is_set() const noexcept { return family() != AF_UNSPEC; }
-	/**
-	 * Determines if the address is set to some value.
-	 * This doesn't attempt to determine if the address is valid, simply
-	 * that the family has been set properly.
-	 * @return @em true if this has been set as some address, whether or not
-	 *  	   is is valid.
-	 */
-	virtual operator bool() const noexcept { return is_set(); }
-
+    /**
+     * Virtual destructor.
+     */
+    virtual ~sock_address() noexcept {}
+    /**
+     * Gets the size of this structure.
+     * This is equivalent to sizeof(this) but more convenient in some
+     * places.
+     * @return The size of this structure.
+     */
+    virtual socklen_t size() const = 0;
+    /**
+     * Gets a pointer to this object cast to a @em sockaddr.
+     * @return A pointer to this object cast to a @em sockaddr.
+     */
+    virtual sockaddr* sockaddr_ptr() = 0;
+    /**
+     * Gets a pointer to this object cast to a @em sockaddr.
+     * @return A pointer to this object cast to a @em sockaddr.
+     */
+    virtual const sockaddr* sockaddr_ptr() const = 0;
+    /**
+     * Gets the network family of the address.
+     * @return The network family of the address (AF_INET, etc). If the
+     *  	   address is not known, returns AF_UNSPEC.
+     */
+    virtual sa_family_t family() const {
+        auto p = sockaddr_ptr();
+        return p ? p->sa_family : AF_UNSPEC;
+    }
+    /**
+     * Checks if the address is set to some value.
+     * This doesn't attempt to determine if the address is valid, simply
+     * that it has set an address family.
+     * @return @em true if at least the address family has been set, @em
+     *  	   false otherwise.
+     */
+    virtual bool is_set() const noexcept { return family() != AF_UNSPEC; }
+    /**
+     * Determines if the address is set to some value.
+     * This doesn't attempt to determine if the address is valid, simply
+     * that the family has been set properly.
+     * @return @em true if this has been set as some address, whether or not
+     *  	   is is valid.
+     */
+    virtual operator bool() const noexcept { return is_set(); }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -126,80 +126,78 @@ public:
  */
 class sock_address_any : public sock_address
 {
-	/** The maximum size of an address, in bytes */
-	static constexpr size_t MAX_SZ = sizeof(sockaddr_storage);
+    /** The maximum size of an address, in bytes */
+    static constexpr size_t MAX_SZ = sizeof(sockaddr_storage);
 
     /** Storage for any kind of socket address */
     sockaddr_storage addr_{};
-	/** Length of the address (in bytes) */
-	socklen_t sz_{MAX_SZ};
+    /** Length of the address (in bytes) */
+    socklen_t sz_{MAX_SZ};
 
 public:
-	/**
-	 * Constructs an empty address.
-	 * The address is initialized to all zeroes.
-	 */
-	sock_address_any() =default;
-	/**
-	 * Constructs an address.
-	 * @param addr Pointer to a buffer holding the address.
-	 * @param n The number of valid bytes in the address
-	 * @throws std::length_error if `n` is greater than the maximum size of
-	 *  		  an address.
-	 */
-	sock_address_any(const sockaddr* addr, socklen_t n) {
-		if (size_t(n) > MAX_SZ) {
-			#if defined(SOCKPP_WITH_EXCEPTIONS)
-				throw std::length_error("Address length out of range");
-			#else
-				return;
-			#endif
-		}
+    /**
+     * Constructs an empty address.
+     * The address is initialized to all zeroes.
+     */
+    sock_address_any() = default;
+    /**
+     * Constructs an address.
+     * @param addr Pointer to a buffer holding the address.
+     * @param n The number of valid bytes in the address
+     * @throws std::length_error if `n` is greater than the maximum size of
+     *  		  an address.
+     */
+    sock_address_any(const sockaddr* addr, socklen_t n) {
+        if (size_t(n) > MAX_SZ) {
+#if defined(SOCKPP_WITH_EXCEPTIONS)
+            throw std::length_error("Address length out of range");
+#else
+            return;
+#endif
+        }
         std::memcpy(&addr_, addr, sz_ = n);
     }
-	/**
-	 * Constructs an address.
-	 * @param addr The buffer holding the address.
-	 * @param n The number of valid bytes in the address
-	 * @throws std::length_error if `n` is greater than the maximum size of
-	 *  		  an address.
-	 */
-	sock_address_any(const sockaddr_storage& addr, socklen_t n) {
-		if (size_t(n) > MAX_SZ) {
-			#if defined(SOCKPP_WITH_EXCEPTIONS)
-				throw std::length_error("Address length out of range");
-			#else
-				return;
-			#endif
-		}
+    /**
+     * Constructs an address.
+     * @param addr The buffer holding the address.
+     * @param n The number of valid bytes in the address
+     * @throws std::length_error if `n` is greater than the maximum size of
+     *  		  an address.
+     */
+    sock_address_any(const sockaddr_storage& addr, socklen_t n) {
+        if (size_t(n) > MAX_SZ) {
+#if defined(SOCKPP_WITH_EXCEPTIONS)
+            throw std::length_error("Address length out of range");
+#else
+            return;
+#endif
+        }
         std::memcpy(&addr_, &addr, sz_ = n);
     }
-	/**
-	 * Copies another address to this one.
-	 * @param addr The other address to copy into this one.
-	 */
-	sock_address_any(const sock_address& addr)
-		: sock_address_any(addr.sockaddr_ptr(), addr.size()) {}
-	/**
-	 * Gets the size of the address.
-	 * @return The size of the address. This is the number of bytes that are a
-	 *  	   valid part of the address.
-	 */
-	socklen_t size() const override { return sz_; }
-	/**
-	 * Gets a pointer to this object cast to a @em sockaddr.
-	 * @return A pointer to this object cast to a @em sockaddr.
-	 */
-	const sockaddr* sockaddr_ptr() const override {
-		return reinterpret_cast<const sockaddr*>(&addr_);
-	}
-	/**
-	 * Gets a pointer to this object cast to a @em sockaddr.
-	 * @return A pointer to this object cast to a @em sockaddr.
-	 */
-	sockaddr* sockaddr_ptr() override {
-		return reinterpret_cast<sockaddr*>(&addr_);
-	}
+    /**
+     * Copies another address to this one.
+     * @param addr The other address to copy into this one.
+     */
+    sock_address_any(const sock_address& addr)
+        : sock_address_any(addr.sockaddr_ptr(), addr.size()) {}
+    /**
+     * Gets the size of the address.
+     * @return The size of the address. This is the number of bytes that are a
+     *  	   valid part of the address.
+     */
+    socklen_t size() const override { return sz_; }
+    /**
+     * Gets a pointer to this object cast to a @em sockaddr.
+     * @return A pointer to this object cast to a @em sockaddr.
+     */
+    const sockaddr* sockaddr_ptr() const override {
+        return reinterpret_cast<const sockaddr*>(&addr_);
+    }
+    /**
+     * Gets a pointer to this object cast to a @em sockaddr.
+     * @return A pointer to this object cast to a @em sockaddr.
+     */
+    sockaddr* sockaddr_ptr() override { return reinterpret_cast<sockaddr*>(&addr_); }
 };
 
 /**
@@ -211,7 +209,7 @@ public:
  */
 inline bool operator==(const sock_address& lhs, const sock_address& rhs) {
     return lhs.size() == rhs.size() &&
-        std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), lhs.size()) == 0;
+           std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), lhs.size()) == 0;
 }
 
 /**
@@ -222,11 +220,10 @@ inline bool operator==(const sock_address& lhs, const sock_address& rhs) {
  *  	   if they refer to the same address.
  */
 inline bool operator!=(const sock_address& lhs, const sock_address& rhs) {
-	return !operator==(lhs, rhs);
+    return !operator==(lhs, rhs);
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace 'sockpp'
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_sock_address_h
+#endif  // __sockpp_sock_address_h

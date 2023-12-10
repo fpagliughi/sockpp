@@ -35,6 +35,7 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/inet_address.h"
+
 #include "sockpp/error.h"
 
 using namespace std;
@@ -43,34 +44,30 @@ namespace sockpp {
 
 // --------------------------------------------------------------------------
 
-inet_address::inet_address(uint32_t addr, in_port_t port)
-{
-	addr_.sin_family = AF_INET;
-	addr_.sin_addr.s_addr = htonl(addr);
-	addr_.sin_port = htons(port);
-	#if defined(__APPLE__) || defined(BSD)
-		addr_.sin_len = (uint8_t) SZ;
-	#endif
+inet_address::inet_address(uint32_t addr, in_port_t port) {
+    addr_.sin_family = AF_INET;
+    addr_.sin_addr.s_addr = htonl(addr);
+    addr_.sin_port = htons(port);
+#if defined(__APPLE__) || defined(BSD)
+    addr_.sin_len = (uint8_t)SZ;
+#endif
 }
 
 // --------------------------------------------------------------------------
 
-inet_address::inet_address(const std::string& saddr, in_port_t port)
-{
-	auto res = create(saddr, port);
-	// If create fails, this is an un-set, default address.
-	addr_ = res.value().addr_;
+inet_address::inet_address(const std::string& saddr, in_port_t port) {
+    auto res = create(saddr, port);
+    // If create fails, this is an un-set, default address.
+    addr_ = res.value().addr_;
 }
 
 // --------------------------------------------------------------------------
 
-result<in_addr_t> inet_address::resolve_name(const std::string& saddr)
-{
-	#if !defined(_WIN32)
-		in_addr ia;
-		if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
-			return ia.s_addr;
-	#endif
+result<in_addr_t> inet_address::resolve_name(const std::string& saddr) {
+#if !defined(_WIN32)
+    in_addr ia;
+    if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1) return ia.s_addr;
+#endif
 
     addrinfo *res, hints = addrinfo{};
     hints.ai_family = ADDRESS_FAMILY;
@@ -78,19 +75,19 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr)
 
     int err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
 
-	if (err != 0) {
-		auto ec =
-		#if defined(_WIN32)
-			error_code{errno, system_category()};
-		#else
-		   make_error_code(static_cast<gai_errc>(err));
-		#endif
+    if (err != 0) {
+        auto ec =
+#if defined(_WIN32)
+            error_code{errno, system_category()};
+#else
+            make_error_code(static_cast<gai_errc>(err));
+#endif
 
-		#if defined(SOCKPP_WITH_EXCEPTIONS)
-			throw system_error{ec};
-		#endif
-		return ec;
-	}
+#if defined(SOCKPP_WITH_EXCEPTIONS)
+        throw system_error{ec};
+#endif
+        return ec;
+    }
 
     auto ipv4 = reinterpret_cast<sockaddr_in*>(res->ai_addr);
     auto addr = ipv4->sin_addr.s_addr;
@@ -100,43 +97,38 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr)
 
 // --------------------------------------------------------------------------
 
-result<inet_address> inet_address::create(const std::string& saddr, in_port_t port)
-{
-	auto res = resolve_name(saddr.c_str());
-	if (!res)
-		return res.error();
+result<inet_address> inet_address::create(const std::string& saddr, in_port_t port) {
+    auto res = resolve_name(saddr.c_str());
+    if (!res) return res.error();
 
-	auto addr = sockaddr_in{};
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = res.value();
-	addr.sin_port = htons(port);
-	#if defined(__APPLE__) || defined(BSD)
-		addr.sin_len = (uint8_t) SZ;
-	#endif
-	return inet_address{addr};
+    auto addr = sockaddr_in{};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = res.value();
+    addr.sin_port = htons(port);
+#if defined(__APPLE__) || defined(BSD)
+    addr.sin_len = (uint8_t)SZ;
+#endif
+    return inet_address{addr};
 }
 
 // --------------------------------------------------------------------------
 
-string inet_address::to_string() const
-{
-	char buf[INET_ADDRSTRLEN];
-	auto str = inet_ntop(AF_INET, (void*) &(addr_.sin_addr), buf, INET_ADDRSTRLEN);
-	return std::string(str ? str : "<unknown>")
-		+ ":" + std::to_string(unsigned(port()));
+string inet_address::to_string() const {
+    char buf[INET_ADDRSTRLEN];
+    auto str = inet_ntop(AF_INET, (void*)&(addr_.sin_addr), buf, INET_ADDRSTRLEN);
+    return std::string(str ? str : "<unknown>") + ":" + std::to_string(unsigned(port()));
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-ostream& operator<<(ostream& os, const inet_address& addr)
-{
+ostream& operator<<(ostream& os, const inet_address& addr) {
     char buf[INET_ADDRSTRLEN];
-	auto str = inet_ntop(AF_INET, (void*) &(addr.sockaddr_in_ptr()->sin_addr),
-						 buf, INET_ADDRSTRLEN);
-	os << (str ? str : "<unknown>") << ":" << unsigned(addr.port());
-	return os;
+    auto str =
+        inet_ntop(AF_INET, (void*)&(addr.sockaddr_in_ptr()->sin_addr), buf, INET_ADDRSTRLEN);
+    os << (str ? str : "<unknown>") << ":" << unsigned(addr.port());
+    return os;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // End namespace sockpp
-}
+}  // namespace sockpp

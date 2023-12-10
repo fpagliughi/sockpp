@@ -38,10 +38,11 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/socket.h"
-#include "sockpp/inet_address.h"
-#include "catch2_version.h"
 #include <string>
+
+#include "catch2_version.h"
+#include "sockpp/inet_address.h"
+#include "sockpp/socket.h"
 
 using namespace sockpp;
 using namespace std::chrono;
@@ -50,29 +51,29 @@ using namespace std::chrono;
 // Test aux functions
 
 TEST_CASE("test to_timeval", "aux") {
-	SECTION("concrete function") {
-		timeval tv = to_timeval(microseconds(500));
-		REQUIRE(tv.tv_sec == 0);
-		REQUIRE(tv.tv_usec == 500);
+    SECTION("concrete function") {
+        timeval tv = to_timeval(microseconds(500));
+        REQUIRE(tv.tv_sec == 0);
+        REQUIRE(tv.tv_usec == 500);
 
-		tv = to_timeval(microseconds(2500000));
-		REQUIRE(tv.tv_sec == 2);
-		REQUIRE(tv.tv_usec == 500000);
-	}
+        tv = to_timeval(microseconds(2500000));
+        REQUIRE(tv.tv_sec == 2);
+        REQUIRE(tv.tv_usec == 500000);
+    }
 
-	SECTION("template") {
-		timeval tv = to_timeval(milliseconds(1));
-		REQUIRE(tv.tv_sec == 0);
-		REQUIRE(tv.tv_usec == 1000);
+    SECTION("template") {
+        timeval tv = to_timeval(milliseconds(1));
+        REQUIRE(tv.tv_sec == 0);
+        REQUIRE(tv.tv_usec == 1000);
 
-		tv = to_timeval(milliseconds(2500));
-		REQUIRE(tv.tv_sec == 2);
-		REQUIRE(tv.tv_usec == 500000);
+        tv = to_timeval(milliseconds(2500));
+        REQUIRE(tv.tv_sec == 2);
+        REQUIRE(tv.tv_usec == 500000);
 
-		tv = to_timeval(seconds(5));
-		REQUIRE(tv.tv_sec == 5);
-		REQUIRE(tv.tv_usec == 0);
-	}
+        tv = to_timeval(seconds(5));
+        REQUIRE(tv.tv_sec == 5);
+        REQUIRE(tv.tv_usec == 0);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -81,216 +82,215 @@ TEST_CASE("test to_timeval", "aux") {
 constexpr in_port_t INET_TEST_PORT = 12346;
 
 TEST_CASE("socket constructors", "[socket]") {
-	SECTION("default constructor") {
-		sockpp::socket sock;
+    SECTION("default constructor") {
+        sockpp::socket sock;
 
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
-		REQUIRE(sock.handle() == INVALID_SOCKET);
-		REQUIRE(!sock.last_error());
-	}
+        REQUIRE(!sock);
+        REQUIRE(!sock.is_open());
+        REQUIRE(sock.handle() == INVALID_SOCKET);
+        REQUIRE(!sock.last_error());
+    }
 
-	SECTION("handle constructor") {
-		constexpr auto HANDLE = socket_t(3);
-		sockpp::socket sock(HANDLE);
+    SECTION("handle constructor") {
+        constexpr auto HANDLE = socket_t(3);
+        sockpp::socket sock(HANDLE);
 
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-		REQUIRE(sock.handle() == HANDLE);
-		REQUIRE(!sock.last_error());
-	}
+        REQUIRE(sock);
+        REQUIRE(sock.is_open());
+        REQUIRE(sock.handle() == HANDLE);
+        REQUIRE(!sock.last_error());
+    }
 
-	SECTION("move constructor") {
-		constexpr auto HANDLE = socket_t(3);
-		sockpp::socket org_sock(HANDLE);
+    SECTION("move constructor") {
+        constexpr auto HANDLE = socket_t(3);
+        sockpp::socket org_sock(HANDLE);
 
-		sockpp::socket sock(std::move(org_sock));
+        sockpp::socket sock(std::move(org_sock));
 
-		// Make sure the new socket got the handle
-		REQUIRE(sock);
-		REQUIRE(sock.handle() == HANDLE);
-		REQUIRE(!sock.last_error());
+        // Make sure the new socket got the handle
+        REQUIRE(sock);
+        REQUIRE(sock.handle() == HANDLE);
+        REQUIRE(!sock.last_error());
 
-		// Make sure the handle was moved out of the org_sock
-		REQUIRE(!org_sock);
-		REQUIRE(org_sock.handle() == INVALID_SOCKET);
-	}
+        // Make sure the handle was moved out of the org_sock
+        REQUIRE(!org_sock);
+        REQUIRE(org_sock.handle() == INVALID_SOCKET);
+    }
 }
 
 // Test the socket error behavior
 TEST_CASE("socket errors", "[socket]") {
-	SECTION("basic errors") {
-		sockpp::socket sock;
+    SECTION("basic errors") {
+        sockpp::socket sock;
 
-		// Operations on an unopened socket should give an error
-		int reuse = 1;
-		socklen_t len = sizeof(int);
-		bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
+        // Operations on an unopened socket should give an error
+        int reuse = 1;
+        socklen_t len = sizeof(int);
+        bool ok = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
 
-		// Socket should be in error state
-		REQUIRE(!ok);
-		REQUIRE(!sock);
+        // Socket should be in error state
+        REQUIRE(!ok);
+        REQUIRE(!sock);
 
-		auto err = sock.last_error();
-		REQUIRE(err);
+        auto err = sock.last_error();
+        REQUIRE(err);
 
-		// last_error() is sticky, unlike `errno`
-		REQUIRE(sock.last_error() == err);
+        // last_error() is sticky, unlike `errno`
+        REQUIRE(sock.last_error() == err);
 
-		// We can clear the error
-		sock.clear();
-		REQUIRE(!sock.last_error());
+        // We can clear the error
+        sock.clear();
+        REQUIRE(!sock.last_error());
 
-		// Test arbitrary clear value
-		sock.clear(42);
-		REQUIRE(sock.last_error().value() == 42);
-		REQUIRE(!sock);
-	}
+        // Test arbitrary clear value
+        sock.clear(42);
+        REQUIRE(sock.last_error().value() == 42);
+        REQUIRE(!sock);
+    }
 
-	SECTION("clear error") {
-		auto sock = sockpp::socket::create(AF_INET, SOCK_STREAM);
-		REQUIRE(sock);
+    SECTION("clear error") {
+        auto sock = sockpp::socket::create(AF_INET, SOCK_STREAM);
+        REQUIRE(sock);
 
-		sock.clear(42);
-		REQUIRE(!sock);
+        sock.clear(42);
+        REQUIRE(!sock);
 
-		sock.clear();
-		REQUIRE(sock);
-	}
+        sock.clear();
+        REQUIRE(sock);
+    }
 }
 
 TEST_CASE("socket handles", "[socket]") {
+    constexpr auto HANDLE = socket_t(3);
 
-	constexpr auto HANDLE = socket_t(3);
+    SECTION("test release") {
+        sockpp::socket sock(HANDLE);
 
-	SECTION("test release") {
-		sockpp::socket sock(HANDLE);
+        REQUIRE(sock.handle() == HANDLE);
+        REQUIRE(sock.release() == HANDLE);
 
-		REQUIRE(sock.handle() == HANDLE);
-		REQUIRE(sock.release() == HANDLE);
+        // Make sure the handle was moved out of the sock
+        REQUIRE(!sock);
+        REQUIRE(sock.handle() == INVALID_SOCKET);
+    }
 
-		// Make sure the handle was moved out of the sock
-		REQUIRE(!sock);
-		REQUIRE(sock.handle() == INVALID_SOCKET);
-	}
+    SECTION("test reset") {
+        sockpp::socket sock(HANDLE);
+        REQUIRE(sock.handle() == HANDLE);
 
-	SECTION("test reset") {
-		sockpp::socket sock(HANDLE);
-		REQUIRE(sock.handle() == HANDLE);
+        sock.reset();  // Default reset acts like release w/o return
 
-		sock.reset();	// Default reset acts like release w/o return
+        // Make sure the handle was moved out of the sock
+        REQUIRE(!sock);
+        REQUIRE(sock.handle() == INVALID_SOCKET);
 
-		// Make sure the handle was moved out of the sock
-		REQUIRE(!sock);
-		REQUIRE(sock.handle() == INVALID_SOCKET);
-
-		// Now reset with a "valid" handle
-		sock.reset(HANDLE);
-		REQUIRE(sock);
-		REQUIRE(sock.handle() == HANDLE);
-	}
+        // Now reset with a "valid" handle
+        sock.reset(HANDLE);
+        REQUIRE(sock);
+        REQUIRE(sock.handle() == HANDLE);
+    }
 }
 
 TEST_CASE("socket family", "[socket]") {
-	SECTION("uninitialized socket") {
-		// Uninitialized socket should have unspecified family
-		sockpp::socket sock;
-		REQUIRE(sock.family() == AF_UNSPEC);
-	}
+    SECTION("uninitialized socket") {
+        // Uninitialized socket should have unspecified family
+        sockpp::socket sock;
+        REQUIRE(sock.family() == AF_UNSPEC);
+    }
 
-	SECTION("unbound socket") {
-		// Unbound socket should have creation family
-		auto sock = socket::create(AF_INET, SOCK_STREAM);
+    SECTION("unbound socket") {
+        // Unbound socket should have creation family
+        auto sock = socket::create(AF_INET, SOCK_STREAM);
 
-		// Windows and *nix behave differently
-		#if defined(_WIN32)
-			REQUIRE(sock.family() == AF_UNSPEC);
-		#else
-			REQUIRE(sock.family() == AF_INET);
-		#endif
-	}
+// Windows and *nix behave differently
+#if defined(_WIN32)
+        REQUIRE(sock.family() == AF_UNSPEC);
+#else
+        REQUIRE(sock.family() == AF_INET);
+#endif
+    }
 
-	SECTION("bound socket") {
-		// Bound socket should have same family as
-		// address to which it's bound
-		auto sock = socket::create(AF_INET, SOCK_STREAM);
-		inet_address addr(INET_TEST_PORT);
+    SECTION("bound socket") {
+        // Bound socket should have same family as
+        // address to which it's bound
+        auto sock = socket::create(AF_INET, SOCK_STREAM);
+        inet_address addr(INET_TEST_PORT);
 
-		int reuse = 1;
-		REQUIRE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
-		REQUIRE(sock.bind(addr));
-		REQUIRE(sock.family() == addr.family());
-	}
+        int reuse = 1;
+        REQUIRE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
+        REQUIRE(sock.bind(addr));
+        REQUIRE(sock.family() == addr.family());
+    }
 }
 
 TEST_CASE("socket address", "[socket]") {
-	SECTION("uninitialized socket") {
-		// Uninitialized socket should have empty address
-		sockpp::socket sock;
-		REQUIRE(sock.address() == sock_address_any{});
-	}
+    SECTION("uninitialized socket") {
+        // Uninitialized socket should have empty address
+        sockpp::socket sock;
+        REQUIRE(sock.address() == sock_address_any{});
+    }
 
-	// The address has the specified family but all zeros
-	SECTION("unbound socket") {
-		auto sock = socket::create(AF_INET, SOCK_STREAM);
-		auto addr = inet_address(sock.address());
+    // The address has the specified family but all zeros
+    SECTION("unbound socket") {
+        auto sock = socket::create(AF_INET, SOCK_STREAM);
+        auto addr = inet_address(sock.address());
 
-		// Windows and *nix behave differently for family
-		#if defined(_WIN32)
-			REQUIRE(sock.family() == AF_UNSPEC);
-		#else
-			REQUIRE(sock.family() == AF_INET);
-		#endif
+// Windows and *nix behave differently for family
+#if defined(_WIN32)
+        REQUIRE(sock.family() == AF_UNSPEC);
+#else
+        REQUIRE(sock.family() == AF_INET);
+#endif
 
-		REQUIRE(addr.address() == 0);
-		REQUIRE(addr.port() == 0);
-	}
+        REQUIRE(addr.address() == 0);
+        REQUIRE(addr.port() == 0);
+    }
 
-	SECTION("bound socket") {
-		// Bound socket should have same family as
-		// address to which it's bound
-		auto sock = socket::create(AF_INET, SOCK_STREAM);
-		const inet_address ADDR(INET_TEST_PORT);
+    SECTION("bound socket") {
+        // Bound socket should have same family as
+        // address to which it's bound
+        auto sock = socket::create(AF_INET, SOCK_STREAM);
+        const inet_address ADDR(INET_TEST_PORT);
 
-		int reuse = 1;
-		REQUIRE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
+        int reuse = 1;
+        REQUIRE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
 
-		REQUIRE(sock.bind(ADDR));
-		REQUIRE(sock.address() == ADDR);
-	}
+        REQUIRE(sock.bind(ADDR));
+        REQUIRE(sock.address() == ADDR);
+    }
 }
 
 // Socket pair shouldn't work for TCP sockets on any known platform.
 // So this should fail, but fail gracefully and retain the error
 // in both sockets.
 TEST_CASE("failed socket pair", "[socket]") {
-	sockpp::socket sock1, sock2;
-	std::tie(sock1, sock2) = std::move(socket::pair(AF_INET, SOCK_STREAM));
+    sockpp::socket sock1, sock2;
+    std::tie(sock1, sock2) = std::move(socket::pair(AF_INET, SOCK_STREAM));
 
-	REQUIRE(!sock1);
-	REQUIRE(!sock2);
+    REQUIRE(!sock1);
+    REQUIRE(!sock2);
 
-	REQUIRE(sock1.last_error());
-	REQUIRE(sock1.last_error() == sock2.last_error());
+    REQUIRE(sock1.last_error());
+    REQUIRE(sock1.last_error() == sock2.last_error());
 }
 
 // Test putting the socket into and out of non-blocking mode
 TEST_CASE("socket non-blocking mode", "[socket]") {
-	auto sock = socket::create(AF_INET, SOCK_STREAM);
+    auto sock = socket::create(AF_INET, SOCK_STREAM);
 
-	#if !defined(_WIN32)
-		REQUIRE(!sock.is_non_blocking());
-	#endif
+#if !defined(_WIN32)
+    REQUIRE(!sock.is_non_blocking());
+#endif
 
-	REQUIRE(sock.set_non_blocking());
-	#if !defined(_WIN32)
-		REQUIRE(sock.is_non_blocking());
-	#endif
+    REQUIRE(sock.set_non_blocking());
+#if !defined(_WIN32)
+    REQUIRE(sock.is_non_blocking());
+#endif
 
-	REQUIRE(sock.set_non_blocking(false));
-	#if !defined(_WIN32)
-		REQUIRE(!sock.is_non_blocking());
-	#endif
+    REQUIRE(sock.set_non_blocking(false));
+#if !defined(_WIN32)
+    REQUIRE(!sock.is_non_blocking());
+#endif
 }
 
 // --------------------------------------------------------------------------
@@ -347,4 +347,3 @@ TEST_CASE("thread-safe last error", "[socket]") {
 	thr.join();
 }
 #endif
-

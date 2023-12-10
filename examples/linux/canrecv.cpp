@@ -37,17 +37,18 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <chrono>
-#include <thread>
-#include "sockpp/can_socket.h"
-#include "sockpp/can_frame.h"
-#include "sockpp/version.h"
-
 #include <net/if.h>
 #include <sys/ioctl.h>
+
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <thread>
+
+#include "sockpp/can_frame.h"
+#include "sockpp/can_socket.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -56,39 +57,37 @@ using sysclock = chrono::system_clock;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample SocketCAN reader for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample SocketCAN reader for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
 
-	string canIface = (argc > 1) ? argv[1] : "can0";
-	canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
+    string canIface = (argc > 1) ? argv[1] : "can0";
+    canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	sockpp::can_address addr(canIface);
-	sockpp::can_socket sock(addr);
+    sockpp::can_address addr(canIface);
+    sockpp::can_socket sock(addr);
 
-	if (!sock) {
-		cerr << "Error binding to the CAN interface '" << canIface << "'\n\t"
-			<< sock.last_error_str() << endl;
-		return 1;
-	}
+    if (!sock) {
+        cerr << "Error binding to the CAN interface '" << canIface << "'\n\t"
+             << sock.last_error_str() << endl;
+        return 1;
+    }
 
-	cout << "Created CAN socket on " << sock.address() << endl;
-	cout.setf(ios::fixed, ios::floatfield);
-	cout << setfill('0');
+    cout << "Created CAN socket on " << sock.address() << endl;
+    cout.setf(ios::fixed, ios::floatfield);
+    cout << setfill('0');
 
-	while (true) {
-		sockpp::can_frame frame;
-		sock.recv(&frame);
-		auto t = sock.last_frame_timestamp();
+    while (true) {
+        sockpp::can_frame frame;
+        sock.recv(&frame);
+        auto t = sock.last_frame_timestamp();
 
-		cout << t << "  ";
-		for (uint8_t i=0; i<frame.can_dlc; ++i)
-			cout << hex << uppercase << setw(2) << unsigned(frame.data[i]) << " ";
-		cout << endl;
-	}
+        cout << t << "  ";
+        for (uint8_t i = 0; i < frame.can_dlc; ++i)
+            cout << hex << uppercase << setw(2) << unsigned(frame.data[i]) << " ";
+        cout << endl;
+    }
 
-	return (!sock) ? 1 : 0;
+    return (!sock) ? 1 : 0;
 }

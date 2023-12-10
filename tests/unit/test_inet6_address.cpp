@@ -38,19 +38,20 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/inet6_address.h"
-#include "catch2_version.h"
 #include <string>
+
+#include "catch2_version.h"
+#include "sockpp/inet6_address.h"
 
 using namespace sockpp;
 
-const in6_addr      ANY_ADDR        IN6ADDR_ANY_INIT;         // Any iface
-const in6_addr      LOCALHOST_ADDR  IN6ADDR_LOOPBACK_INIT;    // Localhost 0x7F000001
-const in_port_t     PORT            { 12345 };
+const in6_addr ANY_ADDR IN6ADDR_ANY_INIT;             // Any iface
+const in6_addr LOCALHOST_ADDR IN6ADDR_LOOPBACK_INIT;  // Localhost 0x7F000001
+const in_port_t PORT{12345};
 
 TEST_CASE("inet6_address default constructor", "[address]") {
     inet6_address addr;
-	in6_addr iaddr{};
+    in6_addr iaddr{};
 
     REQUIRE(!addr);
     REQUIRE(!addr.is_set());
@@ -77,7 +78,7 @@ TEST_CASE("inet6_address port-only constructor", "[address]") {
 TEST_CASE("inet_address int32_t constructor", "[address]") {
     inet_address addr(LOCALHOST_ADDR, PORT);
 
-	REQUIRE(addr);
+    REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(LOCALHOST_ADDR == addr.address());
     REQUIRE(PORT == addr.port());
@@ -97,7 +98,7 @@ TEST_CASE("inet_address int32_t constructor", "[address]") {
 TEST_CASE("inet6_address name constructor", "[address]") {
     inet6_address addr{"FD80:CD00:0000:0CDE:1257:0000:211E:729C", PORT};
 
-	REQUIRE(addr);
+    REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(0xFD == addr[0]);
     REQUIRE(0x9C == addr[15]);
@@ -109,65 +110,64 @@ TEST_CASE("inet6_address name constructor", "[address]") {
 }
 
 TEST_CASE("IPv6 resolve address", "[address]") {
-	SECTION("local address") {
-		auto addr_res = inet6_address::resolve_name("::1");
-		REQUIRE(addr_res.is_ok());
-		auto addr = addr_res.value();
+    SECTION("local address") {
+        auto addr_res = inet6_address::resolve_name("::1");
+        REQUIRE(addr_res.is_ok());
+        auto addr = addr_res.value();
 
-		REQUIRE(memcmp(LOCALHOST_ADDR.s6_addr, addr.s6_addr, 16) == 0);
-	}
+        REQUIRE(memcmp(LOCALHOST_ADDR.s6_addr, addr.s6_addr, 16) == 0);
+    }
 
-	SECTION("any address") {
-		auto addr_res = inet6_address::resolve_name("::");
-		REQUIRE(addr_res.is_ok());
-		auto addr = addr_res.value();
-		REQUIRE(memcmp(ANY_ADDR.s6_addr, addr.s6_addr, 16) == 0);
-	}
+    SECTION("any address") {
+        auto addr_res = inet6_address::resolve_name("::");
+        REQUIRE(addr_res.is_ok());
+        auto addr = addr_res.value();
+        REQUIRE(memcmp(ANY_ADDR.s6_addr, addr.s6_addr, 16) == 0);
+    }
 
-	// According to RFC6761, "invalid." domain should not resolve
-	SECTION("resolve failure", "[address]") {
-		#if defined(SOCKPP_WITH_EXCEPTIONS)
-			REQUIRE_THROWS(inet6_address::resolve_name("invalid"));
-		#else
-			auto res = inet6_address::resolve_name("invalid");
-			REQUIRE(!res);
-			REQUIRE(res.is_error());
-		#endif
-	}
+    // According to RFC6761, "invalid." domain should not resolve
+    SECTION("resolve failure", "[address]") {
+#if defined(SOCKPP_WITH_EXCEPTIONS)
+        REQUIRE_THROWS(inet6_address::resolve_name("invalid"));
+#else
+        auto res = inet6_address::resolve_name("invalid");
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+#endif
+    }
 }
 
 TEST_CASE("IPv6 create address", "[address]") {
-	SECTION("local address") {
-		auto res = inet6_address::create("::1", PORT);
-		REQUIRE(res.is_ok());
+    SECTION("local address") {
+        auto res = inet6_address::create("::1", PORT);
+        REQUIRE(res.is_ok());
 
-		auto addr = res.value();
+        auto addr = res.value();
 
-		REQUIRE(LOCALHOST_ADDR == addr.address());
-		REQUIRE(PORT == addr.port());
-		REQUIRE(inet6_address{LOCALHOST_ADDR, PORT} == addr);
-	}
+        REQUIRE(LOCALHOST_ADDR == addr.address());
+        REQUIRE(PORT == addr.port());
+        REQUIRE(inet6_address{LOCALHOST_ADDR, PORT} == addr);
+    }
 
-	SECTION("any address") {
-		auto res = inet6_address::create("::", PORT);
-		REQUIRE(res.is_ok());
+    SECTION("any address") {
+        auto res = inet6_address::create("::", PORT);
+        REQUIRE(res.is_ok());
 
-		auto addr = res.value();
+        auto addr = res.value();
 
-		REQUIRE(ANY_ADDR == addr.address());
-		REQUIRE(PORT == addr.port());
-		REQUIRE(inet6_address{ANY_ADDR, PORT} == addr);
-	}
+        REQUIRE(ANY_ADDR == addr.address());
+        REQUIRE(PORT == addr.port());
+        REQUIRE(inet6_address{ANY_ADDR, PORT} == addr);
+    }
 
-	// According to RFC6761, "invalid." domain should not resolve
-	SECTION("create failure", "[address]") {
-		#if defined(SOCKPP_WITH_EXCEPTIONS)
-			REQUIRE_THROWS(inet6_address::create("invalid", PORT));
-		#else
-			auto res = inet6_address::create("invalid", PORT);
-			REQUIRE(!res);
-			REQUIRE(res.is_error());
-		#endif
-	}
+    // According to RFC6761, "invalid." domain should not resolve
+    SECTION("create failure", "[address]") {
+#if defined(SOCKPP_WITH_EXCEPTIONS)
+        REQUIRE_THROWS(inet6_address::create("invalid", PORT));
+#else
+        auto res = inet6_address::create("invalid", PORT);
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+#endif
+    }
 }
-

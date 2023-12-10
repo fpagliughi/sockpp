@@ -38,34 +38,33 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/unix_dgram_socket.h"
-#include "catch2_version.h"
 #include <string>
+
+#include "catch2_version.h"
+#include "sockpp/unix_dgram_socket.h"
 
 using namespace sockpp;
 
 // Test that we can create a Unix-domain datagram socket pair and send data
 // from one of the sockets to the other.
 TEST_CASE("unix dgram socket pair", "[unix_dgram_socket]") {
-	unix_dgram_socket sock1, sock2;
-	std::tie(sock1, sock2) = std::move(unix_dgram_socket::pair());
+    unix_dgram_socket sock1, sock2;
+    std::tie(sock1, sock2) = std::move(unix_dgram_socket::pair());
 
-	REQUIRE(sock1);
-	REQUIRE(sock2);
+    REQUIRE(sock1);
+    REQUIRE(sock2);
 
-	REQUIRE(sock1.is_open());
-	REQUIRE(sock2.is_open());
+    REQUIRE(sock1.is_open());
+    REQUIRE(sock2.is_open());
 
-	const std::string MSG { "Hello there!" };
-	const size_t N = MSG.length();
+    const std::string MSG{"Hello there!"};
+    const size_t N = MSG.length();
 
-	char buf[512];
+    char buf[512];
 
-	REQUIRE(sock1.send(MSG) == N);
-	REQUIRE(sock2.recv(buf, N) == N);
+    REQUIRE(sock1.send(MSG) == N);
+    REQUIRE(sock2.recv(buf, N) == N);
 
-	std::string msg { buf, buf+N };
-	REQUIRE(msg == MSG);
+    std::string msg{buf, buf + N};
+    REQUIRE(msg == MSG);
 }
-
-

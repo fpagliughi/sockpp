@@ -44,7 +44,6 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-
 #ifndef __sockpp_tcp_connector_h
 #define __sockpp_tcp_connector_h
 
@@ -59,7 +58,6 @@ namespace sockpp {
 using tcp_connector = connector_tmpl<tcp_socket>;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-};
+};  // namespace sockpp
 
-#endif		// __sockpp_tcp_connector_h
+#endif  // __sockpp_tcp_connector_h

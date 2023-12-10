@@ -47,8 +47,8 @@
 #ifndef __sockpp_tcp6_socket_h
 #define __sockpp_tcp6_socket_h
 
-#include "sockpp/stream_socket.h"
 #include "sockpp/inet6_address.h"
+#include "sockpp/stream_socket.h"
 
 namespace sockpp {
 
@@ -58,8 +58,6 @@ namespace sockpp {
 using tcp6_socket = stream_socket_tmpl<inet6_address>;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_tcp6_socket_h
-
+#endif  // __sockpp_tcp6_socket_h

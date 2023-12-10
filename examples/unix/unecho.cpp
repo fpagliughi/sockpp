@@ -38,6 +38,7 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/unix_connector.h"
 #include "sockpp/version.h"
 
@@ -45,43 +46,42 @@ using namespace std;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample Unix-domain echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample Unix-domain echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
-	string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
+    string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	sockpp::unix_connector conn;
+    sockpp::unix_connector conn;
 
     bool ok = conn.connect(sockpp::unix_address(path));
-	if (!ok) {
-		cerr << "Error connecting to UNIX socket at " << path
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
+    if (!ok) {
+        cerr << "Error connecting to UNIX socket at " << path << "\n\t"
+             << conn.last_error_str() << endl;
+        return 1;
+    }
 
-	cout << "Created a connection to '" << conn.peer_address() << "'" << endl;
+    cout << "Created a connection to '" << conn.peer_address() << "'" << endl;
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != (int) s.length()) {
-			cerr << "Error writing to the UNIX stream" << endl;
-			break;
-		}
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        if (conn.write(s) != (int)s.length()) {
+            cerr << "Error writing to the UNIX stream" << endl;
+            break;
+        }
 
-		sret.resize(s.length());
-		int n = conn.read_n(&sret[0], s.length());
+        sret.resize(s.length());
+        int n = conn.read_n(&sret[0], s.length());
 
-		if (n != (int) s.length()) {
-			cerr << "Error reading from UNIX stream" << endl;
-			break;
-		}
+        if (n != (int)s.length()) {
+            cerr << "Error reading from UNIX stream" << endl;
+            break;
+        }
 
-		cout << sret << endl;
-	}
+        cout << sret << endl;
+    }
 
-	return (!conn) ? 1 : 0;
+    return (!conn) ? 1 : 0;
 }

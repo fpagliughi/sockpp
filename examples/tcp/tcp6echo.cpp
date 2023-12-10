@@ -38,6 +38,7 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/tcp6_connector.h"
 #include "sockpp/version.h"
 
@@ -46,61 +47,57 @@ using namespace std::chrono;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample IPv6 TCP echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample IPv6 TCP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
-	std::string host = (argc > 1) ? argv[1] : "::1";
-	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+    std::string host = (argc > 1) ? argv[1] : "::1";
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	// Try to resolve the address
+    // Try to resolve the address
 
-	auto addr_res = sockpp::inet6_address::create(host, port);
-	if (!addr_res) {
-		cerr << "Error resolving address for '" << host << "': " << addr_res << endl;
-		return 1;
-	}
+    auto addr_res = sockpp::inet6_address::create(host, port);
+    if (!addr_res) {
+        cerr << "Error resolving address for '" << host << "': " << addr_res << endl;
+        return 1;
+    }
 
-	// Implicitly creates an inet6_address from {host,port}
-	// and then tries the connection.
+    // Implicitly creates an inet6_address from {host,port}
+    // and then tries the connection.
 
-	sockpp::tcp6_connector conn(addr_res.value());
-	if (!conn) {
-		cerr << "Error connecting to server at " << addr_res.value()
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
+    sockpp::tcp6_connector conn(addr_res.value());
+    if (!conn) {
+        cerr << "Error connecting to server at " << addr_res.value() << "\n\t"
+             << conn.last_error_str() << endl;
+        return 1;
+    }
 
-	cout << "Created a connection from " << conn.address() << endl;
+    cout << "Created a connection from " << conn.address() << endl;
 
     // Set a timeout for the responses
     if (!conn.read_timeout(5s)) {
-        cerr << "Error setting timeout on TCP stream: "
-                << conn.last_error_str() << endl;
+        cerr << "Error setting timeout on TCP stream: " << conn.last_error_str() << endl;
     }
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        if (conn.write(s) != ssize_t(s.length())) {
+            cerr << "Error writing to the TCP stream: " << conn.last_error_str() << endl;
+            break;
+        }
 
-		sret.resize(s.length());
-		ssize_t n = conn.read_n(&sret[0], s.length());
+        sret.resize(s.length());
+        ssize_t n = conn.read_n(&sret[0], s.length());
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+        if (n != ssize_t(s.length())) {
+            cerr << "Error reading from TCP stream: " << conn.last_error_str() << endl;
+            break;
+        }
 
-		cout << sret << endl;
-	}
+        cout << sret << endl;
+    }
 
-	return (!conn) ? 1 : 0;
+    return (!conn) ? 1 : 0;
 }

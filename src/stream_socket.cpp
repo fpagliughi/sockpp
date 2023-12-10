@@ -35,9 +35,11 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/stream_socket.h"
-#include "sockpp/error.h"
+
 #include <algorithm>
 #include <memory>
+
+#include "sockpp/error.h"
 
 using namespace std::chrono;
 
@@ -47,38 +49,32 @@ namespace sockpp {
 
 // Creates a stream socket for the given domain/protocol.
 
-stream_socket stream_socket::create(int domain, int protocol /*=0*/)
-{
-	stream_socket sock(create_handle(domain, protocol));
-	if (!sock)
-		sock.set_last_error();
-	return sock;
+stream_socket stream_socket::create(int domain, int protocol /*=0*/) {
+    stream_socket sock(create_handle(domain, protocol));
+    if (!sock) sock.set_last_error();
+    return sock;
 }
 
 // --------------------------------------------------------------------------
 // Reads from the socket. Note that we use ::recv() rather then ::read()
 // because many non-*nix operating systems make a distinction.
 
-ssize_t stream_socket::read(void *buf, size_t n)
-{
-	#if defined(_WIN32)
-		return check_ret(::recv(handle(), reinterpret_cast<char*>(buf),
-								int(n), 0));
-	#else
-		return check_ret(::recv(handle(), buf, n, 0));
-	#endif
+ssize_t stream_socket::read(void *buf, size_t n) {
+#if defined(_WIN32)
+    return check_ret(::recv(handle(), reinterpret_cast<char *>(buf), int(n), 0));
+#else
+    return check_ret(::recv(handle(), buf, n, 0));
+#endif
 }
 
 // --------------------------------------------------------------------------
 
-ioresult stream_socket::read_r(void *buf, size_t n)
-{
-    #if defined(_WIN32)
-        return check_ret_res(::recv(handle(), reinterpret_cast<char*>(buf),
-									int(n), 0));
-    #else
-        return check_ret_res(::recv(handle(), buf, n, 0));
-    #endif
+ioresult stream_socket::read_r(void *buf, size_t n) {
+#if defined(_WIN32)
+    return check_ret_res(::recv(handle(), reinterpret_cast<char *>(buf), int(n), 0));
+#else
+    return check_ret_res(::recv(handle(), buf, n, 0));
+#endif
 }
 
 // --------------------------------------------------------------------------
@@ -86,190 +82,167 @@ ioresult stream_socket::read_r(void *buf, size_t n)
 // read() until it has the data or an error occurs.
 //
 
-ssize_t stream_socket::read_n(void *buf, size_t n)
-{
-	size_t	nr = 0;
-	ssize_t	nx = 0;
+ssize_t stream_socket::read_n(void *buf, size_t n) {
+    size_t nr = 0;
+    ssize_t nx = 0;
 
-	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
+    uint8_t *b = reinterpret_cast<uint8_t *>(buf);
 
-	while (nr < n) {
-		if ((nx = read(b + nr, n - nr)) < 0 && last_error() == errc::interrupted)
-			continue;
+    while (nr < n) {
+        if ((nx = read(b + nr, n - nr)) < 0 && last_error() == errc::interrupted) continue;
 
-		if (nx <= 0)
-			break;
+        if (nx <= 0) break;
 
-		nr += nx;
-	}
+        nr += nx;
+    }
 
-	return (nr == 0 && nx < 0) ? nx : ssize_t(nr);
+    return (nr == 0 && nx < 0) ? nx : ssize_t(nr);
 }
 
 // --------------------------------------------------------------------------
 
-ioresult stream_socket::read_n_r(void *buf, size_t n)
-{
-	uint8_t *b = reinterpret_cast<uint8_t*>(buf);
-	size_t nx = 0;
+ioresult stream_socket::read_n_r(void *buf, size_t n) {
+    uint8_t *b = reinterpret_cast<uint8_t *>(buf);
+    size_t nx = 0;
 
-	while (nx < n) {
-        ioresult res = read_r(b+nx, n-nx);
-		if (!res && res != errc::interrupted) {
-			return res;
+    while (nx < n) {
+        ioresult res = read_r(b + nx, n - nx);
+        if (!res && res != errc::interrupted) {
+            return res;
         }
-		nx += size_t(res.value());
-	}
+        nx += size_t(res.value());
+    }
 
-	return ioresult{ int(nx) };
+    return ioresult{int(nx)};
 }
 
 // --------------------------------------------------------------------------
 
-ssize_t stream_socket::read(const std::vector<iovec>& ranges)
-{
-	if (ranges.empty())
-		return 0;
+ssize_t stream_socket::read(const std::vector<iovec> &ranges) {
+    if (ranges.empty()) return 0;
 
-	#if !defined(_WIN32)
-		return check_ret(::readv(handle(), ranges.data(), int(ranges.size())));
-	#else
-		std::vector<WSABUF> bufs;
-		for (const auto& iovec : ranges) {
-			bufs.push_back({
-				static_cast<ULONG>(iovec.iov_len),
-				static_cast<CHAR*>(iovec.iov_base)
-			});
-		}
+#if !defined(_WIN32)
+    return check_ret(::readv(handle(), ranges.data(), int(ranges.size())));
+#else
+    std::vector<WSABUF> bufs;
+    for (const auto &iovec : ranges) {
+        bufs.push_back(
+            {static_cast<ULONG>(iovec.iov_len), static_cast<CHAR *>(iovec.iov_base)}
+        );
+    }
 
-		DWORD flags = 0,
-			  nread = 0,
-			  nbuf = DWORD(bufs.size());
+    DWORD flags = 0, nread = 0, nbuf = DWORD(bufs.size());
 
-		auto ret = check_ret(::WSARecv(handle(), bufs.data(), nbuf, &nread,
-									    &flags, nullptr, nullptr));
-		return ssize_t(ret == SOCKET_ERROR ? ret : nread);
-	#endif
+    auto ret =
+        check_ret(::WSARecv(handle(), bufs.data(), nbuf, &nread, &flags, nullptr, nullptr));
+    return ssize_t(ret == SOCKET_ERROR ? ret : nread);
+#endif
 }
 
 // --------------------------------------------------------------------------
 
-bool stream_socket::read_timeout(const microseconds& to)
-{
-	auto tv = 
-		#if defined(_WIN32)
-			DWORD(duration_cast<milliseconds>(to).count());
-		#else
-			to_timeval(to);
-		#endif
-	return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
+bool stream_socket::read_timeout(const microseconds &to) {
+    auto tv =
+#if defined(_WIN32)
+        DWORD(duration_cast<milliseconds>(to).count());
+#else
+        to_timeval(to);
+#endif
+    return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
 }
 
 // --------------------------------------------------------------------------
 
-ssize_t stream_socket::write(const void *buf, size_t n)
-{
-	#if defined(_WIN32)
-		return check_ret(::send(handle(), reinterpret_cast<const char*>(buf),
-								int(n) , 0));
-	#else
-		return check_ret(::send(handle(), buf, n, 0));
-	#endif
+ssize_t stream_socket::write(const void *buf, size_t n) {
+#if defined(_WIN32)
+    return check_ret(::send(handle(), reinterpret_cast<const char *>(buf), int(n), 0));
+#else
+    return check_ret(::send(handle(), buf, n, 0));
+#endif
 }
 
 // --------------------------------------------------------------------------
 
-ioresult stream_socket::write_r(const void *buf, size_t n)
-{
-    #if defined(_WIN32)
-        return check_ret_res(::send(handle(), reinterpret_cast<const char*>(buf),
-										  int(n) , 0));
-    #else
-        return check_ret_res(::send(handle(), buf, n, 0));
-    #endif
+ioresult stream_socket::write_r(const void *buf, size_t n) {
+#if defined(_WIN32)
+    return check_ret_res(::send(handle(), reinterpret_cast<const char *>(buf), int(n), 0));
+#else
+    return check_ret_res(::send(handle(), buf, n, 0));
+#endif
 }
 
 // --------------------------------------------------------------------------
 // Attempts to write the entire buffer by repeatedly calling write() until
 // either all of the data is sent or an error occurs.
 
-ssize_t stream_socket::write_n(const void *buf, size_t n)
-{
-	size_t	nw = 0;
-	ssize_t	nx = 0;
+ssize_t stream_socket::write_n(const void *buf, size_t n) {
+    size_t nw = 0;
+    ssize_t nx = 0;
 
-	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
+    const uint8_t *b = reinterpret_cast<const uint8_t *>(buf);
 
-	while (nw < n) {
-		if ((nx = write(b + nw, n - nw)) < 0 && last_error() == errc::interrupted)
-			continue;
+    while (nw < n) {
+        if ((nx = write(b + nw, n - nw)) < 0 && last_error() == errc::interrupted) continue;
 
-		if (nx <= 0)
-			break;
+        if (nx <= 0) break;
 
-		nw += nx;
-	}
+        nw += nx;
+    }
 
-	return (nw == 0 && nx < 0) ? nx : ssize_t(nw);
+    return (nw == 0 && nx < 0) ? nx : ssize_t(nw);
 }
 
 // --------------------------------------------------------------------------
 
-ioresult stream_socket::write_n_r(const void *buf, size_t n)
-{
-	const uint8_t *b = reinterpret_cast<const uint8_t*>(buf);
-	size_t nx = 0;
+ioresult stream_socket::write_n_r(const void *buf, size_t n) {
+    const uint8_t *b = reinterpret_cast<const uint8_t *>(buf);
+    size_t nx = 0;
 
-	while (nx < n) {
-        ioresult res = write_r(b+nx, n-nx);
-		if (!res && res != errc::interrupted) {
-			return res;
-		}
-		nx += size_t(res.value());
-	}
+    while (nx < n) {
+        ioresult res = write_r(b + nx, n - nx);
+        if (!res && res != errc::interrupted) {
+            return res;
+        }
+        nx += size_t(res.value());
+    }
 
-	return ioresult{ int(nx) };
+    return ioresult{int(nx)};
 }
 
 // --------------------------------------------------------------------------
 
-ssize_t stream_socket::write(const std::vector<iovec>& ranges)
-{
-	#if !defined(_WIN32)
-		return check_ret(::writev(handle(), ranges.data(), int(ranges.size())));
-	#else
-		std::vector<WSABUF> bufs;
-		for (const auto& iovec : ranges) {
-			bufs.push_back({
-				static_cast<ULONG>(iovec.iov_len),
-				static_cast<CHAR*>(iovec.iov_base)
-			});
-		}
+ssize_t stream_socket::write(const std::vector<iovec> &ranges) {
+#if !defined(_WIN32)
+    return check_ret(::writev(handle(), ranges.data(), int(ranges.size())));
+#else
+    std::vector<WSABUF> bufs;
+    for (const auto &iovec : ranges) {
+        bufs.push_back(
+            {static_cast<ULONG>(iovec.iov_len), static_cast<CHAR *>(iovec.iov_base)}
+        );
+    }
 
-		DWORD nwritten = 0,
-			  nmsg = DWORD(bufs.size());
+    DWORD nwritten = 0, nmsg = DWORD(bufs.size());
 
-		auto ret = check_ret(::WSASend(handle(), bufs.data(),
-									   nmsg, &nwritten, 0, nullptr, nullptr));
-		return ssize_t(ret == SOCKET_ERROR ? ret : nwritten);
-	#endif
+    auto ret =
+        check_ret(::WSASend(handle(), bufs.data(), nmsg, &nwritten, 0, nullptr, nullptr));
+    return ssize_t(ret == SOCKET_ERROR ? ret : nwritten);
+#endif
 }
 
 // --------------------------------------------------------------------------
 
-bool stream_socket::write_timeout(const microseconds& to)
-{
-	auto tv = 
-		#if defined(_WIN32)
-			DWORD(duration_cast<milliseconds>(to).count());
-		#else
-			to_timeval(to);
-		#endif
+bool stream_socket::write_timeout(const microseconds &to) {
+    auto tv =
+#if defined(_WIN32)
+        DWORD(duration_cast<milliseconds>(to).count());
+#else
+        to_timeval(to);
+#endif
 
-	return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
+    return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
-}
-
+}  // namespace sockpp

@@ -40,16 +40,17 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <iostream>
-#include <string>
-#include <chrono>
-#include <thread>
-#include "sockpp/can_socket.h"
-#include "sockpp/can_frame.h"
-#include "sockpp/version.h"
-
 #include <net/if.h>
 #include <sys/ioctl.h>
+
+#include <chrono>
+#include <iostream>
+#include <string>
+#include <thread>
+
+#include "sockpp/can_frame.h"
+#include "sockpp/can_socket.h"
+#include "sockpp/version.h"
 
 using namespace std;
 
@@ -58,41 +59,39 @@ using sysclock = chrono::system_clock;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample SocketCAN writer for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample SocketCAN writer for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
 
-	string canIface = (argc > 1) ? argv[1] : "can0";
-	canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
+    string canIface = (argc > 1) ? argv[1] : "can0";
+    canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	sockpp::can_address addr(canIface);
-	sockpp::can_socket sock(addr);
+    sockpp::can_address addr(canIface);
+    sockpp::can_socket sock(addr);
 
-	if (!sock) {
-		cerr << "Error binding to the CAN interface " << canIface << "\n\t"
-			<< sock.last_error_str() << endl;
-		return 1;
-	}
+    if (!sock) {
+        cerr << "Error binding to the CAN interface " << canIface << "\n\t"
+             << sock.last_error_str() << endl;
+        return 1;
+    }
 
-	cout << "Created CAN socket on " << sock.address() << endl;
-	time_t t = sysclock::to_time_t(sysclock::now());
+    cout << "Created CAN socket on " << sock.address() << endl;
+    time_t t = sysclock::to_time_t(sysclock::now());
 
-	while (true) {
-		// Sleep until the clock ticks to the next second
-		this_thread::sleep_until(sysclock::from_time_t(t+1));
+    while (true) {
+        // Sleep until the clock ticks to the next second
+        this_thread::sleep_until(sysclock::from_time_t(t + 1));
 
-		// Re-read the time in case we fell behind
-		t = sysclock::to_time_t(sysclock::now());
+        // Re-read the time in case we fell behind
+        t = sysclock::to_time_t(sysclock::now());
 
-		// Write the time to the CAN bus as a 32-bit int
-		auto nt = uint32_t(t);
+        // Write the time to the CAN bus as a 32-bit int
+        auto nt = uint32_t(t);
 
-		sockpp::can_frame frame { canID, &nt, sizeof(nt) };
-		sock.send(frame);
-	}
+        sockpp::can_frame frame{canID, &nt, sizeof(nt)};
+        sock.send(frame);
+    }
 
-	return (!sock) ? 1 : 0;
+    return (!sock) ? 1 : 0;
 }

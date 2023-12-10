@@ -38,61 +38,61 @@
 // --------------------------------------------------------------------------
 //
 
+#include <string>
+
+#include "catch2_version.h"
 #include "sockpp/datagram_socket.h"
 #include "sockpp/inet_address.h"
-#include "catch2_version.h"
-#include <string>
 
 using namespace sockpp;
 
 TEST_CASE("datagram_socket default constructor", "[datagram_socket]") {
-	datagram_socket sock;
-	REQUIRE(!sock);
-	REQUIRE(!sock.is_open());
+    datagram_socket sock;
+    REQUIRE(!sock);
+    REQUIRE(!sock.is_open());
 }
 
 TEST_CASE("datagram_socket handle constructor", "[datagram_socket]") {
-	constexpr auto HANDLE = socket_t(3);
+    constexpr auto HANDLE = socket_t(3);
 
-	SECTION("valid handle") {
-		datagram_socket sock(HANDLE);
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-	}
+    SECTION("valid handle") {
+        datagram_socket sock(HANDLE);
+        REQUIRE(sock);
+        REQUIRE(sock.is_open());
+    }
 
-	SECTION("invalid handle") {
-		datagram_socket sock(INVALID_SOCKET);
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
-		// TODO: Should this set an error?
-		REQUIRE(!sock.last_error());
-	}
+    SECTION("invalid handle") {
+        datagram_socket sock(INVALID_SOCKET);
+        REQUIRE(!sock);
+        REQUIRE(!sock.is_open());
+        // TODO: Should this set an error?
+        REQUIRE(!sock.last_error());
+    }
 }
 
 TEST_CASE("datagram_socket address constructor", "[datagram_socket]") {
-	SECTION("valid address") {
-		const auto ADDR = inet_address("localhost", 12345);
+    SECTION("valid address") {
+        const auto ADDR = inet_address("localhost", 12345);
 
-		datagram_socket sock(ADDR);
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-		REQUIRE(!sock.last_error());
-		REQUIRE(sock.address() == ADDR);
-	}
+        datagram_socket sock(ADDR);
+        REQUIRE(sock);
+        REQUIRE(sock.is_open());
+        REQUIRE(!sock.last_error());
+        REQUIRE(sock.address() == ADDR);
+    }
 
-	SECTION("invalid address") {
-		const auto ADDR = sock_address_any();
+    SECTION("invalid address") {
+        const auto ADDR = sock_address_any();
 
-		datagram_socket sock(ADDR);
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
+        datagram_socket sock(ADDR);
+        REQUIRE(!sock);
+        REQUIRE(!sock.is_open());
 
-        // Windows returns a different error code than *nix
-        #if defined(_WIN32)
-            REQUIRE(sock.last_error() == WSAEINVAL);
-        #else
-            REQUIRE(sock.last_error() == errc::address_family_not_supported);
-        #endif
-	}
+// Windows returns a different error code than *nix
+#if defined(_WIN32)
+        REQUIRE(sock.last_error() == WSAEINVAL);
+#else
+        REQUIRE(sock.last_error() == errc::address_family_not_supported);
+#endif
+    }
 }
-

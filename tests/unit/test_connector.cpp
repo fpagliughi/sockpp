@@ -38,29 +38,28 @@
 // --------------------------------------------------------------------------
 //
 
+#include <string>
+
+#include "catch2_version.h"
 #include "sockpp/connector.h"
 #include "sockpp/sock_address.h"
-#include "catch2_version.h"
-#include <string>
 
 using namespace sockpp;
 
 // Test that connector errors properly when given an empty address.
 TEST_CASE("connector unspecified address", "[connector]") {
-	connector conn;
-	REQUIRE(!conn);
+    connector conn;
+    REQUIRE(!conn);
 
-	sock_address_any addr;
+    sock_address_any addr;
 
-	bool ok = conn.connect(addr);
-	REQUIRE(!ok);
+    bool ok = conn.connect(addr);
+    REQUIRE(!ok);
 
-    // Windows returns a different error code than *nix
-    #if defined(_WIN32)
-        REQUIRE(conn.last_error() == WSAENOTSOCK);
-    #else
-        REQUIRE(conn.last_error() == errc::address_family_not_supported);
-    #endif
+// Windows returns a different error code than *nix
+#if defined(_WIN32)
+    REQUIRE(conn.last_error() == WSAENOTSOCK);
+#else
+    REQUIRE(conn.last_error() == errc::address_family_not_supported);
+#endif
 }
-
-

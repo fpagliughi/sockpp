@@ -36,10 +36,11 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <iostream>
-#include <string>
 #include <chrono>
+#include <iostream>
 #include <random>
+#include <string>
+
 #include "sockpp/unix_connector.h"
 #include "sockpp/version.h"
 
@@ -53,62 +54,60 @@ using fpsec = std::chrono::duration<double, std::chrono::seconds::period>;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Unix-domain echo timing test client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Unix-domain echo timing test client for 'sockpp' " << sockpp::SOCKPP_VERSION
+         << '\n'
+         << endl;
 
-	string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
-	size_t n  = (argc > 2) ? size_t(atoll(argv[2])) : DFLT_N;
-	size_t sz = (argc > 3) ? size_t(atoll(argv[3])) : DFLT_SZ;
+    string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
+    size_t n = (argc > 2) ? size_t(atoll(argv[2])) : DFLT_N;
+    size_t sz = (argc > 3) ? size_t(atoll(argv[3])) : DFLT_SZ;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	auto t_start = high_resolution_clock::now();
-	sockpp::unix_connector conn;
+    auto t_start = high_resolution_clock::now();
+    sockpp::unix_connector conn;
 
     bool ok = conn.connect(sockpp::unix_address(path));
-	if (!ok) {
-		cerr << "Error connecting to UNIX socket at " << path
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
+    if (!ok) {
+        cerr << "Error connecting to UNIX socket at " << path << "\n\t"
+             << conn.last_error_str() << endl;
+        return 1;
+    }
 
-	cout << "Created a connection to '" << conn.peer_address() << "'" << endl;
+    cout << "Created a connection to '" << conn.peer_address() << "'" << endl;
 
-	string s, sret;
+    string s, sret;
 
     random_device rd;
     mt19937 reng(rd());
     uniform_int_distribution<> dist(0, 25);
 
-	for (size_t i=0; i<sz; ++i)
-		s.push_back('a' + static_cast<char>(dist(reng)));
+    for (size_t i = 0; i < sz; ++i) s.push_back('a' + static_cast<char>(dist(reng)));
 
-	auto t_start_tx = high_resolution_clock::now();
+    auto t_start_tx = high_resolution_clock::now();
 
-	for (size_t i=0; i<n; ++i) {
-		if (conn.write(s) != (ssize_t) s.length()) {
-			cerr << "Error writing to the UNIX stream" << endl;
-			break;
-		}
+    for (size_t i = 0; i < n; ++i) {
+        if (conn.write(s) != (ssize_t)s.length()) {
+            cerr << "Error writing to the UNIX stream" << endl;
+            break;
+        }
 
-		sret.resize(s.length());
-		int n = conn.read_n(&sret[0], s.length());
+        sret.resize(s.length());
+        int n = conn.read_n(&sret[0], s.length());
 
-		if (n != (int) s.length()) {
-			cerr << "Error reading from UNIX stream" << endl;
-			break;
-		}
-	}
+        if (n != (int)s.length()) {
+            cerr << "Error reading from UNIX stream" << endl;
+            break;
+        }
+    }
 
-	auto t_end = high_resolution_clock::now();
-	cout << "Total time: " << fpsec(t_end - t_start).count() << "s" << endl;
+    auto t_end = high_resolution_clock::now();
+    cout << "Total time: " << fpsec(t_end - t_start).count() << "s" << endl;
 
-	auto t_tx = fpsec(t_end - t_start_tx).count();
-	auto rate = size_t(n / t_tx);
-	cout << "Transfer time: " << t_tx << "s\n    "
-		<< rate << " msg/s" << endl;
+    auto t_tx = fpsec(t_end - t_start_tx).count();
+    auto rate = size_t(n / t_tx);
+    cout << "Transfer time: " << t_tx << "s\n    " << rate << " msg/s" << endl;
 
-	return (!conn) ? 1 : 0;
+    return (!conn) ? 1 : 0;
 }
