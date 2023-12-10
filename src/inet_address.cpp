@@ -66,7 +66,8 @@ inet_address::inet_address(const std::string& saddr, in_port_t port) {
 result<in_addr_t> inet_address::resolve_name(const std::string& saddr) {
 #if !defined(_WIN32)
     in_addr ia;
-    if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1) return ia.s_addr;
+    if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
+        return ia.s_addr;
 #endif
 
     addrinfo *res, hints = addrinfo{};
@@ -76,11 +77,14 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr) {
     int err = ::getaddrinfo(saddr.c_str(), NULL, &hints, &res);
 
     if (err != 0) {
-        auto ec =
+        error_code ec{};
 #if defined(_WIN32)
-            error_code{errno, system_category()};
+        ec = error_code{errno, system_category()};
 #else
-            make_error_code(static_cast<gai_errc>(err));
+        if (err == EAI_SYSTEM)
+            ec = ioresult::get_last_error();
+        else
+            ec = make_error_code(static_cast<gai_errc>(err));
 #endif
 
 #if defined(SOCKPP_WITH_EXCEPTIONS)
@@ -99,7 +103,8 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr) {
 
 result<inet_address> inet_address::create(const std::string& saddr, in_port_t port) {
     auto res = resolve_name(saddr.c_str());
-    if (!res) return res.error();
+    if (!res)
+        return res.error();
 
     auto addr = sockaddr_in{};
     addr.sin_family = AF_INET;

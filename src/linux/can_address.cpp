@@ -77,7 +77,8 @@ can_address::can_address(const string& iface) {
 result<can_address> can_address::create(const std::string& iface) {
     unsigned idx = ::if_nametoindex(iface.c_str());
 
-    if (idx == 0) return error_code{errno, system_category()};
+    if (idx == 0)
+        return error_code{errno, system_category()};
 
     sockaddr_can addr{};
     addr.can_family = ADDRESS_FAMILY;
@@ -86,9 +87,11 @@ result<can_address> can_address::create(const std::string& iface) {
 }
 
 result<string> can_address::get_iface() const {
-    if (addr_.can_family == AF_UNSPEC) return string{};
+    if (addr_.can_family == AF_UNSPEC)
+        return string{};
 
-    if (addr_.can_ifindex == 0) return string{"any"};
+    if (addr_.can_ifindex == 0)
+        return string{"any"};
 
     char buf[IF_NAMESIZE];
     const char* iface = if_indextoname(addr_.can_ifindex, buf);
@@ -108,9 +111,11 @@ result<string> can_address::get_iface() const {
 // --------------------------------------------------------------------------
 
 string can_address::iface() const noexcept {
-    if (addr_.can_family == AF_UNSPEC) return string{};
+    if (addr_.can_family == AF_UNSPEC)
+        return string{};
 
-    if (addr_.can_ifindex == 0) return string{"any"};
+    if (addr_.can_ifindex == 0)
+        return string{"any"};
 
     char buf[IF_NAMESIZE];
     const char* iface = if_indextoname(addr_.can_ifindex, buf);

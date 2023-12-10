@@ -51,7 +51,8 @@ namespace sockpp {
 
 stream_socket stream_socket::create(int domain, int protocol /*=0*/) {
     stream_socket sock(create_handle(domain, protocol));
-    if (!sock) sock.set_last_error();
+    if (!sock)
+        sock.set_last_error();
     return sock;
 }
 
@@ -89,9 +90,11 @@ ssize_t stream_socket::read_n(void *buf, size_t n) {
     uint8_t *b = reinterpret_cast<uint8_t *>(buf);
 
     while (nr < n) {
-        if ((nx = read(b + nr, n - nr)) < 0 && last_error() == errc::interrupted) continue;
+        if ((nx = read(b + nr, n - nr)) < 0 && last_error() == errc::interrupted)
+            continue;
 
-        if (nx <= 0) break;
+        if (nx <= 0)
+            break;
 
         nr += nx;
     }
@@ -119,7 +122,8 @@ ioresult stream_socket::read_n_r(void *buf, size_t n) {
 // --------------------------------------------------------------------------
 
 ssize_t stream_socket::read(const std::vector<iovec> &ranges) {
-    if (ranges.empty()) return 0;
+    if (ranges.empty())
+        return 0;
 
 #if !defined(_WIN32)
     return check_ret(::readv(handle(), ranges.data(), int(ranges.size())));
@@ -182,9 +186,11 @@ ssize_t stream_socket::write_n(const void *buf, size_t n) {
     const uint8_t *b = reinterpret_cast<const uint8_t *>(buf);
 
     while (nw < n) {
-        if ((nx = write(b + nw, n - nw)) < 0 && last_error() == errc::interrupted) continue;
+        if ((nx = write(b + nw, n - nw)) < 0 && last_error() == errc::interrupted)
+            continue;
 
-        if (nx <= 0) break;
+        if (nx <= 0)
+            break;
 
         nw += nx;
     }

@@ -54,7 +54,8 @@ bool connector::recreate(const sock_address& addr) {
     sa_family_t domain = addr.family();
     socket_t h = create_handle(domain);
 
-    if (!check_socket_bool(h)) return false;
+    if (!check_socket_bool(h))
+        return false;
 
     // This will close the old connection, if any.
     reset(h);
@@ -64,7 +65,8 @@ bool connector::recreate(const sock_address& addr) {
 /////////////////////////////////////////////////////////////////////////////
 
 bool connector::connect(const sock_address& addr) {
-    if (!recreate(addr)) return false;
+    if (!recreate(addr))
+        return false;
 
     if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
         return close_on_err();
@@ -75,9 +77,11 @@ bool connector::connect(const sock_address& addr) {
 /////////////////////////////////////////////////////////////////////////////
 
 bool connector::connect(const sock_address& addr, microseconds timeout) {
-    if (timeout.count() <= 0) return connect(addr);
+    if (timeout.count() <= 0)
+        return connect(addr);
 
-    if (!recreate(addr)) return false;
+    if (!recreate(addr))
+        return false;
 
     bool non_blocking =
 #if defined(_WIN32)
@@ -86,7 +90,8 @@ bool connector::connect(const sock_address& addr, microseconds timeout) {
         is_non_blocking();
 #endif
 
-    if (!non_blocking) set_non_blocking(true);
+    if (!non_blocking)
+        set_non_blocking(true);
 
     if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
         auto err = last_error();
@@ -113,7 +118,8 @@ bool connector::connect(const sock_address& addr, microseconds timeout) {
             if (n > 0) {
                 // Got a socket event, but it might be an error, so check:
                 int err;
-                if (get_option(SOL_SOCKET, SO_ERROR, &err)) clear(err);
+                if (get_option(SOL_SOCKET, SO_ERROR, &err))
+                    clear(err);
             }
             else if (n == 0) {
                 clear(ETIMEDOUT);
@@ -127,7 +133,8 @@ bool connector::connect(const sock_address& addr, microseconds timeout) {
     }
 
     // Restore blocking mode for socket, if needed.
-    if (!non_blocking) set_non_blocking(false);
+    if (!non_blocking)
+        set_non_blocking(false);
 
     return true;
 }

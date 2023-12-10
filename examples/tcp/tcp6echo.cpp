@@ -58,18 +58,27 @@ int main(int argc, char* argv[]) {
 
     // Try to resolve the address
 
-    auto addr_res = sockpp::inet6_address::create(host, port);
-    if (!addr_res) {
-        cerr << "Error resolving address for '" << host << "': " << addr_res << endl;
+    // Note that this works if the library was compiled with or without exceptions.
+    // Applications normally only handles the exception or the return code.
+
+    sockpp::result<sockpp::inet6_address> res;
+
+    try {
+        res = sockpp::inet6_address::create(host, port);
+    }
+    catch (system_error& exc) {
+        res = exc.code();
+    }
+
+    if (!res) {
+        cerr << "Error resolving address for '" << host << "': " << res << endl;
         return 1;
     }
 
-    // Implicitly creates an inet6_address from {host,port}
-    // and then tries the connection.
+    sockpp::tcp6_connector conn(res.value());
 
-    sockpp::tcp6_connector conn(addr_res.value());
     if (!conn) {
-        cerr << "Error connecting to server at " << addr_res.value() << "\n\t"
+        cerr << "Error connecting to server at " << res.value() << "\n\t"
              << conn.last_error_str() << endl;
         return 1;
     }

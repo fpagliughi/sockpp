@@ -67,7 +67,8 @@ unix_address::unix_address(const string& path) {
 // --------------------------------------------------------------------------
 
 result<unix_address> unix_address::create(const std::string& path) {
-    if (path.length() > MAX_PATH_NAME) return errc::invalid_argument;
+    if (path.length() > MAX_PATH_NAME)
+        return errc::invalid_argument;
 
     return unix_address{path};
 }

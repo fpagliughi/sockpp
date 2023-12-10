@@ -134,7 +134,8 @@ const ::detail::gai_errc_category &gai_errc_category();
 // Overload the global make_error_code() free function with our
 // custom enum. It will be found via ADL by the compiler if needed.
 inline ::std::error_code make_error_code(gai_errc e) {
-    if (e == gai_errc::system_error) return {errno, std::system_category()};
+    if (e == gai_errc::system_error)
+        return {errno, std::system_category()};
 
     return {static_cast<int>(e), gai_errc_category()};
 }

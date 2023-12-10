@@ -108,7 +108,8 @@ bool socket::close(socket_t h) {
 
 socket socket::create(int domain, int type, int protocol /*=0*/) {
     socket sock(::socket(domain, type, protocol));
-    if (!sock) sock.set_last_error();
+    if (!sock)
+        sock.set_last_error();
     return sock;
 }
 
@@ -195,7 +196,8 @@ std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*
 void socket::reset(socket_t h /*=INVALID_SOCKET*/) {
     socket_t oh = handle_;
     handle_ = h;
-    if (oh != INVALID_SOCKET) close(oh);
+    if (oh != INVALID_SOCKET)
+        close(oh);
     clear();
 }
 

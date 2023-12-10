@@ -46,7 +46,8 @@ namespace sockpp {
 
 acceptor acceptor::create(int domain) {
     acceptor acc(create_handle(domain));
-    if (!acc) acc.set_last_error();
+    if (!acc)
+        acc.set_last_error();
     return acc;
 }
 
@@ -61,12 +62,14 @@ acceptor acceptor::create(int domain) {
 bool acceptor::
     open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, bool reuseSock /*=true*/) {
     // TODO: What to do if we are open but bound to a different address?
-    if (is_open()) return true;
+    if (is_open())
+        return true;
 
     sa_family_t domain = addr.family();
     socket_t h = create_handle(domain);
 
-    if (!check_socket_bool(h)) return false;
+    if (!check_socket_bool(h))
+        return false;
 
     reset(h);
 
@@ -78,10 +81,12 @@ bool acceptor::
 
     if (reuseSock && (domain == AF_INET || domain == AF_INET6)) {
         int reuse = 1;
-        if (!set_option(SOL_SOCKET, REUSE, reuse)) return close_on_err();
+        if (!set_option(SOL_SOCKET, REUSE, reuse))
+            return close_on_err();
     }
 
-    if (!bind(addr) || !listen(queSize)) return close_on_err();
+    if (!bind(addr) || !listen(queSize))
+        return close_on_err();
 
     return true;
 }

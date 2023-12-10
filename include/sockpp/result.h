@@ -94,6 +94,8 @@ class result
     }
 
     friend class socket;
+    friend class inet_address;
+    friend class inet6_address;
 
 public:
     /**

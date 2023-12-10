@@ -55,7 +55,18 @@ int main(int argc, char* argv[]) {
 
     // Try to resolve the address
 
-    auto res = sockpp::inet_address::create(host, port);
+    // Note that this works if the library was compiled with or without exceptions.
+    // Applications normally only handles the exception or the return code.
+
+    sockpp::result<sockpp::inet_address> res;
+
+    try {
+        res = sockpp::inet_address::create(host, port);
+    }
+    catch (system_error& exc) {
+        res = exc.code();
+    }
+
     if (!res) {
         cerr << "Error resolving address for '" << host << "': " << res << endl;
         return 1;
