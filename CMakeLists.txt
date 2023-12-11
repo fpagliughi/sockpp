@@ -42,7 +42,7 @@ cmake_minimum_required(VERSION 3.12)
 
 # --- Project setup ---
 
-project(sockpp VERSION "0.8.2")
+project(sockpp VERSION "0.8.3")
 
 # --- Build Options ---
 

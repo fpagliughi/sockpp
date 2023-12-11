@@ -1,5 +1,10 @@
 # Change Log for _sockpp_
 
+## [Version 0.8.3](https://github.com/fpagliughi/sockpp/compare/v0.8.2..v0.8.3) - (2023-12-11)
+
+- [#64](https://github.com/fpagliughi/sockpp/pull/84) Added support for Catch2 v3.x for unit tests. (v2.x still supported)
+
+
 ## [Version 0.8.2](https://github.com/fpagliughi/sockpp/compare/v0.8.1..v0.8.2) - (2023-12-05)
 
 - [#89](https://github.com/fpagliughi/sockpp/issue/89) Fixed generator expression for older CMake
