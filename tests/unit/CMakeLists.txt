@@ -94,10 +94,6 @@ set_target_properties(unit_tests PROPERTIES
   CXX_EXTENSIONS OFF
 )
 
-if(SOCKPP_WITH_EXCEPTIONS)
-  target_compile_options(unit_tests PUBLIC -DSOCKPP_WITH_EXCEPTIONS)
-endif()
-
 
 # --- Link for executables ---
 

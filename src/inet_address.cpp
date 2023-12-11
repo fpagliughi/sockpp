@@ -57,13 +57,24 @@ inet_address::inet_address(uint32_t addr, in_port_t port) {
 
 inet_address::inet_address(const std::string& saddr, in_port_t port) {
     auto res = create(saddr, port);
-    // If create fails, this is an un-set, default address.
+    if (!res)
+        throw system_error{res.error()};
+
     addr_ = res.value().addr_;
 }
 
+inet_address::inet_address(const string& saddr, in_port_t port, error_code& ec) noexcept {
+    auto res = create(saddr, port);
+    ec = res.error();
+
+    if (res)
+        addr_ = res.value().addr_;
+}
+
+
 // --------------------------------------------------------------------------
 
-result<in_addr_t> inet_address::resolve_name(const std::string& saddr) {
+result<in_addr_t> inet_address::resolve_name(const std::string& saddr) noexcept {
 #if !defined(_WIN32)
     in_addr ia;
     if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
@@ -86,10 +97,6 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr) {
         else
             ec = make_error_code(static_cast<gai_errc>(err));
 #endif
-
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-        throw system_error{ec};
-#endif
         return ec;
     }
 
@@ -101,7 +108,7 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr) {
 
 // --------------------------------------------------------------------------
 
-result<inet_address> inet_address::create(const std::string& saddr, in_port_t port) {
+result<inet_address> inet_address::create(const std::string& saddr, in_port_t port) noexcept {
     auto res = resolve_name(saddr.c_str());
     if (!res)
         return res.error();

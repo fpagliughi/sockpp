@@ -51,17 +51,24 @@ constexpr size_t unix_address::MAX_PATH_NAME;
 // --------------------------------------------------------------------------
 
 unix_address::unix_address(const string& path) {
-    if (path.length() > MAX_PATH_NAME) {
-#if defined(SOCKPP_WITH_EXCEPTIONS)
+    if (path.length() > MAX_PATH_NAME)
         throw system_error{make_error_code(errc::invalid_argument)};
-#else
-        return;
-#endif
-    }
 
     addr_.sun_family = ADDRESS_FAMILY;
     // Remember, if len==MAX, there's no NUL terminator
     ::strncpy(addr_.sun_path, path.c_str(), MAX_PATH_NAME);
+}
+
+unix_address::unix_address(const string& path, error_code& ec) noexcept {
+    if (path.length() > MAX_PATH_NAME) {
+        ec = make_error_code(errc::invalid_argument);
+    }
+    else {
+        ec = error_code{};
+        addr_.sun_family = ADDRESS_FAMILY;
+        // Remember, if len==MAX, there's no NUL terminator
+        ::strncpy(addr_.sun_path, path.c_str(), MAX_PATH_NAME);
+    }
 }
 
 // --------------------------------------------------------------------------

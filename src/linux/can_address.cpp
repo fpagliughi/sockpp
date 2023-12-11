@@ -62,13 +62,8 @@ can_address::can_address(unsigned idx) noexcept {
 can_address::can_address(const string& iface) {
     unsigned idx = ::if_nametoindex(iface.c_str());
 
-    if (idx == 0) {
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-        throw system_error{error_code{errno, system_category()}};
-#else
-        return;
-#endif
-    }
+    if (idx == 0)
+        throw system_error{ioresult::get_last_error()};
 
     addr_.can_family = ADDRESS_FAMILY;
     addr_.can_ifindex = idx;
@@ -96,14 +91,8 @@ result<string> can_address::get_iface() const {
     char buf[IF_NAMESIZE];
     const char* iface = if_indextoname(addr_.can_ifindex, buf);
 
-    if (!iface) {
-        auto ec = error_code{errno, system_category()};
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-        throw system_error{ec};
-#else
-        return ec;
-#endif
-    }
+    if (!iface)
+        return error_code{errno, system_category()};
 
     return string{iface};
 }

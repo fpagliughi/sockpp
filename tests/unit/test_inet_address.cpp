@@ -165,13 +165,9 @@ TEST_CASE("IPv4 resolve address", "[address]") {
 
     // According to RFC6761, "invalid." domain should not resolve
     SECTION("resolve failure", "[address]") {
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-        REQUIRE_THROWS(inet_address::resolve_name("invalid"));
-#else
         auto res = inet_address::resolve_name("invalid");
         REQUIRE(!res);
         REQUIRE(res.is_error());
-#endif
     }
 }
 
@@ -199,12 +195,8 @@ TEST_CASE("IPv4 create address", "[address]") {
 
     // According to RFC6761, "invalid." domain should not resolve
     SECTION("create failure", "[address]") {
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-        REQUIRE_THROWS(inet_address::create("invalid", PORT));
-#else
         auto res = inet_address::create("invalid", PORT);
         REQUIRE(!res);
         REQUIRE(res.is_error());
-#endif
     }
 }

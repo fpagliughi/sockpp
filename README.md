@@ -40,7 +40,6 @@ If you're using this library, tweet at me or send me a message, and let me know 
 - [#72](https://github.com/fpagliughi/sockpp/issues/72) Removed some exceptions and made the others optional by build option.
 - Added `raw_socket` class.
 - [#77](https://github.com/fpagliughi/sockpp/issues/77) 
-    - Exceptions can now be removed through a CMake build option, `SOCKPP_WITH_EXCEPTIONS`.
     - Added `result<T>` tempate class for success/error return values using `std::error_code` for errors.
     - `sockpp::last_error()` now returns a `std::error_code`. This should be slightly more portable, but Windows will likely still be somewhat problematic.
     - A new `sockpp::last_errno()` will return the platform-specific integer error code (i.e. what `last_error()` used to return).
@@ -127,7 +126,6 @@ SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documen
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
 SOCKPP_WITH_CAN | OFF | Include SocketCAN support. (Linux only)
-SOCKPP_WITH_EXCEPTIONS | ON | Whether to use C++ exceptions
 
 Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:
 

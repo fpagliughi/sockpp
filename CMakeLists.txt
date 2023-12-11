@@ -54,7 +54,6 @@ option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 #option(SOCKPP_WITH_OPENSSL "Include support for TLS Secure Sockets with OpenSSL" OFF)
 #option(SOCKPP_WITH_MBEDTLS "Include support for TLS Secure Sockets with Mbed TLS" OFF)
 option(SOCKPP_WITH_CAN "Include support for Linux SocketCAN components" OFF)
-option(SOCKPP_WITH_EXCEPTIONS "Use C++ exceptions" ON)
 
 # ----- Find any dependencies -----
 

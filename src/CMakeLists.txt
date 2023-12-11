@@ -87,10 +87,6 @@ endif()
 
 target_compile_features(sockpp-objs PUBLIC cxx_std_14)
 
-if(SOCKPP_WITH_EXCEPTIONS)
-  target_compile_options(sockpp-objs PUBLIC -DSOCKPP_WITH_EXCEPTIONS)
-endif()
-
 # Position indepence is only necessary for older compilers, but doesn't hurt
 set_target_properties(sockpp-objs 
 	PROPERTIES 

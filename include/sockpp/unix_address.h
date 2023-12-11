@@ -13,8 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
-// All rights reserved.
+// Copyright (c) 2014-2023 Frank Pagliughi All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -88,8 +87,15 @@ public:
     /**
      * Constructs an address given the specified path.
      * @param path The path to the socket file.
+     * @throw system_error if the path is invalid (too long, etc)
      */
     unix_address(const std::string& path);
+    /**
+     * Constructs an address given the specified path.
+     * Sets the error code on failure.
+     * @param path The path to the socket file.
+     */
+    unix_address(const std::string& path, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The generic address. This must be a proper AF_UNIX

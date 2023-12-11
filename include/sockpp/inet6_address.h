@@ -97,11 +97,21 @@ public:
     /**
      * Constructs an address using the name of the host and the specified
      * port. This attempts to resolve the host name to an address.
-     *
      * @param saddr The name of the host.
      * @param port The port number in native/host byte order.
+     * @throw system_error if the host name can not be resolved, or any
+     *  	  other error occurs.
      */
     inet6_address(const std::string& saddr, in_port_t port);
+    /**
+     * Constructs an address using the name of the host and the specified
+     * port. This attempts to resolve the host name to an address.
+     * If the name resolution fails, the error code is set.
+     * @param saddr The name of the host.
+     * @param port The port number in native/host byte order.
+     * @param ec Gets the error code on failure.
+     */
+    inet6_address(const std::string& saddr, in_port_t port, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * TODO: Do we actually need a conversion from something that's
@@ -147,7 +157,7 @@ public:
      * @return On success, the internet address in network byte order, or an
      *  	   error_code on failure.
      */
-    static result<in6_addr> resolve_name(const std::string& saddr);
+    static result<in6_addr> resolve_name(const std::string& saddr) noexcept;
     /**
      * Creates the socket address using the specified host name and port
      * number.

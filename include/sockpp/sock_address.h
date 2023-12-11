@@ -50,6 +50,7 @@
 #include <cstring>
 #include <stdexcept>
 
+#include "sockpp/error.h"
 #include "sockpp/platform.h"
 
 namespace sockpp {
@@ -144,35 +145,52 @@ public:
      * Constructs an address.
      * @param addr Pointer to a buffer holding the address.
      * @param n The number of valid bytes in the address
-     * @throws std::length_error if `n` is greater than the maximum size of
+     * @throw std::length_error if `n` is greater than the maximum size of
      *  		  an address.
      */
     sock_address_any(const sockaddr* addr, socklen_t n) {
-        if (size_t(n) > MAX_SZ) {
-#if defined(SOCKPP_WITH_EXCEPTIONS)
+        if (size_t(n) > MAX_SZ)
             throw std::length_error("Address length out of range");
-#else
-            return;
-#endif
-        }
         std::memcpy(&addr_, addr, sz_ = n);
+    }
+    /**
+     * Constructs an address.
+     * On failure the error code is set.
+     * @param addr Pointer to a buffer holding the address.
+     * @param n The number of valid bytes in the address
+     * @param ec Gets the error code on failure.
+     */
+    sock_address_any(const sockaddr* addr, socklen_t n, error_code& ec) noexcept {
+        ec = (size_t(n) > MAX_SZ)
+            ? std::make_error_code(errc::invalid_argument)
+            : std::error_code{};
+        if (ec)
+            std::memcpy(&addr_, addr, sz_ = n);
     }
     /**
      * Constructs an address.
      * @param addr The buffer holding the address.
      * @param n The number of valid bytes in the address
-     * @throws std::length_error if `n` is greater than the maximum size of
+     * @throw std::length_error if `n` is greater than the maximum size of
      *  		  an address.
      */
     sock_address_any(const sockaddr_storage& addr, socklen_t n) {
-        if (size_t(n) > MAX_SZ) {
-#if defined(SOCKPP_WITH_EXCEPTIONS)
+        if (size_t(n) > MAX_SZ)
             throw std::length_error("Address length out of range");
-#else
-            return;
-#endif
-        }
         std::memcpy(&addr_, &addr, sz_ = n);
+    }
+    /**
+     * Constructs an address.
+     * @param addr The buffer holding the address.
+     * @param n The number of valid bytes in the address
+     * @param ec Gets the error code on failure.
+     */
+    sock_address_any(const sockaddr_storage& addr, socklen_t n, std::error_code& ec) noexcept {
+        ec = (size_t(n) > MAX_SZ)
+            ? std::make_error_code(errc::invalid_argument)
+            : std::error_code{};
+        if (ec)
+            std::memcpy(&addr_, &addr, sz_ = n);
     }
     /**
      * Copies another address to this one.

@@ -145,13 +145,7 @@ TEST_CASE("unix_address path constructor", "[address]") {
         string path;
         path.insert(0, unix_address::MAX_PATH_NAME + 5, 'x');
 
-#if defined(SOCKPP_WITH_EXCEPTIONS)
         REQUIRE_THROWS(unix_address{path});
-#else
-        unix_address addr{path};
-        REQUIRE(!addr);
-        REQUIRE(!addr.is_set());
-#endif
     }
 }
 

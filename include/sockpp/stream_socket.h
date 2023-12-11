@@ -346,13 +346,11 @@ public:
     /**
      * Gets the local address to which the socket is bound.
      * @return The local address to which the socket is bound.
-     * @throw sys_error on error
      */
     addr_t address() const { return addr_t(socket::address()); }
     /**
      * Gets the address of the remote peer, if this socket is connected.
      * @return The address of the remote peer, if this socket is connected.
-     * @throw sys_error on error
      */
     addr_t peer_address() const { return addr_t(socket::peer_address()); }
 };

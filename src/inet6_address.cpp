@@ -55,7 +55,27 @@ inet6_address::inet6_address(const in6_addr& addr, in_port_t port) {
 
 // --------------------------------------------------------------------------
 
-result<in6_addr> inet6_address::resolve_name(const string& saddr) {
+inet6_address::inet6_address(const string& saddr, in_port_t port) {
+    auto res = create(saddr, port);
+    if (!res)
+        throw system_error{res.error()};
+
+    addr_ = res.value().addr_;
+}
+
+// --------------------------------------------------------------------------
+
+inet6_address::inet6_address(const string& saddr, in_port_t port, error_code& ec) noexcept {
+    auto res = create(saddr, port);
+    ec = res.error();
+
+    if (res)
+        addr_ = res.value().addr_;
+}
+
+// --------------------------------------------------------------------------
+
+result<in6_addr> inet6_address::resolve_name(const string& saddr) noexcept {
 #if !defined(_WIN32)
     in6_addr ia;
     if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
@@ -77,10 +97,6 @@ result<in6_addr> inet6_address::resolve_name(const string& saddr) {
             ec = ioresult::get_last_error();
         else
             ec = make_error_code(static_cast<gai_errc>(err));
-#endif
-
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-        throw system_error{ec};
 #endif
         return ec;
     }
@@ -110,18 +126,10 @@ result<inet6_address> inet6_address::create(const string& saddr, in_port_t port)
 
 // --------------------------------------------------------------------------
 
-inet6_address::inet6_address(const std::string& saddr, in_port_t port) {
-    auto res = create(saddr, port);
-    // If create fails, this is an un-set, default address.
-    addr_ = res.value().addr_;
-}
-
-// --------------------------------------------------------------------------
-
 string inet6_address::to_string() const {
     char buf[INET6_ADDRSTRLEN];
     auto str = inet_ntop(AF_INET6, (void*)&(addr_.sin6_addr), buf, INET6_ADDRSTRLEN);
-    return std::string("[") + std::string(str ? str : "<unknown>") +
+    return string("[") + string(str ? str : "<unknown>") +
            "]:" + std::to_string(unsigned(port()));
 }
 

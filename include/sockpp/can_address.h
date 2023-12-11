@@ -96,6 +96,7 @@ public:
      * Constructs an address for the specified CAN interface.
      * The interface might be "can0", "can1", "vcan0", etc.
      * @param iface The name of the CAN interface
+     * @throw system_error on failure
      */
     can_address(const std::string& iface);
     /**
@@ -143,9 +144,8 @@ public:
     /**
      * Try to get the name of the CAN interface for this address.
      * @return The name of the CAN interface for this address.
-     * @throw system_error
      */
-    result<std::string> get_iface() const;
+    result<std::string> get_iface() const noexcept;
     /**
      * Get the name of the CAN interface for this address.
      * If the name can not be found or there's an error, returns "unknown".

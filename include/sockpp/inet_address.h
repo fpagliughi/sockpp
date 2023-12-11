@@ -98,13 +98,20 @@ public:
     /**
      * Constructs an address using the name of the host and the specified
      * port. This attempts to resolve the host name to an address.
-     *
      * @param saddr The name of the host.
      * @param port The port number in native/host byte order.
      * @throw system_error if the host name can not be resolved, or any
      *  	  other error occurs.
      */
     inet_address(const std::string& saddr, in_port_t port);
+    /**
+     * Constructs an address using the name of the host and the specified
+     * port. This attempts to resolve the host name to an address.
+     * @param saddr The name of the host.
+     * @param port The port number in native/host byte order.
+     * @param ec Gets the error code on failure.
+     */
+    inet_address(const std::string& saddr, in_port_t port, error_code& ec) noexcept ;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
@@ -132,9 +139,8 @@ public:
      * @param port The port number in native/host byte order.
      * @return A result with the address on success, or an error code on
      *  	   failure.
-     * @throw system_error
      */
-    static result<inet_address> create(const std::string& saddr, in_port_t port);
+    static result<inet_address> create(const std::string& saddr, in_port_t port) noexcept;
     /**
      * Checks if the address is set to some value.
      * This doesn't attempt to determine if the address is valid, simply
@@ -147,9 +153,8 @@ public:
      * Attempts to resolve the host name into a 32-bit internet address.
      * @param saddr The string host name.
      * @return The internet address in network byte order.
-     * @throw system_error
      */
-    static result<in_addr_t> resolve_name(const std::string& saddr);
+    static result<in_addr_t> resolve_name(const std::string& saddr) noexcept;
     /**
      * Gets the 32-bit internet address.
      * @return The internet address in the local host's byte order.

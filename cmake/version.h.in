@@ -45,13 +45,6 @@
 
 #include <string>
 
-// Flag if sockpp was built with exceptions
-
-#cmakedefine SOCKPP_WITH_EXCEPTIONS
-#if defined(SOCKPP_WITH_EXCEPTIONS)
-    #define SOCKPP_EXCEPTIONS
-#endif
-
 // Define which secure socket library compiled in (if any) 
 
 #cmakedefine SOCKPP_WITH_OPENSSL

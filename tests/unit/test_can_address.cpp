@@ -72,16 +72,7 @@ TEST_CASE("can_address iface constructor", "[address]") {
         REQUIRE(addr.index() > 0);
     }
 
-    SECTION("valid interface") {
-#if defined(SOCKPP_WITH_EXCEPTIONS)
+    SECTION("invalid interface") {
         REQUIRE_THROWS(can_address("invalid"));
-#else
-        can_address addr("invalid");
-
-        REQUIRE(!addr);
-        REQUIRE(!addr.is_set());
-        REQUIRE(addr.iface().empty());
-        REQUIRE(addr.index() == 0);
-#endif
     }
 }
