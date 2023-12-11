@@ -18,17 +18,21 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
 
-The API is changing (slightly)!
+An update to v0.9 should be landing by the end of 2023. Until then the _master_ branch may not be stable, and contains a few breaking API changes.
 
-The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which was never fully merged is coming into the API with a `result<T>` class. This will be generic over the return type, though typically use an int for I/O operations, but the error state will be represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors. This may even take over the whole of the API to make _all_ operations stateless by default.
+The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which was never fully merged is coming into the API with a `result<T>` class. This will be generic over the return type, though typically use an `int` for I/O operations. Now the error state will be represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors. This has also removed the need for exceptions in several instances, and those cases where the a function might throw, a comparable `noexcept` function is also provided which can set an error code parameter instead of throwing. So the library can be used without any exceptions if so desired by the application.
 
-Work has has begun on incorporating Secure Sockets into the library using either OpenSSL or MbedTLS libraries.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years in being merged and updated, along with new work to do something compatible with OpenSSL. You will be ablt to chose one library or the other when building `sockpp`. This probably won't be in the next release, but the following one.
+Some side work has also begun on the following version after that, v0.10. It will incorporate Secure Sockets into the library using either OpenSSL or MbedTLS libraries, or (likely), a build-time choice for one or the other.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years is being merged and updated, along with new work to do something compatible with OpenSSL. You will be ablt to chose one library or the other when building `sockpp`. This probably won't be in the next release, but the following one.
+
+v0.10 will also see a conversion to fully stateless I/O operations. Any function that can fail will return a `result<>` object, instead of the typical C API of int 0 is success, -1 is failure. By returning results directly, the need for `get_last_error()` calls will be eliminated, and the socket can lose its "last error" cache, making it more thread safe - at least comparable to the underlying OS socket.
 
 The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
 
 On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable, and if not, please report an issue!
 
 To keep up with the latest announcements for this project, follow me at:
+
+**Mastodon:** [@fpagliughi@fosstodon.org](https://fosstodon.org/@fpagliughi)
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
 
