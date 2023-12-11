@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -57,9 +57,12 @@ int main(int argc, char* argv[]) {
 
     sockpp::udp6_socket sock;
 
-    if (!sock.connect(sockpp::inet6_address(host, port))) {
+    try {
+        sock.connect(sockpp::inet6_address(host, port));
+    }
+    catch (system_error& exc) {
         cerr << "Error connecting to server at " << host << ":" << port << "\n\t"
-             << sock.last_error_str() << endl;
+             << exc.what() << endl;
         return 1;
     }
 

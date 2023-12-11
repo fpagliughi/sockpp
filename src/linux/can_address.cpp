@@ -81,7 +81,7 @@ result<can_address> can_address::create(const std::string& iface) {
     return can_address{addr};
 }
 
-result<string> can_address::get_iface() const {
+result<string> can_address::get_iface() const noexcept {
     if (addr_.can_family == AF_UNSPEC)
         return string{};
 
