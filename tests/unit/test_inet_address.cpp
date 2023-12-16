@@ -163,15 +163,14 @@ TEST_CASE("IPv4 resolve address", "[address]") {
         REQUIRE(addr == htonl(LOCALHOST_ADDR));
     }
 
-    // According to RFC6761, "invalid." domain should not resolve
-    #if !defined(_WIN32)
-        SECTION("resolve failure", "[address]") {
-            auto res = inet_address::resolve_name("invalid");
-            REQUIRE(!res);
-            REQUIRE(res.is_error());
-        }
-    #endif
-
+// According to RFC6761, "invalid." domain should not resolve
+#if !defined(_WIN32)
+    SECTION("resolve failure", "[address]") {
+        auto res = inet_address::resolve_name("invalid");
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+    }
+#endif
 }
 
 TEST_CASE("IPv4 create address", "[address]") {
@@ -196,12 +195,12 @@ TEST_CASE("IPv4 create address", "[address]") {
         REQUIRE(inet_address{LOCALHOST_ADDR, PORT} == addr);
     }
 
-    // According to RFC6761, "invalid." domain should not resolve
-    #if !defined(_WIN32)
-        SECTION("create failure", "[address]") {
-            auto res = inet_address::create("invalid", PORT);
-            REQUIRE(!res);
-            REQUIRE(res.is_error());
-        }
-    #endif
+// According to RFC6761, "invalid." domain should not resolve
+#if !defined(_WIN32)
+    SECTION("create failure", "[address]") {
+        auto res = inet_address::create("invalid", PORT);
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+    }
+#endif
 }

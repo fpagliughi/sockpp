@@ -111,7 +111,7 @@ public:
      * @param port The port number in native/host byte order.
      * @param ec Gets the error code on failure.
      */
-    inet_address(const std::string& saddr, in_port_t port, error_code& ec) noexcept ;
+    inet_address(const std::string& saddr, in_port_t port, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address

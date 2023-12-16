@@ -88,7 +88,8 @@ typedef long suseconds_t;  // signed # of microseconds in timeval
     #define SHUT_WR SD_SEND
     #define SHUT_RDWR SD_BOTH
 
-struct iovec {
+struct iovec
+{
     void* iov_base;
     size_t iov_len;
 };

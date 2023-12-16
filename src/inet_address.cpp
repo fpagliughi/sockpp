@@ -71,7 +71,6 @@ inet_address::inet_address(const string& saddr, in_port_t port, error_code& ec) 
         addr_ = res.value().addr_;
 }
 
-
 // --------------------------------------------------------------------------
 
 result<in_addr_t> inet_address::resolve_name(const std::string& saddr) noexcept {

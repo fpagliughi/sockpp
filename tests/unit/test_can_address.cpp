@@ -72,7 +72,5 @@ TEST_CASE("can_address iface constructor", "[address]") {
         REQUIRE(addr.index() > 0);
     }
 
-    SECTION("invalid interface") {
-        REQUIRE_THROWS(can_address("invalid"));
-    }
+    SECTION("invalid interface") { REQUIRE_THROWS(can_address("invalid")); }
 }

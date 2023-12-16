@@ -125,14 +125,14 @@ TEST_CASE("IPv6 resolve address", "[address]") {
         REQUIRE(memcmp(ANY_ADDR.s6_addr, addr.s6_addr, 16) == 0);
     }
 
-    // According to RFC6761, "invalid." domain should not resolve
-    #if !defined(_WIN32)
-        SECTION("resolve failure", "[address]") {
-            auto res = inet6_address::resolve_name("invalid");
-            REQUIRE(!res);
-            REQUIRE(res.is_error());
-        }
-    #endif
+// According to RFC6761, "invalid." domain should not resolve
+#if !defined(_WIN32)
+    SECTION("resolve failure", "[address]") {
+        auto res = inet6_address::resolve_name("invalid");
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+    }
+#endif
 }
 
 TEST_CASE("IPv6 create address", "[address]") {
@@ -143,7 +143,7 @@ TEST_CASE("IPv6 create address", "[address]") {
         auto addr = res.value();
 
         // TODO: Figure out why this doesn't compile with clang
-        //REQUIRE(LOCALHOST_ADDR == addr.address());
+        // REQUIRE(LOCALHOST_ADDR == addr.address());
         if (LOCALHOST_ADDR != addr.address()) {
             FAIL();
         }
@@ -159,7 +159,7 @@ TEST_CASE("IPv6 create address", "[address]") {
         inet6_address addr = res.value();
 
         // TODO: Figure out why this doesn't compile with clang
-        //REQUIRE(ANY_ADDR == addr.address());
+        // REQUIRE(ANY_ADDR == addr.address());
         if (ANY_ADDR != addr.address()) {
             FAIL();
         }
@@ -168,12 +168,12 @@ TEST_CASE("IPv6 create address", "[address]") {
         REQUIRE(inet6_address{ANY_ADDR, PORT} == addr);
     }
 
-    // According to RFC6761, "invalid." domain should not resolve
-    #if !defined(_WIN32)
-        SECTION("create failure", "[address]") {
-            auto res = inet6_address::create("invalid", PORT);
-            REQUIRE(!res);
-            REQUIRE(res.is_error());
-        }
-    #endif
+// According to RFC6761, "invalid." domain should not resolve
+#if !defined(_WIN32)
+    SECTION("create failure", "[address]") {
+        auto res = inet6_address::create("invalid", PORT);
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+    }
+#endif
 }

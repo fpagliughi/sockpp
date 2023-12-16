@@ -161,9 +161,8 @@ public:
      * @param ec Gets the error code on failure.
      */
     sock_address_any(const sockaddr* addr, socklen_t n, error_code& ec) noexcept {
-        ec = (size_t(n) > MAX_SZ)
-            ? std::make_error_code(errc::invalid_argument)
-            : std::error_code{};
+        ec = (size_t(n) > MAX_SZ) ? std::make_error_code(errc::invalid_argument)
+                                  : std::error_code{};
         if (ec)
             std::memcpy(&addr_, addr, sz_ = n);
     }
@@ -185,10 +184,11 @@ public:
      * @param n The number of valid bytes in the address
      * @param ec Gets the error code on failure.
      */
-    sock_address_any(const sockaddr_storage& addr, socklen_t n, std::error_code& ec) noexcept {
-        ec = (size_t(n) > MAX_SZ)
-            ? std::make_error_code(errc::invalid_argument)
-            : std::error_code{};
+    sock_address_any(
+        const sockaddr_storage& addr, socklen_t n, std::error_code& ec
+    ) noexcept {
+        ec = (size_t(n) > MAX_SZ) ? std::make_error_code(errc::invalid_argument)
+                                  : std::error_code{};
         if (ec)
             std::memcpy(&addr_, &addr, sz_ = n);
     }

@@ -101,7 +101,8 @@ namespace std {
  * with the standard error code system
  */
 template <>
-struct is_error_code_enum<::sockpp::gai_errc> : true_type {
+struct is_error_code_enum<::sockpp::gai_errc> : true_type
+{
 };
 }  // namespace std
 

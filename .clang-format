@@ -29,11 +29,12 @@ AlignConsecutiveMacros:
   AcrossComments:  false
   AlignCompound:   false
   PadOperators:    false
-AlignConsecutiveShortCaseStatements:
-  Enabled:         false
-  AcrossEmptyLines: false
-  AcrossComments:  false
-  AlignCaseColons: false
+# Clang-17
+#AlignConsecutiveShortCaseStatements:
+#  Enabled:         false
+#  AcrossEmptyLines: false
+#  AcrossComments:  false
+#  AlignCaseColons: false
 AlignEscapedNewlines: Left
 AlignOperands:   Align
 AlignTrailingComments:
@@ -66,9 +67,9 @@ BraceWrapping:
   AfterFunction:   false
   AfterNamespace:  false
   AfterObjCDeclaration: false
-  AfterStruct:     false
+  AfterStruct:     true
   AfterUnion:      false
-  BeforeCatch:     false
+  BeforeCatch:     true
   BeforeElse:      true
   BeforeLambdaBody: false
   BeforeWhile:     false
@@ -245,12 +246,13 @@ SpacesInContainerLiterals: true
 SpacesInLineCommentPrefix:
   Minimum:         1
   Maximum:         -1
-SpacesInParens:  Never
-SpacesInParensOptions:
-  InCStyleCasts:   false
-  InConditionalStatements: false
-  InEmptyParentheses: false
-  Other:           false
+# Clang Format >v17
+#SpacesInParens:  Never
+#SpacesInParensOptions:
+#  InCStyleCasts:   false
+#  InConditionalStatements: false
+#  InEmptyParentheses: false
+#  Other:           false
 SpacesInSquareBrackets: false
 Standard:        Auto
 StatementAttributeLikeMacros:
