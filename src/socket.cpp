@@ -184,6 +184,9 @@ std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*
         sock1.clear(err);
     }
 #else
+    (void)domain;
+    (void)type;
+    (void)protocol;
     sock0.clear(ENOTSUP);
     sock1.clear(ENOTSUP);
 #endif
