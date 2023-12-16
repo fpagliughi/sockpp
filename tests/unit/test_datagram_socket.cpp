@@ -90,7 +90,7 @@ TEST_CASE("datagram_socket address constructor", "[datagram_socket]") {
 
 // Windows returns a different error code than *nix
 #if defined(_WIN32)
-        REQUIRE(sock.last_error() == WSAEINVAL);
+        REQUIRE(sock.last_error() == errc::invalid_argument);
 #else
         REQUIRE(sock.last_error() == errc::address_family_not_supported);
 #endif

@@ -41,12 +41,13 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+#if !defined(_WIN32)
 // A global function returning a static instance of the custom category
 const ::detail::gai_errc_category &gai_errc_category() {
     static ::detail::gai_errc_category c;
     return c;
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace 'sockpp'
 }  // namespace sockpp

@@ -90,7 +90,7 @@ TEST_CASE("acceptor address constructor", "[acceptor]") {
 
 // Windows returns a different error code than *nix
 #if defined(_WIN32)
-        REQUIRE(sock.last_error() == WSAEINVAL);
+        REQUIRE(sock.last_error() == errc::invalid_argument);
 #else
         REQUIRE(sock.last_error() == errc::address_family_not_supported);
 #endif
@@ -122,7 +122,7 @@ TEST_CASE("acceptor create", "[acceptor]") {
 
 // Windows returns a different error code than *nix
 #if defined(_WIN32)
-        REQUIRE(sock.last_error() == WSAEINVAL);
+        REQUIRE(sock.last_error() == errc::invalid_argument);
 #else
         REQUIRE(sock.last_error() == errc::address_family_not_supported);
 #endif
