@@ -140,7 +140,12 @@ TEST_CASE("IPv6 create address", "[address]") {
 
         auto addr = res.value();
 
-        REQUIRE(LOCALHOST_ADDR == addr.address());
+        // TODO: Figure out why this doesn't compile with clang
+        //REQUIRE(LOCALHOST_ADDR == addr.address());
+        if (LOCALHOST_ADDR != addr.address()) {
+            FAIL();
+        }
+
         REQUIRE(PORT == addr.port());
         REQUIRE(inet6_address{LOCALHOST_ADDR, PORT} == addr);
     }
@@ -149,9 +154,14 @@ TEST_CASE("IPv6 create address", "[address]") {
         auto res = inet6_address::create("::", PORT);
         REQUIRE(res.is_ok());
 
-        auto addr = res.value();
+        inet6_address addr = res.value();
 
-        REQUIRE(ANY_ADDR == addr.address());
+        // TODO: Figure out why this doesn't compile with clang
+        //REQUIRE(ANY_ADDR == addr.address());
+        if (ANY_ADDR != addr.address()) {
+            FAIL();
+        }
+
         REQUIRE(PORT == addr.port());
         REQUIRE(inet6_address{ANY_ADDR, PORT} == addr);
     }
