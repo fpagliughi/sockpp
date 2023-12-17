@@ -48,6 +48,23 @@
 
 namespace sockpp {
 
+/**
+ * Type for a result that returns nothing.
+ */
+struct none
+{
+};
+
+/**
+ * Writes out a none value.
+ * @param os The output stream.
+ * @return A reference to the output stream.
+ */
+inline std::ostream& operator<<(std::ostream& os, const none&) {
+    os << "<none>";
+    return os;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 /**

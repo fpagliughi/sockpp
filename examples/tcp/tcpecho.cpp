@@ -45,34 +45,22 @@
 using namespace std;
 using namespace std::chrono;
 
+// --------------------------------------------------------------------------
+
 int main(int argc, char* argv[]) {
-    cout << "Sample TCP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
+    cout << "Sample IPv4 TCP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
     string host = (argc > 1) ? argv[1] : "localhost";
     in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
     sockpp::initialize();
+    sockpp::tcp_connector conn;
 
-    // Try to resolve the address
-
-    // Note that this works if the library was compiled with or without exceptions.
-    // Applications normally only handles the exception or the return code.
-
-    auto res = sockpp::inet_address::create(host, port);
-
+    // Attempt to connect with a 10 sec timeout.
+    auto res = conn.connect(host, port, 10s);
     if (!res) {
         cerr << "Error resolving address for '" << host << "': " << res << endl;
-        return 1;
-    }
-
-    auto addr = res.value();
-
-    // Try the connection using a timeout of 5sec.
-
-    sockpp::tcp_connector conn(addr, 5s);
-    if (!conn) {
-        cerr << "Error connecting to server at " << addr << "\n\t" << conn.last_error_str()
-             << endl;
         return 1;
     }
 

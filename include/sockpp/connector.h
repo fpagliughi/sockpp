@@ -96,7 +96,8 @@ public:
     /**
      * Creates the connector and attempts to connect to the specified
      * address, with a timeout.
-     * If the operation times out, the \ref last_error will be set to ETIMEOUT.
+     * If the operation times out, the \ref last_error will be set to
+     * `timed_out`.
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
      */
@@ -138,7 +139,7 @@ public:
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
      * If the operation times out, the @ref last_error will be set to
-     * ETIMEDOUT.
+     * `timed_out`.
      * @param addr The remote server address.
      * @param timeout The duration after which to give up. Zero means never.
      * @return @em true on success, @em false on error
@@ -149,7 +150,7 @@ public:
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
      * If the operation times out, the @ref last_error will be set to
-     * ETIMEDOUT.
+     * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
      * @return @em true on success, @em false on error
@@ -248,7 +249,7 @@ public:
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
      * If the operation times out, the @ref last_error will be set to
-     * ETIMEDOUT.
+     * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
      * @return @em true on success, @em false on error
@@ -258,6 +259,49 @@ public:
         const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime
     ) {
         return base::connect(addr, std::chrono::microseconds(relTime));
+    }
+    /**
+     * Attempts to connect to the server at the specified port.
+     *
+     * This requires that the socket's address type can be created from a
+     * string host name and a port number.
+     *
+     * @param saddr The name of the host.
+     * @param port The port number in native/host byte order.
+     *
+     * @return The result of the operation, with an error code on failure.
+     */
+    result<none> connect(const std::string& saddr, in_port_t port) noexcept {
+        auto res = addr_t::create(saddr, port);
+        if (!res)
+            return result<none>{res.error()};
+        if (!connect(res.value()))
+            return last_error();
+        return success(none{});
+    }
+    /**
+     * Attempts to connect to the server at the specified port.
+     *
+     * This requires that the socket's address type can be created from a
+     * string host name and a port number.
+     *
+     * @param saddr The name of the host.
+     * @param port The port number in native/host byte order.
+     * @param relTime The duration after which to give up. Zero means never.
+     *
+     * @return The result of the operation, with an error code on failure.
+     */
+    template <class Rep, class Period>
+    result<none> connect(
+        const std::string& saddr, in_port_t port,
+        const std::chrono::duration<Rep, Period>& relTime
+    ) noexcept {
+        auto res = addr_t::create(saddr, port);
+        if (!res)
+            return result<none>{res.error()};
+        if (!connect(res.value(), relTime))
+            return last_error();
+        return success(none{});
     }
 };
 
