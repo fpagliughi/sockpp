@@ -50,38 +50,40 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::recreate(const sock_address& addr) {
+result<none> connector::recreate(const sock_address& addr) {
     sa_family_t domain = addr.family();
     socket_t h = create_handle(domain);
 
     if (!check_socket_bool(h))
-        return false;
+        return last_error();
 
     // This will close the old connection, if any.
     reset(h);
-    return true;
+    return none{};
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::connect(const sock_address& addr) {
-    if (!recreate(addr))
-        return false;
+result<none> connector::connect(const sock_address& addr) {
+    auto res = recreate(addr);
+    if (!res)
+        return res;
 
     if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
-        return close_on_err();
+        return last_error();
 
-    return true;
+    return none{};
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-bool connector::connect(const sock_address& addr, microseconds timeout) {
+result<none> connector::connect(const sock_address& addr, microseconds timeout) {
     if (timeout.count() <= 0)
         return connect(addr);
 
-    if (!recreate(addr))
-        return false;
+    auto res = recreate(addr);
+    if (!res)
+        return res;
 
     bool non_blocking =
 #if defined(_WIN32)
@@ -126,9 +128,10 @@ bool connector::connect(const sock_address& addr, microseconds timeout) {
             }
         }
 
-        if (last_error()) {
+        auto last_err = last_error();
+        if (last_err) {
             close();
-            return false;
+            return last_err;
         }
     }
 
@@ -136,7 +139,7 @@ bool connector::connect(const sock_address& addr, microseconds timeout) {
     if (!non_blocking)
         set_non_blocking(false);
 
-    return true;
+    return none{};
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -122,9 +122,14 @@ public:
     result() = default;
     /**
      * Construct a "success" result with the specified value.
-     * @param val The success return value
+     * @param val The success value
      */
     result(const T& val) : val_{val} {}
+    /**
+     * Construct a "success" result with the specified value.
+     * @param val The success value
+     */
+    result(T&& val) : val_{std::move(val)} {}
     /**
      * Creates an unsuccesful result from a portable error condition.
      * @param err The error
@@ -225,6 +230,17 @@ public:
 template <typename T>
 result<T> success(const T& val) {
     return result<T>(val);
+}
+
+/**
+ * Create a successful result with the specified value.
+ *
+ * @param val The succesful return value from the operation.
+ * @return A success result.
+ */
+template <typename T>
+result<T> success(T&& val) {
+    return result<T>(std::move(val));
 }
 
 /**

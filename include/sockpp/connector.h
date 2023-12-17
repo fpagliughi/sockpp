@@ -70,7 +70,7 @@ class connector : public stream_socket
     connector& operator=(const connector&) = delete;
 
     /** Recreate the socket with a new handle, closing any old one. */
-    bool recreate(const sock_address& addr);
+    result<none> recreate(const sock_address& addr);
 
 public:
     /**
@@ -133,7 +133,7 @@ public:
      * @param addr The remote server address.
      * @return @em true on success, @em false on error
      */
-    bool connect(const sock_address& addr);
+    result<none> connect(const sock_address& addr);
     /**
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
@@ -144,7 +144,7 @@ public:
      * @param timeout The duration after which to give up. Zero means never.
      * @return @em true on success, @em false on error
      */
-    bool connect(const sock_address& addr, std::chrono::microseconds timeout);
+    result<none> connect(const sock_address& addr, std::chrono::microseconds timeout);
     /**
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
@@ -156,7 +156,7 @@ public:
      * @return @em true on success, @em false on error
      */
     template <class Rep, class Period>
-    bool connect(
+    result<none> connect(
         const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime
     ) {
         return connect(addr, std::chrono::microseconds(relTime));
