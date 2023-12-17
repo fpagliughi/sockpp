@@ -40,7 +40,24 @@
 #include "catch2_version.h"
 #include "sockpp/result.h"
 
+using namespace std;
 using namespace sockpp;
+
+class moveable {
+    int val_;
+    moveable(const moveable&) =delete;
+    moveable& operator=(const moveable&) =delete;
+
+public:
+    moveable(int val) : val_{val} {}
+    moveable(moveable&& other) : val_{other.val_} { other.val_ = 0; }
+    int val() const { return val_; }
+};
+
+ostream& operator<<(ostream& os, const moveable& v) {
+    os << v.val();
+    return os;
+}
 
 TEST_CASE("test result success", "[result]") {
     const int VAL = 42;
@@ -67,4 +84,16 @@ TEST_CASE("test result error", "[result]") {
     REQUIRE(res == ERR);
     REQUIRE(res == std::make_error_code(ERR));
     REQUIRE(res == error<int>(ERR));
+}
+
+TEST_CASE("test result release", "[result]") {
+    const int VAL = 42;
+    result<moveable> res{moveable{42}};
+
+    REQUIRE(res);
+    REQUIRE(VAL == res.value().val());
+
+    auto val = res.release();
+    REQUIRE(VAL == val.val());
+    REQUIRE(0 == res.value().val());
 }

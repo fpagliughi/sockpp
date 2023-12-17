@@ -212,6 +212,20 @@ public:
      */
     const T& value() const { return val_; };
     /**
+     * Releases the value from this result.
+     *
+     * The value is only valid if the operation was successful. Releasing
+     * the value will move it out of this result, leaving an unknown, but
+     * valid value in its place. This might be necessary to retrieve a value
+     * that only implements move semantics (such as a socket), or if the
+     * caller would rather not copy the object.
+     *
+     * The result should not be used after releasint the value.
+     *
+     * @return The success value.
+     */
+    T&& release() { return std::move(val_); }
+    /**
      * Gets the error code from a failed operation.
      *
      * This is only valid if the operation failed. If not, it returns the
