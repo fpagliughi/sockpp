@@ -14,57 +14,21 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
 
-The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
-
-On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable, and if not, please report an issue!
-
 To keep up with the latest announcements for this project, follow me at:
+
+**Mastodon/Fosstodon:** [@fpagliughi@fosstodon.org](https://fosstodon.org/@fpagliughi)
 
 **Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
 
-If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
-
-## New in v0.8.x
-
-These releases attempt to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
-
-- [#64](https://github.com/fpagliughi/sockpp/pull/84) Added support for Catch2 v3.x for unit tests. (v2.x still supported)
-- [#89](https://github.com/fpagliughi/sockpp/issue/89) Fixed generator expression for older CMake
-- [#91](https://github.com/fpagliughi/sockpp/issue/91) Fixed uniform_int_distribution<> in UNIX socket example
-- Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
-    - Connector timeouts
-    - Stateless reads & writes for streaming sockets w/ functions returning `ioresult`
-    - Some small bug fixes
-    - No shutdown on invalid sockets
-- [#38](https://github.com/fpagliughi/sockpp/issues/38) Made system libs public for static builds to fix Windows
-- [#73](https://github.com/fpagliughi/sockpp/issue/73) Clone a datagram (UDP) socket
-- [#74](https://github.com/fpagliughi/sockpp/issue/74) Added `<sys/time.h>` to properly get `timeval` in *nix builds.
-- [#56](https://github.com/fpagliughi/sockpp/issue/56) handling unix paths with maximum length (no NUL term)
-- Fixed outstanding build warnings on Windows when using MSVC
-
-
-## New in v0.8.0
-
-This was primarily a release of code that had been sitting in the develop branch for nearly a year. That code mostly improved CMake functionality for downstream projects.
-
-- [Breaking] Library initializer now uses a static singleton created via `socket_initializer::initialize()` call, which can be called repeatedly with no ill effect. Also added global `socketpp::initialize()` function as shortcut.
-- Improvements to CMake to better follow modern standards.
-    - CMake required version bumped up to 3.12
-    - Generating CMake files for downstream projects (config, target, version)
-    - Windows builds default to shared DLL, not static library
-    - Lots of cleanup
+If you're using this library, send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
 
 ## Contributing
 
-Contributions are accepted and appreciated. New and unstable work is done in the `develop` branch Please submit all pull requests against that branch, not _master_.
+Contributions are accepted and appreciated. New and unstable work is done in the `develop` branch. Please submit all pull requests against that branch, not _master_.
 
 For more information, refer to: [CONTRIBUTING.md](https://github.com/fpagliughi/sockpp/blob/master/CONTRIBUTING.md)
 
-## TODO
-
-- **Secure Sockets** - It would be extremely handy to have support for SSL/TLS built right into the library as an optional feature.
-- **SCTP** - The _SCTP_ protocol never caught on, but it seems intriguing, and might be nice to have in the library for experimentation, if not for some internal applications.
 
 ## Building the Library
 

@@ -1,5 +1,9 @@
 # Change Log for _sockpp_
 
+## [Version 1.0.0](https://github.com/fpagliughi/sockpp/compare/v0.8.3..v1.0.0) - (2023-12-17)
+
+This is a release of the previous 0.8.x line as the initial, stable API.
+
 ## [Version 0.8.3](https://github.com/fpagliughi/sockpp/compare/v0.8.2..v0.8.3) - (2023-12-11)
 
 - [#64](https://github.com/fpagliughi/sockpp/pull/84) Added support for Catch2 v3.x for unit tests. (v2.x still supported)
