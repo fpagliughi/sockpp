@@ -133,19 +133,16 @@ public:
     /**
      * Creates an unsuccesful result from a portable error condition.
      * @param err The error
-     * @return The result of an unsuccessful operation.
      */
     result(errc err) : err_{std::make_error_code(err)} {}
     /**
      * Creates an unsuccesful result from a portable error condition.
      * @param err The error
-     * @return The result of an unsuccessful operation.
      */
     result(const error_code& err) : err_{err} {}
     /**
      * Creates an unsuccesful result from a portable error condition.
      * @param err The error
-     * @return The result of an unsuccessful operation.
      */
     result(error_code&& err) : err_{std::move(err)} {}
     /**
@@ -173,9 +170,7 @@ public:
     /**
      * Creates an unsuccessful result from an platform-specific integer
      * error code and an optional category.
-     * @param ec The platform-specific error code.
-     * @param ecat The error category.
-     * @return The result of an unsuccessful operation.
+     * @return The result for the last unsuccessful system operation.
      */
     static result from_last_error() { return from_error(get_last_errno()); }
     /**
@@ -390,7 +385,6 @@ bool operator!=(const errc& lhs, const result<T>& rhs) noexcept {
  * error code.
  *
  * @param err The portable error condition.
- * @param ecat The error category.
  * @return A failed result.
  */
 template <typename T>
