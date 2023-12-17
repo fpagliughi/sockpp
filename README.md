@@ -16,19 +16,27 @@ There is also some experimental support for CAN bus programming on Linux using t
 
 All code in the library lives within the `sockpp` C++ namespace.
 
+**The 'master' branch is particularly unstable at the moment. You're advised to download the latest release for general use.**
+
 ## Latest News
 
-An update to v0.9 should be landing by the end of 2023. Until then the _master_ branch may not be stable, and contains a few breaking API changes.
+Version 1.0 is releaed!
 
-The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which was never fully merged is coming into the API with a `result<T>` class. This will be generic over the return type, though typically use an `int` for I/O operations. Now the error state will be represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors. This has also removed the need for exceptions in several instances, and those cases where the a function might throw, a comparable `noexcept` function is also provided which can set an error code parameter instead of throwing. So the library can be used without any exceptions if so desired by the application.
+As breaking changes were starting to accumulate in the current development branch, the decision was made to release the API that has been fairly stable for the last few years as 1.0. This is from the latest v0.8.x line. That will make things going forward less confusing and allow us to maintain the v1.x branch.
 
-Some side work has also begun on the following version after that, v0.10. It will incorporate Secure Sockets into the library using either OpenSSL or MbedTLS libraries, or (likely), a build-time choice for one or the other.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years is being merged and updated, along with new work to do something compatible with OpenSSL. You will be ablt to chose one library or the other when building `sockpp`. This probably won't be in the next release, but the following one.
+Version 2.0 development is underway.
 
-v0.10 will also see a conversion to fully stateless I/O operations. Any function that can fail will return a `result<>` object, instead of the typical C API of int 0 is success, -1 is failure. By returning results directly, the need for `get_last_error()` calls will be eliminated, and the socket can lose its "last error" cache, making it more thread safe - at least comparable to the underlying OS socket.
+The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), (which was never fully merged) is coming in the 2.0 API with a `result<T>` class. It will be generic over the "success" return type with errors being represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors.
 
-The library is reaching a stable API, and is on track for a 1.0 release in the near future. Until then, there may be a few more breaking changes, but hopefully those will be fewer than we have seen so far.
+Using a uniform result type removes the need for exceptions in most functions, except maybe constructors. In those cases where the function might throw, a comparable `noexcept` function will also be provided which can set an error code parameter instead of throwing. So the library can be used without any exceptions if so desired by the application.
 
-On that note, despite being recently refactored and re-versioned at 0.x, earlier implementations of this library have been in use on production systems since ~2003, particularly with remote embedded Linux data loggers. Things that we now call IoT gateways and edge devices. It can be counted on to be reliable, and if not, please report an issue!
+All functions that might fail due to a system error will return a result. That will eliminate the need for the "last error", and thus the cached last error variable in the `socket` class will disappear. The socket classes will then only wrap the socket handle, making them safer to share across threads in the same way a handle can be shared - typically with one thread for reading and another for writing.
+
+Some work has also begun to incorporate Secure Sockets into a 2.x release of the library using either OpenSSL or MbedTLS libraries, or (likely), a build-time choice for one or the other.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years is being merged and updated, along with new work to do something comparable with OpenSSL. You will be able to chose one secure library or the other when building `sockpp`. 
+
+The 2.0 version will also move up to C++17 and CMake v3.12 or later.
+
+### Get Updates
 
 To keep up with the latest announcements for this project, follow me at:
 
@@ -38,32 +46,6 @@ To keep up with the latest announcements for this project, follow me at:
 
 If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
 
-## Unrelased Features in this Branch
-
-- [#64](https://github.com/fpagliughi/sockpp/pull/84) Added support for Catch2 v3.x for unit tests. (v2.x still supported)
-- [#72](https://github.com/fpagliughi/sockpp/issues/72) Removed some exceptions and made the others optional by build option.
-- Added `raw_socket` class.
-- [#77](https://github.com/fpagliughi/sockpp/issues/77) 
-    - Added `result<T>` tempate class for success/error return values using `std::error_code` for errors.
-    - `sockpp::last_error()` now returns a `std::error_code`. This should be slightly more portable, but Windows will likely still be somewhat problematic.
-    - A new `sockpp::last_errno()` will return the platform-specific integer error code (i.e. what `last_error()` used to return).
-    - More consistent validity checks for address types with `is_set()` and `operator bool()`.
-- The `connector::connect()` with timeout now uses `poll()` for the timeout on non-Windows systems. Hopefully `WSAPoll()` on Windows will be available before the upcoming release as well.
-
-## New in v0.8.1
-
-This release attempts to fix some of the outstanding build issues on Windows with MSVC and resolve some old issues and PR commits.
-
-- Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
-    - Connector timeouts
-    - Stateless reads & writes for streaming sockets w/ functions returning `ioresult`
-    - Some small bug fixes
-    - No shutdown on invalid sockets
-- [#38](https://github.com/fpagliughi/sockpp/issues/38) Made system libs public for static builds to fix Windows
-- [#73](https://github.com/fpagliughi/sockpp/issue/73) Clone a datagram (UDP) socket
-- [#74](https://github.com/fpagliughi/sockpp/issue/74) Added `<sys/time.h>` to properly get `timeval` in *nix builds.
-- [#56](https://github.com/fpagliughi/sockpp/issue/56) handling unix paths with maximum length (no NUL term)
-- Fixed outstanding build warnings on Windows when using MSVC
 
 ## Building your app with CMake
 
@@ -87,9 +69,6 @@ Contributions are accepted and appreciated. New and unstable work is done in the
 
 For more information, refer to: [CONTRIBUTING.md](https://github.com/fpagliughi/sockpp/blob/master/CONTRIBUTING.md)
 
-## TODO
-
-- **SCTP** - The _SCTP_ protocol never caught on, but it seems intriguing, and might be nice to have in the library for experimentation, if not for some internal applications.
 
 ## Building the Library
 
