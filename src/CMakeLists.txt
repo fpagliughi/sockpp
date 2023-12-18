@@ -85,14 +85,7 @@ elseif(SOCKPP_WITH_MBEDTLS)
 endif()
 
 
-target_compile_features(sockpp-objs PUBLIC cxx_std_14)
-
-# Position indepence is only necessary for older compilers, but doesn't hurt
-set_target_properties(sockpp-objs 
-	PROPERTIES 
-		POSITION_INDEPENDENT_CODE 1
-		CXX_EXTENSIONS OFF
-)
+set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
 
 target_include_directories(sockpp-objs
 	PUBLIC

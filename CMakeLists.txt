@@ -42,7 +42,7 @@ cmake_minimum_required(VERSION 3.12)
 
 # --- Project setup ---
 
-project(sockpp VERSION "0.9.0")
+project(sockpp VERSION "2.0.0")
 
 # --- Build Options ---
 
@@ -51,8 +51,8 @@ option(SOCKPP_BUILD_STATIC "Build static library" OFF)
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
-#option(SOCKPP_WITH_OPENSSL "Include support for TLS Secure Sockets with OpenSSL" OFF)
-#option(SOCKPP_WITH_MBEDTLS "Include support for TLS Secure Sockets with Mbed TLS" OFF)
+#option(SOCKPP_WITH_OPENSSL "TLS Secure Sockets with OpenSSL" OFF)
+#option(SOCKPP_WITH_MBEDTLS "TLS Secure Sockets with Mbed TLS" OFF)
 option(SOCKPP_WITH_CAN "Include support for Linux SocketCAN components" OFF)
 
 # ----- Find any dependencies -----
@@ -73,6 +73,12 @@ set(SOCKPP_OBJECT_LIBRARY sockpp-objs)
 
 set(SOCKPP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(SOCKPP_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
+# --- Project uses C++17 ---
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # --- Generate a version header ---
 
@@ -113,8 +119,6 @@ if(${SOCKPP_BUILD_SHARED})
 	message(STATUS "Creating shared library: ${SOCKPP_SHARED_LIBRARY}")
 	add_library(${SOCKPP_SHARED_LIBRARY} SHARED $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
 
-	target_compile_features(${SOCKPP_SHARED_LIBRARY} PUBLIC cxx_std_14)
-
 	target_include_directories(${SOCKPP_SHARED_LIBRARY}
 		PUBLIC
 			$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
@@ -131,7 +135,6 @@ if(${SOCKPP_BUILD_SHARED})
 	set_target_properties(${SOCKPP_SHARED_LIBRARY} PROPERTIES
 		VERSION ${PROJECT_VERSION}
 		SOVERSION ${PROJECT_VERSION_MAJOR}
-		CXX_EXTENSIONS OFF
 	)
 
 	list(APPEND TARGET_FILES ${SOCKPP_SHARED_LIBRARY})
@@ -140,8 +143,6 @@ endif()
 if(${SOCKPP_BUILD_STATIC})
 	message(STATUS "Creating static library: ${SOCKPP_STATIC_LIBRARY}")
 	add_library(${SOCKPP_STATIC_LIBRARY} STATIC $<TARGET_OBJECTS:${SOCKPP_OBJECT_LIBRARY}>)
-
-	target_compile_features(${SOCKPP_STATIC_LIBRARY} PUBLIC cxx_std_14)
 
 	target_include_directories(${SOCKPP_STATIC_LIBRARY}
 		PUBLIC
@@ -155,10 +156,6 @@ if(${SOCKPP_BUILD_STATIC})
 	if(SOCKPP_WITH_OPENSSL)
 		target_link_libraries(${SOCKPP_STATIC_LIBRARY} PUBLIC OpenSSL::SSL OpenSSL::Crypto)
 	endif()
-
-	set_target_properties(${SOCKPP_STATIC_LIBRARY} PROPERTIES
-		CXX_EXTENSIONS OFF
-	)
 
 	# On *nix systems, the static library can have the same base filename
 	# as the shared library, thus 'libsockpp.a' for the static lib.

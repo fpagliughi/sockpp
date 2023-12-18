@@ -63,10 +63,6 @@ foreach(EXECUTABLE ${EXECUTABLES})
 		PRIVATE
 			${SOCKPP_GENERATED_DIR}/include
 	)
-	
-  set_target_properties(${EXECUTABLE} PROPERTIES
-    CXX_EXTENSIONS OFF
-  )
 
 	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
 endforeach()

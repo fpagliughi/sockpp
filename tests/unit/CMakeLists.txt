@@ -90,11 +90,6 @@ target_include_directories(unit_tests
 		${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set_target_properties(unit_tests PROPERTIES
-  CXX_EXTENSIONS OFF
-)
-
-
 # --- Link for executables ---
 
 target_link_libraries(unit_tests 
