@@ -89,11 +89,11 @@ class can_socket : public raw_socket
      * We can't connect to a raw CAN socket;
      * we can only bind the address/iface.
      */
-    bool connect(const sock_address&) = delete;
+    result<> connect(const sock_address&) = delete;
 
 protected:
-    static socket_t create_handle(int type, int protocol) {
-        return socket_t(::socket(PROTOCOL_FAMILY, type, protocol));
+    static result<socket_t> create_handle(int type, int protocol) {
+        return check_socket(socket_t(::socket(PROTOCOL_FAMILY, type, protocol)));
     }
 
 public:
@@ -110,18 +110,30 @@ public:
     /**
      * Creates an uninitialized CAN socket.
      */
-    can_socket() {}
+    can_socket() noexcept {}
     /**
      * Creates a CAN socket from an existing OS socket handle and
      * claims ownership of the handle.
      * @param handle A socket handle from the operating system.
      */
-    explicit can_socket(socket_t handle) : base(handle) {}
+    explicit can_socket(socket_t handle) noexcept : base(handle) {}
     /**
      * Creates a CAN socket and binds it to the address.
      * @param addr The address to bind.
+     * @throws std::system_error on failure
      */
-    explicit can_socket(const can_address& addr);
+    explicit can_socket(const can_address& addr) {
+        if (auto res = open(addr); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates a CAN socket and binds it to the address.
+     * @param addr The address to bind.
+     * @param ec The error code, on failure
+     */
+    explicit can_socket(const can_address& addr, error_code& ec) noexcept {
+        ec = open(addr).error();
+    }
     /**
      * Move constructor.
      * @param other The other socket to move to this one
@@ -136,7 +148,12 @@ public:
         base::operator=(std::move(rhs));
         return *this;
     }
-
+    /**
+     * Opens the CANbus socket and binds it to the address.
+     * @param addr The address to bind the socket
+     * @return The error code, on failure.
+     */
+    result<> open(const can_address& addr) noexcept;
     /**
      * Gets the system time of the last frame read from the socket.
      * @return The system time of the last frame read from the socket with
@@ -166,7 +183,7 @@ public:
      * @param n The number of CAN filters.
      * @return @em true if the filters were set, @em false otherwise.
      */
-    bool set_filters(const can_filter* filters, size_t n) {
+    result<> set_filters(const can_filter* filters, size_t n) {
         return set_option(SOL_CAN_RAW, CAN_RAW_FILTER, filters, socklen_t(n));
     }
 
@@ -182,7 +199,7 @@ public:
      * @param n The number of CAN filters.
      * @return @em true if the filters were set, @em false otherwise.
      */
-    bool set_filters(const std::vector<can_filter>& filters) {
+    result<> set_filters(const std::vector<can_filter>& filters) {
         return set_filters(filters.data(), filters.size());
     }
 
@@ -195,10 +212,8 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const can_frame& frame, int flags, const can_address& addr) {
-        return check_ret(::sendto(
-            handle(), &frame, sizeof(can_frame), flags, addr.sockaddr_ptr(), addr.size()
-        ));
+    result<size_t> send_to(const can_frame& frame, int flags, const can_address& addr) {
+        return base::send_to(&frame, sizeof(can_frame), flags, addr);
     }
     /**
      * Sends a frame to the CAN interface at the specified address.
@@ -206,10 +221,8 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const can_frame& frame, const can_address& addr) {
-        return check_ret(
-            ::sendto(handle(), &frame, sizeof(can_frame), 0, addr.sockaddr_ptr(), addr.size())
-        );
+    result<size_t> send_to(const can_frame& frame, const can_address& addr) {
+        return send_to(frame, 0, addr);
     }
     /**
      * Sends a frame to the CAN bus.
@@ -218,8 +231,8 @@ public:
      * @param flags The option bit flags. See send(2).
      * @return @em zero on success, @em -1 on failure.
      */
-    ssize_t send(const can_frame& frame, int flags = 0) {
-        return check_ret(::send(handle(), &frame, sizeof(can_frame), flags));
+    result<size_t> send(const can_frame& frame, int flags = 0) {
+        return base::send(&frame, sizeof(can_frame), flags);
     }
     /**
      * Receives a message from the CAN interface with the specified address.
@@ -229,15 +242,17 @@ public:
      *  			   message
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv_from(can_frame* frame, int flags, can_address* srcAddr = nullptr);
+    result<size_t> recv_from(can_frame* frame, int flags, can_address* srcAddr = nullptr) {
+        return base::recv_from(frame, sizeof(frame), flags, srcAddr);
+    }
     /**
      * Receives a message on the socket.
      * @param frame CAN frame to get the incoming data.
      * @param flags The option bit flags. See send(2).
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv(can_frame* frame, int flags = 0) {
-        return check_ret(::recv(handle(), frame, sizeof(can_frame), flags));
+    result<size_t> recv(can_frame* frame, int flags = 0) {
+        return base::recv(frame, sizeof(can_frame), flags);
     }
 };
 

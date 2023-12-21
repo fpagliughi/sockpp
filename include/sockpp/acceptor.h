@@ -11,7 +11,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -87,26 +87,40 @@ public:
     /**
      * Creates an unconnected acceptor.
      */
-    acceptor() {}
+    acceptor() noexcept {}
     /**
      * Creates an acceptor from an existing OS socket
      * handle and claims ownership of the handle.
      * @param handle A socket handle from the operating system.
      */
-    explicit acceptor(socket_t handle) : base(handle) {}
+    explicit acceptor(socket_t handle) noexcept : base(handle) {}
     /**
      * Creates an acceptor socket and starts it listening to the specified
      * address.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
+     * @throws std::system_error
      */
-    acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE) { open(addr, queSize); }
+    acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE) {
+        if (auto res = open(addr, queSize); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates an acceptor socket and starts it listening to the specified
+     * address.
+     * @param addr The address to which this server should be bound.
+     * @param queSize The listener queue size.
+     * @param ec The error code, on failure
+     */
+    acceptor(const sock_address& addr, int queSize, error_code& ec) noexcept {
+        ec = open(addr, queSize).error();
+    }
     /**
      * Move constructor.
      * Creates an acceptor by moving the other acceptor to this one.
      * @param acc Another acceptor
      */
-    acceptor(acceptor&& acc) : base(std::move(acc)) {}
+    acceptor(acceptor&& acc) noexcept : base(std::move(acc)) {}
     /**
      * Creates an unbound acceptor socket with an open OS socket handle.
      * An application would need to manually bind and listen to this
@@ -114,7 +128,7 @@ public:
      * @param domain The communications domain (address family).
      * @return An open, but unbound acceptor socket.
      */
-    static acceptor create(int domain);
+    static result<acceptor> create(int domain) noexcept;
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
@@ -129,9 +143,9 @@ public:
      * @param queSize The listener queue size.
      * @return @em true on success, @em false on error
      */
-    bool listen(int queSize = DFLT_QUE_SIZE) {
-        return check_ret_bool(::listen(handle(), queSize));
-    };
+    result<> listen(int queSize = DFLT_QUE_SIZE) {
+        return check_res_none(::listen(handle(), queSize));
+    }
     /**
      * Opens the acceptor socket, binds it to the specified address, and starts
      * listening.
@@ -142,14 +156,16 @@ public:
      *  				listening.
      * @return @em true on success, @em false on error
      */
-    bool open(const sock_address& addr, int queSize = DFLT_QUE_SIZE, bool reuseSock = true);
+    result<> open(
+        const sock_address& addr, int queSize = DFLT_QUE_SIZE, bool reuseSock = true
+    ) noexcept;
     /**
      * Accepts an incoming TCP connection and gets the address of the client.
      * @param clientAddr Pointer to the variable that will get the
      *  				 address of a client when it connects.
      * @return A socket to the remote client.
      */
-    stream_socket accept(sock_address* clientAddr = nullptr);
+    result<stream_socket> accept(sock_address* clientAddr = nullptr) noexcept;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -181,34 +197,62 @@ public:
     /**
      * Creates an unconnected acceptor.
      */
-    acceptor_tmpl() {}
+    acceptor_tmpl() noexcept {}
     /**
      * Creates a acceptor and starts it listening on the specified address.
      * @param addr The TCP address on which to listen.
      * @param queSize The listener queue size.
+     * @throws std::system_error
      */
-    acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE) { open(addr, queSize); }
+    acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE) {
+        if (auto res = open(addr, queSize); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates a acceptor and starts it listening on the specified address.
+     * @param addr The TCP address on which to listen.
+     * @param queSize The listener queue size.
+     * @param ec The error code, on failure
+     */
+    acceptor_tmpl(const addr_t& addr, int queSize, error_code& ec) noexcept {
+        ec = open(addr, queSize).error();
+    }
     /**
      * Creates a acceptor and starts it listening on the specified port.
      * The acceptor binds to the specified port for any address on the local
      * host.
      * @param port The TCP port on which to listen.
      * @param queSize The listener queue size.
+     * @throws std::system_error
      */
-    acceptor_tmpl(in_port_t port, int queSize = DFLT_QUE_SIZE) { open(port, queSize); }
+    acceptor_tmpl(in_port_t port, int queSize = DFLT_QUE_SIZE) {
+        if (auto res = open(port, queSize); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates a acceptor and starts it listening on the specified port.
+     * The acceptor binds to the specified port for any address on the local
+     * host.
+     * @param port The TCP port on which to listen.
+     * @param queSize The listener queue size.
+     * @param ec The error code, on failure
+     */
+    acceptor_tmpl(in_port_t port, int queSize, error_code& ec) noexcept {
+        ec = open(port, queSize).error();
+    }
     /**
      * Move constructor.
      * Creates an acceptor by moving the other acceptor to this one.
      * @param acc Another acceptor
      */
-    acceptor_tmpl(acceptor_tmpl&& acc) : base(std::move(acc)) {}
+    acceptor_tmpl(acceptor_tmpl&& acc) noexcept : base(std::move(acc)) {}
     /**
      * Creates an unbound acceptor socket with an open OS socket handle.
      * An application would need to manually bind and listen to this
      * acceptor to get incoming connections.
      * @return An open, but unbound acceptor socket.
      */
-    static acceptor_tmpl create() { return base::create(addr_t::ADDRESS_FAMILY); }
+    static result<acceptor_tmpl> create() { return base::create(addr_t::ADDRESS_FAMILY); }
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
@@ -228,7 +272,7 @@ public:
      * @param addr The address to which we get bound.
      * @return @em true on success, @em false on error
      */
-    bool bind(const addr_t& addr) { return base::bind(addr); }
+    result<> bind(const addr_t& addr) { return base::bind(addr); }
     /**
      * Opens the acceptor socket, binds it to the specified address, and starts
      * listening.
@@ -236,7 +280,7 @@ public:
      * @param queSize The listener queue size.
      * @return @em true on success, @em false on error
      */
-    bool open(const addr_t& addr, int queSize = DFLT_QUE_SIZE) {
+    result<> open(const addr_t& addr, int queSize = DFLT_QUE_SIZE) noexcept {
         return base::open(addr, queSize);
     }
     /**
@@ -246,7 +290,7 @@ public:
      * @param queSize The listener queue size.
      * @return @em true on success, @em false on error
      */
-    bool open(in_port_t port, int queSize = DFLT_QUE_SIZE) {
+    result<> open(in_port_t port, int queSize = DFLT_QUE_SIZE) noexcept {
         return open(addr_t(port), queSize);
     }
     /**
@@ -255,8 +299,11 @@ public:
      *  				 address of a client when it connects.
      * @return A tcp_socket to the remote client.
      */
-    stream_sock_t accept(addr_t* clientAddr = nullptr) {
-        return stream_sock_t(base::accept(clientAddr));
+    result<stream_sock_t> accept(addr_t* clientAddr = nullptr) {
+        if (auto res = base::accept(clientAddr); res)
+            return stream_sock_t{res.release()};
+        else
+            return res.error();
     }
 };
 

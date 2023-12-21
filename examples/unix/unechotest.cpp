@@ -68,10 +68,9 @@ int main(int argc, char* argv[]) {
     auto t_start = high_resolution_clock::now();
     sockpp::unix_connector conn;
 
-    bool ok = conn.connect(sockpp::unix_address(path));
-    if (!ok) {
-        cerr << "Error connecting to UNIX socket at " << path << "\n\t"
-             << conn.last_error_str() << endl;
+    if (auto res = conn.connect(sockpp::unix_address(path)); !res) {
+        cerr << "Error connecting to UNIX socket at " << path << "\n\t" << res.error_message()
+             << endl;
         return 1;
     }
 
@@ -88,15 +87,13 @@ int main(int argc, char* argv[]) {
     auto t_start_tx = high_resolution_clock::now();
 
     for (size_t i = 0; i < n; ++i) {
-        if (conn.write(s) != (ssize_t)s.length()) {
+        if (auto res = conn.write(s); res != sz) {
             cerr << "Error writing to the UNIX stream" << endl;
             break;
         }
 
-        sret.resize(s.length());
-        int n = conn.read_n(&sret[0], s.length());
-
-        if (n != (int)s.length()) {
+        sret.resize(sz);
+        if (auto res = conn.read_n(&sret[0], s.length()); res != sz) {
             cerr << "Error reading from UNIX stream" << endl;
             break;
         }

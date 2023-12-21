@@ -55,8 +55,7 @@ using fpsec = std::chrono::duration<double, std::chrono::seconds::period>;
 // --------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
-    cout << "Unix-domain echo timing test client for 'sockpp' " << sockpp::SOCKPP_VERSION
-         << '\n'
+    cout << "TCP echo timing test client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
          << endl;
 
     string host = (argc > 1) ? argv[1] : "localhost";
@@ -69,10 +68,11 @@ int main(int argc, char* argv[]) {
 
     auto t_start = high_resolution_clock::now();
 
-    sockpp::tcp_connector conn({host, port});
-    if (!conn) {
+    error_code ec;
+    sockpp::tcp_connector conn({host, port}, ec);
+    if (ec) {
         cerr << "Error connecting to server at " << sockpp::inet_address(host, port) << "\n\t"
-             << conn.last_error_str() << endl;
+             << ec.message() << endl;
         return 1;
     }
 
@@ -80,8 +80,8 @@ int main(int argc, char* argv[]) {
     cout << "Created a connection to " << conn.peer_address() << endl;
 
     // Set a timeout for the responses
-    if (!conn.read_timeout(seconds(2))) {
-        cerr << "Error setting timeout on TCP stream: " << conn.last_error_str() << endl;
+    if (auto res = conn.read_timeout(seconds(2)); !res) {
+        cerr << "Error setting timeout on TCP stream: " << res.error_message() << endl;
     }
     string s, sret;
 
@@ -94,16 +94,14 @@ int main(int argc, char* argv[]) {
     auto t_start_tx = high_resolution_clock::now();
 
     for (size_t i = 0; i < n; ++i) {
-        if (conn.write(s) != (ssize_t)s.length()) {
-            cerr << "Error writing to the UNIX stream" << endl;
+        if (conn.write(s) != sz) {
+            cerr << "Error writing to the TCP stream" << endl;
             break;
         }
 
-        sret.resize(s.length());
-        ssize_t n = conn.read_n(&sret[0], s.length());
-
-        if (n != (ssize_t)s.length()) {
-            cerr << "Error reading from UNIX stream" << endl;
+        sret.resize(sz);
+        if (auto res = conn.read_n(&sret[0], s.length()); res != sz) {
+            cerr << "Error reading from TCP stream" << endl;
             break;
         }
     }

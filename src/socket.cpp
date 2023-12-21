@@ -96,24 +96,25 @@ void initialize() { socket_initializer::initialize(); }
 //									socket
 /////////////////////////////////////////////////////////////////////////////
 
-bool socket::close(socket_t h) {
+result<> socket::close(socket_t h) noexcept {
 #if defined(_WIN32)
-    return ::closesocket(h) >= 0;
+    return check_res_none(::closesocket(h));
 #else
-    return ::close(h) >= 0;
+    return check_res_none(::close(h));
 #endif
 }
 
 // --------------------------------------------------------------------------
 
-socket socket::create(int domain, int type, int protocol /*=0*/) {
+result<socket> socket::create(int domain, int type, int protocol /*=0*/) noexcept {
     socket sock(::socket(domain, type, protocol));
     if (!sock)
-        sock.set_last_error();
+        result<socket>::from_last_error();
     return sock;
 }
 
 // --------------------------------------------------------------------------
+// TODO: result<ocket>?
 
 socket socket::clone() const {
     socket_t h = INVALID_SOCKET;
@@ -134,81 +135,73 @@ socket socket::clone() const {
 
 #if !defined(_WIN32)
 
-int socket::get_flags() const {
-    int flags = ::fcntl(handle_, F_GETFL, 0);
-    lastErr_ = (flags == -1) ? ioresult::get_last_error() : error_code{};
-    return flags;
+result<int> socket::get_flags() const { return check_res(::fcntl(handle_, F_GETFL, 0)); }
+
+result<> socket::set_flags(int flags) {
+    return check_res_none(::fcntl(handle_, F_SETFL, flags));
 }
 
-bool socket::set_flags(int flags) {
-    if (::fcntl(handle_, F_SETFL, flags) == -1) {
-        set_last_error();
-        return false;
-    }
-    return true;
-}
-
-bool socket::set_flag(int flag, bool on /*=true*/) {
-    int flags = get_flags();
-    if (flags == -1) {
-        return false;
+result<> socket::set_flag(int flag, bool on /*=true*/) {
+    auto res = get_flags();
+    if (!res) {
+        return res.error();
     }
 
+    int flags = res.value();
     flags = on ? (flags | flag) : (flags & ~flag);
     return set_flags(flags);
 }
 
+// TODO: result<bool>?
 bool socket::is_non_blocking() const {
-    int flags = get_flags();
-    return (flags == -1) ? false : ((flags & O_NONBLOCK) != 0);
+    auto res = get_flags();
+    return (res) ? ((res.value() & O_NONBLOCK) != 0) : false;
 }
 
 #endif
 
 // --------------------------------------------------------------------------
 
-std::tuple<socket, socket> socket::pair(int domain, int type, int protocol /*=0*/) {
+result<std::tuple<socket, socket>>
+socket::pair(int domain, int type, int protocol /*=0*/) noexcept {
+    result<std::tuple<socket, socket>> res;
     socket sock0, sock1;
 
 #if !defined(_WIN32)
     int sv[2];
-    int ret = ::socketpair(domain, type, protocol, sv);
 
-    if (ret == 0) {
-        sock0.reset(sv[0]);
-        sock1.reset(sv[1]);
+    if (::socketpair(domain, type, protocol, sv) == 0) {
+        res = std::make_tuple<socket, socket>(socket{sv[0]}, socket{sv[1]});
     }
     else {
-        int err = ioresult::get_last_errno();
-        sock0.clear(err);
-        sock1.clear(err);
+        res = result<std::tuple<socket, socket>>::from_last_error();
     }
 #else
     (void)domain;
     (void)type;
     (void)protocol;
-    sock0.clear(ENOTSUP);
-    sock1.clear(ENOTSUP);
+
+    res = errc::function_not_supported;
 #endif
 
-    return std::make_tuple<socket, socket>(std::move(sock0), std::move(sock1));
+    return res;
 }
 
 // --------------------------------------------------------------------------
 
-void socket::reset(socket_t h /*=INVALID_SOCKET*/) {
+void socket::reset(socket_t h /*=INVALID_SOCKET*/) noexcept {
     socket_t oh = handle_;
     handle_ = h;
     if (oh != INVALID_SOCKET)
         close(oh);
-    clear();
 }
 
 // --------------------------------------------------------------------------
 // Binds the socket to the specified address.
 
-bool socket::bind(const sock_address& addr) {
-    return check_ret_bool(::bind(handle_, addr.sockaddr_ptr(), addr.size()));
+result<> socket::bind(const sock_address& addr) noexcept {
+    auto res = check_res(::bind(handle_, addr.sockaddr_ptr(), addr.size()));
+    return (res) ? error_code{} : res.error();
 }
 
 // --------------------------------------------------------------------------
@@ -218,8 +211,10 @@ sock_address_any socket::address() const {
     auto addrStore = sockaddr_storage{};
     socklen_t len = sizeof(sockaddr_storage);
 
-    if (!check_ret_bool(::getsockname(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len)
-        ))
+    // TODO: Return the result
+    auto res =
+        check_res(::getsockname(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len));
+    if (!res)
         return sock_address_any{};
 
     return sock_address_any(addrStore, len);
@@ -232,8 +227,10 @@ sock_address_any socket::peer_address() const {
     auto addrStore = sockaddr_storage{};
     socklen_t len = sizeof(sockaddr_storage);
 
-    if (!check_ret_bool(::getpeername(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len)
-        ))
+    // TODO: Return the result?
+    auto res =
+        check_res(::getpeername(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len));
+    if (!res)
         return sock_address_any{};
 
     return sock_address_any(addrStore, len);
@@ -241,41 +238,45 @@ sock_address_any socket::peer_address() const {
 
 // --------------------------------------------------------------------------
 
-bool socket::get_option(int level, int optname, void* optval, socklen_t* optlen) const {
+result<> socket::get_option(int level, int optname, void* optval, socklen_t* optlen) const {
+    result<int> res;
 #if defined(_WIN32)
     if (optval && optlen) {
         int len = static_cast<int>(*optlen);
-        if (check_ret_bool(
-                ::getsockopt(handle_, level, optname, static_cast<char*>(optval), &len)
-            )) {
+        res =
+            check_res(::getsockopt(handle_, level, optname, static_cast<char*>(optval), &len)
+            );
+        if (res) {
             *optlen = static_cast<socklen_t>(len);
-            return true;
         }
     }
-    return false;
 #else
-    return check_ret_bool(::getsockopt(handle_, level, optname, optval, optlen));
+    res = check_res(::getsockopt(handle_, level, optname, optval, optlen));
 #endif
+    return (res) ? error_code{} : res.error();
 }
 
 // --------------------------------------------------------------------------
 
-bool socket::set_option(int level, int optname, const void* optval, socklen_t optlen) {
+result<> socket::set_option(int level, int optname, const void* optval, socklen_t optlen) {
+    result<int> res;
 #if defined(_WIN32)
-    return check_ret_bool(::setsockopt(
+    res = check_res(::setsockopt(
         handle_, level, optname, static_cast<const char*>(optval), static_cast<int>(optlen)
     ));
 #else
-    return check_ret_bool(::setsockopt(handle_, level, optname, optval, optlen));
+    res = check_res(::setsockopt(handle_, level, optname, optval, optlen));
 #endif
+    return (res) ? error_code{} : res.error();
 }
 
 /// --------------------------------------------------------------------------
 
-bool socket::set_non_blocking(bool on /*=true*/) {
+result<> socket::set_non_blocking(bool on /*=true*/) {
 #if defined(_WIN32)
     unsigned long mode = on ? 1 : 0;
-    return check_ret_bool(::ioctlsocket(handle_, FIONBIO, &mode));
+    auto res = check_res(::ioctlsocket(handle_, FIONBIO, &mode));
+    return (res) ? error_code{} : res.error();
 #else
     return set_flag(O_NONBLOCK, on);
 #endif
@@ -284,44 +285,40 @@ bool socket::set_non_blocking(bool on /*=true*/) {
 // --------------------------------------------------------------------------
 // Shuts down all or part of the connection.
 
-bool socket::shutdown(int how /*=SHUT_RDWR*/) {
-    if (handle_ != INVALID_SOCKET) {
-        return check_ret_bool(::shutdown(release(), how));
-    }
+result<> socket::shutdown(int how /*=SHUT_RDWR*/) {
+    if (handle_ == INVALID_SOCKET)
+        return errc::invalid_argument;
 
-    return false;
+    return check_res_none(::shutdown(handle_, how));
 }
 
 // --------------------------------------------------------------------------
 // Closes the socket and updates the last error on failure.
 
-bool socket::close() {
+result<> socket::close() {
     if (handle_ != INVALID_SOCKET) {
-        if (!close(release())) {
-            set_last_error();
-            return false;
-        }
+        return close(release());
     }
-    return true;
+    return error_code{};
 }
 
 // --------------------------------------------------------------------------
 
-ssize_t
+result<size_t>
 socket::recv_from(void* buf, size_t n, int flags, sock_address* srcAddr /*=nullptr*/) {
     sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
     socklen_t len = srcAddr ? srcAddr->size() : 0;
 
-// TODO: Check returned length
+    // TODO: Check returned length
+
 #if defined(_WIN32)
-    return check_ret(
+    return check_res<ssize_t, size_t>(
         ::recvfrom(handle(), reinterpret_cast<char*>(buf), int(n), flags, p, &len)
     );
 #else
-    return check_ret(::recvfrom(handle(), buf, n, flags, p, &len));
+    return check_res<ssize_t, size_t>(::recvfrom(handle(), buf, n, flags, p, &len));
 #endif
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
 }  // namespace sockpp

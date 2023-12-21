@@ -50,12 +50,12 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-result<none> connector::recreate(const sock_address& addr) {
+result<> connector::recreate(const sock_address& addr) {
     sa_family_t domain = addr.family();
     socket_t h = create_handle(domain);
 
-    if (!check_socket_bool(h))
-        return last_error();
+    if (h < 0)
+        return result<>::from_last_error();
 
     // This will close the old connection, if any.
     reset(h);
@@ -65,24 +65,19 @@ result<none> connector::recreate(const sock_address& addr) {
 /////////////////////////////////////////////////////////////////////////////
 
 result<none> connector::connect(const sock_address& addr) {
-    auto res = recreate(addr);
-    if (!res)
+    if (auto res = recreate(addr); !res)
         return res;
 
-    if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size())))
-        return last_error();
-
-    return none{};
+    return check_res_none(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-result<none> connector::connect(const sock_address& addr, microseconds timeout) {
+result<> connector::connect(const sock_address& addr, microseconds timeout) {
     if (timeout.count() <= 0)
         return connect(addr);
 
-    auto res = recreate(addr);
-    if (!res)
+    if (auto res = recreate(addr); !res)
         return res;
 
     bool non_blocking =
@@ -95,8 +90,10 @@ result<none> connector::connect(const sock_address& addr, microseconds timeout) 
     if (!non_blocking)
         set_non_blocking(true);
 
-    if (!check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()))) {
-        auto err = last_error();
+    result<int> res = check_res(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
+
+    if (!res) {
+        auto err = res.error();
         if (err == errc::operation_in_progress || err == errc::operation_would_block) {
 // TODO: Windows has a WSAPoll() function we can use.
 #if defined(_WIN32)
@@ -109,29 +106,29 @@ result<none> connector::connect(const sock_address& addr, microseconds timeout) 
             fd_set writeset = readset;
             fd_set exceptset = readset;
             timeval tv = to_timeval(timeout);
-            int n =
-                check_ret(::select(int(handle()) + 1, &readset, &writeset, &exceptset, &tv));
+            res =
+                check_res(::select(int(handle()) + 1, &readset, &writeset, &exceptset, &tv));
 #else
             pollfd fds = {handle(), POLLIN | POLLOUT, 0};
             int ms = int(duration_cast<milliseconds>(timeout).count());
-            int n = check_ret(::poll(&fds, 1, ms));
+            res = check_res(::poll(&fds, 1, ms));
 #endif
-
-            if (n > 0) {
-                // Got a socket event, but it might be an error, so check:
-                int err;
-                if (get_option(SOL_SOCKET, SO_ERROR, &err))
-                    clear(err);
-            }
-            else if (n == 0) {
-                clear(ETIMEDOUT);
+            if (res) {
+                if (res && res.value() > 0) {
+                    // Got a socket event, but it might be an error, so check:
+                    int err;
+                    if (get_option(SOL_SOCKET, SO_ERROR, &err))
+                        res = result<int>::from_error(err);
+                }
+                else {
+                    res = errc::timed_out;
+                }
             }
         }
 
-        auto last_err = last_error();
-        if (last_err) {
+        if (!res) {
             close();
-            return last_err;
+            return res.error();
         }
     }
 
@@ -143,5 +140,4 @@ result<none> connector::connect(const sock_address& addr, microseconds timeout) 
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
 }  // namespace sockpp

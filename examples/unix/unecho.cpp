@@ -53,13 +53,11 @@ int main(int argc, char* argv[]) {
     string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
 
     sockpp::initialize();
-
     sockpp::unix_connector conn;
 
-    bool ok = conn.connect(sockpp::unix_address(path));
-    if (!ok) {
-        cerr << "Error connecting to UNIX socket at " << path << "\n\t"
-             << conn.last_error_str() << endl;
+    if (auto res = conn.connect(sockpp::unix_address(path)); !res) {
+        cerr << "Error connecting to UNIX socket at " << path << "\n\t" << res.error_message()
+             << endl;
         return 1;
     }
 
@@ -67,15 +65,15 @@ int main(int argc, char* argv[]) {
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        if (conn.write(s) != (int)s.length()) {
+        size_t n = s.length();
+
+        if (auto res = conn.write(s); !res || size_t(res.value()) != n) {
             cerr << "Error writing to the UNIX stream" << endl;
             break;
         }
 
-        sret.resize(s.length());
-        int n = conn.read_n(&sret[0], s.length());
-
-        if (n != (int)s.length()) {
+        sret.resize(n);
+        if (auto res = conn.read_n(&sret[0], n); !res || size_t(res.value()) != n) {
             cerr << "Error reading from UNIX stream" << endl;
             break;
         }

@@ -58,31 +58,32 @@ int main(int argc, char* argv[]) {
     sockpp::tcp_connector conn;
 
     // Attempt to connect with a 10 sec timeout.
-    auto res = conn.connect(host, port, 10s);
-    if (!res) {
-        cerr << "Error resolving address for '" << host << "': " << res << endl;
+    if (auto res = conn.connect(host, port, 10s); !res) {
+        cerr << "Error connecting to server at: '" << host << "':\n\t" << res.error_message()
+             << endl;
         return 1;
     }
 
     cout << "Created a connection from " << conn.address() << endl;
 
     // Set a timeout for the responses
-    if (!conn.read_timeout(5s)) {
-        cerr << "Error setting timeout on TCP stream: " << conn.last_error_str() << endl;
+    if (auto res = conn.read_timeout(5s); !res) {
+        cerr << "Error setting timeout on TCP stream: " << res.error_message() << endl;
     }
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        if (conn.write(s) != ssize_t(s.length())) {
-            cerr << "Error writing to the TCP stream: " << conn.last_error_str() << endl;
+        const size_t N = s.length();
+
+        // TODO: Do we need to check length (res.value()) for write or read?
+        if (auto res = conn.write(s); res != N) {
+            cerr << "Error writing to the TCP stream: " << res.error_message() << endl;
             break;
         }
 
-        sret.resize(s.length());
-        ssize_t n = conn.read_n(&sret[0], s.length());
-
-        if (n != ssize_t(s.length())) {
-            cerr << "Error reading from TCP stream: " << conn.last_error_str() << endl;
+        sret.resize(N);
+        if (auto res = conn.read_n(&sret[0], N); res != N) {
+            cerr << "Error reading from TCP stream: " << res.error_message() << endl;
             break;
         }
 

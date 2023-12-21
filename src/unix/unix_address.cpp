@@ -73,7 +73,7 @@ unix_address::unix_address(const string& path, error_code& ec) noexcept {
 
 // --------------------------------------------------------------------------
 
-result<unix_address> unix_address::create(const std::string& path) {
+result<unix_address> unix_address::create(const string& path) {
     if (path.length() > MAX_PATH_NAME)
         return errc::invalid_argument;
 

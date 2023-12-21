@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,6 @@ TEST_CASE("tcp_socket handle constructor", "[tcp_socket]") {
         REQUIRE(!sock);
         REQUIRE(!sock.is_open());
         // TODO: Should this set an error?
-        REQUIRE(!sock.last_error());
 
         // REQUIRE(sock.family() == AF_INET);
     }
@@ -94,14 +93,14 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
 
     REQUIRE(csock.connect(addr));
 
-    auto ssock = asock.accept();
+    auto ssock = asock.accept().release();
     REQUIRE(ssock);
 
     SECTION("read_n/write_n") {
         char buf[512];  // N
 
-        REQUIRE(csock.write_n(STR.data(), N) == N);
-        REQUIRE(ssock.read_n(buf, N) == N);
+        REQUIRE(csock.write_n(STR.data(), N).value() == N);
+        REQUIRE(ssock.read_n(buf, N).value() == N);
 
         std::string str{buf, buf + N};
         REQUIRE(str == STR);
@@ -109,8 +108,8 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
         char buf2[512];  // N
 
         // string write is a write_n()
-        REQUIRE(csock.write(STR) == N);
-        REQUIRE(ssock.read_n(buf2, N) == N);
+        REQUIRE(csock.write(STR).value() == N);
+        REQUIRE(ssock.read_n(buf2, N).value() == N);
 
         std::string str2{buf2, buf2 + N};
         REQUIRE(str2 == STR);
@@ -135,11 +134,11 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
             iovec{(void*)hbuf, N_HEADER}, iovec{(void*)buf, N}, iovec{(void*)fbuf, N_FOOTER}
         };
 
-        REQUIRE(csock.write(outv) == N_TOT);
-        REQUIRE(csock.write(outv) == N_TOT);
-        REQUIRE(csock.write(outv) == N_TOT);
+        REQUIRE(csock.write(outv).value() == N_TOT);
+        REQUIRE(csock.write(outv).value() == N_TOT);
+        REQUIRE(csock.write(outv).value() == N_TOT);
 
-        REQUIRE(ssock.read(inv) == N_TOT);
+        REQUIRE(ssock.read(inv).value() == N_TOT);
 
         REQUIRE(std::string(hbuf, N_HEADER) == HEADER);
         REQUIRE(std::string(buf, N) == STR);

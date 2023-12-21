@@ -44,6 +44,7 @@
 #include "sockpp/datagram_socket.h"
 #include "sockpp/inet_address.h"
 
+using namespace std;
 using namespace sockpp;
 
 TEST_CASE("datagram_socket default constructor", "[datagram_socket]") {
@@ -66,7 +67,6 @@ TEST_CASE("datagram_socket handle constructor", "[datagram_socket]") {
         REQUIRE(!sock);
         REQUIRE(!sock.is_open());
         // TODO: Should this set an error?
-        REQUIRE(!sock.last_error());
     }
 }
 
@@ -76,23 +76,38 @@ TEST_CASE("datagram_socket address constructor", "[datagram_socket]") {
 
         datagram_socket sock(ADDR);
         REQUIRE(sock);
-        REQUIRE(sock.is_open());
-        REQUIRE(!sock.last_error());
         REQUIRE(sock.address() == ADDR);
     }
 
-    SECTION("invalid address") {
-        const auto ADDR = sock_address_any();
+    SECTION("invalid address throws") {
+        const auto ADDR = sock_address_any{};
 
-        datagram_socket sock(ADDR);
-        REQUIRE(!sock);
-        REQUIRE(!sock.is_open());
-
-// Windows returns a different error code than *nix
+        try {
+            datagram_socket sock(ADDR);
+            REQUIRE(false);
+        }
+        catch (const system_error& exc) {
 #if defined(_WIN32)
-        REQUIRE(sock.last_error() == errc::invalid_argument);
+            REQUIRE(exc.code() == errc::invalid_argument);
 #else
-        REQUIRE(sock.last_error() == errc::address_family_not_supported);
+            REQUIRE(exc.code() == errc::address_family_not_supported);
+#endif
+        }
+    }
+
+    SECTION("invalid address ec") {
+        const auto ADDR = sock_address_any{};
+
+        error_code ec;
+        datagram_socket sock{ADDR, ec};
+
+        REQUIRE(!sock);
+
+        // Windows returns a different error code than *nix
+#if defined(_WIN32)
+        REQUIRE(ec == errc::invalid_argument);
+#else
+        REQUIRE(ec == errc::address_family_not_supported);
 #endif
     }
 }

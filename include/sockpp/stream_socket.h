@@ -13,7 +13,8 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2023 Frank Pagliughi All rights reserved.
+// Copyright (c) 2014-2023 Frank Pagliughi
+// All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -88,12 +89,12 @@ public:
      * claims ownership of the handle.
      * @param handle A socket handle from the operating system.
      */
-    explicit stream_socket(socket_t handle) : base(handle) {}
+    explicit stream_socket(socket_t handle) noexcept : base(handle) {}
     /**
      * Creates a stream socket by copying the socket handle from the
      * specified socket object and transfers ownership of the socket.
      */
-    stream_socket(stream_socket&& sock) : base(std::move(sock)) {}
+    stream_socket(stream_socket&& sock) noexcept : base(std::move(sock)) {}
     /**
      * Creates a socket with the specified communications characterics.
      * Not that this is not normally how a socket is creates in the sockpp
@@ -110,7 +111,7 @@ public:
      * @return A stream socket with the requested communications
      *  	   characteristics.
      */
-    static stream_socket create(int domain, int protocol = 0);
+    static result<stream_socket> create(int domain, int protocol = 0);
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
@@ -140,17 +141,7 @@ public:
      * @param n The number of bytes to try to read.
      * @return The number of bytes read on success, or @em -1 on error.
      */
-    virtual ssize_t read(void* buf, size_t n);
-    /**
-     * Read that returns the error code on a failure.
-     * This is the same as a standard @ref read, but returns the error code
-     * directly on a failure.
-     * @param buf Buffer to get the incoming data.
-     * @param n The number of bytes to try to read.
-     * @return The result of the operation. On success, the number of bytes
-     *  	   read; on failure the error code.
-     */
-    virtual ioresult read_r(void* buf, size_t n);
+    virtual result<size_t> read(void* buf, size_t n);
     /**
      * Best effort attempts to read the specified number of bytes.
      * This will make repeated read attempts until all the bytes are read in
@@ -160,26 +151,13 @@ public:
      * @return The number of bytes read on success, or @em -1 on error. If
      *  	   successful, the number of bytes read should always be 'n'.
      */
-    virtual ssize_t read_n(void* buf, size_t n);
-    /**
-     * Best effort attempts to read the specified number of bytes, returning
-     * the error code on failure.
-     * This will make repeated read attempts until all the bytes are read in
-     * or until an error occurs. It's the same as @ref read_n, but returns
-     * the error code on failure.
-     *
-     * @param buf Buffer to get the incoming data.
-     * @param n The number of bytes to try to read.
-     * @return The number of bytes read on success, or @em -1 on error. If
-     *  	   successful, the number of bytes read should always be 'n'.
-     */
-    virtual ioresult read_n_r(void* buf, size_t n);
+    virtual result<size_t> read_n(void* buf, size_t n);
     /**
      * Reads discontiguous memory ranges from the socket.
      * @param ranges The vector of memory ranges to fill
      * @return The number of bytes read, or @em -1 on error.
      */
-    ssize_t read(const std::vector<iovec>& ranges);
+    result<size_t> read(const std::vector<iovec>& ranges);
     /**
      * Set a timeout for read operations.
      * Sets the timeout that the device uses for read operations. Not all
@@ -187,7 +165,7 @@ public:
      * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
      */
-    virtual bool read_timeout(const std::chrono::microseconds& to);
+    virtual result<> read_timeout(const std::chrono::microseconds& to);
     /**
      * Set a timeout for read operations.
      * Sets the timout that the device uses for read operations. Not all
@@ -196,7 +174,7 @@ public:
      * @return @em true on success, @em false on failure.
      */
     template <class Rep, class Period>
-    bool read_timeout(const std::chrono::duration<Rep, Period>& to) {
+    result<> read_timeout(const std::chrono::duration<Rep, Period>& to) {
         return read_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
     }
     /**
@@ -205,14 +183,7 @@ public:
      * @param n The number of bytes in the buffer.
      * @return The number of bytes written, or @em -1 on error.
      */
-    virtual ssize_t write(const void* buf, size_t n);
-    /**
-     * Writes the buffer to the socket, returning the error code on failure.
-     * @param buf The buffer to write
-     * @param n The number of bytes in the buffer.
-     * @return The number of bytes written, or @em -1 on error.
-     */
-    virtual ioresult write_r(const void* buf, size_t n);
+    virtual result<size_t> write(const void* buf, size_t n);
     /**
      * Best effort attempt to write the whole buffer to the socket.
      * @param buf The buffer to write
@@ -220,17 +191,7 @@ public:
      * @return The number of bytes written, or @em -1 on error. On success,
      *  	   the number of bytes written should always be 'n'.
      */
-    virtual ssize_t write_n(const void* buf, size_t n);
-    /**
-     * Best effort attempt to write the whole buffer to the socket,
-     * returning the error code on error.
-     * @param buf The buffer to write
-     * @param n The number of bytes in the buffer.
-     * @return An I/O result with number of bytes written, or the error code
-     *  	   on failure. On success, the number of bytes written should
-     *  	   always be 'n'.
-     */
-    virtual ioresult write_n_r(const void* buf, size_t n);
+    virtual result<size_t> write_n(const void* buf, size_t n);
     /**
      * Best effort attempt to write a string to the socket.
      * @param s The string to write.
@@ -238,13 +199,13 @@ public:
      *  	   the number of bytes written should always be the length of
      *  	   the string.
      */
-    virtual ssize_t write(const std::string& s) { return write_n(s.data(), s.size()); }
+    virtual result<size_t> write(const string& s) { return write_n(s.data(), s.size()); }
     /**
      * Writes discontiguous memory ranges to the socket.
      * @param ranges The vector of memory ranges to write
      * @return The number of bytes written, or @em -1 on error.
      */
-    virtual ssize_t write(const std::vector<iovec>& ranges);
+    virtual result<size_t> write(const std::vector<iovec>& ranges);
     /**
      * Set a timeout for write operations.
      * Sets the timout that the device uses for write operations. Not all
@@ -252,7 +213,7 @@ public:
      * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
      */
-    virtual bool write_timeout(const std::chrono::microseconds& to);
+    virtual result<> write_timeout(const std::chrono::microseconds& to);
     /**
      * Set a timeout for write operations.
      * Sets the timout that the device uses for write operations. Not all
@@ -261,7 +222,7 @@ public:
      * @return @em true on success, @em false on failure.
      */
     template <class Rep, class Period>
-    bool write_timeout(const std::chrono::duration<Rep, Period>& to) {
+    result<> write_timeout(const std::chrono::duration<Rep, Period>& to) {
         return write_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
     }
 };
@@ -336,12 +297,16 @@ public:
      * @return A std::tuple of stream sockets. On error both sockets will be
      *  	   in an error state with the last error set.
      */
-    static std::tuple<stream_socket_tmpl, stream_socket_tmpl> pair(int protocol = 0) {
-        auto pr = base::pair(ADDRESS_FAMILY, COMM_TYPE, protocol);
-        return std::make_tuple<stream_socket_tmpl, stream_socket_tmpl>(
-            stream_socket_tmpl{std::get<0>(pr).release()},
-            stream_socket_tmpl{std::get<1>(pr).release()}
-        );
+    static result<std::tuple<stream_socket_tmpl, stream_socket_tmpl>> pair(int protocol = 0) {
+        if (auto res = base::pair(ADDRESS_FAMILY, COMM_TYPE, protocol); !res) {
+            return res.error();
+        }
+        else {
+            auto [s1, s2] = res.release();
+            return std::make_tuple<stream_socket_tmpl, stream_socket_tmpl>(
+                stream_socket_tmpl{s1.release()}, stream_socket_tmpl{s2.release()}
+            );
+        }
     }
     /**
      * Gets the local address to which the socket is bound.

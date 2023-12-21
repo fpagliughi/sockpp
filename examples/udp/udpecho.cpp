@@ -69,16 +69,16 @@ int main(int argc, char* argv[]) {
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        if (sock.send(s) != ssize_t(s.length())) {
-            cerr << "Error writing to the UDP socket: " << sock.last_error_str() << endl;
+        const size_t N = s.length();
+
+        if (auto res = sock.send(s); res != N) {
+            cerr << "Error writing to the UDP socket: " << res.error_message() << endl;
             break;
         }
 
-        sret.resize(s.length());
-        ssize_t n = sock.recv(&sret[0], s.length());
-
-        if (n != ssize_t(s.length())) {
-            cerr << "Error reading from UDP socket: " << sock.last_error_str() << endl;
+        sret.resize(N);
+        if (auto res = sock.recv(&sret[0], N); res != N) {
+            cerr << "Error reading from UDP socket: " << res.error_message() << endl;
             break;
         }
 

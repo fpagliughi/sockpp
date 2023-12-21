@@ -54,6 +54,8 @@
 
 using namespace std;
 
+const string UNSOCK_FILE{"/tmp/undgramechosvr.sock"};
+
 // --------------------------------------------------------------------------
 // The main thread creates the UDP socket, and then starts them running the
 // echo service in a loop.
@@ -64,15 +66,10 @@ int main(int argc, char* argv[]) {
          << endl;
 
     sockpp::initialize();
-
     sockpp::unix_dgram_socket sock;
-    if (!sock) {
-        cerr << "Error creating the socket: " << sock.last_error_str() << endl;
-        return 1;
-    }
 
-    if (!sock.bind(sockpp::unix_address("/tmp/undgramechosvr.sock"))) {
-        cerr << "Error binding the socket: " << sock.last_error_str() << endl;
+    if (auto res = sock.bind(sockpp::unix_address(UNSOCK_FILE)); !res) {
+        cerr << "Error binding the socket: " << res.error_message() << endl;
         return 1;
     }
 
@@ -81,13 +78,17 @@ int main(int argc, char* argv[]) {
     char buf[512];
 
     sockpp::unix_address srcAddr;
-
     cout << "Awaiting packets on: '" << sock.address() << "'" << endl;
 
     // Read some data, also getting the address of the sender,
     // then just send it back.
-    while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
+    while (true) {
+        if (auto res = sock.recv_from(buf, sizeof(buf), &srcAddr); !res || res.value() == 0) {
+            cerr << "Error receiving data: " << res.error_message() << endl;
+            return 1;
+        }
         sock.send_to(buf, n, srcAddr);
+    }
 
     return 0;
 }

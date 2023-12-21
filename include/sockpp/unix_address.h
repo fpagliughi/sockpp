@@ -55,6 +55,7 @@
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
 #include "sockpp/sock_address.h"
+#include "sockpp/types.h"
 
 namespace sockpp {
 
@@ -89,13 +90,13 @@ public:
      * @param path The path to the socket file.
      * @throw system_error if the path is invalid (too long, etc)
      */
-    unix_address(const std::string& path);
+    unix_address(const string& path);
     /**
      * Constructs an address given the specified path.
      * Sets the error code on failure.
      * @param path The path to the socket file.
      */
-    unix_address(const std::string& path, error_code& ec) noexcept;
+    unix_address(const string& path, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The generic address. This must be a proper AF_UNIX
@@ -135,9 +136,9 @@ public:
      * Gets the path to which this address refers.
      * @return The path to which this address refers.
      */
-    std::string path() const {
+    string path() const {
         // Remember, if len==MAX, there's no NUL terminator
-        return std::string(addr_.sun_path, strnlen(addr_.sun_path, MAX_PATH_NAME));
+        return string(addr_.sun_path, strnlen(addr_.sun_path, MAX_PATH_NAME));
     }
     /**
      * Gets the size of the address structure.
@@ -155,7 +156,7 @@ public:
      * @return A result with the address on success, or an error code on
      *  	   failure.
      */
-    static result<unix_address> create(const std::string& path);
+    static result<unix_address> create(const string& path);
     /**
      * Gets a pointer to this object cast to a const @em sockaddr.
      * @return A pointer to this object cast to a const @em sockaddr.
@@ -183,7 +184,7 @@ public:
      * @return A string representation of the address in the form
      *  	   "unix:<path>"
      */
-    std::string to_string() const { return std::string("unix:") + path(); }
+    string to_string() const { return string("unix:") + path(); }
 };
 
 // --------------------------------------------------------------------------

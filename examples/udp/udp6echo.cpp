@@ -54,7 +54,6 @@ int main(int argc, char* argv[]) {
     in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
 
     sockpp::initialize();
-
     sockpp::udp6_socket sock;
 
     try {
@@ -70,16 +69,16 @@ int main(int argc, char* argv[]) {
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        if (sock.send(s) != ssize_t(s.length())) {
-            cerr << "Error writing to the UDP socket: " << sock.last_error_str() << endl;
+        size_t n = s.length();
+
+        if (auto res = sock.send(s); res != n) {
+            cerr << "Error writing to the UDP socket: " << res.error_message() << endl;
             break;
         }
 
-        sret.resize(s.length());
-        ssize_t n = sock.recv(&sret[0], s.length());
-
-        if (n != ssize_t(s.length())) {
-            cerr << "Error reading from UDP socket: " << sock.last_error_str() << endl;
+        sret.resize(n);
+        if (auto res = sock.recv(&sret[0], n); res != n) {
+            cerr << "Error reading from UDP socket: " << res.error_message() << endl;
             break;
         }
 

@@ -77,9 +77,20 @@ public:
      * Creates a acceptor and starts it listening on the specified address.
      * @param addr The TCP address on which to listen.
      * @param queSize The listener queue size.
+     * @throws std::system_error on failure
      */
     unix_acceptor(const unix_address& addr, int queSize = DFLT_QUE_SIZE) {
-        open(addr, queSize);
+        if (auto res = open(addr, queSize); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates a acceptor and starts it listening on the specified address.
+     * @param addr The TCP address on which to listen.
+     * @param queSize The listener queue size.
+     * @param ec Gets the error code on failure
+     */
+    unix_acceptor(const unix_address& addr, int queSize, error_code& ec) noexcept {
+        ec = open(addr, queSize).error();
     }
     /**
      * Gets the local address to which we are bound.
@@ -96,7 +107,7 @@ public:
      * @param queSize The listener queue size.
      * @return @em true on success, @em false on error
      */
-    bool open(const unix_address& addr, int queSize = DFLT_QUE_SIZE) {
+    result<> open(const unix_address& addr, int queSize = DFLT_QUE_SIZE) {
         return base::open(addr, queSize);
     }
     /**
@@ -104,7 +115,12 @@ public:
      * client.
      * @return A unix_socket to the client.
      */
-    unix_socket accept() { return unix_socket(base::accept()); }
+    result<unix_socket> accept() noexcept {
+        if (auto res = base::accept(); res)
+            return unix_socket{res.release()};
+        else
+            return res.error();
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////

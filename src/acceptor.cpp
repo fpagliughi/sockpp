@@ -44,10 +44,10 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-acceptor acceptor::create(int domain) {
+result<acceptor> acceptor::create(int domain) noexcept {
     acceptor acc(create_handle(domain));
     if (!acc)
-        acc.set_last_error();
+        return result<acceptor>::from_last_error();
     return acc;
 }
 
@@ -59,17 +59,18 @@ acceptor acceptor::create(int domain) {
 // If the acceptor appears to already be opened, this will quietly succeed
 // without doing anything.
 
-bool acceptor::
-    open(const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, bool reuseSock /*=true*/) {
+result<> acceptor::open(
+    const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, bool reuseSock /*=true*/
+) noexcept {
     // TODO: What to do if we are open but bound to a different address?
     if (is_open())
-        return true;
+        return error_code{};
 
     sa_family_t domain = addr.family();
     socket_t h = create_handle(domain);
 
-    if (!check_socket_bool(h))
-        return false;
+    if (h == INVALID_SOCKET)
+        return result<>::from_last_error();
 
     reset(h);
 
@@ -81,26 +82,37 @@ bool acceptor::
 
     if (reuseSock && (domain == AF_INET || domain == AF_INET6)) {
         int reuse = 1;
-        if (!set_option(SOL_SOCKET, REUSE, reuse))
-            return close_on_err();
+        if (auto res = set_option(SOL_SOCKET, REUSE, reuse); !res) {
+            close();
+            return res;
+        }
     }
 
-    if (!bind(addr) || !listen(queSize))
-        return close_on_err();
+    if (auto res = bind(addr); !res) {
+        close();
+        return res;
+    }
 
-    return true;
+    if (auto res = listen(queSize); !res) {
+        close();
+        return res;
+    }
+
+    return error_code{};
 }
 
 // --------------------------------------------------------------------------
 
-stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/) {
+result<stream_socket> acceptor::accept(sock_address* clientAddr /*=nullptr*/) noexcept {
     sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
     socklen_t len = clientAddr ? clientAddr->size() : 0;
 
-    socket_t s = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr));
+    socket_t s = ::accept(handle(), p, clientAddr ? &len : nullptr);
+    if (s < 0)
+        return result<stream_socket>::from_last_error();
+
     return stream_socket(s);
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
 }  // namespace sockpp

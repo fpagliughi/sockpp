@@ -48,8 +48,10 @@ using namespace sockpp;
 // Test that we can create a Unix-domain datagram socket pair and send data
 // from one of the sockets to the other.
 TEST_CASE("unix dgram socket pair", "[unix_dgram_socket]") {
-    unix_dgram_socket sock1, sock2;
-    std::tie(sock1, sock2) = std::move(unix_dgram_socket::pair());
+    auto res = unix_dgram_socket::pair();
+    REQUIRE(res);
+
+    auto [sock1, sock2] = res.release();
 
     REQUIRE(sock1);
     REQUIRE(sock2);
@@ -62,8 +64,8 @@ TEST_CASE("unix dgram socket pair", "[unix_dgram_socket]") {
 
     char buf[512];
 
-    REQUIRE(sock1.send(MSG) == N);
-    REQUIRE(sock2.recv(buf, N) == N);
+    REQUIRE(sock1.send(MSG).value() == N);
+    REQUIRE(sock2.recv(buf, N).value() == N);
 
     std::string msg{buf, buf + N};
     REQUIRE(msg == MSG);

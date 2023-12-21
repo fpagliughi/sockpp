@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021 Frank Pagliughi
+// Copyright (c) 2021-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,13 +48,18 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-can_socket::can_socket(const can_address& addr) {
-    socket_t h = create_handle(SOCK_RAW, CAN_RAW);
-
-    if (check_socket_bool(h)) {
-        reset(h);
-        bind(addr);
+result<> can_socket::open(const can_address& addr) noexcept {
+    if (auto createRes = create_handle(SOCK_RAW, CAN_RAW); !createRes) {
+        return createRes.error();
     }
+    else {
+        reset(createRes.value());
+        if (auto res = bind(addr); !res) {
+            close();
+            return res;
+        }
+    }
+    return none{};
 }
 
 system_clock::time_point can_socket::last_frame_time() {
@@ -75,6 +80,7 @@ double can_socket::last_frame_timestamp() {
 
 // --------------------------------------------------------------------------
 
+#if 0
 ssize_t
 can_socket::recv_from(can_frame* frame, int flags, can_address* srcAddr /*=nullptr*/) {
     sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
@@ -83,7 +89,7 @@ can_socket::recv_from(can_frame* frame, int flags, can_address* srcAddr /*=nullp
     // TODO: Check returned length
     return check_ret(::recvfrom(handle(), frame, sizeof(can_frame), flags, p, &len));
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
 }  // namespace sockpp

@@ -71,8 +71,13 @@ void run_echo(UDPSOCK sock) {
 
     // Read some data, also getting the address of the sender,
     // then just send it back.
-    while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
+    while (true) {
+        auto res = sock.recv_from(buf, sizeof(buf), &srcAddr);
+        if (!res || res.value() == 0)
+            break;
+
         sock.send_to(buf, n, srcAddr);
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -87,24 +92,14 @@ int main(int argc, char* argv[]) {
     sockpp::initialize();
 
     sockpp::udp_socket udpsock;
-    if (!udpsock) {
-        cerr << "Error creating the UDP v4 socket: " << udpsock.last_error_str() << endl;
-        return 1;
-    }
-
-    if (!udpsock.bind(sockpp::inet_address("localhost", port))) {
-        cerr << "Error binding the UDP v4 socket: " << udpsock.last_error_str() << endl;
+    if (auto res = udpsock.bind(sockpp::inet_address("localhost", port)); !res) {
+        cerr << "Error binding the UDP v4 socket: " << res.error_message() << endl;
         return 1;
     }
 
     sockpp::udp6_socket udp6sock;
-    if (!udp6sock) {
-        cerr << "Error creating the UDP v6 socket: " << udp6sock.last_error_str() << endl;
-        return 1;
-    }
-
-    if (!udp6sock.bind(sockpp::inet6_address("localhost", port))) {
-        cerr << "Error binding the UDP v6 socket: " << udp6sock.last_error_str() << endl;
+    if (auto res = udp6sock.bind(sockpp::inet6_address("localhost", port)); !res) {
+        cerr << "Error binding the UDP v6 socket: " << res.error_message() << endl;
         return 1;
     }
 

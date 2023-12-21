@@ -45,6 +45,7 @@
 
 #include "sockpp/error.h"
 #include "sockpp/platform.h"
+#include "sockpp/types.h"
 
 namespace sockpp {
 
@@ -55,6 +56,7 @@ struct none
 {
 };
 
+#if 0
 /**
  * Writes out a none value.
  * @param os The output stream.
@@ -64,14 +66,38 @@ inline std::ostream& operator<<(std::ostream& os, const none&) {
     os << "<none>";
     return os;
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
  * A result type that can contain a value of any type on successful
  * completion of an operation, or a std::error_code on failure.
+ *
+ * Objects can contain a value of type T on an operation's success, or a
+ * standard `error_code` on failure. As an implementation detail, the class
+ * isn't implemented with a union or variant, but rather both types are
+ * available. When the error code indicates "success" (where it has an
+ * internal value of zero), then the result value is considered valid. If
+ * the code contains an error, that takes precedence and the result value is
+ * set to the default for that type - zero for an int, empty for a string,
+ * etc.
+ *
+ * The result can act as a boolean - @em true for a successful result, @em
+ * false for an error/failure.
+ *
+ * The result can also be directly compared to values of type T or to any of
+ * the standard error types, `std::error_code`, `std::error_condition`, or
+ * `std::errc`. When comparing to type T, it will always fail if the result
+ * is an error, otherwise it will do a comparison of the T values. Comparing
+ * to an error will simply compare the error values.
+ *
+ * As a weird corner case, comparing an error code of zero - which indicates
+ * "no error" - against a result will always be true for _any_ successful
+ * result value. This should probably not be done as it could lead to some
+ * confusion.
  */
-template <typename T>
+template <typename T = none>
 class result
 {
     /** The return value of an operation, if successful */
@@ -85,6 +111,12 @@ class result
      * @param err The error
      */
     result(const T& val, const error_code& err) : val_{val}, err_{err} {}
+    /**
+     * Private helper constructor to build a result.
+     * @param val The value
+     * @param err The error
+     */
+    result(T&& val, const error_code& err) : val_{std::move(val)}, err_{err} {}
 
     /**
      * OS-specific means to retrieve the last error from an operation.
@@ -105,12 +137,13 @@ class result
      * This should be called after a failed system call to get the cause of
      * the error.
      */
-    static std::error_code get_last_error() {
+    static error_code get_last_error() {
         int ec = get_last_errno();
         return error_code{ec, std::system_category()};
     }
 
     friend class socket;
+    friend class connector;
     friend class inet_address;
     friend class inet6_address;
     friend class can_address;
@@ -188,7 +221,7 @@ public:
      * @return @em true if the result is from a successful operation, @em
      *  	   false if the operation failed.
      */
-    bool is_ok() const { return !is_error(); }
+    bool is_ok() const { return !bool(err_); }
     /**
      * Determines if the result represents a successful operation.
      *
@@ -197,7 +230,7 @@ public:
      * @return @em true if the result is from a successful operation, @em
      *  	   false if the operation failed.
      */
-    operator bool() const { return is_ok(); }
+    explicit operator bool() const { return !bool(err_); }
     /**
      * Gets the value from a successful operation.
      *
@@ -207,6 +240,18 @@ public:
      */
     const T& value() const { return val_; };
     /**
+     * Gets the value if the result is a success, otherwise throws a system
+     * error exception corresponding to the internal error code if it hold
+     * an error.
+     * @return A const reference to the success value.
+     * @throws std::system_error if the result is an error
+     */
+    const T& value_or_throw() const {
+        if (err_)
+            throw std::system_error{err_};
+        return val_;
+    }
+    /**
      * Releases the value from this result.
      *
      * The value is only valid if the operation was successful. Releasing
@@ -215,11 +260,26 @@ public:
      * that only implements move semantics (such as a socket), or if the
      * caller would rather not copy the object.
      *
-     * The result should not be used after releasint the value.
+     * The result should not be used after releasing the value.
      *
      * @return The success value.
      */
     T&& release() { return std::move(val_); }
+    /**
+     * Releases the value if the result is a success, otherwise throws a
+     * system error exception corresponding to the internal error code if it
+     * hold an error.
+     *
+     * The result should not be used after releasing the value.
+     *
+     * @return A const reference to the success value.
+     * @throws std::system_error if the result is an error
+     */
+    T&& release_or_throw() {
+        if (err_)
+            throw std::system_error{err_};
+        return std::move(val_);
+    }
     /**
      * Gets the error code from a failed operation.
      *
@@ -228,6 +288,12 @@ public:
      * @return A const reference to the error code.
      */
     const error_code& error() const { return err_; }
+    /**
+     * Gets the message corresponding to the current error.
+     * Equivalent to `error().message()`
+     * @return The message corresponding to the current error.
+     */
+    std::string error_message() const { return err_.message(); }
 };
 
 /**
@@ -267,6 +333,18 @@ result<T> error(const error_code& err) {
  * Create a failed result with the specified platform-specific integer
  * error code.
  *
+ * @param err The portable error condition.
+ * @return A failed result.
+ */
+template <typename T>
+result<T> error(errc err) {
+    return result<T>{err};
+}
+
+/**
+ * Create a failed result with the specified platform-specific integer
+ * error code.
+ *
  * @param ec The platform-specific error code.
  * @param ecat The error category.
  * @return A failed result.
@@ -277,6 +355,114 @@ result<T> error(int ec, const error_category& ecat = std::system_category()) {
 }
 
 /**
+ * Compare the result to a value.
+ *
+ * This fails if the result is an error or if the values don't maych
+ * @param res A result.
+ * @param val An value of the same type
+ * @return @em true if the result is a success and the values are equal,
+ *         false otherwise.
+ */
+template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+bool operator==(const result<T>& res, const T& val) noexcept {
+    return res && res.value() == val;
+}
+
+/**
+ * Compare the result to a value.
+ *
+ * This fails if the result is an error or if the values don't maych
+ * @param val An value of the same type
+ * @param res A result.
+ * @return @em true if the result is a success and the values are equal,
+ *         false otherwise.
+ */
+template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+bool operator==(const T& val, const result<T>& res) noexcept {
+    return res && res.value() == val;
+}
+
+/**
+ * Compare the result to a value.
+ *
+ * This fails if the result is an error or if the values don't maych
+ * @param res A result.
+ * @param val An value of the same type
+ * @return @em true if the result is a failure or the values are not equal,
+ *         false otherwise.
+ */
+template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+bool operator!=(const result<T>& res, const T& val) noexcept {
+    return !res || res.value() != val;
+}
+
+/**
+ * Compare the result to a value.
+ *
+ * This fails if the result is an error or if the values don't maych
+ * @param res A result.
+ * @param val An value of the same type
+ * @return @em true if the result is a failure or the values are not equal,
+ *         false otherwise.
+ */
+template <typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+bool operator!=(const T& val, const result<T>& res) noexcept {
+    return !res || res.value() != val;
+}
+
+/**
+ * Compare the result to an error code.
+ *
+ * @param res A result.
+ * @param err An error code
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator==(const result<T>& res, const error_code& err) noexcept {
+    return res.error() == err;
+}
+
+/**
+ * Compare the result to an error code.
+ *
+ * @param err An error code
+ * @param res A result.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator==(const error_code& err, const result<T>& res) noexcept {
+    return err == res.error();
+}
+
+/**
+ * Compare the result to an error.
+ *
+ * @param res A result.
+ * @param err A portable error condition.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator==(const result<T>& res, const errc& err) noexcept {
+    return res.error() == err;
+}
+
+/**
+ * Compare the result to an error.
+ *
+ * @param err A portable error condition.
+ * @param res A result.
+ * @return @em true if the error code matches the one in the result, false
+ *  	   otherwise.
+ */
+template <typename T>
+bool operator==(const errc& err, const result<T>& res) noexcept {
+    return err == res.error();
+}
+
+/**
  * Compare the result to an error code.
  *
  * @param lhs A result.
@@ -285,8 +471,8 @@ result<T> error(int ec, const error_category& ecat = std::system_category()) {
  *  	   otherwise.
  */
 template <typename T>
-bool operator==(const result<T>& lhs, const error_code& rhs) noexcept {
-    return lhs.error() == rhs;
+bool operator!=(const result<T>& res, const error_code& err) noexcept {
+    return res.error() != err;
 }
 
 /**
@@ -298,8 +484,8 @@ bool operator==(const result<T>& lhs, const error_code& rhs) noexcept {
  *  	   otherwise.
  */
 template <typename T>
-bool operator==(const error_code& lhs, const result<T>& rhs) noexcept {
-    return lhs == rhs.error();
+bool operator!=(const error_code& err, const result<T>& res) noexcept {
+    return res.error() != err;
 }
 
 /**
@@ -311,8 +497,8 @@ bool operator==(const error_code& lhs, const result<T>& rhs) noexcept {
  *  	   otherwise.
  */
 template <typename T>
-bool operator==(const result<T>& lhs, const errc& rhs) noexcept {
-    return lhs.error() == rhs;
+bool operator!=(const result<T>& res, const errc& err) noexcept {
+    return res.error() != err;
 }
 
 /**
@@ -324,74 +510,11 @@ bool operator==(const result<T>& lhs, const errc& rhs) noexcept {
  *  	   otherwise.
  */
 template <typename T>
-bool operator==(const errc& lhs, const result<T>& rhs) noexcept {
-    return lhs == rhs.error();
+bool operator!=(const errc& err, const result<T>& res) noexcept {
+    return res.error() != err;
 }
 
-/**
- * Compare the result to an error code.
- *
- * @param lhs A result.
- * @param rhs An error code
- * @return @em true if the error code matches the one in the result, false
- *  	   otherwise.
- */
-template <typename T>
-bool operator!=(const result<T>& lhs, const error_code& rhs) noexcept {
-    return !operator==(lhs, rhs);
-}
-
-/**
- * Compare the result to an error code.
- *
- * @param lhs An error code
- * @param rhs A result.
- * @return @em true if the error code matches the one in the result, false
- *  	   otherwise.
- */
-template <typename T>
-bool operator!=(const error_code& lhs, const result<T>& rhs) noexcept {
-    return !operator==(lhs, rhs);
-}
-
-/**
- * Compare the result to an error.
- *
- * @param lhs A result.
- * @param rhs A portable error condition.
- * @return @em true if the error code matches the one in the result, false
- *  	   otherwise.
- */
-template <typename T>
-bool operator!=(const result<T>& lhs, const errc& rhs) noexcept {
-    return !operator==(lhs, rhs);
-}
-
-/**
- * Compare the result to an error.
- *
- * @param lhs A portable error condition.
- * @param rhs A result.
- * @return @em true if the error code matches the one in the result, false
- *  	   otherwise.
- */
-template <typename T>
-bool operator!=(const errc& lhs, const result<T>& rhs) noexcept {
-    return !operator==(lhs, rhs);
-}
-
-/**
- * Create a failed result with the specified platform-specific integer
- * error code.
- *
- * @param err The portable error condition.
- * @return A failed result.
- */
-template <typename T>
-result<T> error(errc err) {
-    return result<T>{err};
-}
-
+#if 0
 /**
  * Writes out the result.
  *
@@ -410,13 +533,11 @@ std::ostream& operator<<(std::ostream& os, const result<T>& res) {
         os << res.value();
     }
     else {
-        os << res.error().message();
+        os << res.error_message();
     }
     return os;
 }
-
-/** The result of an I/O operation that should return an int. */
-using ioresult = result<int>;
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

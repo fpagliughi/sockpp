@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,8 +73,8 @@ protected:
      * Creates a datagram socket.
      * @return An OS handle to a datagram socket.
      */
-    static socket_t create_handle(int domain, int protocol = 0) {
-        return socket_t(::socket(domain, COMM_TYPE, protocol));
+    static result<socket_t> create_handle(int domain, int protocol = 0) {
+        return check_socket(socket_t(::socket(domain, COMM_TYPE, protocol)));
     }
 
 public:
@@ -84,18 +84,30 @@ public:
     /**
      * Creates an uninitialized datagram socket.
      */
-    datagram_socket() {}
+    datagram_socket() noexcept {}
     /**
      * Creates a datagram socket from an existing OS socket handle and
      * claims ownership of the handle.
      * @param handle A socket handle from the operating system.
      */
-    explicit datagram_socket(socket_t handle) : base(handle) {}
+    explicit datagram_socket(socket_t handle) noexcept : base(handle) {}
     /**
      * Creates a UDP socket and binds it to the address.
      * @param addr The address to bind.
+     * @throws std::system_error on failure
      */
-    explicit datagram_socket(const sock_address& addr);
+    explicit datagram_socket(const sock_address& addr) {
+        if (auto res = open(addr); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates a UDP socket and binds it to the address.
+     * @param addr The address to bind.
+     * @param ec The error code, on failure
+     */
+    explicit datagram_socket(const sock_address& addr, error_code& ec) noexcept {
+        ec = open(addr).error();
+    }
     /**
      * Move constructor.
      * @param other The other socket to move to this one
@@ -110,6 +122,12 @@ public:
         base::operator=(std::move(rhs));
         return *this;
     }
+    /**
+     * Opens the datagram sockets and binds it to the address.
+     * @param addr The address to bind the socket
+     * @return The error code, on failure.
+     */
+    result<> open(const sock_address& addr) noexcept;
     /**
      * Creates a new datagram socket that refers to this one.
      * This creates a new object with an independent lifetime, but refers
@@ -133,8 +151,8 @@ public:
      * @param addr The address on which to "connect".
      * @return @em true on success, @em false on failure
      */
-    bool connect(const sock_address& addr) {
-        return check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
+    result<> connect(const sock_address& addr) {
+        return check_res_none(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
     }
 };
 
@@ -162,7 +180,7 @@ public:
      * Creates an unbound datagram socket.
      * This can be used as a client or later bound as a server socket.
      */
-    datagram_socket_tmpl() : base(create_handle(ADDRESS_FAMILY)) {}
+    datagram_socket_tmpl() : base(create_handle(ADDRESS_FAMILY).value_or_throw()) {}
     /**
      * Creates a datagram socket from an existing OS socket handle and
      * claims ownership of the handle.
@@ -206,12 +224,18 @@ public:
      * @return A std::tuple of stream sockets. On error both sockets will be
      *  	   in an error state with the last error set.
      */
-    static std::tuple<datagram_socket_tmpl, datagram_socket_tmpl> pair(int protocol = 0) {
-        auto pr = base::pair(addr_t::ADDRESS_FAMILY, COMM_TYPE, protocol);
-        return std::make_tuple<datagram_socket_tmpl, datagram_socket_tmpl>(
-            datagram_socket_tmpl{std::get<0>(pr).release()},
-            datagram_socket_tmpl{std::get<1>(pr).release()}
-        );
+    static result<std::tuple<datagram_socket_tmpl, datagram_socket_tmpl>> pair(
+        int protocol = 0
+    ) {
+        if (auto res = base::pair(addr_t::ADDRESS_FAMILY, COMM_TYPE, protocol); !res) {
+            return res.error();
+        }
+        else {
+            auto [s1, s2] = res.release();
+            return std::make_tuple<datagram_socket_tmpl, datagram_socket_tmpl>(
+                datagram_socket_tmpl{s1.release()}, datagram_socket_tmpl{s2.release()}
+            );
+        }
     }
     /**
      * Gets the local address to which the socket is bound.
@@ -230,7 +254,7 @@ public:
      * @param addr The address on which to bind.
      * @return @em true on success, @em false on failure
      */
-    bool bind(const ADDR& addr) { return base::bind(addr); }
+    result<> bind(const ADDR& addr) { return base::bind(addr); }
     /**
      * Connects the socket to the remote address.
      * In the case of datagram sockets, this does not create an actual
@@ -240,7 +264,7 @@ public:
      * @param addr The address on which to "connect".
      * @return @em true on success, @em false on failure
      */
-    bool connect(const ADDR& addr) { return base::connect(addr); }
+    result<> connect(const ADDR& addr) { return base::connect(addr); }
 
     // ----- I/O -----
 
@@ -252,7 +276,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const void* buf, size_t n, int flags, const ADDR& addr) {
+    result<size_t> send_to(const void* buf, size_t n, int flags, const ADDR& addr) {
         return base::send_to(buf, n, flags, addr);
     }
     /**
@@ -262,7 +286,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const std::string& s, int flags, const ADDR& addr) {
+    result<size_t> send_to(const std::string& s, int flags, const ADDR& addr) {
         return base::send_to(s, flags, addr);
     }
     /**
@@ -272,7 +296,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const void* buf, size_t n, const ADDR& addr) {
+    result<size_t> send_to(const void* buf, size_t n, const ADDR& addr) {
         return base::send_to(buf, n, 0, addr);
     }
     /**
@@ -281,7 +305,9 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const std::string& s, const ADDR& addr) { return base::send_to(s, addr); }
+    result<size_t> send_to(const std::string& s, const ADDR& addr) {
+        return base::send_to(s, addr);
+    }
     /**
      * Receives a message on the socket.
      * @param buf Buffer to get the incoming data.
@@ -291,7 +317,7 @@ public:
      *  			the message
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv_from(void* buf, size_t n, int flags, ADDR* srcAddr) {
+    result<size_t> recv_from(void* buf, size_t n, int flags, ADDR* srcAddr) {
         return base::recv_from(buf, n, flags, srcAddr);
     }
     /**
@@ -302,7 +328,7 @@ public:
      *  			the message
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv_from(void* buf, size_t n, ADDR* srcAddr = nullptr) {
+    result<size_t> recv_from(void* buf, size_t n, ADDR* srcAddr = nullptr) {
         return base::recv_from(buf, n, srcAddr);
     }
 };

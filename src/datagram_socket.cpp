@@ -48,17 +48,20 @@ namespace sockpp {
 //								datagram_socket
 /////////////////////////////////////////////////////////////////////////////
 
-datagram_socket::datagram_socket(const sock_address& addr) {
+result<> datagram_socket::open(const sock_address& addr) noexcept {
     auto domain = addr.family();
-    socket_t h = create_handle(domain);
-
-    if (check_socket_bool(h)) {
-        reset(h);
-        // TODO: If the bind fails, should we close the socket and fail completely?
-        bind(addr);
+    if (auto createRes = create_handle(domain); !createRes) {
+        return createRes.error();
     }
+    else {
+        reset(createRes.value());
+        if (auto res = bind(addr); !res) {
+            close();
+            return res;
+        }
+    }
+    return none{};
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// End namespace sockpp
 }  // namespace sockpp

@@ -53,6 +53,7 @@
 
 #include "sockpp/result.h"
 #include "sockpp/sock_address.h"
+#include "sockpp/types.h"
 
 namespace sockpp {
 
@@ -175,14 +176,12 @@ class socket
 {
     /** The OS integer socket handle */
     socket_t handle_{INVALID_SOCKET};
-    /** Cache of the last error (errno) */
-    mutable error_code lastErr_{};
     /**
      * The OS-specific function to close a socket handle/
      * @param h The OS socket handle.
      * @return @em true if the sock is closed, @em false on error.
      */
-    bool close(socket_t h);
+    result<> close(socket_t h) noexcept;
 
     // Non-copyable.
     socket(const socket&) = delete;
@@ -190,114 +189,46 @@ class socket
 
 protected:
     /**
-     * Closes the socket without checking for errors or updating the last
+     * Checks the value and if less than zero, returns the error.
+     * @tparam T A signed integer type of any size
+     * @param ret The return value from a library or system call.
+     * @return The error code from the last error, if any.
+     */
+    template <typename T, typename Tout = T>
+    static result<Tout> check_res(T ret) {
+        return (ret < 0) ? result<Tout>::from_last_error() : result<Tout>{Tout(ret)};
+    }
+    /**
+     * Checks the value and if less than zero, returns the error.
+     * @tparam T A signed integer type of any size
+     * @param ret The return value from a library or system call.
+     * @return The error code from the last error, if any.
+     */
+    template <typename T>
+    static result<> check_res_none(T ret) {
+        return (ret < 0) ? result<>::from_last_error() : result<>{none{}};
+    }
+
+    /**
+     * Checks the value of the socket handle, and if invalid, returns the
      * error.
-     * This is used in internal open/connect type functions that fail after
-     * creating the socket, but want to preserve the previous failure
-     * condition.
-     * Assumes that the socket handle is valid.
-     * @return Always returns @em false.
+     * @param ret The socket return value from a library or system call.
+     * @return The error code from the last error, if any.
      */
-    bool close_on_err() {
-        close(release());
-        return false;
-    }
-    /**
-     * Cache the last system error code into this object.
-     * This should be called after a failed system call to store the error
-     * value.
-     * @return The error value set.
-     */
-    error_code set_last_error() const { return lastErr_ = ioresult::get_last_error(); }
-    /**
-     * Checks the value and if less than zero, sets last error.
-     * @tparam T A signed integer type of any size
-     * @param ret The return value from a library or system call.
-     * @return Returns the value sent to it, `ret`.
-     */
-    template <typename T>
-    T check_ret(T ret) const {
-        lastErr_ = (ret < 0) ? ioresult::get_last_error() : error_code{};
-        return ret;
-    }
-    /**
-     * Checks the value and if less than zero, sets last error.
-     * @tparam T A signed integer type of any size
-     * @param ret The return value from a library or system call.
-     * @return @em true if the value is a typical system success value (>=0)
-     *  	   or @em false is is an error (<0)
-     */
-    template <typename T>
-    bool check_ret_bool(T ret) const {
-        lastErr_ = (ret < 0) ? ioresult::get_last_error() : error_code{};
-        return ret >= 0;
-    }
-    /**
-     * Checks the value and if less than zero, sets last error.
-     * @tparam T A signed integer type of any size
-     * @param ret The return value from a library or system call.
-     * @return An ioresult indicating the success or error value of the
-     *  	   operation.
-     */
-    template <typename T>
-    ioresult check_ret_res(T ret) const {
-        if (ret < 0) {
-            return set_last_error();
-        }
-        lastErr_ = error_code{};
-        return static_cast<int>(ret);
-    }
-    /**
-     * Checks the value and if it is not a valid socket, sets last error.
-     * This is specifically required for Windows which uses an unsigned type
-     * for its SOCKET.
-     * @param ret The return value from a library or system call that returns
-     *  		  a socket, such as socket() or accept().
-     * @return Returns the value sent to it, `ret`.
-     */
-    socket_t check_socket(socket_t ret) const {
-        lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_error() : error_code{};
-        return ret;
-    }
-    /**
-     * Checks the value and if it is INVALID_SOCKET, sets last error.
-     * This is specifically required for Windows which uses an unsigned type
-     * for its SOCKET.
-     * @param ret The return value from a library or system call that returns
-     *  		  a socket such as socket() or accept().
-     * @return @em true if the value is a valid socket (not INVALID_SOCKET)
-     *  	   or @em false is is an error (INVALID_SOCKET)
-     */
-    bool check_socket_bool(socket_t ret) const {
-        lastErr_ = (ret == INVALID_SOCKET) ? ioresult::get_last_error() : error_code{};
-        return ret != INVALID_SOCKET;
-    }
-    /**
-     * Checks the value and if it is INVALID_SOCKET, sets last error.
-     * This is specifically required for Windows which uses an unsigned type
-     * for its SOCKET.
-     * @param ret The return value from a library or system call that returns
-     *  		  a socket such as socket() or accept().
-     * @return An ioresult indicating the success or error value of the
-     *  	   operation.
-     */
-    result<socket_t> check_socket_res(socket_t ret) const {
-        if (ret == INVALID_SOCKET) {
-            return set_last_error();
-        }
-        lastErr_ = error_code{};
-        return ret;
+    static result<socket_t> check_socket(socket_t s) {
+        return (s == INVALID_SOCKET) ? result<socket_t>::from_last_error()
+                                     : result<socket_t>{s};
     }
 
 // For non-Windows systems, routines to manipulate flags on the socket
 // handle.
 #if !defined(_WIN32)
     /** Gets the flags on the socket handle. */
-    int get_flags() const;
+    result<int> get_flags() const;
     /** Sets the flags on the socket handle. */
-    bool set_flags(int flags);
+    result<> set_flags(int flags);
     /** Sets a single flag on or off */
-    bool set_flag(int flag, bool on = true);
+    result<> set_flag(int flag, bool on = true);
 #endif
 
 public:
@@ -311,15 +242,13 @@ public:
      * destroyed.
      * @param h An OS socket handle.
      */
-    explicit socket(socket_t h) : handle_(h) {}
+    explicit socket(socket_t h) noexcept : handle_(h) {}
     /**
      * Move constructor.
      * This takes ownership of the underlying handle in sock.
      * @param sock An rvalue reference to a socket object.
      */
-    socket(socket&& sock) noexcept : handle_(sock.handle_), lastErr_(sock.lastErr_) {
-        sock.handle_ = INVALID_SOCKET;
-    }
+    socket(socket&& sock) noexcept : handle_(sock.handle_) { sock.handle_ = INVALID_SOCKET; }
     /**
      * Destructor closes the socket.
      */
@@ -336,10 +265,10 @@ public:
      * @param protocol The particular protocol to be used with the sockets
      *
      * @return An OS socket handle with the requested communications
-     *  	   characteristics, or INVALID_SOCKET on failure.
+     *  	   characteristics, or error code on failure.
      */
-    static socket_t create_handle(int domain, int type, int protocol = 0) {
-        return socket_t(::socket(domain, type, protocol));
+    static result<socket_t> create_handle(int domain, int type, int protocol = 0) noexcept {
+        return check_socket(socket_t(::socket(domain, type, protocol)));
     }
     /**
      * Creates a socket with the specified communications characterics.
@@ -358,7 +287,7 @@ public:
      *
      * @return A socket with the requested communications characteristics.
      */
-    static socket create(int domain, int type, int protocol = 0);
+    static result<socket> create(int domain, int type, int protocol = 0) noexcept;
     /**
      * Determines if the socket is open (valid).
      * @return @em true if the socket is open, @em false otherwise.
@@ -369,13 +298,13 @@ public:
      * @return @em true if the socket is closed or in an error state, @em
      *  	   false otherwise.
      */
-    bool operator!() const { return handle_ == INVALID_SOCKET || lastErr_; }
+    bool operator!() const { return handle_ == INVALID_SOCKET; }
     /**
      * Determines if the socket is open and in an error-free state.
      * @return @em true if the socket is open and in an error-free state,
      *  	   @em false otherwise.
      */
-    explicit operator bool() const { return handle_ != INVALID_SOCKET && !lastErr_; }
+    explicit operator bool() const { return handle_ != INVALID_SOCKET; }
     /**
      * Get the underlying OS socket handle.
      * @return The underlying OS socket handle.
@@ -420,17 +349,14 @@ public:
      * @return A std::tuple of sockets. On error both sockets will be in an
      *  	   error state with the
      */
-    static std::tuple<socket, socket> pair(int domain, int type, int protocol = 0);
-    /**
-     * Clears the error flag for the object.
-     * @param val The value to set the flag, normally zero.
-     */
-    void clear(int val = 0) { lastErr_ = error_code{val, std::system_category()}; }
+    static result<std::tuple<socket, socket>> pair(
+        int domain, int type, int protocol = 0
+    ) noexcept;
     /**
      * Releases ownership of the underlying socket object.
      * @return The OS socket handle.
      */
-    socket_t release() {
+    socket_t release() noexcept {
         socket_t h = handle_;
         handle_ = INVALID_SOCKET;
         return h;
@@ -439,7 +365,7 @@ public:
      * Replaces the underlying managed socket object.
      * @param h The new socket handle to manage.
      */
-    void reset(socket_t h = INVALID_SOCKET);
+    void reset(socket_t h = INVALID_SOCKET) noexcept;
     /**
      * Move assignment.
      * This assigns ownership of the socket from the other object to this
@@ -449,7 +375,6 @@ public:
     socket& operator=(socket&& sock) noexcept {
         // Give our handle to the other to close.
         std::swap(handle_, sock.handle_);
-        lastErr_ = sock.lastErr_;
         return *this;
     }
     /**
@@ -457,7 +382,7 @@ public:
      * @param addr The address to which we get bound.
      * @return @em true on success, @em false on error
      */
-    bool bind(const sock_address& addr);
+    result<> bind(const sock_address& addr) noexcept;
     /**
      * Gets the local address to which the socket is bound.
      * @return The local address to which the socket is bound.
@@ -483,7 +408,7 @@ public:
      * @return bool @em true if the value was retrieved, @em false if an error
      *  	   occurred.
      */
-    bool get_option(int level, int optname, void* optval, socklen_t* optlen) const;
+    result<> get_option(int level, int optname, void* optval, socklen_t* optlen) const;
     /**
      * Gets the value of a socket option.
      *
@@ -495,7 +420,7 @@ public:
      *  	   occurred.
      */
     template <typename T>
-    bool get_option(int level, int optname, T* val) const {
+    result<> get_option(int level, int optname, T* val) const {
         socklen_t len = sizeof(T);
         return get_option(level, optname, (void*)val, &len);
     }
@@ -513,7 +438,7 @@ public:
      * @return bool @em true if the value was set, @em false if an error
      *  	   occurred.
      */
-    bool set_option(int level, int optname, const void* optval, socklen_t optlen);
+    result<> set_option(int level, int optname, const void* optval, socklen_t optlen);
     /**
      * Sets the value of a socket option.
      *
@@ -526,7 +451,7 @@ public:
      *  	   occurred.
      */
     template <typename T>
-    bool set_option(int level, int optname, const T& val) {
+    result<> set_option(int level, int optname, const T& val) {
         return set_option(level, optname, (void*)&val, sizeof(T));
     }
     /**
@@ -537,7 +462,7 @@ public:
      * @param on Whether to turn non-blocking mode on or off.
      * @return @em true on success, @em false on failure.
      */
-    virtual bool set_non_blocking(bool on = true);
+    virtual result<> set_non_blocking(bool on = true);
 
 #if !defined(_WIN32)
     /**
@@ -551,30 +476,10 @@ public:
      * @param errNum The error number.
      * @return A string describing the specified error.
      */
-    static std::string error_str(int errNum) {
+    static string error_str(int errNum) {
         auto ec = error_code{errNum, std::system_category()};
         return ec.message();
     }
-    /**
-     * Gets the code for the last errror.
-     * This is typically the code from the underlying OS operation.
-     * @return The code for the last errror.
-     */
-    std::error_code last_error() const { return lastErr_; }
-    /**
-     * Gets the platform-specific errror from the last failed operation.
-     * This is integer the code from the OS:
-     * @li On *nix systems, this is the `errno` for the current thread.
-     * @li On Windows, this is the value returned by `WSAGetLastError()`.
-     * @return The platform-specific for the last errror.
-     */
-    int last_errno() const { return lastErr_.value(); }
-    /**
-     * Gets a string describing the last errror.
-     * This is typically the returned message from the system strerror().
-     * @return A string describing the last errror.
-     */
-    std::string last_error_str() const { return lastErr_.message(); }
     /**
      * Shuts down all or part of the full-duplex connection.
      * @param how Which part of the connection should be shut:
@@ -583,14 +488,14 @@ public:
      *  	@li SHUT_RDWR (2) Further reads and writes disallowed.
      * @return @em true on success, @em false on error.
      */
-    bool shutdown(int how = SHUT_RDWR);
+    result<> shutdown(int how = SHUT_RDWR);
     /**
      * Closes the socket.
      * After closing the socket, the handle is @em invalid, and can not be
      * used again until reassigned.
      * @return @em true if the sock is closed, @em false on error.
      */
-    virtual bool close();
+    virtual result<> close();
 
     // ----- I/O -----
 
@@ -600,16 +505,19 @@ public:
      * @param n The number of bytes in the data buffer.
      * @param flags The flags. See send(2).
      * @param addr The remote destination of the data.
-     * @return the number of bytes sent on success or, @em -1 on failure.
+     * @return The number of bytes sent on success or, the error code on
+     *         failure.
      */
-    ssize_t send_to(const void* buf, size_t n, int flags, const sock_address& addr) {
+    result<size_t> send_to(const void* buf, size_t n, int flags, const sock_address& addr) {
 #if defined(_WIN32)
-        return check_ret(::sendto(
-            handle(), reinterpret_cast<const char*>(buf), int(n), flags, addr.sockaddr_ptr(),
-            addr.size()
-        ));
+        auto cbuf = reinterpret_cast<const char*>(buf);
+        return check_res(
+            ::sendto(handle(), cbuf, int(n), flags, addr.sockaddr_ptr(), addr.size())
+        );
 #else
-        return check_ret(::sendto(handle(), buf, n, flags, addr.sockaddr_ptr(), addr.size()));
+        return check_res<ssize_t, size_t>(
+            ::sendto(handle(), buf, n, flags, addr.sockaddr_ptr(), addr.size())
+        );
 #endif
     }
     /**
@@ -619,7 +527,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const std::string& s, int flags, const sock_address& addr) {
+    result<size_t> send_to(const string& s, int flags, const sock_address& addr) {
         return send_to(s.data(), s.length(), flags, addr);
     }
     /**
@@ -629,7 +537,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const void* buf, size_t n, const sock_address& addr) {
+    result<size_t> send_to(const void* buf, size_t n, const sock_address& addr) {
         return send_to(buf, n, 0, addr);
     }
     /**
@@ -638,7 +546,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const std::string& s, const sock_address& addr) {
+    result<size_t> send_to(const string& s, const sock_address& addr) {
         return send_to(s.data(), s.length(), 0, addr);
     }
     /**
@@ -649,11 +557,13 @@ public:
      * @param flags The option bit flags. See send(2).
      * @return @em zero on success, @em -1 on failure.
      */
-    ssize_t send(const void* buf, size_t n, int flags = 0) {
+    result<size_t> send(const void* buf, size_t n, int flags = 0) {
 #if defined(_WIN32)
-        return check_ret(::send(handle(), reinterpret_cast<const char*>(buf), int(n), flags));
+        return check_res<ssize_t, size_t>(
+            ::send(handle(), reinterpret_cast<const char*>(buf), int(n), flags)
+        );
 #else
-        return check_ret(::send(handle(), buf, n, flags));
+        return check_res<ssize_t, size_t>(::send(handle(), buf, n, flags));
 #endif
     }
     /**
@@ -663,7 +573,7 @@ public:
      * @param flags The option bit flags. See send(2).
      * @return @em zero on success, @em -1 on failure.
      */
-    ssize_t send(const std::string& s, int flags = 0) {
+    result<size_t> send(const string& s, int flags = 0) {
         return send(s.data(), s.length(), flags);
     }
     /**
@@ -675,7 +585,7 @@ public:
      *  			   message
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv_from(void* buf, size_t n, int flags, sock_address* srcAddr = nullptr);
+    result<size_t> recv_from(void* buf, size_t n, int flags, sock_address* srcAddr = nullptr);
     /**
      * Receives a message on the socket.
      * @param buf Buffer to get the incoming data.
@@ -684,7 +594,7 @@ public:
      *  			   message
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv_from(void* buf, size_t n, sock_address* srcAddr = nullptr) {
+    result<size_t> recv_from(void* buf, size_t n, sock_address* srcAddr = nullptr) {
         return recv_from(buf, n, 0, srcAddr);
     }
     /**
@@ -694,11 +604,13 @@ public:
      * @param flags The option bit flags. See send(2).
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv(void* buf, size_t n, int flags = 0) {
+    result<size_t> recv(void* buf, size_t n, int flags = 0) {
 #if defined(_WIN32)
-        return check_ret(::recv(handle(), reinterpret_cast<char*>(buf), int(n), flags));
+        return check_res<ssize_t, size_t>(
+            ::recv(handle(), reinterpret_cast<char*>(buf), int(n), flags)
+        );
 #else
-        return check_ret(::recv(handle(), buf, n, flags));
+        return check_res<ssize_t, size_t>(::recv(handle(), buf, n, flags));
 #endif
     }
 };

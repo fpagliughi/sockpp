@@ -61,40 +61,46 @@ int main(int argc, char* argv[]) {
     // Note that this works if the library was compiled with or without exceptions.
     // Applications normally only handles the exception or the return code.
 
-    auto res = sockpp::inet6_address::create(host, port);
+    auto addrRes = sockpp::inet6_address::create(host, port);
 
-    if (!res) {
-        cerr << "Error resolving address for '" << host << "': " << res << endl;
+    if (!addrRes) {
+        cerr << "Error resolving address for '" << host << "':\n\t"
+             << addrRes.error().message() << endl;
         return 1;
     }
 
-    sockpp::tcp6_connector conn(res.value());
+    auto addr = addrRes.value();
 
-    if (!conn) {
-        cerr << "Error connecting to server at " << res.value() << "\n\t"
-             << conn.last_error_str() << endl;
+    // TODO: Shouldn't this work?
+    // sockpp::tcp6_connector conn(addr);
+
+    sockpp::tcp6_connector conn;
+
+    if (auto res = conn.connect(addr); !res) {
+        cerr << "Error connecting to server at " << addr << "\n\t" << res.error_message()
+             << endl;
         return 1;
     }
 
     cout << "Created a connection from " << conn.address() << endl;
 
     // Set a timeout for the responses
-    if (!conn.read_timeout(5s)) {
-        cerr << "Error setting timeout on TCP stream: " << conn.last_error_str() << endl;
+    if (auto res = conn.read_timeout(5s); !res) {
+        cerr << "Error setting timeout on TCP stream: " << res.error_message() << endl;
     }
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        if (conn.write(s) != ssize_t(s.length())) {
-            cerr << "Error writing to the TCP stream: " << conn.last_error_str() << endl;
+        const size_t N = s.length();
+
+        if (auto res = conn.write(s); res != N) {
+            cerr << "Error writing to the TCP stream: " << res.error_message() << endl;
             break;
         }
 
-        sret.resize(s.length());
-        ssize_t n = conn.read_n(&sret[0], s.length());
-
-        if (n != ssize_t(s.length())) {
-            cerr << "Error reading from TCP stream: " << conn.last_error_str() << endl;
+        sret.resize(N);
+        if (auto res = conn.read_n(&sret[0], N); res != N) {
+            cerr << "Error reading from TCP stream: " << res.error_message() << endl;
             break;
         }
 

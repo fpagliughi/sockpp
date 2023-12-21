@@ -55,18 +55,18 @@ int main(int argc, char* argv[]) {
     // A Unix-domain UDP client needs to bind to its own address
     // before it can send or receive packets
 
-    if (!sock.bind(sockpp::unix_address(cliAddr))) {
+    if (auto res = sock.bind(sockpp::unix_address(cliAddr)); !res) {
         cerr << "Error connecting to client address at '" << cliAddr << "'"
-             << "\n\t" << sock.last_error_str() << endl;
+             << "\n\t" << res.error_message() << endl;
         return 1;
     }
 
     // "Connect" to the server address. This is a convenience to set the
     // default 'send_to' address, as there is no real connection.
 
-    if (!sock.connect(sockpp::unix_address(svrAddr))) {
+    if (auto res = sock.connect(sockpp::unix_address(svrAddr)); !res) {
         cerr << "Error connecting to server at '" << svrAddr << "'"
-             << "\n\t" << sock.last_error_str() << endl;
+             << "\n\t" << res.error_message() << endl;
         return 1;
     }
 
@@ -74,21 +74,20 @@ int main(int argc, char* argv[]) {
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        if (sock.send(s) != ssize_t(s.length())) {
-            cerr << "Error writing to the UDP socket: " << sock.last_error_str() << endl;
+        const size_t N = s.length();
+
+        if (auto res = sock.send(s); res != N) {
+            cerr << "Error writing to the UDP socket: " << res.error_message() << endl;
             break;
         }
 
-        sret.resize(s.length());
-        ssize_t n = sock.recv(&sret[0], s.length());
-
-        if (n != ssize_t(s.length())) {
-            cerr << "Error reading from UDP socket: " << sock.last_error_str() << endl;
+        sret.resize(N);
+        if (auto res = sock.recv(&sret[0], N); res != N) {
+            cerr << "Error reading from UDP socket: " << res.error_message() << endl;
             break;
         }
-
-        cout << sret << endl;
     }
 
+    cout << sret << endl;
     return (!sock) ? 1 : 0;
 }

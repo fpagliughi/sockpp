@@ -9,7 +9,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,10 +54,11 @@ using namespace std;
 // function exits, the socket is automatically closed.
 
 void run_echo(sockpp::tcp6_socket sock) {
-    ssize_t n;
     char buf[512];
+    sockpp::result<size_t> res;
 
-    while ((n = sock.read(buf, sizeof(buf))) > 0) sock.write_n(buf, n);
+    while ((res = sock.read(buf, sizeof(buf))) && res.value() > 0)
+        sock.write_n(buf, res.value());
 
     cout << "Connection closed from " << sock.peer_address() << endl;
 }
@@ -74,10 +75,12 @@ int main(int argc, char* argv[]) {
     in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
 
     sockpp::initialize();
-    sockpp::tcp6_acceptor acc(port);
 
-    if (!acc) {
-        cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
+    error_code ec;
+    sockpp::tcp6_acceptor acc(port, 4, ec);
+
+    if (ec) {
+        cerr << "Error creating the acceptor: " << ec.message() << endl;
         return 1;
     }
     cout << "Awaiting connections on port " << port << "..." << endl;
@@ -86,13 +89,13 @@ int main(int argc, char* argv[]) {
         sockpp::inet6_address peer;
 
         // Accept a new client connection
-        sockpp::tcp6_socket sock = acc.accept(&peer);
-        cout << "Received a connection request from " << peer << endl;
-
-        if (!sock) {
-            cerr << "Error accepting incoming connection: " << acc.last_error_str() << endl;
+        if (auto res = acc.accept(&peer); !res) {
+            cerr << "Error accepting incoming connection: " << res.error_message() << endl;
         }
         else {
+            cout << "Received a connection request from " << peer << endl;
+            sockpp::tcp6_socket sock = res.release();
+
             // Create a thread and transfer the new stream to it.
             thread thr(run_echo, std::move(sock));
             thr.detach();

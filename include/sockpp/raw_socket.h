@@ -70,8 +70,8 @@ protected:
      * Creates a raw socket.
      * @return An OS handle to a raw socket.
      */
-    static socket_t create_handle(int domain, int protocol = 0) {
-        return socket_t(::socket(domain, COMM_TYPE, protocol));
+    static result<socket_t> create_handle(int domain, int protocol = 0) {
+        return check_socket(socket_t(::socket(domain, COMM_TYPE, protocol)));
     }
 
 public:
@@ -130,8 +130,8 @@ public:
      * @param addr The address on which to "connect".
      * @return @em true on success, @em false on failure
      */
-    bool connect(const sock_address& addr) {
-        return check_ret_bool(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
+    result<> connect(const sock_address& addr) {
+        return check_res_none(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
     }
 };
 
@@ -217,7 +217,7 @@ public:
      * @param addr The address on which to bind.
      * @return @em true on success, @em false on failure
      */
-    bool bind(const ADDR& addr) { return base::bind(addr); }
+    result<> bind(const ADDR& addr) { return base::bind(addr); }
     /**
      * Connects the socket to the remote address.
      * In the case of raw sockets, this does not create an actual
@@ -227,7 +227,7 @@ public:
      * @param addr The address on which to "connect".
      * @return @em true on success, @em false on failure
      */
-    bool connect(const ADDR& addr) { return base::connect(addr); }
+    result<> connect(const ADDR& addr) { return base::connect(addr); }
 
     // ----- I/O -----
 
@@ -239,7 +239,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const void* buf, size_t n, int flags, const ADDR& addr) {
+    result<size_t> send_to(const void* buf, size_t n, int flags, const ADDR& addr) {
         return base::send_to(buf, n, flags, addr);
     }
     /**
@@ -249,7 +249,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const std::string& s, int flags, const ADDR& addr) {
+    result<size_t> send_to(const std::string& s, int flags, const ADDR& addr) {
         return base::send_to(s, flags, addr);
     }
     /**
@@ -259,7 +259,7 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const void* buf, size_t n, const ADDR& addr) {
+    result<size_t> send_to(const void* buf, size_t n, const ADDR& addr) {
         return base::send_to(buf, n, 0, addr);
     }
     /**
@@ -268,7 +268,9 @@ public:
      * @param addr The remote destination of the data.
      * @return the number of bytes sent on success or, @em -1 on failure.
      */
-    ssize_t send_to(const std::string& s, const ADDR& addr) { return base::send_to(s, addr); }
+    result<size_t> send_to(const std::string& s, const ADDR& addr) {
+        return base::send_to(s, addr);
+    }
     /**
      * Receives a message on the socket.
      * @param buf Buffer to get the incoming data.
@@ -278,7 +280,7 @@ public:
      *  			the message
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv_from(void* buf, size_t n, int flags, ADDR* srcAddr) {
+    result<size_t> recv_from(void* buf, size_t n, int flags, ADDR* srcAddr) {
         return base::recv_from(buf, n, flags, srcAddr);
     }
     /**
@@ -289,7 +291,7 @@ public:
      *  			the message
      * @return The number of bytes read or @em -1 on error.
      */
-    ssize_t recv_from(void* buf, size_t n, ADDR* srcAddr = nullptr) {
+    result<size_t> recv_from(void* buf, size_t n, ADDR* srcAddr = nullptr) {
         return base::recv_from(buf, n, srcAddr);
     }
 };

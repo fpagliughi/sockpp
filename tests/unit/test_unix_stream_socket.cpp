@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,8 +48,10 @@ using namespace sockpp;
 // Test that we can create a Unix-domain stream socket pair and send
 // data from one of the sockets to the other.
 TEST_CASE("unix stream socket pair", "[unix_stream_socket]") {
-    unix_stream_socket sock1, sock2;
-    std::tie(sock1, sock2) = std::move(unix_stream_socket::pair());
+    auto res = unix_stream_socket::pair();
+    REQUIRE(res);
+
+    auto [sock1, sock2] = res.release();
 
     REQUIRE(sock1);
     REQUIRE(sock2);
@@ -62,8 +64,8 @@ TEST_CASE("unix stream socket pair", "[unix_stream_socket]") {
 
     char buf[512];
 
-    REQUIRE(sock1.write(MSG) == N);
-    REQUIRE(sock2.read_n(buf, N) == N);
+    REQUIRE(sock1.write(MSG).value() == N);
+    REQUIRE(sock2.read_n(buf, N).value() == N);
 
     std::string msg{buf, buf + N};
     REQUIRE(msg == MSG);

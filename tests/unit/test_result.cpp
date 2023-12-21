@@ -43,10 +43,11 @@
 using namespace std;
 using namespace sockpp;
 
-class moveable {
+class moveable
+{
     int val_;
-    moveable(const moveable&) =delete;
-    moveable& operator=(const moveable&) =delete;
+    moveable(const moveable&) = delete;
+    moveable& operator=(const moveable&) = delete;
 
 public:
     moveable(int val) : val_{val} {}
@@ -59,9 +60,11 @@ ostream& operator<<(ostream& os, const moveable& v) {
     return os;
 }
 
+// --------------------------------------------------------------------------
+
 TEST_CASE("test result success", "[result]") {
     const int VAL = 42;
-    auto res = result<int>(VAL);
+    result<int> res{VAL};
 
     REQUIRE(res);
     REQUIRE(res.is_ok());
@@ -69,8 +72,6 @@ TEST_CASE("test result success", "[result]") {
     REQUIRE(res.value() == VAL);
     REQUIRE(res.error() == error_code{});
     REQUIRE(res.error().value() == 0);
-    REQUIRE(res == success(VAL));
-    REQUIRE(res == error_code{});
 }
 
 TEST_CASE("test result error", "[result]") {
@@ -83,7 +84,6 @@ TEST_CASE("test result error", "[result]") {
     REQUIRE(res.error() == ERR);
     REQUIRE(res == ERR);
     REQUIRE(res == std::make_error_code(ERR));
-    REQUIRE(res == error<int>(ERR));
 }
 
 TEST_CASE("test result release", "[result]") {
@@ -96,4 +96,57 @@ TEST_CASE("test result release", "[result]") {
     auto val = res.release();
     REQUIRE(VAL == val.val());
     REQUIRE(0 == res.value().val());
+}
+
+TEST_CASE("test result cmp error", "[result]") {
+    const auto ERR = errc::interrupted;
+    auto res = result<int>::from_error(ERR);
+
+    REQUIRE(!res);
+
+    // Should compare to different forms of the error
+
+    REQUIRE(res == ERR);
+    REQUIRE(res == std::make_error_code(ERR));
+
+    REQUIRE(!(res != ERR));
+
+    REQUIRE(res != errc::bad_address);
+    REQUIRE(!(res == errc::bad_address));
+
+    // Errors should never equal _any_ value type.
+
+    REQUIRE(res != 42);
+    REQUIRE(!(res == 42));
+
+    REQUIRE(res != int{});
+    REQUIRE(!(res == int{}));
+}
+
+TEST_CASE("test result cmp value", "[result]") {
+    const int VAL = 42;
+    auto res = result<int>{VAL};
+
+    REQUIRE(res);
+    REQUIRE(!(!res));
+
+    REQUIRE(res == 42);
+    REQUIRE(!(res != 42));
+
+    REQUIRE(res != 29);
+    REQUIRE(!(res == 29));
+    REQUIRE(res != 0);
+    REQUIRE(!(res == 0));
+
+    REQUIRE(res != errc::interrupted);
+}
+
+TEST_CASE("test result no error", "[result]") {
+    // Zero error means success
+    auto res = result<int>::from_error(0);
+
+    REQUIRE(res);
+    REQUIRE(res.error().value() == 0);
+    REQUIRE(res.value() == int{});
+    REQUIRE(res.value() != 42);
 }

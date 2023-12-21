@@ -54,15 +54,17 @@ void read_thr(sockpp::tcp_socket rdSock) {
     char buf[512];
     ssize_t n;
 
-    while ((n = rdSock.read(buf, sizeof(buf))) > 0) {
-        cout.write(buf, n);
-        cout << endl;
+    while (true) {
+        if (auto res = rdSock.read(buf, sizeof(buf)); !res || res.value() == 0) {
+            cerr << "Read error: " << res.error_message() << endl;
+            break;
+        }
+        else {
+            cout.write(buf, res.value());
+            cout << endl;
+        }
     }
 
-    if (n < 0) {
-        cout << "Read error [" << rdSock.last_error() << "]: " << rdSock.last_error_str()
-             << endl;
-    }
     rdSock.shutdown();
 }
 
@@ -81,10 +83,12 @@ int main(int argc, char* argv[]) {
     // Implicitly creates an inet_address from {host,port}
     // and then tries the connection.
 
-    sockpp::tcp_connector conn({host, port});
-    if (!conn) {
+    error_code ec;
+    sockpp::tcp_connector conn({host, port}, ec);
+
+    if (ec) {
         cerr << "Error connecting to server at " << sockpp::inet_address(host, port) << "\n\t"
-             << conn.last_error_str() << endl;
+             << ec.message() << endl;
         return 1;
     }
 
@@ -99,13 +103,12 @@ int main(int argc, char* argv[]) {
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        if (conn.write(s) != (int)s.length()) {
-            if (conn.last_error() == errc::broken_pipe) {
+        if (auto res = conn.write(s); !res || res != s.length()) {
+            if (res == errc::broken_pipe) {
                 cerr << "It appears that the socket was closed." << endl;
             }
             else {
-                cerr << "Error writing to the TCP stream [" << conn.last_error()
-                     << "]: " << conn.last_error_str() << endl;
+                cerr << "Error writing to the TCP stream :" << res.error_message() << endl;
             }
             break;
         }

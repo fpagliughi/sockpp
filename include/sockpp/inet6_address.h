@@ -54,6 +54,7 @@
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
 #include "sockpp/sock_address.h"
+#include "sockpp/types.h"
 
 namespace sockpp {
 
@@ -102,7 +103,7 @@ public:
      * @throw system_error if the host name can not be resolved, or any
      *  	  other error occurs.
      */
-    inet6_address(const std::string& saddr, in_port_t port);
+    inet6_address(const string& saddr, in_port_t port);
     /**
      * Constructs an address using the name of the host and the specified
      * port. This attempts to resolve the host name to an address.
@@ -111,7 +112,7 @@ public:
      * @param port The port number in native/host byte order.
      * @param ec Gets the error code on failure.
      */
-    inet6_address(const std::string& saddr, in_port_t port, error_code& ec) noexcept;
+    inet6_address(const string& saddr, in_port_t port, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * TODO: Do we actually need a conversion from something that's
@@ -157,14 +158,14 @@ public:
      * @return On success, the internet address in network byte order, or an
      *  	   error_code on failure.
      */
-    static result<in6_addr> resolve_name(const std::string& saddr) noexcept;
+    static result<in6_addr> resolve_name(const string& saddr) noexcept;
     /**
      * Creates the socket address using the specified host name and port
      * number.
      * @param saddr The string host name.
      * @param port The port number in native/host byte order.
      */
-    static result<inet6_address> create(const std::string& saddr, in_port_t port);
+    static result<inet6_address> create(const string& saddr, in_port_t port);
     /**
      * Gets 128-bit IPv6 address.
      * The address is usually stored in network byte order.
@@ -222,7 +223,7 @@ public:
      * @return A string representation of the address in the form
      *  	   '[address]:port'
      */
-    std::string to_string() const;
+    string to_string() const;
 };
 
 // --------------------------------------------------------------------------

@@ -94,7 +94,7 @@ result<in6_addr> inet6_address::resolve_name(const string& saddr) noexcept {
         ec = error_code{errno, system_category()};
 #else
         if (err == EAI_SYSTEM)
-            ec = ioresult::get_last_error();
+            ec = result<>::get_last_error();
         else
             ec = make_error_code(static_cast<gai_errc>(err));
 #endif
@@ -145,5 +145,4 @@ ostream& operator<<(ostream& os, const inet6_address& addr) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
 }  // namespace sockpp

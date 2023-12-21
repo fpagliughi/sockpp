@@ -1,12 +1,19 @@
-// test_connector.cpp
-//
-// Unit tests for the `connector` class(es).
-//
+/**
+ * @file types.h
+ *
+ * Primitive definitions for the sockpp library.
+ *
+ * @author	Frank Pagliughi
+ * @author	SoRo Systems, Inc.
+ * @author  www.sorosys.com
+ *
+ * @date	December 2023
+ */
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,30 +43,24 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
-//
 
+#ifndef __sockpp_types_h
+#define __sockpp_types_h
+
+#include <chrono>
 #include <string>
 
-#include "catch2_version.h"
-#include "sockpp/connector.h"
-#include "sockpp/sock_address.h"
+namespace sockpp {
 
-using namespace sockpp;
+/////////////////////////////////////////////////////////////////////////////
 
-// Test that connector errors properly when given an empty address.
-TEST_CASE("connector unspecified address", "[connector]") {
-    connector conn;
-    REQUIRE(!conn);
+/** A sockpp::string is a std::string */
+using std::string;
 
-    sock_address_any addr;
+/** A sockpp::duration is a std::chrono::duration */
+using std::chrono::duration;
 
-    auto res = conn.connect(addr);
-    REQUIRE(!res);
+/////////////////////////////////////////////////////////////////////////////
+}  // namespace sockpp
 
-// Windows returns a different error code than *nix
-#if defined(_WIN32)
-    REQUIRE(errc::invalid_argument == res);
-#else
-    REQUIRE(errc::address_family_not_supported == res);
-#endif
-}
+#endif  // __sockpp_types_h

@@ -3,11 +3,11 @@
  *
  * Class for creating client-side streaming connections.
  *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
+ * @author  Frank Pagliughi
+ * @author  SoRo Systems, Inc.
  * @author  www.sorosys.com
  *
- * @date	December 2014
+ * @date    December 2014
  */
 
 // --------------------------------------------------------------------------
@@ -49,6 +49,7 @@
 
 #include "sockpp/sock_address.h"
 #include "sockpp/stream_socket.h"
+#include "sockpp/types.h"
 
 namespace sockpp {
 
@@ -76,22 +77,64 @@ public:
     /**
      * Creates an unconnected connector.
      */
-    connector() {}
+    connector() noexcept {}
     /**
      * Creates the connector and attempts to connect to the specified
      * address.
      * @param addr The remote server address.
+     * @throws std::system_error
      */
-    connector(const sock_address& addr) { connect(addr); }
+    connector(const sock_address& addr) {
+        if (auto res = connect(addr); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates the connector and attempts to connect to the specified
+     * address.
+     * @param addr The remote server address.
+     * @param ec The error code on failure.
+     */
+    connector(const sock_address& addr, error_code& ec) noexcept {
+        ec = connect(addr).error();
+    }
     /**
      * Creates the connector and attempts to connect to the specified
      * server, with a timeout.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
+     * @throws std::system_error on failure
      */
     template <class Rep, class Period>
     connector(const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime) {
-        connect(addr, std::chrono::microseconds(relTime));
+        if (auto res = connect(addr, std::chrono::microseconds(relTime)); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates the connector and attempts to connect to the specified
+     * server, with a timeout.
+     * @param addr The remote server address.
+     * @param relTime The duration after which to give up. Zero means never.
+     * @param ec The error code on failure
+     */
+    template <class Rep, class Period>
+    connector(
+        const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime,
+        error_code& ec
+    ) noexcept {
+        ec = connect(addr, std::chrono::microseconds(relTime)).error();
+    }
+    /**
+     * Creates the connector and attempts to connect to the specified
+     * address, with a timeout.
+     * If the operation times out, the \ref last_error will be set to
+     * `timed_out`.
+     * @param addr The remote server address.
+     * @param t The duration after which to give up. Zero means never.
+     * @throws std::system_error
+     */
+    connector(const sock_address& addr, std::chrono::milliseconds t) {
+        if (auto res = connect(addr, t); !res)
+            throw std::system_error{res.error()};
     }
     /**
      * Creates the connector and attempts to connect to the specified
@@ -101,19 +144,23 @@ public:
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
      */
-    connector(const sock_address& addr, std::chrono::milliseconds t) { connect(addr, t); }
+    connector(
+        const sock_address& addr, std::chrono::milliseconds t, error_code& ec
+    ) noexcept {
+        ec = connect(addr, t).error();
+    }
     /**
      * Move constructor.
      * Creates a connector by moving the other connector to this one.
      * @param conn Another connector.
      */
-    connector(connector&& conn) : base(std::move(conn)) {}
+    connector(connector&& conn) noexcept : base(std::move(conn)) {}
     /**
      * Move assignment.
      * @param rhs The other connector to move into this one.
      * @return A reference to this object.
      */
-    connector& operator=(connector&& rhs) {
+    connector& operator=(connector&& rhs) noexcept {
         base::operator=(std::move(rhs));
         return *this;
     }
@@ -123,7 +170,7 @@ public:
      * currently connected, but rather that an initial connection was
      * established.
      * @return @em true If the socket connected to a remote host,
-     *  	   @em false if not.
+     *         @em false if not.
      */
     bool is_connected() const { return is_open(); }
     /**
@@ -187,21 +234,42 @@ public:
     /**
      * Creates an unconnected connector.
      */
-    connector_tmpl() {}
+    connector_tmpl() noexcept {}
     /**
      * Creates the connector and attempts to connect to the specified
      * address.
      * @param addr The remote server address.
+     * @throws std::system_error on failure.
      */
     connector_tmpl(const addr_t& addr) : base(addr) {}
+    /**
+     * Creates the connector and attempts to connect to the specified
+     * address.
+     * @param addr The remote server address.
+     * @param ec The error code on failure.
+     */
+    connector_tmpl(const addr_t& addr, error_code& ec) noexcept : base(addr, ec) {}
     /**
      * Creates the connector and attempts to connect to the specified
      * server, with a timeout.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
+     * @throws std::system_error on failure
      */
     template <class Rep, class Period>
     connector_tmpl(const addr_t& addr, const std::chrono::duration<Rep, Period>& relTime)
+        : base(addr, relTime) {}
+    /**
+     * Creates the connector and attempts to connect to the specified
+     * server, with a timeout.
+     * @param addr The remote server address.
+     * @param relTime The duration after which to give up. Zero means never.
+     * @param ec The error code on failure
+     */
+    template <class Rep, class Period>
+    connector_tmpl(
+        const addr_t& addr, const std::chrono::duration<Rep, Period>& relTime, error_code& ec
+    ) noexcept
         : base(addr, relTime) {}
     /**
      * Move constructor.
@@ -235,7 +303,7 @@ public:
      * @param addr The address to which we get bound.
      * @return @em true on success, @em false on error
      */
-    bool bind(const addr_t& addr) { return base::bind(addr); }
+    result<> bind(const addr_t& addr) { return base::bind(addr); }
     /**
      * Attempts to connects to the specified server.
      * If the socket is currently connected, this will close the current
@@ -243,7 +311,7 @@ public:
      * @param addr The remote server address.
      * @return @em true on success, @em false on error
      */
-    bool connect(const addr_t& addr) { return base::connect(addr); }
+    result<> connect(const addr_t& addr) { return base::connect(addr); }
     /**
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
@@ -255,7 +323,7 @@ public:
      * @return @em true on success, @em false on error
      */
     template <class Rep, class Period>
-    bool connect(
+    result<> connect(
         const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime
     ) {
         return base::connect(addr, std::chrono::microseconds(relTime));
@@ -271,13 +339,13 @@ public:
      *
      * @return The result of the operation, with an error code on failure.
      */
-    result<none> connect(const std::string& saddr, in_port_t port) noexcept {
-        auto res = addr_t::create(saddr, port);
-        if (!res)
-            return result<none>{res.error()};
-        if (!connect(res.value()))
-            return last_error();
-        return success(none{});
+    result<> connect(const string& saddr, in_port_t port) noexcept {
+        auto addrRes = addr_t::create(saddr, port);
+        if (!addrRes)
+            return addrRes.error();
+        if (auto res = connect(addrRes.value()); !res)
+            return res;
+        return none{};
     }
     /**
      * Attempts to connect to the server at the specified port.
@@ -292,16 +360,15 @@ public:
      * @return The result of the operation, with an error code on failure.
      */
     template <class Rep, class Period>
-    result<none> connect(
-        const std::string& saddr, in_port_t port,
-        const std::chrono::duration<Rep, Period>& relTime
+    result<> connect(
+        const string& saddr, in_port_t port, const duration<Rep, Period>& relTime
     ) noexcept {
-        auto res = addr_t::create(saddr, port);
-        if (!res)
-            return result<none>{res.error()};
-        if (!connect(res.value(), relTime))
-            return last_error();
-        return success(none{});
+        auto addrRes = addr_t::create(saddr, port);
+        if (!addrRes)
+            return addrRes.error();
+        if (auto res = connect(addrRes.value(), relTime); !res)
+            return res;
+        return none{};
     }
 };
 
