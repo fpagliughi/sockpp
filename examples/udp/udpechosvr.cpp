@@ -16,7 +16,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ void run_echo(UDPSOCK sock)
 	// Read some data, also getting the address of the sender,
 	// then just send it back.
 	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
-		sock.send_to(buf, n, srcAddr);
+		sock.send_to((void*) buf, n, srcAddr);
 }
 
 // --------------------------------------------------------------------------
