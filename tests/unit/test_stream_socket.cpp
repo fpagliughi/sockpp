@@ -71,7 +71,7 @@ TEST_CASE("stream_socket handle constructor", "[stream_socket]") {
 #if 0
 TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 	SECTION("valid address") {
-		const auto ADDR = inet_address("localhost", 12345);
+		const auto ADDR = inet_address("localhost", TEST_PORT);
 
 		stream_socket sock(ADDR);
 		REQUIRE(sock);

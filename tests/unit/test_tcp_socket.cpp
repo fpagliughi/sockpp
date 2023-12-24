@@ -47,8 +47,6 @@
 
 using namespace sockpp;
 
-static const in_port_t TEST_PORT = 12345;
-
 TEST_CASE("tcp_socket default constructor", "[tcp_socket]") {
     tcp_socket sock;
     REQUIRE(!sock);
@@ -86,7 +84,7 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
     const size_t N = STR.length();
 
     inet_address addr{"localhost", TEST_PORT};
-    tcp_acceptor asock{addr};
+    tcp_acceptor asock{addr, 4, acceptor::REUSE};
 
     tcp_connector csock;
     csock.set_non_blocking();

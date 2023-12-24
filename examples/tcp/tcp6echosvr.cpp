@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     cout << "Sample IPv6 TCP echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
          << endl;
 
-    in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+    in_port_t port = (argc > 1) ? atoi(argv[1]) : sockpp::TEST_PORT;
 
     sockpp::initialize();
 

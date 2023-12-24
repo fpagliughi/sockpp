@@ -72,7 +72,7 @@ TEST_CASE("datagram_socket handle constructor", "[datagram_socket]") {
 
 TEST_CASE("datagram_socket address constructor", "[datagram_socket]") {
     SECTION("valid address") {
-        const auto ADDR = inet_address("localhost", 12345);
+        const auto ADDR = inet_address("localhost", TEST_PORT);
 
         datagram_socket sock(ADDR);
         REQUIRE(sock);

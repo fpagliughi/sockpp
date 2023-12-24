@@ -4,7 +4,7 @@
 //
 // This runs a UDP echo server for both IPv4 and IPv6, each in a separate
 // thread. They both use the same port number, either as provided by the user
-// on the command line, or defaulting to 12345.
+// on the command line, or defaulting to TEST_PORT.
 //
 // USAGE:
 //  	uspechosvr [port]
@@ -86,7 +86,7 @@ void run_echo(UDPSOCK sock) {
 int main(int argc, char* argv[]) {
     cout << "Sample UDP echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
-    in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+    in_port_t port = (argc > 1) ? atoi(argv[1]) : sockpp::TEST_PORT;
 
     sockpp::initialize();
 

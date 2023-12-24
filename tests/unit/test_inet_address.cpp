@@ -48,7 +48,7 @@ using namespace sockpp;
 const uint32_t ANY_ADDR{INADDR_ANY};             // Any iface 0x00000000
 const uint32_t LOCALHOST_ADDR{INADDR_LOOPBACK};  // Localhost 0x7F000001
 const std::string LOCALHOST_STR{"localhost"};
-const in_port_t PORT{12345};
+const in_port_t PORT{sockpp::TEST_PORT};
 
 TEST_CASE("inet_address default constructor", "[address]") {
     SECTION("default address") {

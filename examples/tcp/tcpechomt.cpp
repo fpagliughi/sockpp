@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
          << endl;
 
     string host = (argc > 1) ? argv[1] : "localhost";
-    in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : sockpp::TEST_PORT;
 
     sockpp::initialize();
 

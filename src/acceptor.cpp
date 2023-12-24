@@ -62,7 +62,7 @@ result<acceptor> acceptor::create(int domain) noexcept {
 result<> acceptor::open(
     const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, int reuse /*=0*/
 ) noexcept {
-    // TODO: What to do if we are open but bound to a different address?
+    // TODO: Should we fail if we're bound to a different address?
     if (is_open())
         return none{};
 

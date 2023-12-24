@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     cout << "Sample UDP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
     string host = (argc > 1) ? argv[1] : "localhost";
-    in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : sockpp::TEST_PORT;
 
     sockpp::initialize();
 

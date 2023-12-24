@@ -47,7 +47,7 @@ using namespace sockpp;
 
 const in6_addr ANY_ADDR IN6ADDR_ANY_INIT;             // Any iface
 const in6_addr LOCALHOST_ADDR IN6ADDR_LOOPBACK_INIT;  // Localhost 0x7F000001
-const in_port_t PORT{12345};
+const in_port_t PORT{sockpp::TEST_PORT};
 
 TEST_CASE("inet6_address default constructor", "[address]") {
     inet6_address addr;

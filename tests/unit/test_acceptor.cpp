@@ -70,9 +70,9 @@ TEST_CASE("acceptor handle constructor", "[acceptor]") {
 
 TEST_CASE("acceptor address constructor", "[acceptor]") {
     SECTION("valid address") {
-        const auto ADDR = inet_address("localhost", 12345);
+        const auto ADDR = inet_address("localhost", TEST_PORT);
 
-        acceptor sock(ADDR);
+        acceptor sock{ADDR, 4, acceptor::REUSE};
         REQUIRE(sock);
         REQUIRE(sock.address() == ADDR);
     }

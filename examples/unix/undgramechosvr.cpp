@@ -4,7 +4,7 @@
 //
 // This runs a UDP echo server for both IPv4 and IPv6, each in a separate
 // thread. They both use the same port number, either as provided by the user
-// on the command line, or defaulting to 12345.
+// on the command line, or defaulting to TEST_PORT.
 //
 // USAGE:
 //  	undgramechosvr [port]

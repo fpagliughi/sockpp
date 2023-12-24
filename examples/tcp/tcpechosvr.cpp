@@ -71,7 +71,7 @@ void run_echo(sockpp::tcp_socket sock) {
 int main(int argc, char* argv[]) {
     cout << "Sample TCP echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
-    in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+    in_port_t port = (argc > 1) ? atoi(argv[1]) : sockpp::TEST_PORT;
 
     sockpp::initialize();
 

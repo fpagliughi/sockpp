@@ -70,14 +70,6 @@ class acceptor : public socket
     acceptor& operator=(const acceptor&) = delete;
 
 protected:
-    /** The default listener queue size. */
-    static constexpr int DFLT_QUE_SIZE = 4;
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-    static constexpr int DFLT_REUSE = SO_REUSEADDR;
-#else
-    static constexpr int DFLT_REUSE = SO_REUSEPORT;
-#endif
     /**
      * Creates an underlying acceptor socket.
      * The acceptor uses a stream socket type, but for our purposes is not
@@ -89,6 +81,15 @@ protected:
     static socket_t create_handle(int domain) { return stream_socket::create_handle(domain); }
 
 public:
+    /** The default listener queue size. */
+    static constexpr int DFLT_QUE_SIZE = 4;
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    static constexpr int REUSE = SO_REUSEADDR;
+#else
+    static constexpr int REUSE = SO_REUSEPORT;
+#endif
+
     /**
      * Creates an unconnected acceptor.
      */
@@ -109,7 +110,7 @@ public:
      *              value of zero doesn;t set an option.
      * @throws std::system_error
      */
-    acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE) {
+    acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) {
         if (auto res = open(addr, queSize, reuse); !res)
             throw std::system_error{res.error()};
     }
@@ -165,7 +166,7 @@ public:
      * @return The error code on failure.
      */
     result<> open(
-        const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE
+        const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0
     ) noexcept;
     /**
      * Accepts an incoming TCP connection and gets the address of the client.
@@ -212,7 +213,7 @@ public:
      * @param queSize The listener queue size.
      * @throws std::system_error
      */
-    acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE) {
+    acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) {
         if (auto res = open(addr, queSize, reuse); !res)
             throw std::system_error{res.error()};
     }
@@ -292,7 +293,7 @@ public:
      * @return @em true on success, @em false on error
      */
     result<> open(
-        const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE
+        const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0
     ) noexcept {
         return base::open(addr, queSize, reuse);
     }
@@ -307,7 +308,7 @@ public:
      * @return @em true on success, @em false on error
      */
     result<> open(
-        in_port_t port, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE
+        in_port_t port, int queSize = DFLT_QUE_SIZE, int reuse = 0
     ) noexcept {
         return open(addr_t(port), queSize, reuse);
     }
