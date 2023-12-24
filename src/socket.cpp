@@ -194,9 +194,22 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/) noexcept {
 // --------------------------------------------------------------------------
 // Binds the socket to the specified address.
 
-result<> socket::bind(const sock_address& addr) noexcept {
-    auto res = check_res(::bind(handle_, addr.sockaddr_ptr(), addr.size()));
-    return (res) ? error_code{} : res.error();
+result<> socket::bind(const sock_address& addr, int reuse) noexcept {
+    if (reuse) {
+#if defined(_WIN32) || defined(__CYGWIN__)
+        if (reuse != SO_REUSEADDR) {
+#else
+        if (reuse != SO_REUSEADDR && reuse != SO_REUSEPORT) {
+#endif
+            return errc::invalid_argument;
+        }
+
+        if (auto res = set_option(SOL_SOCKET, reuse, true); !res) {
+            return res;
+        }
+    }
+
+    return check_res_none(::bind(handle_, addr.sockaddr_ptr(), addr.size()));
 }
 
 // --------------------------------------------------------------------------
@@ -233,7 +246,8 @@ sock_address_any socket::peer_address() const {
 
 // --------------------------------------------------------------------------
 
-result<> socket::get_option(int level, int optname, void* optval, socklen_t* optlen) const {
+result<> socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
+    const noexcept {
     result<int> res;
 #if defined(_WIN32)
     if (optval && optlen) {
@@ -253,7 +267,9 @@ result<> socket::get_option(int level, int optname, void* optval, socklen_t* opt
 
 // --------------------------------------------------------------------------
 
-result<> socket::set_option(int level, int optname, const void* optval, socklen_t optlen) {
+result<> socket::set_option(
+    int level, int optname, const void* optval, socklen_t optlen
+) noexcept {
     result<int> res;
 #if defined(_WIN32)
     res = check_res(::setsockopt(

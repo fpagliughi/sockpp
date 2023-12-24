@@ -137,6 +137,20 @@ public:
         return stream_socket(h);
     }
     /**
+     * Gets the value of the `TCP_NODELAY` option on the socket.
+     * @return The value of the `TCP_NODELAY` option on the socket if
+     *         successful, an error code on failure.
+     */
+    result<bool> nodelay() const noexcept {
+        return get_option<bool>(IPPROTO_TCP, TCP_NODELAY);
+    }
+    /**
+     * Sets the value of the `TCP_NODELAY` option on the socket.
+     * @return The value of the `TCP_NODELAY` option on the socket if
+     *         successful, an error code on failure.
+     */
+    result<> nodelay(bool on) noexcept { return set_option(IPPROTO_TCP, TCP_NODELAY, on); }
+    /**
      * Reads from the socket.
      * @param buf Buffer to get the incoming data.
      * @param n The number of bytes to try to read.

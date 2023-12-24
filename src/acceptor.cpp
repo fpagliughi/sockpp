@@ -60,7 +60,7 @@ result<acceptor> acceptor::create(int domain) noexcept {
 // without doing anything.
 
 result<> acceptor::open(
-    const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, bool reuseSock /*=true*/
+    const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, int reuse /*=0*/
 ) noexcept {
     // TODO: What to do if we are open but bound to a different address?
     if (is_open())
@@ -73,22 +73,7 @@ result<> acceptor::open(
         return result<>::from_last_error();
 
     reset(h);
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-    const int REUSE = SO_REUSEADDR;
-#else
-    const int REUSE = SO_REUSEPORT;
-#endif
-
-    if (reuseSock && (domain == AF_INET || domain == AF_INET6)) {
-        int reuse = 1;
-        if (auto res = set_option(SOL_SOCKET, REUSE, reuse); !res) {
-            close();
-            return res;
-        }
-    }
-
-    if (auto res = bind(addr); !res) {
+    if (auto res = bind(addr, reuse); !res) {
         close();
         return res;
     }

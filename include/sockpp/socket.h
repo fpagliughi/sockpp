@@ -380,9 +380,12 @@ public:
     /**
      * Binds the socket to the specified address.
      * @param addr The address to which we get bound.
+     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn;t set an option.
      * @return @em true on success, @em false on error
      */
-    result<> bind(const sock_address& addr) noexcept;
+    result<> bind(const sock_address& addr, int reuse = 0) noexcept;
     /**
      * Gets the local address to which the socket is bound.
      * @return The local address to which the socket is bound.
@@ -408,7 +411,8 @@ public:
      * @return bool @em true if the value was retrieved, @em false if an error
      *  	   occurred.
      */
-    result<> get_option(int level, int optname, void* optval, socklen_t* optlen) const;
+    result<> get_option(int level, int optname, void* optval, socklen_t* optlen)
+        const noexcept;
     /**
      * Gets the value of a socket option.
      *
@@ -416,13 +420,39 @@ public:
      *  			SOL_SOCKET.
      * @param optname The option passed directly to the protocol module.
      * @param val The value to retrieve
-     * @return bool @em true if the value was retrieved, @em false if an error
-     *  	   occurred.
+     * @return An error code on failure.
      */
     template <typename T>
-    result<> get_option(int level, int optname, T* val) const {
+    result<> get_option(int level, int optname, T* val) const noexcept {
         socklen_t len = sizeof(T);
         return get_option(level, optname, (void*)val, &len);
+    }
+    /**
+     * Gets the value of a socket option.
+     *
+     * @param level The protocol level at which the option resides, such as
+     *  			SOL_SOCKET.
+     * @param optname The option passed directly to the protocol module.
+     * @return The option value on success, an error code on failure.
+     */
+    template <typename T>
+    result<T> get_option(int level, int optname) const noexcept {
+        T val{};
+        auto res = get_option(level, optname, &val);
+        return (res) ? result<T>{val} : result<T>{res.error()};
+    }
+    /**
+     * Gets the value of a boolean socket option.
+     *
+     * @param level The protocol level at which the option resides, such as
+     *  			SOL_SOCKET.
+     * @param optname The option passed directly to the protocol module.
+     * @return The option value on success, an error code on failure.
+     */
+    result<bool> get_option(int level, int optname) const noexcept {
+        int val{};
+        auto res = get_option(level, optname, &val);
+        return (res) ? result<bool>{val != 0} : result<bool>{res.error()};
     }
     /**
      * Sets the value of a socket option.
@@ -438,7 +468,9 @@ public:
      * @return bool @em true if the value was set, @em false if an error
      *  	   occurred.
      */
-    result<> set_option(int level, int optname, const void* optval, socklen_t optlen);
+    result<> set_option(
+        int level, int optname, const void* optval, socklen_t optlen
+    ) noexcept;
     /**
      * Sets the value of a socket option.
      *
@@ -451,9 +483,25 @@ public:
      *  	   occurred.
      */
     template <typename T>
-    result<> set_option(int level, int optname, const T& val) {
-        return set_option(level, optname, (void*)&val, sizeof(T));
+    result<> set_option(int level, int optname, const T& val) noexcept {
+        return set_option(level, optname, &val, sizeof(T));
     }
+    /**
+     * Sets the value of a boolean socket option.
+     *
+     * @param level The protocol level at which the option resides, such as
+     *  			SOL_SOCKET.
+     * @param optname The option passed directly to the protocol module.
+     * @param val The value to set.
+     *
+     * @return An error code on failure.
+     */
+    result<> set_option(int level, int optname, const bool& val) noexcept {
+        return set_option(level, optname, int(val));
+    }
+
+    // ----- Specific socket options -----
+
     /**
      * Places the socket into or out of non-blocking mode.
      * When in non-blocking mode, a call that is not immediately ready to
@@ -470,6 +518,72 @@ public:
      */
     virtual bool is_non_blocking() const;
 #endif
+    /**
+     * Gets the value of the `SO_REUSEADDR` option on the socket.
+     * @return The value of the `SO_REUSEADDR` option on the socket on
+     *         success, an error code on faliure.
+     */
+    result<bool> reuse_address() const noexcept {
+        return get_option<bool>(SOL_SOCKET, SO_REUSEADDR);
+    }
+    /**
+     * Sets the value of the `SO_REUSEADDR` option on the socket.
+     * @param on The desired value of the `SO_REUSEADDR` option
+     * @return An error code on failure.
+     */
+    result<> reuse_address(bool on) noexcept {
+        return set_option(SOL_SOCKET, SO_REUSEADDR, on);
+    }
+#if !defined(_WIN32) && !defined(__CYGWIN__)
+    /**
+     * Gets the value of the `SO_REUSEPORT` option on the socket.
+     * @return The value of the `SO_REUSEPORT` option on the socket on
+     *         success, an error code on faliure.
+     */
+    result<bool> reuse_port() const noexcept {
+        return get_option<bool>(SOL_SOCKET, SO_REUSEPORT);
+    }
+    /**
+     * Sets the value of the `SO_REUSEPORT` option on the socket.
+     * @param on The desired value of the `SO_REUSEPORT` option
+     * @return An error code on failure.
+     */
+    result<> reuse_port(bool on) noexcept { return set_option(SOL_SOCKET, SO_REUSEPORT, on); }
+#endif
+    /**
+     * Gets the value of the `SO_RCVBUF` option on the socket.
+     * This is the size of the OS receive buffer for the socket.
+     * @return The size of the OS receive buffer.
+     */
+    result<unsigned int> recv_buffer_size() const noexcept {
+        return get_option<unsigned int>(SOL_SOCKET, SO_RCVBUF);
+    }
+    /**
+     * Sets the value of the `SO_RCVBUF` option on the socket.
+     * This is the size of the OS receive buffer for the socket.
+     * @param sz The desired size of the OS receive buffer.
+     * @return The error code on failure.
+     */
+    result<> recv_buffer_size(unsigned int sz) noexcept {
+        return set_option<unsigned int>(SOL_SOCKET, SO_RCVBUF, sz);
+    }
+    /**
+     * Gets the value of the `SO_SNDBUF` option on the socket.
+     * This is the size of the OS send buffer for the socket.
+     * @return The size of the OS send buffer.
+     */
+    result<unsigned int> send_buffer_size() const noexcept {
+        return get_option<unsigned int>(SOL_SOCKET, SO_SNDBUF);
+    }
+    /**
+     * Sets the value of the `SO_SNDBUF` option on the socket.
+     * This is the size of the OS send buffer for the socket.
+     * @param sz The desired size of the OS send buffer.
+     * @return The error code on failure.
+     */
+    result<> send_buffer_size(unsigned int sz) noexcept {
+        return set_option<unsigned int>(SOL_SOCKET, SO_SNDBUF, sz);
+    }
     /**
      * Gets a string describing the specified error.
      * This is typically the returned message from the system strerror().

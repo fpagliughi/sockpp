@@ -167,7 +167,8 @@ result<size_t> stream_socket::write(const std::vector<iovec> &ranges) {
 
     DWORD nwritten = 0, nmsg = DWORD(bufs.size());
 
-    if (::WSASend(handle(), bufs.data(), nmsg, &nwritten, 0, nullptr, nullptr) == SOCKET_ERROR)
+    if (::WSASend(handle(), bufs.data(), nmsg, &nwritten, 0, nullptr, nullptr) ==
+        SOCKET_ERROR)
         return result<size_t>::from_last_error();
     return size_t(nread);
 #endif

@@ -104,6 +104,7 @@ struct iovec
         #include <netinet/in.h>
     #endif
     #include <netdb.h>
+    #include <netinet/tcp.h>  // TCP_NODELAY, etc
     #include <signal.h>
 
     #include <cerrno>

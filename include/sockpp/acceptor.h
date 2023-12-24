@@ -71,8 +71,13 @@ class acceptor : public socket
 
 protected:
     /** The default listener queue size. */
-    static const int DFLT_QUE_SIZE = 4;
+    static constexpr int DFLT_QUE_SIZE = 4;
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+    static constexpr int DFLT_REUSE = SO_REUSEADDR;
+#else
+    static constexpr int DFLT_REUSE = SO_REUSEPORT;
+#endif
     /**
      * Creates an underlying acceptor socket.
      * The acceptor uses a stream socket type, but for our purposes is not
@@ -99,10 +104,13 @@ public:
      * address.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn;t set an option.
      * @throws std::system_error
      */
-    acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE) {
-        if (auto res = open(addr, queSize); !res)
+    acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE) {
+        if (auto res = open(addr, queSize, reuse); !res)
             throw std::system_error{res.error()};
     }
     /**
@@ -151,13 +159,13 @@ public:
      * listening.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
-     * @param reuseSock Whether the SO_REUSEPORT (or SO_REUSEADDR on Win32)
-     *  				socket option should be used before binding and
-     *  				listening.
-     * @return @em true on success, @em false on error
+     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn;t set an option.
+     * @return The error code on failure.
      */
     result<> open(
-        const sock_address& addr, int queSize = DFLT_QUE_SIZE, bool reuseSock = true
+        const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE
     ) noexcept;
     /**
      * Accepts an incoming TCP connection and gets the address of the client.
@@ -204,8 +212,8 @@ public:
      * @param queSize The listener queue size.
      * @throws std::system_error
      */
-    acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE) {
-        if (auto res = open(addr, queSize); !res)
+    acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE) {
+        if (auto res = open(addr, queSize, reuse); !res)
             throw std::system_error{res.error()};
     }
     /**
@@ -278,20 +286,30 @@ public:
      * listening.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn;t set an option.
      * @return @em true on success, @em false on error
      */
-    result<> open(const addr_t& addr, int queSize = DFLT_QUE_SIZE) noexcept {
-        return base::open(addr, queSize);
+    result<> open(
+        const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE
+    ) noexcept {
+        return base::open(addr, queSize, reuse);
     }
     /**
      * Opens the acceptor socket, binds the socket to all adapters and starts it
      * listening.
      * @param port The TCP port on which to listen.
      * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn;t set an option.
      * @return @em true on success, @em false on error
      */
-    result<> open(in_port_t port, int queSize = DFLT_QUE_SIZE) noexcept {
-        return open(addr_t(port), queSize);
+    result<> open(
+        in_port_t port, int queSize = DFLT_QUE_SIZE, int reuse = DFLT_REUSE
+    ) noexcept {
+        return open(addr_t(port), queSize, reuse);
     }
     /**
      * Accepts an incoming connection and gets the address of the client.

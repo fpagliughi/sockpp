@@ -58,10 +58,10 @@ TEST_CASE("tcp_socket default constructor", "[tcp_socket]") {
 }
 
 TEST_CASE("tcp_socket handle constructor", "[tcp_socket]") {
-    constexpr auto HANDLE = socket_t(3);
+    constexpr auto HANDLE = socket_t{3};
 
     SECTION("valid handle") {
-        tcp_socket sock(HANDLE);
+        tcp_socket sock{HANDLE};
         REQUIRE(sock);
         REQUIRE(sock.is_open());
 
@@ -69,7 +69,7 @@ TEST_CASE("tcp_socket handle constructor", "[tcp_socket]") {
     }
 
     SECTION("invalid handle") {
-        tcp_socket sock(INVALID_SOCKET);
+        tcp_socket sock{INVALID_SOCKET};
         REQUIRE(!sock);
         REQUIRE(!sock.is_open());
         // TODO: Should this set an error?
@@ -82,7 +82,7 @@ TEST_CASE("tcp_socket handle constructor", "[tcp_socket]") {
 // Connected tests
 
 TEST_CASE("tcp_socket read/write", "[stream_socket]") {
-    const std::string STR{"This is a test. This is only a test."};
+    const string STR{"This is a test. This is only a test."};
     const size_t N = STR.length();
 
     inet_address addr{"localhost", TEST_PORT};
@@ -102,7 +102,7 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
         REQUIRE(csock.write_n(STR.data(), N).value() == N);
         REQUIRE(ssock.read_n(buf, N).value() == N);
 
-        std::string str{buf, buf + N};
+        string str{buf, buf + N};
         REQUIRE(str == STR);
 
         char buf2[512];  // N
@@ -111,12 +111,12 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
         REQUIRE(csock.write(STR).value() == N);
         REQUIRE(ssock.read_n(buf2, N).value() == N);
 
-        std::string str2{buf2, buf2 + N};
+        string str2{buf2, buf2 + N};
         REQUIRE(str2 == STR);
     }
 
     SECTION("scatter/gather") {
-        const std::string HEADER{"<start>"}, FOOTER{"<end>"};
+        const string HEADER{"<start>"}, FOOTER{"<end>"};
 
         const size_t N_HEADER = HEADER.length(), N_FOOTER = FOOTER.length(),
                      N_TOT = N_HEADER + N + N_FOOTER;
@@ -140,8 +140,8 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
 
         REQUIRE(ssock.read(inv).value() == N_TOT);
 
-        REQUIRE(std::string(hbuf, N_HEADER) == HEADER);
-        REQUIRE(std::string(buf, N) == STR);
-        REQUIRE(std::string(fbuf, N_FOOTER) == FOOTER);
+        REQUIRE(string(hbuf, N_HEADER) == HEADER);
+        REQUIRE(string(buf, N) == STR);
+        REQUIRE(string(fbuf, N_FOOTER) == FOOTER);
     }
 }
