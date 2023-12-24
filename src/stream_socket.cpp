@@ -50,10 +50,10 @@ namespace sockpp {
 // Creates a stream socket for the given domain/protocol.
 
 result<stream_socket> stream_socket::create(int domain, int protocol /*=0*/) {
-    stream_socket sock(create_handle(domain, protocol));
-    if (!sock)
-        return result<stream_socket>::from_last_error();
-    return sock;
+    if (auto res = create_handle(domain, protocol); !res)
+        return res.error();
+    else
+        return stream_socket{res.value()};
 }
 
 // --------------------------------------------------------------------------

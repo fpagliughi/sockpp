@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -244,13 +244,13 @@ public:
      * destroyed.
      * @param h An OS socket handle.
      */
-    explicit socket(socket_t h) noexcept : handle_(h) {}
+    explicit socket(socket_t h) noexcept : handle_{h} {}
     /**
      * Move constructor.
      * This takes ownership of the underlying handle in sock.
      * @param sock An rvalue reference to a socket object.
      */
-    socket(socket&& sock) noexcept : handle_(sock.handle_) { sock.handle_ = INVALID_SOCKET; }
+    socket(socket&& sock) noexcept : handle_{sock.handle_} { sock.handle_ = INVALID_SOCKET; }
     /**
      * Destructor closes the socket.
      */
@@ -583,16 +583,6 @@ public:
      */
     result<> send_buffer_size(unsigned int sz) noexcept {
         return set_option<unsigned int>(SOL_SOCKET, SO_SNDBUF, sz);
-    }
-    /**
-     * Gets a string describing the specified error.
-     * This is typically the returned message from the system strerror().
-     * @param errNum The error number.
-     * @return A string describing the specified error.
-     */
-    static string error_str(int errNum) {
-        auto ec = error_code{errNum, std::system_category()};
-        return ec.message();
     }
     /**
      * Shuts down all or part of the full-duplex connection.

@@ -76,9 +76,12 @@ protected:
      * classified (derived from) a streaming socket, since it doesn't
      * support read and write to the socket.
      * @param domain The communications domain (address family).
-     * @return An OS handle to a stream socket.
+     * @return An OS handle to a stream socket on success, or an error code
+     *         on failure.
      */
-    static socket_t create_handle(int domain) { return stream_socket::create_handle(domain); }
+    static result<socket_t> create_handle(int domain) {
+        return stream_socket::create_handle(domain);
+    }
 
 public:
     /** The default listener queue size. */
@@ -292,9 +295,7 @@ public:
      *              value of zero doesn;t set an option.
      * @return @em true on success, @em false on error
      */
-    result<> open(
-        const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0
-    ) noexcept {
+    result<> open(const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) noexcept {
         return base::open(addr, queSize, reuse);
     }
     /**
@@ -307,9 +308,7 @@ public:
      *              value of zero doesn;t set an option.
      * @return @em true on success, @em false on error
      */
-    result<> open(
-        in_port_t port, int queSize = DFLT_QUE_SIZE, int reuse = 0
-    ) noexcept {
+    result<> open(in_port_t port, int queSize = DFLT_QUE_SIZE, int reuse = 0) noexcept {
         return open(addr_t(port), queSize, reuse);
     }
     /**

@@ -51,15 +51,13 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 result<> connector::recreate(const sock_address& addr) {
-    sa_family_t domain = addr.family();
-    socket_t h = create_handle(domain);
-
-    if (h < 0)
-        return result<>::from_last_error();
-
-    // This will close the old connection, if any.
-    reset(h);
-    return none{};
+    if (auto res = create_handle(addr.family()); !res)
+        return res.error();
+    else {
+        // This will close the old connection, if any.
+        reset(res.value());
+        return none{};
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////

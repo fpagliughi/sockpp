@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ class connector : public stream_socket
     connector& operator=(const connector&) = delete;
 
     /** Recreate the socket with a new handle, closing any old one. */
-    result<none> recreate(const sock_address& addr);
+    result<> recreate(const sock_address& addr);
 
 public:
     /**
@@ -162,33 +162,23 @@ public:
         return *this;
     }
     /**
-     * Determines if the socket connected to a remote host.
-     * Note that this is not a reliable determination if the socket is
-     * currently connected, but rather that an initial connection was
-     * established.
-     * @return @em true If the socket connected to a remote host,
-     *         @em false if not.
-     */
-    bool is_connected() const { return is_open(); }
-    /**
      * Attempts to connect to the specified server.
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
      * @param addr The remote server address.
-     * @return @em true on success, @em false on error
+     * @return The error code on failure.
      */
-    result<none> connect(const sock_address& addr);
+    result<> connect(const sock_address& addr);
     /**
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
-     * If the operation times out, the @ref last_error will be set to
-     * `timed_out`.
+     * If the operation times out, the @ref error will be `errc::timed_out`.
      * @param addr The remote server address.
      * @param timeout The duration after which to give up. Zero means never.
-     * @return @em true on success, @em false on error
+     * @return The error code on failure.
      */
-    result<none> connect(const sock_address& addr, microseconds timeout);
+    result<> connect(const sock_address& addr, microseconds timeout);
     /**
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
@@ -197,10 +187,10 @@ public:
      * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
-     * @return @em true on success, @em false on error
+     * @return The error code on failure
      */
     template <class Rep, class Period>
-    result<none> connect(const sock_address& addr, const duration<Rep, Period>& relTime) {
+    result<> connect(const sock_address& addr, const duration<Rep, Period>& relTime) {
         return connect(addr, microseconds(relTime));
     }
 };

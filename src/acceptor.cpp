@@ -45,10 +45,10 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 result<acceptor> acceptor::create(int domain) noexcept {
-    acceptor acc(create_handle(domain));
-    if (!acc)
-        return result<acceptor>::from_last_error();
-    return acc;
+    if (auto res = create_handle(domain); !res)
+        return res.error();
+    else
+        return acceptor(res.value());
 }
 
 // --------------------------------------------------------------------------
@@ -66,13 +66,11 @@ result<> acceptor::open(
     if (is_open())
         return none{};
 
-    sa_family_t domain = addr.family();
-    socket_t h = create_handle(domain);
+    if (auto res = create_handle(addr.family()); !res)
+        return res.error();
+    else
+        reset(res.value());
 
-    if (h == INVALID_SOCKET)
-        return result<>::from_last_error();
-
-    reset(h);
     if (auto res = bind(addr, reuse); !res) {
         close();
         return res;

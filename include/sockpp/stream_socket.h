@@ -74,8 +74,8 @@ protected:
      * Creates a streaming socket.
      * @return An OS handle to a stream socket.
      */
-    static socket_t create_handle(int domain, int protocol = 0) {
-        return (socket_t)::socket(domain, COMM_TYPE, protocol);
+    static result<socket_t> create_handle(int domain, int protocol = 0) {
+        return base::create_handle(domain, COMM_TYPE, protocol);
     }
 
 public:

@@ -188,7 +188,7 @@ void socket::reset(socket_t h /*=INVALID_SOCKET*/) noexcept {
     if (h != handle_) {
         std::swap(h, handle_);
         if (h != INVALID_SOCKET)
-            ::close(h);
+            close(h);
     }
 }
 
