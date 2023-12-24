@@ -175,6 +175,8 @@ public:
     static constexpr sa_family_t ADDRESS_FAMILY = ADDR::ADDRESS_FAMILY;
     /** The type of address for the socket. */
     using addr_t = ADDR;
+    /** A pair of datagram sockets */
+    using socket_pair = std::tuple<datagram_socket_tmpl, datagram_socket_tmpl>;
 
     /**
      * Creates an unbound datagram socket.
@@ -224,9 +226,7 @@ public:
      * @return A std::tuple of stream sockets. On error both sockets will be
      *  	   in an error state with the last error set.
      */
-    static result<std::tuple<datagram_socket_tmpl, datagram_socket_tmpl>> pair(
-        int protocol = 0
-    ) {
+    static result<socket_pair> pair(int protocol = 0) {
         if (auto res = base::pair(addr_t::ADDRESS_FAMILY, COMM_TYPE, protocol); !res) {
             return res.error();
         }

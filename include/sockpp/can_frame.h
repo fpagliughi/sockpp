@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021 Frank Pagliughi
+// Copyright (c) 2021-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -82,7 +82,7 @@ public:
      * @param canID The CAN identifier for the frame
      * @param data The data field for the frame
      */
-    can_frame(canid_t canID, const std::string& data)
+    can_frame(canid_t canID, const string& data)
         : can_frame{canID, data.data(), data.length()} {}
     /**
      * Constructs a frame with the specified ID and data.

@@ -196,7 +196,6 @@ public:
      * \endverbatim
      *
      * @param filters The CAN filters
-     * @param n The number of CAN filters.
      * @return @em true if the filters were set, @em false otherwise.
      */
     result<> set_filters(const std::vector<can_filter>& filters) {

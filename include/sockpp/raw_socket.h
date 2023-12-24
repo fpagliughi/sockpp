@@ -68,7 +68,8 @@ class raw_socket : public socket
 protected:
     /**
      * Creates a raw socket.
-     * @return An OS handle to a raw socket.
+     * @return An OS handle to a raw socket on success, or an error code on
+     *         failure.
      */
     static result<socket_t> create_handle(int domain, int protocol = 0) {
         return check_socket(socket_t(::socket(domain, COMM_TYPE, protocol)));
@@ -81,29 +82,24 @@ public:
     /**
      * Creates an uninitialized raw socket.
      */
-    raw_socket() {}
+    raw_socket() noexcept {}
     /**
      * Creates a raw socket from an existing OS socket handle and
      * claims ownership of the handle.
      * @param handle A socket handle from the operating system.
      */
-    explicit raw_socket(socket_t handle) : base(handle) {}
-    /**
-     * Creates a UDP socket and binds it to the address.
-     * @param addr The address to bind.
-     */
-    explicit raw_socket(const sock_address& addr);
+    explicit raw_socket(socket_t handle) noexcept : base(handle) {}
     /**
      * Move constructor.
      * @param other The other socket to move to this one
      */
-    raw_socket(raw_socket&& other) : base(std::move(other)) {}
+    raw_socket(raw_socket&& other) noexcept : base(std::move(other)) {}
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
      * @return A reference to this object.
      */
-    raw_socket& operator=(raw_socket&& rhs) {
+    raw_socket& operator=(raw_socket&& rhs) noexcept {
         base::operator=(std::move(rhs));
         return *this;
     }
@@ -158,14 +154,15 @@ public:
     /**
      * Creates an unbound raw socket.
      * This can be used as a client or later bound as a server socket.
+     * @throws std::system_error on failure.
      */
-    raw_socket_tmpl() : base(create_handle(ADDRESS_FAMILY)) {}
+    raw_socket_tmpl() noexcept {}
     /**
      * Creates a raw socket from an existing OS socket handle and
      * claims ownership of the handle.
      * @param handle A socket handle from the operating system.
      */
-    raw_socket_tmpl(socket_t handle) : base(handle) {}
+    raw_socket_tmpl(socket_t handle) noexcept : base(handle) {}
     /**
      * Creates a raw socket and binds it to the address.
      * @param addr The address to bind.

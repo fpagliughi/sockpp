@@ -92,7 +92,7 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr) noexcept 
         ec = error_code{errno, system_category()};
 #else
         if (err == EAI_SYSTEM)
-            ec = result<>::get_last_error();
+            ec = result<>::last_error();
         else
             ec = make_error_code(static_cast<gai_errc>(err));
 #endif

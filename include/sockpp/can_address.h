@@ -57,6 +57,7 @@
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
 #include "sockpp/sock_address.h"
+#include "sockpp/types.h"
 
 namespace sockpp {
 
@@ -98,7 +99,7 @@ public:
      * @param iface The name of the CAN interface
      * @throw system_error on failure
      */
-    can_address(const std::string& iface);
+    can_address(const string& iface);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The generic address. This must be an AF_CAN address to be
@@ -133,7 +134,7 @@ public:
      * @return A result with a CAN address, if successful, or an error code
      *  	   on failure.
      */
-    static result<can_address> create(const std::string& iface);
+    static result<can_address> create(const string& iface);
     /**
      * Checks if the address is set to some value.
      * This doesn't attempt to determine if the address is valid, simply
@@ -145,13 +146,13 @@ public:
      * Try to get the name of the CAN interface for this address.
      * @return The name of the CAN interface for this address.
      */
-    result<std::string> get_iface() const noexcept;
+    result<string> get_iface() const noexcept;
     /**
      * Get the name of the CAN interface for this address.
      * If the name can not be found or there's an error, returns "unknown".
      * @return The name of the CAN interface for this address.
      */
-    std::string iface() const noexcept;
+    string iface() const noexcept;
     /**
      * Gets the index of the CAN interface for this address.
      * @return The index of the CAN interface for this address.
@@ -193,7 +194,7 @@ public:
      * @return A string representation of the address in the form
      *  	   "unix:<path>"
      */
-    std::string to_string() const noexcept { return std::string("can:") + iface(); }
+    string to_string() const noexcept { return string("can:") + iface(); }
 };
 
 // --------------------------------------------------------------------------

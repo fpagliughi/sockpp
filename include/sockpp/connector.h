@@ -105,8 +105,8 @@ public:
      * @throws std::system_error on failure
      */
     template <class Rep, class Period>
-    connector(const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime) {
-        if (auto res = connect(addr, std::chrono::microseconds(relTime)); !res)
+    connector(const sock_address& addr, const duration<Rep, Period>& relTime) {
+        if (auto res = connect(addr, microseconds(relTime)); !res)
             throw std::system_error{res.error()};
     }
     /**
@@ -118,10 +118,9 @@ public:
      */
     template <class Rep, class Period>
     connector(
-        const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime,
-        error_code& ec
+        const sock_address& addr, const duration<Rep, Period>& relTime, error_code& ec
     ) noexcept {
-        ec = connect(addr, std::chrono::microseconds(relTime)).error();
+        ec = connect(addr, microseconds(relTime)).error();
     }
     /**
      * Creates the connector and attempts to connect to the specified
@@ -144,9 +143,7 @@ public:
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
      */
-    connector(
-        const sock_address& addr, std::chrono::milliseconds t, error_code& ec
-    ) noexcept {
+    connector(const sock_address& addr, milliseconds t, error_code& ec) noexcept {
         ec = connect(addr, t).error();
     }
     /**
@@ -191,7 +188,7 @@ public:
      * @param timeout The duration after which to give up. Zero means never.
      * @return @em true on success, @em false on error
      */
-    result<none> connect(const sock_address& addr, std::chrono::microseconds timeout);
+    result<none> connect(const sock_address& addr, microseconds timeout);
     /**
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
@@ -203,10 +200,8 @@ public:
      * @return @em true on success, @em false on error
      */
     template <class Rep, class Period>
-    result<none> connect(
-        const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime
-    ) {
-        return connect(addr, std::chrono::microseconds(relTime));
+    result<none> connect(const sock_address& addr, const duration<Rep, Period>& relTime) {
+        return connect(addr, microseconds(relTime));
     }
 };
 
@@ -257,7 +252,7 @@ public:
      * @throws std::system_error on failure
      */
     template <class Rep, class Period>
-    connector_tmpl(const addr_t& addr, const std::chrono::duration<Rep, Period>& relTime)
+    connector_tmpl(const addr_t& addr, const duration<Rep, Period>& relTime)
         : base(addr, relTime) {}
     /**
      * Creates the connector and attempts to connect to the specified
@@ -268,9 +263,9 @@ public:
      */
     template <class Rep, class Period>
     connector_tmpl(
-        const addr_t& addr, const std::chrono::duration<Rep, Period>& relTime, error_code& ec
+        const addr_t& addr, const duration<Rep, Period>& relTime, error_code& ec
     ) noexcept
-        : base(addr, relTime) {}
+        : base(addr, relTime, ec) {}
     /**
      * Move constructor.
      * Creates a connector by moving the other connector to this one.

@@ -117,11 +117,14 @@ class result
      * @param err The error
      */
     result(T&& val, const error_code& err) : val_{std::move(val)}, err_{err} {}
-
     /**
      * OS-specific means to retrieve the last error from an operation.
      * This should be called after a failed system call to get the cause of
      * the error.
+     *
+     * On most systems, this is the current `errno`.
+     *
+     * On Windows this retrieves the error via `WSAGetLastError()`
      */
     static int get_last_errno() {
 #if defined(_WIN32)
@@ -132,61 +135,45 @@ class result
 #endif
     }
 
-    /**
-     * Retrieves the last error from an operation.
-     * This should be called after a failed system call to get the cause of
-     * the error.
-     */
-    static error_code get_last_error() {
-        int ec = get_last_errno();
-        return error_code{ec, std::system_category()};
-    }
-
-    friend class socket;
-    friend class connector;
-    friend class inet_address;
-    friend class inet6_address;
-    friend class can_address;
-
 public:
     /**
      * Default result is considered a success with default value.
      */
     result() = default;
     /**
-     * Construct a "success" result with the specified value.
+     * Construct a success result with the specified value.
      * @param val The success value
      */
     result(const T& val) : val_{val} {}
     /**
-     * Construct a "success" result with the specified value.
+     * Construct a success result with the specified value.
      * @param val The success value
      */
     result(T&& val) : val_{std::move(val)} {}
     /**
-     * Creates an unsuccesful result from a portable error condition.
+     * Creates a failed result from a portable error condition.
      * @param err The error
      */
     result(errc err) : err_{std::make_error_code(err)} {}
     /**
-     * Creates an unsuccesful result from a portable error condition.
+     * Creates a failed result from a portable error condition.
      * @param err The error
      */
     result(const error_code& err) : err_{err} {}
     /**
-     * Creates an unsuccesful result from a portable error condition.
+     * Creates a failed result from a portable error condition.
      * @param err The error
      */
     result(error_code&& err) : err_{std::move(err)} {}
     /**
-     * Creates an unsuccessful result from an error code.
+     * Creates a failed result from an error code.
      * @param err The error code from an operation.
      * @return The result of an unsucessful operation.
      */
     static result from_error(const error_code& err) { return result{T{}, err}; }
     /**
-     * Creates an unsuccessful result from an platform-specific integer
-     * error code and an optional category.
+     * Creates a failed result from an platform-specific integer error code
+     * and an optional category.
      * @param ec The platform-specific error code.
      * @param ecat The error category.
      * @return The result of an unsuccessful operation.
@@ -205,7 +192,16 @@ public:
      * error code and an optional category.
      * @return The result for the last unsuccessful system operation.
      */
-    static result from_last_error() { return from_error(get_last_errno()); }
+    static result from_last_error() { return result{last_error()}; }
+    /**
+     * Retrieves the last error from an operation.
+     * This should be called after a failed system call to get the cause of
+     * the error.
+     */
+    static error_code last_error() {
+        int err = get_last_errno();
+        return error_code{err, std::system_category()};
+    }
     /**
      * Determines if the result represents a failed operation.
      *
@@ -465,8 +461,8 @@ bool operator==(const errc& err, const result<T>& res) noexcept {
 /**
  * Compare the result to an error code.
  *
- * @param lhs A result.
- * @param rhs An error code
+ * @param res A result.
+ * @param err An error code
  * @return @em true if the error code matches the one in the result, false
  *  	   otherwise.
  */
@@ -478,8 +474,8 @@ bool operator!=(const result<T>& res, const error_code& err) noexcept {
 /**
  * Compare the result to an error code.
  *
- * @param lhs An error code
- * @param rhs A result.
+ * @param err An error code
+ * @param res A result.
  * @return @em true if the error code matches the one in the result, false
  *  	   otherwise.
  */
@@ -491,8 +487,8 @@ bool operator!=(const error_code& err, const result<T>& res) noexcept {
 /**
  * Compare the result to an error.
  *
- * @param lhs A result.
- * @param rhs A portable error condition.
+ * @param res A result.
+ * @param err A portable error condition.
  * @return @em true if the error code matches the one in the result, false
  *  	   otherwise.
  */
@@ -504,8 +500,8 @@ bool operator!=(const result<T>& res, const errc& err) noexcept {
 /**
  * Compare the result to an error.
  *
- * @param lhs A portable error condition.
- * @param rhs A result.
+ * @param err A portable error condition.
+ * @param res A result.
  * @return @em true if the error code matches the one in the result, false
  *  	   otherwise.
  */

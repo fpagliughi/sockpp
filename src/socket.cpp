@@ -43,11 +43,6 @@
 
 #include "sockpp/error.h"
 
-// Used to explicitly ignore the returned value of a function call.
-#define ignore_result(x) \
-    if (x) {             \
-    }
-
 using namespace std::chrono;
 
 namespace sockpp {

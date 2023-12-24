@@ -65,15 +65,15 @@ int main(int argc, char* argv[]) {
 
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
-        size_t n = s.length();
+        const size_t N = s.length();
 
-        if (auto res = conn.write(s); !res || size_t(res.value()) != n) {
+        if (auto res = conn.write(s); !res || res != N) {
             cerr << "Error writing to the UNIX stream" << endl;
             break;
         }
 
-        sret.resize(n);
-        if (auto res = conn.read_n(&sret[0], n); !res || size_t(res.value()) != n) {
+        sret.resize(N);
+        if (auto res = conn.read_n(&sret[0], N); !res || res != N) {
             cerr << "Error reading from UNIX stream" << endl;
             break;
         }

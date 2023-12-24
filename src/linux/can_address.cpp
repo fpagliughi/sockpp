@@ -63,7 +63,7 @@ can_address::can_address(const string& iface) {
     unsigned idx = ::if_nametoindex(iface.c_str());
 
     if (idx == 0)
-        throw system_error{result<>::get_last_error()};
+        throw system_error{result<>::last_error()};
 
     addr_.can_family = ADDRESS_FAMILY;
     addr_.can_ifindex = idx;

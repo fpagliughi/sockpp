@@ -74,7 +74,6 @@ int main(int argc, char* argv[]) {
     }
 
     // Run the socket in this thread.
-    ssize_t n;
     char buf[512];
 
     sockpp::unix_address srcAddr;
@@ -87,7 +86,9 @@ int main(int argc, char* argv[]) {
             cerr << "Error receiving data: " << res.error_message() << endl;
             return 1;
         }
-        sock.send_to(buf, n, srcAddr);
+        else {
+            sock.send_to(buf, res.value(), srcAddr);
+        }
     }
 
     return 0;

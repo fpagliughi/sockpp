@@ -60,6 +60,12 @@ using std::string;
 /** A sockpp::duration is a std::chrono::duration */
 using std::chrono::duration;
 
+// Time units are std::chrono time unite.
+using std::chrono::microseconds;
+using std::chrono::milliseconds;
+using std::chrono::nanoseconds;
+using std::chrono::seconds;
+
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
 

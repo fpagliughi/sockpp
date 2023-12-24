@@ -64,7 +64,7 @@ result<> acceptor::open(
 ) noexcept {
     // TODO: What to do if we are open but bound to a different address?
     if (is_open())
-        return error_code{};
+        return none{};
 
     sa_family_t domain = addr.family();
     socket_t h = create_handle(domain);
@@ -98,7 +98,7 @@ result<> acceptor::open(
         return res;
     }
 
-    return error_code{};
+    return none{};
 }
 
 // --------------------------------------------------------------------------
@@ -107,11 +107,10 @@ result<stream_socket> acceptor::accept(sock_address* clientAddr /*=nullptr*/) no
     sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
     socklen_t len = clientAddr ? clientAddr->size() : 0;
 
-    socket_t s = ::accept(handle(), p, clientAddr ? &len : nullptr);
-    if (s < 0)
-        return result<stream_socket>::from_last_error();
-
-    return stream_socket(s);
+    if (auto res = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr)); !res)
+        return res.error();
+    else
+        return stream_socket{res.value()};
 }
 
 /////////////////////////////////////////////////////////////////////////////

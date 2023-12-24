@@ -50,6 +50,7 @@
 #include <vector>
 
 #include "sockpp/socket.h"
+#include "types.h"
 
 namespace sockpp {
 
@@ -165,7 +166,7 @@ public:
      * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
      */
-    virtual result<> read_timeout(const std::chrono::microseconds& to);
+    virtual result<> read_timeout(const microseconds& to);
     /**
      * Set a timeout for read operations.
      * Sets the timout that the device uses for read operations. Not all
@@ -174,8 +175,8 @@ public:
      * @return @em true on success, @em false on failure.
      */
     template <class Rep, class Period>
-    result<> read_timeout(const std::chrono::duration<Rep, Period>& to) {
-        return read_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
+    result<> read_timeout(const duration<Rep, Period>& to) {
+        return read_timeout(std::chrono::duration_cast<microseconds>(to));
     }
     /**
      * Writes the buffer to the socket.
@@ -213,7 +214,7 @@ public:
      * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
      */
-    virtual result<> write_timeout(const std::chrono::microseconds& to);
+    virtual result<> write_timeout(const microseconds& to);
     /**
      * Set a timeout for write operations.
      * Sets the timout that the device uses for write operations. Not all
@@ -222,8 +223,8 @@ public:
      * @return @em true on success, @em false on failure.
      */
     template <class Rep, class Period>
-    result<> write_timeout(const std::chrono::duration<Rep, Period>& to) {
-        return write_timeout(std::chrono::duration_cast<std::chrono::microseconds>(to));
+    result<> write_timeout(const duration<Rep, Period>& to) {
+        return write_timeout(std::chrono::duration_cast<microseconds>(to));
     }
 };
 
@@ -247,6 +248,9 @@ public:
     static constexpr sa_family_t ADDRESS_FAMILY = ADDR::ADDRESS_FAMILY;
     /** The type of network address used with this socket. */
     using addr_t = ADDR;
+    /** A pair of stream sockets */
+    using socket_pair = std::tuple<stream_socket_tmpl, stream_socket_tmpl>;
+
     /**
      * Creates an unconnected streaming socket.
      */
@@ -294,10 +298,10 @@ public:
      *
      * @param protocol The protocol to be used with the socket. (Normally 0)
      *
-     * @return A std::tuple of stream sockets. On error both sockets will be
-     *  	   in an error state with the last error set.
+     * @return A pair (std::tuple) of stream sockets on success. An error
+     *             code on failure.
      */
-    static result<std::tuple<stream_socket_tmpl, stream_socket_tmpl>> pair(int protocol = 0) {
+    static result<socket_pair> pair(int protocol = 0) {
         if (auto res = base::pair(ADDRESS_FAMILY, COMM_TYPE, protocol); !res) {
             return res.error();
         }

@@ -52,7 +52,6 @@ using namespace std;
 
 void read_thr(sockpp::tcp_socket rdSock) {
     char buf[512];
-    ssize_t n;
 
     while (true) {
         if (auto res = rdSock.read(buf, sizeof(buf)); !res || res.value() == 0) {

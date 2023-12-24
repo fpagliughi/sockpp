@@ -1,7 +1,7 @@
 /**
  * @file socket.h
  *
- * Classes for TCP & UDP socket.
+ * The base `socket` and library initialization classes.
  *
  * @author Frank Pagliughi
  * @author SoRo Systems, Inc.
@@ -70,7 +70,7 @@ const socket_t INVALID_SOCKET = -1;  ///< Invalid socket descriptor
  * @param dur A chrono duration of microseconds.
  * @return A timeval
  */
-timeval to_timeval(const std::chrono::microseconds& dur);
+timeval to_timeval(const microseconds& dur);
 
 /**
  * Converts a chrono duration to a relative timeval.
@@ -78,8 +78,8 @@ timeval to_timeval(const std::chrono::microseconds& dur);
  * @return A timeval.
  */
 template <class Rep, class Period>
-timeval to_timeval(const std::chrono::duration<Rep, Period>& dur) {
-    return to_timeval(std::chrono::duration_cast<std::chrono::microseconds>(dur));
+timeval to_timeval(const duration<Rep, Period>& dur) {
+    return to_timeval(std::chrono::duration_cast<microseconds>(dur));
 }
 
 /**
@@ -87,9 +87,9 @@ timeval to_timeval(const std::chrono::duration<Rep, Period>& dur) {
  * @param tv A timeval.
  * @return A chrono duration.
  */
-inline std::chrono::microseconds to_duration(const timeval& tv) {
-    auto dur = std::chrono::seconds{tv.tv_sec} + std::chrono::microseconds{tv.tv_usec};
-    return std::chrono::duration_cast<std::chrono::microseconds>(dur);
+inline microseconds to_duration(const timeval& tv) {
+    auto dur = seconds{tv.tv_sec} + microseconds{tv.tv_usec};
+    return std::chrono::duration_cast<microseconds>(dur);
 }
 
 /**
@@ -104,7 +104,7 @@ inline std::chrono::system_clock::time_point to_timepoint(const timeval& tv) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-//							socket_initializer
+//                              socket_initializer
 /////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -212,7 +212,7 @@ protected:
     /**
      * Checks the value of the socket handle, and if invalid, returns the
      * error.
-     * @param ret The socket return value from a library or system call.
+     * @param s The socket return value from a library or system call.
      * @return The error code from the last error, if any.
      */
     static result<socket_t> check_socket(socket_t s) {
@@ -232,6 +232,8 @@ protected:
 #endif
 
 public:
+    /** A pair of base sockets */
+    using socket_pair = std::tuple<socket, socket>;
     /**
      * Creates an unconnected (invalid) socket
      */
@@ -313,8 +315,8 @@ public:
     /**
      * Gets the network family of the address to which the socket is bound.
      * @return The network family of the address (AF_INET, etc) to which the
-     *  	   socket is bound. If the socket is not bound, or the address
-     *  	   is not known, returns AF_UNSPEC.
+     *             socket is bound. If the socket is not bound or the
+     *             address is not known, returns AF_UNSPEC.
      */
     virtual sa_family_t family() const { return address().family(); }
     /**
@@ -346,12 +348,10 @@ public:
      *  		   SOCK_DGRAM, etc).
      * @param protocol The particular protocol to be used with the sockets
      *
-     * @return A std::tuple of sockets. On error both sockets will be in an
-     *  	   error state with the
+     * @return A pair (std::tuple) of sockets on success, or an error code
+     *         on failure.
      */
-    static result<std::tuple<socket, socket>> pair(
-        int domain, int type, int protocol = 0
-    ) noexcept;
+    static result<socket_pair> pair(int domain, int type, int protocol = 0) noexcept;
     /**
      * Releases ownership of the underlying socket object.
      * @return The OS socket handle.
@@ -519,16 +519,6 @@ public:
             ::sendto(handle(), buf, n, flags, addr.sockaddr_ptr(), addr.size())
         );
 #endif
-    }
-    /**
-     * Sends a string to the socket at the specified address.
-     * @param s The string to send.
-     * @param flags The flags. See send(2).
-     * @param addr The remote destination of the data.
-     * @return the number of bytes sent on success or, @em -1 on failure.
-     */
-    result<size_t> send_to(const string& s, int flags, const sock_address& addr) {
-        return send_to(s.data(), s.length(), flags, addr);
     }
     /**
      * Sends a message to another socket.

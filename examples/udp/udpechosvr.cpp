@@ -63,7 +63,6 @@ using namespace std;
 
 template <typename UDPSOCK>
 void run_echo(UDPSOCK sock) {
-    ssize_t n;
     char buf[512];
 
     // Each UDP socket type knows its address type as `addr_t`
@@ -76,7 +75,7 @@ void run_echo(UDPSOCK sock) {
         if (!res || res.value() == 0)
             break;
 
-        sock.send_to(buf, n, srcAddr);
+        sock.send_to(buf, res.value(), srcAddr);
     }
 }
 
