@@ -16,7 +16,7 @@ There is also some experimental support for CAN bus programming on Linux using t
 
 All code in the library lives within the `sockpp` C++ namespace.
 
-**The 'master' branch is particularly unstable at the moment. You're advised to download the latest release for general use.**
+**The 'master' branch is starting the move toward the v2.0 API, and is particularly unstable at the moment. You're advised to download the latest release for general use.**
 
 ## Latest News
 
