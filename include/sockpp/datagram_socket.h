@@ -138,9 +138,11 @@ public:
      * @return A new datagram socket object that refers to the same socket
      *  	   as this one.
      */
-    datagram_socket clone() const {
-        auto h = base::clone().release();
-        return datagram_socket(h);
+    result<datagram_socket> clone() const {
+        if (auto res = base::clone(); !res)
+            return res.error();
+        else
+            return datagram_socket{res.release().release()};
     }
     /**
      * Connects the socket to the remote address.

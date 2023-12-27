@@ -96,7 +96,13 @@ int main(int argc, char* argv[]) {
     // We create a read thread and send it a clone (dup) of the
     // connector socket.
 
-    std::thread rdThr(read_thr, std::move(conn.clone()));
+    auto cloneRes = conn.clone();
+    if (!cloneRes) {
+        cerr << "Error cloning socket: " << cloneRes.error_message() << endl;
+        return 1;
+    }
+
+    std::thread rdThr(read_thr, std::move(cloneRes.release()));
 
     // The write loop get user input and writes it to the socket.
 

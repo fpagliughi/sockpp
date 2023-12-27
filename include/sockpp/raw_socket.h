@@ -113,9 +113,11 @@ public:
      * @return A new raw socket object that refers to the same socket
      *  	   as this one.
      */
-    raw_socket clone() const {
-        auto h = base::clone().release();
-        return raw_socket(h);
+    result<raw_socket> clone() const {
+        if (auto res = base::clone(); !res)
+            return res.error();
+        else
+            return raw_socket{res.release().release()};
     }
     /**
      * Connects the socket to the remote address.

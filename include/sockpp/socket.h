@@ -176,10 +176,11 @@ class socket
 {
     /** The OS integer socket handle */
     socket_t handle_{INVALID_SOCKET};
+
     /**
      * The OS-specific function to close a socket handle/
      * @param h The OS socket handle.
-     * @return @em true if the sock is closed, @em false on error.
+     * @return An error code on failure
      */
     result<> close(socket_t h) noexcept;
 
@@ -250,7 +251,9 @@ public:
      * This takes ownership of the underlying handle in sock.
      * @param sock An rvalue reference to a socket object.
      */
-    socket(socket&& sock) noexcept : handle_{sock.handle_} { sock.handle_ = INVALID_SOCKET; }
+    socket(socket&& sock) noexcept : handle_{std::move(sock.handle_)} {
+        sock.handle_ = INVALID_SOCKET;
+    }
     /**
      * Destructor closes the socket.
      */
@@ -267,7 +270,7 @@ public:
      * @param protocol The particular protocol to be used with the sockets
      *
      * @return An OS socket handle with the requested communications
-     *  	   characteristics, or error code on failure.
+     *  	   characteristics on success, or error code on failure.
      */
     static result<socket_t> create_handle(int domain, int type, int protocol = 0) noexcept {
         return check_socket(socket_t(::socket(domain, type, protocol)));
@@ -313,24 +316,24 @@ public:
      */
     socket_t handle() const { return handle_; }
     /**
-     * Gets the network family of the address to which the socket is bound.
+     * Gets the network family of the address to which the socket is bound,
+     * if it is bound.
      * @return The network family of the address (AF_INET, etc) to which the
      *             socket is bound. If the socket is not bound or the
      *             address is not known, returns AF_UNSPEC.
      */
     virtual sa_family_t family() const { return address().family(); }
     /**
-     * Creates a new socket that refers to this one.
+     * Make a copy of this socket.
      * This creates a new object with an independent lifetime, but refers
      * back to this same socket. On most systems, this duplicates the file
-     * handle using the dup() call.
-     * A typical use of this is to have separate threads for reading and
-     * writing the socket. One thread would get the original socket and the
-     * other would get the cloned one.
+     * handle using the dup() call. A typical use of this is to have
+     * separate threads for reading and writing the socket. One thread would
+     * get the original socket and the other would get the cloned one.
      * @return A new socket object that refers to the same socket as this
      *  	   one.
      */
-    socket clone() const;
+    result<socket> clone() const;
     /**
      * Creates a pair of connected sockets.
      *
@@ -363,6 +366,7 @@ public:
     }
     /**
      * Replaces the underlying managed socket object.
+     * This closes the existing socket before replacing the handle.
      * @param h The new socket handle to manage.
      */
     void reset(socket_t h = INVALID_SOCKET) noexcept;
@@ -381,8 +385,9 @@ public:
      * Binds the socket to the specified address.
      * @param addr The address to which we get bound.
      * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
-     *              or SO_REUSEPORT, and is set before it tries to bind. A
-     *              value of zero doesn;t set an option.
+     *              or SO_REUSEPORT if supported on the platform, and is set
+     *              before it tries to bind. A value of zero doesn't set any
+     *              option on the socket.
      * @return @em true on success, @em false on error
      */
     result<> bind(const sock_address& addr, int reuse = 0) noexcept;
@@ -443,11 +448,12 @@ public:
     }
     /**
      * Gets the value of a boolean socket option.
-     *
+     * This maps the OS options that use an C-style integer value where 0 is
+     * false, and non-zero is true.
      * @param level The protocol level at which the option resides, such as
      *  			SOL_SOCKET.
      * @param optname The option passed directly to the protocol module.
-     * @return The option value on success, an error code on failure.
+     * @return The option's value on success, an error code on failure.
      */
     result<bool> get_option(int level, int optname) const noexcept {
         int val{};
@@ -488,7 +494,8 @@ public:
     }
     /**
      * Sets the value of a boolean socket option.
-     *
+     * This maps the OS options that use an C-style integer value where 0 is
+     * false, and non-zero is true.
      * @param level The protocol level at which the option resides, such as
      *  			SOL_SOCKET.
      * @param optname The option passed directly to the protocol module.
@@ -506,7 +513,7 @@ public:
      * Places the socket into or out of non-blocking mode.
      * When in non-blocking mode, a call that is not immediately ready to
      * complete (read, write, accept, etc) will return immediately with the
-     * error EWOULDBLOCK.
+     * error errc::operation_would_block.
      * @param on Whether to turn non-blocking mode on or off.
      * @return @em true on success, @em false on failure.
      */

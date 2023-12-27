@@ -132,9 +132,11 @@ public:
      * @return A new stream socket object that refers to the same socket as
      *  	   this one.
      */
-    stream_socket clone() const {
-        auto h = base::clone().release();
-        return stream_socket(h);
+    result<stream_socket> clone() const {
+        if (auto res = base::clone(); !res)
+            return res.error();
+        else
+            return stream_socket{res.release().release()};
     }
     /**
      * Gets the value of the `TCP_NODELAY` option on the socket.

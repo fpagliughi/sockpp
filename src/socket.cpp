@@ -102,16 +102,15 @@ result<> socket::close(socket_t h) noexcept {
 // --------------------------------------------------------------------------
 
 result<socket> socket::create(int domain, int type, int protocol /*=0*/) noexcept {
-    socket sock(::socket(domain, type, protocol));
-    if (!sock)
-        return result<socket>::from_last_error();
-    return sock;
+    if (auto res = check_socket(::socket(domain, type, protocol)); !res)
+        return res.error();
+    else
+        return socket(res.value());
 }
 
 // --------------------------------------------------------------------------
-// TODO: result<socket>?
 
-socket socket::clone() const {
+result<socket> socket::clone() const {
     socket_t h = INVALID_SOCKET;
 #if defined(_WIN32)
     WSAPROTOCOL_INFOW protInfo;
@@ -122,6 +121,9 @@ socket socket::clone() const {
 #else
     h = ::dup(handle_);
 #endif
+
+    if (auto res = check_socket(h); !res)
+        return res.error();
 
     return socket(h);
 }
