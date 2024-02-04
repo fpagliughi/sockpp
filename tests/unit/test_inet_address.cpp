@@ -204,3 +204,11 @@ TEST_CASE("IPv4 create address", "[address]") {
     }
 #endif
 }
+
+TEST_CASE("inet_address with any", "[address]") {
+    auto addr = inet_address::create("127.0.0.1", PORT).value();
+
+    sock_address_any addrAny(addr);
+    REQUIRE(addrAny.size() == addr.size());
+    REQUIRE(addr == addrAny);
+}

@@ -60,9 +60,9 @@ result<stream_socket> stream_socket::create(int domain, int protocol /*=0*/) {
 // Reads from the socket. Note that we use ::recv() rather then ::read()
 // because many non-*nix operating systems make a distinction.
 
-result<size_t> stream_socket::read(void *buf, size_t n) {
+result<size_t> stream_socket::read(void* buf, size_t n) {
 #if defined(_WIN32)
-    auto cbuf = reinterpret_cast<char *>(buf);
+    auto cbuf = reinterpret_cast<char*>(buf);
     return check_res<ssize_t, size_t>(::recv(handle(), cbuf, int(n), 0));
 #else
     return check_res<ssize_t, size_t>(::recv(handle(), buf, n, 0));
@@ -73,8 +73,8 @@ result<size_t> stream_socket::read(void *buf, size_t n) {
 // Attempts to read the requested number of bytes by repeatedly calling
 // read() until it has the data or an error occurs.
 //
-result<size_t> stream_socket::read_n(void *buf, size_t n) {
-    uint8_t *b = reinterpret_cast<uint8_t *>(buf);
+result<size_t> stream_socket::read_n(void* buf, size_t n) {
+    uint8_t* b = reinterpret_cast<uint8_t*>(buf);
     size_t nx = 0;
 
     while (nx < n) {
@@ -90,7 +90,7 @@ result<size_t> stream_socket::read_n(void *buf, size_t n) {
 
 // --------------------------------------------------------------------------
 
-result<size_t> stream_socket::read(const std::vector<iovec> &ranges) {
+result<size_t> stream_socket::read(const std::vector<iovec>& ranges) {
     if (ranges.empty())
         return 0;
 
@@ -98,9 +98,8 @@ result<size_t> stream_socket::read(const std::vector<iovec> &ranges) {
     return check_res<ssize_t, size_t>(::readv(handle(), ranges.data(), int(ranges.size())));
 #else
     std::vector<WSABUF> bufs;
-    for (const auto &iovec : ranges) {
-        bufs.push_back(
-            {static_cast<ULONG>(iovec.iov_len), static_cast<CHAR *>(iovec.iov_base)}
+    for (const auto& iovec : ranges) {
+        bufs.push_back({static_cast<ULONG>(iovec.iov_len), static_cast<CHAR*>(iovec.iov_base)}
         );
     }
 
@@ -115,7 +114,7 @@ result<size_t> stream_socket::read(const std::vector<iovec> &ranges) {
 
 // --------------------------------------------------------------------------
 
-result<> stream_socket::read_timeout(const microseconds &to) {
+result<> stream_socket::read_timeout(const microseconds& to) {
     auto tv =
 #if defined(_WIN32)
         DWORD(duration_cast<milliseconds>(to).count());
@@ -127,9 +126,9 @@ result<> stream_socket::read_timeout(const microseconds &to) {
 
 // --------------------------------------------------------------------------
 
-result<size_t> stream_socket::write(const void *buf, size_t n) {
+result<size_t> stream_socket::write(const void* buf, size_t n) {
 #if defined(_WIN32)
-    auto cbuf = reinterpret_cast<const char *>(buf);
+    auto cbuf = reinterpret_cast<const char*>(buf);
     return check_res<ssize_t, size_t>(::send(handle(), cbuf, int(n), 0));
 #else
     return check_res<ssize_t, size_t>(::send(handle(), buf, n, 0));
@@ -138,8 +137,8 @@ result<size_t> stream_socket::write(const void *buf, size_t n) {
 
 // --------------------------------------------------------------------------
 
-result<size_t> stream_socket::write_n(const void *buf, size_t n) {
-    const uint8_t *b = reinterpret_cast<const uint8_t *>(buf);
+result<size_t> stream_socket::write_n(const void* buf, size_t n) {
+    const uint8_t* b = reinterpret_cast<const uint8_t*>(buf);
     size_t nx = 0;
 
     while (nx < n) {
@@ -154,14 +153,13 @@ result<size_t> stream_socket::write_n(const void *buf, size_t n) {
 
 // --------------------------------------------------------------------------
 
-result<size_t> stream_socket::write(const std::vector<iovec> &ranges) {
+result<size_t> stream_socket::write(const std::vector<iovec>& ranges) {
 #if !defined(_WIN32)
     return check_res<ssize_t, size_t>(::writev(handle(), ranges.data(), int(ranges.size())));
 #else
     std::vector<WSABUF> bufs;
-    for (const auto &iovec : ranges) {
-        bufs.push_back(
-            {static_cast<ULONG>(iovec.iov_len), static_cast<CHAR *>(iovec.iov_base)}
+    for (const auto& iovec : ranges) {
+        bufs.push_back({static_cast<ULONG>(iovec.iov_len), static_cast<CHAR*>(iovec.iov_base)}
         );
     }
 
@@ -176,7 +174,7 @@ result<size_t> stream_socket::write(const std::vector<iovec> &ranges) {
 
 // --------------------------------------------------------------------------
 
-result<> stream_socket::write_timeout(const microseconds &to) {
+result<> stream_socket::write_timeout(const microseconds& to) {
     auto tv =
 #if defined(_WIN32)
         DWORD(duration_cast<milliseconds>(to).count());

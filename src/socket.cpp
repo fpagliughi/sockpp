@@ -42,6 +42,12 @@
 #include <cstring>
 
 #include "sockpp/error.h"
+#include "sockpp/version.h"
+
+#if defined(SOCKPP_OPENSSL)
+    #include <openssl/err.h>
+    #include <openssl/ssl.h>
+#endif
 
 using namespace std::chrono;
 
@@ -74,6 +80,11 @@ socket_initializer::socket_initializer() {
 #else
     // Don't signal on socket write errors.
     ::signal(SIGPIPE, SIG_IGN);
+#endif
+
+#if defined(SOCKPP_OPENSSL)
+    SSL_library_init();
+    SSL_load_error_strings();
 #endif
 }
 

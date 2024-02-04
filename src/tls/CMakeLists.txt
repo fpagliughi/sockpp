@@ -1,6 +1,6 @@
 # CMakeLists.txt
 #
-# Source CMake build file (src/) for the 'sockpp' library.
+# Source CMake build file (src/tls) for the 'sockpp' library.
 #
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
@@ -36,73 +36,13 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-add_library(sockpp-objs OBJECT
-	acceptor.cpp
-	connector.cpp
-	datagram_socket.cpp
-  error.cpp
-	inet_address.cpp
-	inet6_address.cpp
-	socket.cpp
-	stream_socket.cpp
-)
+# ----- Mbed TLS -----
 
-if(UNIX)
-	target_sources(sockpp-objs PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/unix/unix_address.cpp
-	)
-	if(SOCKPP_WITH_CAN)
-		target_sources(sockpp-objs PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
-		)
-	endif()
-endif()
+#target_sources(sockpp-objs PUBLIC
+#  ${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/mbedtls_context.cpp
+#)
 
-# Secure TLS library, is one selected
-
-if(SOCKPP_WITH_OPENSSL)
-	target_sources(sockpp-objs PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_context.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_socket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_error.cpp
-	)
-	target_link_libraries(sockpp-objs 
-		PUBLIC
-			OpenSSL::SSL 
-			OpenSSL::Crypto
-	)
-elseif(SOCKPP_WITH_MBEDTLS)
-	target_sources(sockpp-objs PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_socket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_error.cpp
-	)
-	target_link_libraries(sockpp-objs 
-		PUBLIC 
-			MbedTLS::mbedtls
-			MbedTLS::mbedcrypto
-			MbedTLS::mbedx509
-	)
-endif()
+# ----- OpenSSL -----
 
 
-set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
-
-target_include_directories(sockpp-objs
-	PUBLIC
-		$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
-		$<INSTALL_INTERFACE:include>
-	PRIVATE 
-		${SOCKPP_GENERATED_DIR}/include
-		${CMAKE_SOURCE_DIR}/src
-)
-
-# --- Warnings ---
-
-target_compile_options(sockpp-objs PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W3>
-  $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Wdocumentation>
-  $<$<NOT:$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:Clang>>>:-Wall -Wextra -Wpedantic>
-)
 

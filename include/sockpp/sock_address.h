@@ -113,7 +113,7 @@ public:
      * @return @em true if this has been set as some address, whether or not
      *  	   is is valid.
      */
-    virtual operator bool() const noexcept { return is_set(); }
+    virtual explicit operator bool() const noexcept { return is_set(); }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -163,7 +163,7 @@ public:
     sock_address_any(const sockaddr* addr, socklen_t n, error_code& ec) noexcept {
         ec = (size_t(n) > MAX_SZ) ? std::make_error_code(errc::invalid_argument)
                                   : error_code{};
-        if (ec)
+        if (!ec)
             std::memcpy(&addr_, addr, sz_ = n);
     }
     /**
@@ -187,14 +187,14 @@ public:
     sock_address_any(const sockaddr_storage& addr, socklen_t n, error_code& ec) noexcept {
         ec = (size_t(n) > MAX_SZ) ? std::make_error_code(errc::invalid_argument)
                                   : error_code{};
-        if (ec)
+        if (!ec)
             std::memcpy(&addr_, &addr, sz_ = n);
     }
     /**
      * Copies another address to this one.
      * @param addr The other address to copy into this one.
      */
-    sock_address_any(const sock_address& addr)
+    sock_address_any(const sock_address& addr) noexcept
         : sock_address_any(addr.sockaddr_ptr(), addr.size()) {}
     /**
      * Gets the size of the address.

@@ -171,6 +171,8 @@ class datagram_socket_tmpl : public datagram_socket
 {
     /** The base class */
     using base = datagram_socket;
+    /** This class */
+    using self = datagram_socket_tmpl;
 
 public:
     /** The address family for this type of address */
@@ -178,7 +180,7 @@ public:
     /** The type of address for the socket. */
     using addr_t = ADDR;
     /** A pair of datagram sockets */
-    using socket_pair = std::tuple<datagram_socket_tmpl, datagram_socket_tmpl>;
+    using socket_pair = std::tuple<self, self>;
 
     /**
      * Creates an unbound datagram socket.
@@ -234,9 +236,7 @@ public:
         }
         else {
             auto [s1, s2] = res.release();
-            return std::make_tuple<datagram_socket_tmpl, datagram_socket_tmpl>(
-                datagram_socket_tmpl{s1.release()}, datagram_socket_tmpl{s2.release()}
-            );
+            return std::make_tuple<self, self>(self{s1.release()}, self{s2.release()});
         }
     }
     /**

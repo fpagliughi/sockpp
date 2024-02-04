@@ -1,9 +1,9 @@
-// error.cpp
+// openssl_socket.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2023-2024 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,21 +33,67 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
-//
 
-#include "sockpp/error.h"
+#include "sockpp/tls/openssl_socket.h"
+
+#include "sockpp/tls/openssl_context.h"
+#include "sockpp/tls/openssl_error.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-#if !defined(_WIN32)
-// A global function returning a static instance of the custom category
-const ::detail::gai_errc_category& gai_errc_category() {
-    static ::detail::gai_errc_category c;
-    return c;
+tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock)
+    : base{std::move(sock)}, ssl_{::SSL_new(ctx.ctx_)} {
+    if (!ssl_)
+        throw tls_error::from_last_error();
+
+    if (auto res = tls_check_res(::SSL_set_fd(ssl_, handle())); !res)
+        throw res;
 }
-#endif
+
+tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock, error_code& ec) noexcept
+    : base{std::move(sock)}, ssl_{::SSL_new(ctx.ctx_)} {
+    if (!ssl_ || ::SSL_set_fd(ssl_, handle()) <= 0)
+        ec = tls_last_error();
+}
+
+tls_socket::~tls_socket() {
+    if (ssl_)
+        ::SSL_free(ssl_);
+}
+
+tls_socket& tls_socket::operator=(tls_socket&& rhs) {
+    if (&rhs != this) {
+        base::operator=(std::move(rhs));
+        ssl_ = rhs.ssl_;
+
+        rhs.ssl_ = nullptr;
+    }
+    return *this;
+}
+
+result<size_t> tls_socket::read(void* buf, size_t n) {
+    size_t nx;
+    int ret = ::SSL_read_ex(ssl_, buf, n, &nx);
+    return tls_check_io(ret, nx);
+}
+
+result<> tls_socket::read_timeout(const microseconds& to) {
+    // TODO: Is this adequate?
+    return stream_socket::read_timeout(to);
+}
+
+result<size_t> tls_socket::write(const void* buf, size_t n) {
+    size_t nx;
+    int ret = ::SSL_write_ex(ssl_, buf, n, &nx);
+    return tls_check_io(ret, nx);
+}
+
+result<> tls_socket::write_timeout(const microseconds& to) {
+    // TODO: Is this adequate?
+    return stream_socket::write_timeout(to);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

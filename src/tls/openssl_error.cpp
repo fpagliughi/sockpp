@@ -1,9 +1,9 @@
-// error.cpp
+// openssl_error.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2024 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,19 +35,32 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/error.h"
+#include "sockpp/tls/openssl_error.h"
+
+#include <openssl/err.h>
+
+#include <iostream>
+
+namespace detail {
+
+std::string tls_errc_category::message(int c) const {
+    char buf[128];
+    std::cout << "OpenSSL error: " << c << std::endl;
+    ::ERR_error_string_n((unsigned long)c, buf, sizeof(buf));
+    return std::string(buf);
+}
+
+}  // namespace detail
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-#if !defined(_WIN32)
 // A global function returning a static instance of the custom category
-const ::detail::gai_errc_category& gai_errc_category() {
-    static ::detail::gai_errc_category c;
+const ::detail::tls_errc_category& tls_errc_category() {
+    static ::detail::tls_errc_category c;
     return c;
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

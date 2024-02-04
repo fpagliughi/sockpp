@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017-2018 Frank Pagliughi
+# Copyright (c) 2017-2023 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,8 +51,8 @@ option(SOCKPP_BUILD_STATIC "Build static library" OFF)
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
-#option(SOCKPP_WITH_OPENSSL "TLS Secure Sockets with OpenSSL" OFF)
-#option(SOCKPP_WITH_MBEDTLS "TLS Secure Sockets with Mbed TLS" OFF)
+option(SOCKPP_WITH_OPENSSL "TLS Secure Sockets with OpenSSL" OFF)
+option(SOCKPP_WITH_MBEDTLS "TLS Secure Sockets with Mbed TLS" OFF)
 option(SOCKPP_WITH_CAN "Include support for Linux SocketCAN components" OFF)
 
 # ----- Find any dependencies -----
@@ -138,6 +138,21 @@ if(${SOCKPP_BUILD_SHARED})
 	)
 
 	list(APPEND TARGET_FILES ${SOCKPP_SHARED_LIBRARY})
+
+  if(SOCKPP_WITH_OPENSSL)
+    target_link_libraries(${SOCKPP_SHARED_LIBRARY}
+      PUBLIC
+        OpenSSL::SSL 
+        OpenSSL::Crypto
+    )
+  elseif(SOCKPP_WITH_MBEDTLS)
+    target_link_libraries(${SOCKPP_SHARED_LIBRARY} 
+      PUBLIC
+        MbedTLS::mbedtls
+        MbedTLS::mbedcrypto
+        MbedTLS::mbedx509
+    )
+  endif()
 endif()
 
 if(${SOCKPP_BUILD_STATIC})
@@ -168,6 +183,20 @@ if(${SOCKPP_BUILD_STATIC})
 	endif()
 
 	list(APPEND TARGET_FILES ${SOCKPP_STATIC_LIBRARY})
+
+  if(SOCKPP_WITH_OPENSSL)
+    target_link_libraries(${SOCKPP_STATIC_LIBRARY}
+      PUBLIC
+        OpenSSL::SSL 
+        OpenSSL::Crypto
+    )
+  elseif(SOCKPP_WITH_MBEDTLS)
+    target_link_libraries(${SOCKPP_STATIC_LIBRARY} PUBLIC
+      MbedTLS::mbedtls
+      MbedTLS::mbedcrypto
+      MbedTLS::mbedx509
+    )
+  endif()
 endif()
 
 # --- Install Targets ---

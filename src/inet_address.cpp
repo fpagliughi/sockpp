@@ -55,7 +55,7 @@ inet_address::inet_address(uint32_t addr, in_port_t port) {
 
 // --------------------------------------------------------------------------
 
-inet_address::inet_address(const std::string& saddr, in_port_t port) {
+inet_address::inet_address(const string& saddr, in_port_t port) {
     auto res = create(saddr, port);
     if (!res)
         throw system_error{res.error()};
@@ -73,7 +73,7 @@ inet_address::inet_address(const string& saddr, in_port_t port, error_code& ec) 
 
 // --------------------------------------------------------------------------
 
-result<in_addr_t> inet_address::resolve_name(const std::string& saddr) noexcept {
+result<in_addr_t> inet_address::resolve_name(const string& saddr) noexcept {
 #if !defined(_WIN32)
     in_addr ia;
     if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
@@ -107,7 +107,7 @@ result<in_addr_t> inet_address::resolve_name(const std::string& saddr) noexcept 
 
 // --------------------------------------------------------------------------
 
-result<inet_address> inet_address::create(const std::string& saddr, in_port_t port) noexcept {
+result<inet_address> inet_address::create(const string& saddr, in_port_t port) noexcept {
     auto res = resolve_name(saddr.c_str());
     if (!res)
         return res.error();
@@ -127,7 +127,7 @@ result<inet_address> inet_address::create(const std::string& saddr, in_port_t po
 string inet_address::to_string() const {
     char buf[INET_ADDRSTRLEN];
     auto str = inet_ntop(AF_INET, (void*)&(addr_.sin_addr), buf, INET_ADDRSTRLEN);
-    return std::string(str ? str : "<unknown>") + ":" + std::to_string(unsigned(port()));
+    return string(str ? str : "<unknown>") + ":" + std::to_string(unsigned(port()));
 }
 
 /////////////////////////////////////////////////////////////////////////////

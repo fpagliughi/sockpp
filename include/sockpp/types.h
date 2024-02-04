@@ -53,7 +53,7 @@
 namespace sockpp {
 
 /** Port used for example apps and unit tests */
-constexpr in_port_t TEST_PORT = 12345;
+// constexpr in_port_t TEST_PORT = 12345;
 
 /////////////////////////////////////////////////////////////////////////////
 

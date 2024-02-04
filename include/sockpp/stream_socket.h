@@ -258,6 +258,8 @@ class stream_socket_tmpl : public stream_socket
 {
     /** The base class */
     using base = stream_socket;
+    /** This class */
+    using self = stream_socket_tmpl;
 
 public:
     /** The address family for this type of address */
@@ -323,9 +325,7 @@ public:
         }
         else {
             auto [s1, s2] = res.release();
-            return std::make_tuple<stream_socket_tmpl, stream_socket_tmpl>(
-                stream_socket_tmpl{s1.release()}, stream_socket_tmpl{s2.release()}
-            );
+            return std::make_tuple<self, self>(self{s1.release()}, self{s2.release()});
         }
     }
     /**

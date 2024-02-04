@@ -109,12 +109,10 @@ int main(int argc, char* argv[]) {
     string s, sret;
     while (getline(cin, s) && !s.empty()) {
         if (auto res = conn.write(s); !res || res != s.length()) {
-            if (res == errc::broken_pipe) {
+            if (res == errc::broken_pipe)
                 cerr << "It appears that the socket was closed." << endl;
-            }
-            else {
+            else
                 cerr << "Error writing to the TCP stream :" << res.error_message() << endl;
-            }
             break;
         }
     }

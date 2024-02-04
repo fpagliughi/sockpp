@@ -1,3 +1,4 @@
+
 // error.cpp
 //
 // --------------------------------------------------------------------------
@@ -35,19 +36,17 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/error.h"
+#include "sockpp/tls/mbedtls/mbedtls_error.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-#if !defined(_WIN32)
 // A global function returning a static instance of the custom category
-const ::detail::gai_errc_category& gai_errc_category() {
-    static ::detail::gai_errc_category c;
+const ::detail::tls_errc_category& tls_errc_category() {
+    static ::detail::tls_errc_category c;
     return c;
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

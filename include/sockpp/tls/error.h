@@ -1,9 +1,16 @@
-// error.cpp
-//
+/**
+ * @file tls_error.h
+ *
+ * Master include for sockpp TLS error objects.
+ *
+ *
+ * @date January 2024
+ */
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2024 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,21 +40,18 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
-//
 
-#include "sockpp/error.h"
+#ifndef __sockpp_tls_error_h
+#define __sockpp_tls_error_h
 
-namespace sockpp {
+#include "sockpp/version.h"
 
-/////////////////////////////////////////////////////////////////////////////
-
-#if !defined(_WIN32)
-// A global function returning a static instance of the custom category
-const ::detail::gai_errc_category& gai_errc_category() {
-    static ::detail::gai_errc_category c;
-    return c;
-}
+#if defined(SOCKPP_OPENSSL)
+    #include "sockpp/tls/openssl_error.h"
+#elif defined(SOCKPP_MBEDTLS)
+    #include "sockpp/tls/mbedtls_error.h"
+#else
+    #error "No TLS library chosen for sockpp"
 #endif
 
-/////////////////////////////////////////////////////////////////////////////
-}  // namespace sockpp
+#endif  // __sockpp_tls_error_h

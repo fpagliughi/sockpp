@@ -1,5 +1,8 @@
-// error.cpp
+// test_sock_address.cpp
 //
+// Unit tests for the generic address classes.
+//
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
@@ -35,19 +38,21 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/error.h"
+#include "catch2_version.h"
+#include "sockpp/sock_address.h"
 
-namespace sockpp {
+using namespace sockpp;
 
-/////////////////////////////////////////////////////////////////////////////
+TEST_CASE("sock_address_any ctor", "[address]") {
+    sockaddr_in sin;
+    const size_t N = sizeof(sockaddr_in);
+    memset(&sin, 0, N);
+    sin.sin_family = AF_INET;
 
-#if !defined(_WIN32)
-// A global function returning a static instance of the custom category
-const ::detail::gai_errc_category& gai_errc_category() {
-    static ::detail::gai_errc_category c;
-    return c;
+    error_code ec;
+    sock_address_any addr(reinterpret_cast<sockaddr*>(&sin), N, ec);
+
+    REQUIRE(!ec);
+    REQUIRE(addr.family() == AF_INET);
+    REQUIRE(addr.size() == N);
 }
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
-}  // namespace sockpp

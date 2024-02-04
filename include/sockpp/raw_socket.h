@@ -146,6 +146,8 @@ class raw_socket_tmpl : public raw_socket
 {
     /** The base class */
     using base = raw_socket;
+    /** This class */
+    using self = raw_socket_tmpl;
 
 public:
     /** The address family for this type of address */
@@ -202,11 +204,10 @@ public:
      * @return A std::tuple of stream sockets. On error both sockets will be
      *  	   in an error state with the last error set.
      */
-    static std::tuple<raw_socket_tmpl, raw_socket_tmpl> pair(int protocol = 0) {
+    static std::tuple<self, self> pair(int protocol = 0) {
         auto pr = base::pair(addr_t::ADDRESS_FAMILY, COMM_TYPE, protocol);
-        return std::make_tuple<raw_socket_tmpl, raw_socket_tmpl>(
-            raw_socket_tmpl{std::get<0>(pr).release()},
-            raw_socket_tmpl{std::get<1>(pr).release()}
+        return std::make_tuple<self, self>(
+            self{std::get<0>(pr).release()}, self{std::get<1>(pr).release()}
         );
     }
     /**

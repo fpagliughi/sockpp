@@ -116,13 +116,13 @@ public:
     /**
      * Gets short descriptive name for the category.
      */
-    const char *name() const noexcept override final { return "GetAddrInfoError"; }
+    const char* name() const noexcept override final { return "GetAddrInfoError"; }
 
     /**
      * Gets the string representation of the error.
      */
     std::string message(int c) const override final {
-        const char *s = gai_strerror(c);
+        const char* s = gai_strerror(c);
         return s ? std::string(s) : std::string();
     }
 };
@@ -130,7 +130,7 @@ public:
 
 namespace sockpp {
 // Declare a global function returning a static instance of the custom category
-const ::detail::gai_errc_category &gai_errc_category();
+const ::detail::gai_errc_category& gai_errc_category();
 
 // Overload the global make_error_code() free function with our
 // custom enum. It will be found via ADL by the compiler if needed.
