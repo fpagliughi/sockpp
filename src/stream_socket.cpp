@@ -107,7 +107,7 @@ result<size_t> stream_socket::read(const std::vector<iovec>& ranges) {
 
     auto ret = ::WSARecv(handle(), bufs.data(), nbuf, &nread, &flags, nullptr, nullptr);
     if (ret == SOCKET_ERROR)
-        return result<>::from_last_error();
+        return result<size_t>::from_last_error();
     return size_t(nread);
 #endif
 }
@@ -168,7 +168,7 @@ result<size_t> stream_socket::write(const std::vector<iovec>& ranges) {
     if (::WSASend(handle(), bufs.data(), nmsg, &nwritten, 0, nullptr, nullptr) ==
         SOCKET_ERROR)
         return result<size_t>::from_last_error();
-    return size_t(nread);
+    return size_t(nwritten);
 #endif
 }
 

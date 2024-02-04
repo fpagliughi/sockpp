@@ -622,7 +622,7 @@ public:
     result<size_t> send_to(const void* buf, size_t n, int flags, const sock_address& addr) {
 #if defined(_WIN32)
         auto cbuf = reinterpret_cast<const char*>(buf);
-        return check_res(
+        return check_res<size_t>(
             ::sendto(handle(), cbuf, int(n), flags, addr.sockaddr_ptr(), addr.size())
         );
 #else

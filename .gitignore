@@ -46,3 +46,5 @@ lib/
 
 # Misc
 fmt.sh
+
+.vscode/
