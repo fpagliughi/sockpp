@@ -11,7 +11,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2023 Frank Pagliughi
+// Copyright (c) 2014-2024 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,7 @@ public:
      * address.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
-     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
      *              value of zero doesn;t set an option.
      * @throws std::system_error
@@ -126,6 +126,19 @@ public:
      */
     acceptor(const sock_address& addr, int queSize, error_code& ec) noexcept {
         ec = open(addr, queSize).error();
+    }
+    /**
+     * Creates an acceptor socket and starts it listening to the specified
+     * address.
+     * @param addr The address to which this server should be bound.
+     * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn;t set an option.
+     * @param ec The error code, on failure
+     */
+    acceptor(const sock_address& addr, int queSize, int reuse, error_code& ec) noexcept {
+        ec = open(addr, queSize, reuse).error();
     }
     /**
      * Move constructor.
@@ -163,7 +176,7 @@ public:
      * listening.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
-     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
      *              value of zero doesn;t set an option.
      * @return The error code on failure.
@@ -221,13 +234,25 @@ public:
             throw std::system_error{res.error()};
     }
     /**
-     * Creates a acceptor and starts it listening on the specified address.
+     * Creates an acceptor and starts it listening on the specified address.
      * @param addr The TCP address on which to listen.
      * @param queSize The listener queue size.
      * @param ec The error code, on failure
      */
     acceptor_tmpl(const addr_t& addr, int queSize, error_code& ec) noexcept {
         ec = open(addr, queSize).error();
+    }
+    /**
+     * Creates a acceptor and starts it listening on the specified address.
+     * @param addr The TCP address on which to listen.
+     * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn't set an option.
+     * @param ec The error code, on failure
+     */
+    acceptor_tmpl(const addr_t& addr, int queSize, int reuse, error_code& ec) noexcept {
+        ec = open(addr, queSize, reuse).error();
     }
     /**
      * Creates a acceptor and starts it listening on the specified port.
@@ -251,6 +276,20 @@ public:
      */
     acceptor_tmpl(in_port_t port, int queSize, error_code& ec) noexcept {
         ec = open(port, queSize).error();
+    }
+    /**
+     * Creates a acceptor and starts it listening on the specified port.
+     * The acceptor binds to the specified port for any address on the local
+     * host.
+     * @param port The TCP port on which to listen.
+     * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn't set an option.
+     * @param ec The error code, on failure
+     */
+    acceptor_tmpl(in_port_t port, int queSize, int reuse, error_code& ec) noexcept {
+        ec = open(port, queSize, reuse).error();
     }
     /**
      * Move constructor.
@@ -290,7 +329,7 @@ public:
      * listening.
      * @param addr The address to which this server should be bound.
      * @param queSize The listener queue size.
-     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
      *              value of zero doesn;t set an option.
      * @return @em true on success, @em false on error
@@ -303,7 +342,7 @@ public:
      * listening.
      * @param port The TCP port on which to listen.
      * @param queSize The listener queue size.
-     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
      *              value of zero doesn;t set an option.
      * @return @em true on success, @em false on error

@@ -167,7 +167,11 @@ public:
             ctx_.set_verify(tls_context::verify_t::PEER);
         return *this;
     }
-
+    /**
+     * Load the certificate chain from a file.
+     * @param certFile The certificate chain file.
+     * @return Error code on failure.
+     */
     auto cert_file(const string& certFile) -> self& {
         if (!ec_) {
             if (auto res = ctx_.set_cert_file(certFile); !res)
@@ -175,7 +179,11 @@ public:
         }
         return *this;
     }
-
+    /**
+     * Set the private key from a file.
+     * @param keyFile The private key file.
+     * @return Error code on faliure.
+     */
     auto key_file(const string& keyFile) -> self& {
         if (!ec_) {
             if (auto res = ctx_.set_key_file(keyFile); !res)

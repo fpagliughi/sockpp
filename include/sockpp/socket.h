@@ -384,7 +384,7 @@ public:
     /**
      * Binds the socket to the specified address.
      * @param addr The address to which we get bound.
-     * @param reuse A reuse option for the socket. This can be SO_REUSE_ADDR
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT if supported on the platform, and is set
      *              before it tries to bind. A value of zero doesn't set any
      *              option on the socket.

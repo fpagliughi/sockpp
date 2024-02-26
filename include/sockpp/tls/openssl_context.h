@@ -174,7 +174,7 @@ public:
      */
     result<> set_cert_file(const string& certFile);
     /**
-     * Set the private key file.
+     * Set the private key from a file.
      * @param keyFile The private key file.
      * @return Error code on faliure.
      */
