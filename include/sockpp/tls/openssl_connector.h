@@ -43,6 +43,7 @@
 #ifndef __sockpp_tls_openssl_connector_h
 #define __sockpp_tls_openssl_connector_h
 
+#include "sockpp/connector.h"
 #include "sockpp/tls/socket.h"
 
 namespace sockpp {

@@ -127,8 +127,9 @@ result<socket> socket::clone() const {
     WSAPROTOCOL_INFOW protInfo;
     if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0)
         h = check_socket(
-            ::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED)
-        ).value();
+                ::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED)
+        )
+                .value();
 #else
     h = ::dup(handle_);
 #endif

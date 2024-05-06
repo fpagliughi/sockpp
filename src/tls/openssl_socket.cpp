@@ -95,5 +95,9 @@ result<> tls_socket::write_timeout(const microseconds& to) {
     return stream_socket::write_timeout(to);
 }
 
+bool tls_socket::received_shutdown() {
+    return (::SSL_get_shutdown(ssl_) & SSL_RECEIVED_SHUTDOWN) == SSL_RECEIVED_SHUTDOWN;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

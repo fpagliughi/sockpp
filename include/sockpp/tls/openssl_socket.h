@@ -133,7 +133,7 @@ public:
      */
     tls_socket& operator=(tls_socket&& rhs);
 
-    // I/O primitives must be reimplemented in subclasses:
+    // I/O primitives
 
     using base::read;
     result<size_t> read(void* buf, size_t n);
@@ -151,6 +151,13 @@ public:
         (void)on;
         return none{};
     }
+
+    /**
+     * Determines if the socket received a shutdown from the peer.
+     * @return @em true if the socet received a shutdown from the peer, @em
+     *         false otherwise.
+     */
+    bool received_shutdown();
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -89,6 +89,15 @@ result<> tls_context::set_default_trust_store() {
     return tls_check_res_none(::SSL_CTX_set_default_verify_paths(ctx_));
 }
 
+result<> tls_context::set_trust_store(
+    const std::optional<string>& caFile, const std::optional<string>& caPath /*=std::nullopt*/
+) {
+    return tls_check_res_none(::SSL_CTX_load_verify_locations(
+        ctx_, caFile ? caFile.value().c_str() : nullptr,
+        caPath ? caPath.value().c_str() : nullptr
+    ));
+}
+
 void tls_context::set_verify(verify_t mode) noexcept {
     int vmode = SSL_VERIFY_NONE;
     switch (mode) {
@@ -164,5 +173,4 @@ tls_socket tls_context::wrap_socket(
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
 }  // namespace sockpp

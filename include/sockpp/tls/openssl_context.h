@@ -48,6 +48,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "sockpp/platform.h"
@@ -164,9 +165,26 @@ public:
             ::SSL_CTX_load_verify_locations(ctx_, nullptr, caPath.c_str())
         );
     }
-
+    /**
+     * Sets a trust file and/or a trust path at the same time.
+     * @param caFile The path to a file of CA certificates to be used as the
+     *               trust store.
+     * @param caPath The  directory containing CA certificate files as the
+     *               trust store.
+     * @return The error code on failure
+     */
+    result<> set_trust_store(
+        const std::optional<string>& caFile,
+        const std::optional<string>& caPath = std::nullopt
+    );
+    /**
+     * Sets the verify flag in the context to the specified mode.
+     * This wraps <a
+     * href="https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_verify.html">
+     * SSL_CTX_set_verify</a>
+     * @param mode The verification mode.
+     */
     void set_verify(verify_t mode) noexcept;
-
     /**
      * Load the certificate chain from a file.
      * @param certFile The certificate chain file.
@@ -179,12 +197,10 @@ public:
      * @return Error code on faliure.
      */
     result<> set_key_file(const string& keyFile);
-
     /**
      * Overrides the set of trusted root certificates used for validation.
      */
     void set_root_certs(const string& certData);
-
     /**
      * Configures whether the peer is required to present a valid
      * certificate, for a connection using the given role.

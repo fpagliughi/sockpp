@@ -39,7 +39,7 @@
 #include <iostream>
 #include <string>
 
-#include "sockpp/tcp_connector.h"
+#include "sockpp/inet_address.h"
 #include "sockpp/tls/connector.h"
 #include "sockpp/tls/context.h"
 #include "sockpp/tls/error.h"
@@ -50,11 +50,11 @@ using namespace std;
 int main(int argc, char* argv[]) {
     cout << "Sample TLS client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
-    string host = (argc > 1) ? argv[1] : "example.org";  //"localhost";
+    string host = (argc > 1) ? argv[1] : "example.org";
     in_port_t port = (argc > 2) ? atoi(argv[2]) : 443;
-    string trustStore = (argc > 3) ? argv[3] : "default";
+    string trustStore = (argc > 3) ? argv[3] : "";
 
-    const string REQUEST{"GET / HTTP/1.0\r\n\r\n"};
+    const string REQUEST = string{"GET / HTTP/1.1\r\nHost: "} + host + "\r\n\r\n";
 
     sockpp::initialize();
 
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     auto ctx = sockpp::tls_context_builder::client().verify_peer().finalize();
 
-    if (trustStore == "default")
+    if (trustStore.empty())
         ctx.set_default_trust_store();
     else
         ctx.set_trust_file(trustStore);
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
 
     // Read the result
 
-    while (true) {
+    while (!conn.received_shutdown()) {
         char buf[512];
 
         if (auto res = conn.read(buf, sizeof(buf)); !res) {
