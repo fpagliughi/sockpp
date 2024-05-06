@@ -38,10 +38,6 @@
 
 # ----- Mbed TLS -----
 
-#target_sources(sockpp-objs PUBLIC
-#  ${CMAKE_CURRENT_SOURCE_DIR}/mbedtls/mbedtls_context.cpp
-#)
-
 # ----- OpenSSL -----
 
 

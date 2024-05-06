@@ -48,28 +48,20 @@ set(THREADED_EXECUTABLES
 )
 
 set(EXECUTABLES
-  tlscli
-  tlsconn
-  ${THREADED_EXECUTABLES}
+    tlscli
+    tlsconn
+    ${THREADED_EXECUTABLES}
 )
 
 foreach(EXECUTABLE ${EXECUTABLES})
-	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-	
-	target_include_directories(${EXECUTABLE}
-		PUBLIC
-			${SOCKPP_INCLUDE_DIR}
-		PRIVATE
-			${SOCKPP_GENERATED_DIR}/include
-	)
-
-	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+    add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+    target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
 endforeach()
 
 # --- Additional linkage to Threads ---
 
 foreach(EXECUTABLE ${THREADED_EXECUTABLES})
-  target_link_libraries(${EXECUTABLE} Threads::Threads)
+    target_link_libraries(${EXECUTABLE} Threads::Threads)
 endforeach()
 
 # --- Install examples ---

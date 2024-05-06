@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017-2023 Frank Pagliughi
+# Copyright (c) 2017-2024 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,73 +36,130 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-add_library(sockpp-objs OBJECT
-	acceptor.cpp
-	connector.cpp
-	datagram_socket.cpp
-  error.cpp
-	inet_address.cpp
-	inet6_address.cpp
-	socket.cpp
-	stream_socket.cpp
+include(GenerateExportHeader)
+
+# The common sources.
+# Additional files are added below, as configured.
+set(SOURCES
+    acceptor.cpp
+    connector.cpp
+    datagram_socket.cpp
+    error.cpp
+    inet_address.cpp
+    inet6_address.cpp
+    socket.cpp
+    stream_socket.cpp
 )
+
+# Additional sources (platform & config)
 
 if(UNIX)
-	target_sources(sockpp-objs PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/unix/unix_address.cpp
-	)
-	if(SOCKPP_WITH_CAN)
-		target_sources(sockpp-objs PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
-		)
-	endif()
+    list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/unix/unix_address.cpp
+    )
+    if(SOCKPP_WITH_CAN)
+        list(APPEND SOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
+        )
+    endif()
 endif()
-
-# Secure TLS library, is one selected
 
 if(SOCKPP_WITH_OPENSSL)
-	target_sources(sockpp-objs PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_context.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_socket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_error.cpp
-	)
-	target_link_libraries(sockpp-objs 
-		PUBLIC
-			OpenSSL::SSL 
-			OpenSSL::Crypto
-	)
+    list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_context.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_socket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_error.cpp
+    )
 elseif(SOCKPP_WITH_MBEDTLS)
-	target_sources(sockpp-objs PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_context.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_socket.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_error.cpp
-	)
-	target_link_libraries(sockpp-objs 
-		PUBLIC 
-			MbedTLS::mbedtls
-			MbedTLS::mbedcrypto
-			MbedTLS::mbedx509
-	)
+    list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_context.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_socket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_error.cpp
+    )
 endif()
 
+# -- The shared library (if configured) ---
 
-set_target_properties(sockpp-objs PROPERTIES POSITION_INDEPENDENT_CODE 1)
+if(${SOCKPP_BUILD_SHARED})
+    message(STATUS "Creating shared library")
 
-target_include_directories(sockpp-objs
-	PUBLIC
-		$<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
-		$<INSTALL_INTERFACE:include>
-	PRIVATE 
-		${SOCKPP_GENERATED_DIR}/include
-		${CMAKE_SOURCE_DIR}/src
-)
+    add_library(sockpp-shared SHARED ${SOURCES})
 
-# --- Warnings ---
+    add_library(Sockpp::sockpp-shared ALIAS sockpp-shared)
+    add_library(Sockpp::sockpp ALIAS sockpp-shared)
 
-target_compile_options(sockpp-objs PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W3>
-  $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Wdocumentation>
-  $<$<NOT:$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:Clang>>>:-Wall -Wextra -Wpedantic>
-)
+    set_target_properties(sockpp-shared PROPERTIES
+        OUTPUT_NAME sockpp
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
+
+    generate_export_header(sockpp-shared
+        BASE_NAME sockpp
+        EXPORT_FILE_NAME ${SOCKPP_GENERATED_DIR}/include/sockpp/export.h
+    )
+endif()
+
+# -- The static library (if configured) ---
+
+if(${SOCKPP_BUILD_STATIC})
+    message(STATUS "Creating static library")
+
+    add_library(sockpp-static STATIC ${SOURCES})
+
+    add_library(Sockpp::sockpp-static ALIAS sockpp-static)
+
+    if(${SOCKPP_BUILD_SHARED})
+        target_compile_definitions(sockpp-static PRIVATE SOCKPP_STATIC_DEFINE)
+    else()
+        add_library(Sockpp::sockpp ALIAS sockpp-static)
+
+        generate_export_header(sockpp-static
+            BASE_NAME sockpp
+            EXPORT_FILE_NAME ${SOCKPP_GENERATED_DIR}/include/sockpp/export.h
+        )
+    endif()
+
+    # On *nix systems, the static library can have the same base filename
+    # as the shared library, thus 'libsockpp.a' for the static lib.
+    # On Windows they need different names to tell the static lib from the
+    # DLL import library.
+    if(UNIX)
+        set_target_properties(sockpp-static PROPERTIES OUTPUT_NAME sockpp)
+    endif()
+endif()
+
+foreach(TARGET ${SOCKPP_TARGETS})
+    target_include_directories(${TARGET} PUBLIC
+        $<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${SOCKPP_GENERATED_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+
+    target_link_libraries(${TARGET} PUBLIC ${LIBS_SYSTEM})
+
+    # Secure TLS library (if one is configured)
+
+    if(SOCKPP_WITH_OPENSSL)
+        target_link_libraries(${TARGET} PUBLIC
+            OpenSSL::SSL 
+            OpenSSL::Crypto
+        )
+    elseif(SOCKPP_WITH_MBEDTLS)
+        target_link_libraries(${TARGET} PUBLIC 
+            MbedTLS::mbedtls
+            MbedTLS::mbedcrypto
+            MbedTLS::mbedx509
+        )
+    endif()
+
+    # --- Warnings ---
+
+    target_compile_options(${TARGET} PRIVATE
+      $<$<CXX_COMPILER_ID:MSVC>:/W3>
+      $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic -Wdocumentation>
+      $<$<NOT:$<OR:$<CXX_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:Clang>>>:-Wall -Wextra -Wpedantic>
+    )
+endforeach()
 

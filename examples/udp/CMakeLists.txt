@@ -45,32 +45,24 @@ find_package(Threads REQUIRED)
 # --- Executables ---
 
 set(THREADED_EXECUTABLES
-  udpechosvr
+    udpechosvr
 )
 
 set(EXECUTABLES
-	udpecho
-	udp6echo
-  ${THREADED_EXECUTABLES}
+    udpecho
+    udp6echo
+    ${THREADED_EXECUTABLES}
 )
 
 foreach(EXECUTABLE ${EXECUTABLES})
-	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-	
-	target_include_directories(${EXECUTABLE}
-		PUBLIC
-			${SOCKPP_INCLUDE_DIR}
-		PRIVATE
-			${SOCKPP_GENERATED_DIR}/include
-	)
-
-	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+    add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+    target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
 endforeach()
 
 # --- Additional linkage to Threads ---
 
 foreach(EXECUTABLE ${THREADED_EXECUTABLES})
-  target_link_libraries(${EXECUTABLE} Threads::Threads)
+    target_link_libraries(${EXECUTABLE} Threads::Threads)
 endforeach()
 
 # --- Install examples ---

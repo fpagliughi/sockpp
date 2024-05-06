@@ -45,29 +45,21 @@ find_package(Threads REQUIRED)
 # --- Executables ---
 
 set(THREADED_EXECUTABLES
-  tcpechosvr
-  tcpechomt
-  tcp6echosvr
+    tcpechosvr
+    tcpechomt
+    tcp6echosvr
 )
 
 set(EXECUTABLES
-	tcpecho
-	tcpechotest
-	tcp6echo
-  ${THREADED_EXECUTABLES}
+    tcpecho
+    tcpechotest
+    tcp6echo
+    ${THREADED_EXECUTABLES}
 )
 
 foreach(EXECUTABLE ${EXECUTABLES})
-	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-	
-	target_include_directories(${EXECUTABLE}
-		PUBLIC
-			${SOCKPP_INCLUDE_DIR}
-		PRIVATE
-			${SOCKPP_GENERATED_DIR}/include
-	)
- 
-	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+    add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+    target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
 endforeach()
 
 # --- Additional linkage to Threads ---

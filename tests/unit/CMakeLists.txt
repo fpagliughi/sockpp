@@ -54,49 +54,39 @@ find_package(Threads REQUIRED)
 # --- Executables ---
 
 add_executable(unit_tests 
-	unit_tests.cpp
-  test_inet_address.cpp
-  test_inet6_address.cpp
-	test_socket.cpp
-  test_sock_address.cpp
-	test_stream_socket.cpp
-	test_tcp_socket.cpp
-	test_datagram_socket.cpp
-	test_acceptor.cpp
-	test_connector.cpp
-  test_result.cpp
+    unit_tests.cpp
+    test_inet_address.cpp
+    test_inet6_address.cpp
+    test_socket.cpp
+    test_sock_address.cpp
+    test_stream_socket.cpp
+    test_tcp_socket.cpp
+    test_datagram_socket.cpp
+    test_acceptor.cpp
+    test_connector.cpp
+    test_result.cpp
 )
 
 if(UNIX)
-  target_sources(unit_tests 
-    PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_address.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_stream_socket.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_dgram_socket.cpp
-	)
+    target_sources(unit_tests PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_address.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_stream_socket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_dgram_socket.cpp
+    )
 endif()
 
 if(SOCKPP_WITH_CAN)
-  target_sources(unit_tests 
-    PUBLIC
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_can_address.cpp
-  )
+    target_sources(unit_tests PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_can_address.cpp
+    )
 endif()
-
-target_include_directories(unit_tests
-	PUBLIC
-		${SOCKPP_INCLUDE_DIR}
-	PRIVATE 
-		${SOCKPP_GENERATED_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}
-)
 
 # --- Link for executables ---
 
 target_link_libraries(unit_tests 
-	${SOCKPP_LIB} 
-	Catch2::Catch2
-	Threads::Threads
+    Sockpp::sockpp
+    Catch2::Catch2
+    Threads::Threads
 )
 
 include(CTest)
