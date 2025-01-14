@@ -205,7 +205,7 @@ public:
     // ----- I/O -----
 
     /**
-     * Sends a frame to the CAN interfacce at the specified address.
+     * Sends a frame to the CAN interface at the specified address.
      * @param frame The CAN frame to send.
      * @param flags The flags. See send(2).
      * @param addr The remote destination of the data.

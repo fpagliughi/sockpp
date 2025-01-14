@@ -168,7 +168,7 @@ public:
     /**
      * Creates a failed result from an error code.
      * @param err The error code from an operation.
-     * @return The result of an unsucessful operation.
+     * @return The result of an unsuccessful operation.
      */
     static result from_error(const error_code& err) { return result{T{}, err}; }
     /**
@@ -182,7 +182,7 @@ public:
         return result{T{}, {ec, ecat}};
     }
     /**
-     * Creates an unsuccesful result from a portable error condition.
+     * Creates an unsuccessful result from a portable error condition.
      * @param err The error
      * @return The result of an unsuccessful operation.
      */
@@ -295,7 +295,7 @@ public:
 /**
  * Create a successful result with the specified value.
  *
- * @param val The succesful return value from the operation.
+ * @param val The successful return value from the operation.
  * @return A success result.
  */
 template <typename T>
@@ -306,7 +306,7 @@ result<T> success(const T& val) {
 /**
  * Create a successful result with the specified value.
  *
- * @param val The succesful return value from the operation.
+ * @param val The successful return value from the operation.
  * @return A success result.
  */
 template <typename T>

@@ -194,7 +194,7 @@ public:
     /**
      * Set the private key from a file.
      * @param keyFile The private key file.
-     * @return Error code on faliure.
+     * @return Error code on failure.
      */
     result<> set_key_file(const string& keyFile);
     /**

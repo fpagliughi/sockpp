@@ -128,7 +128,7 @@ public:
      */
     can_address(const can_address& addr) noexcept : addr_(addr.addr_) {}
     /**
-     * Attempts to get the address for the secified CAN interface
+     * Attempts to get the address for the specified CAN interface
      *
      * @param iface The name of the CAN interface
      * @return A result with a CAN address, if successful, or an error code

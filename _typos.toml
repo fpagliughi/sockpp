@@ -1,0 +1,9 @@
+[default.extend-words]
+thr = "thr"
+PNG = "PNG"
+
+[files]
+extend-exclude = [
+    "*.fodt"
+]
+    

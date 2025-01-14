@@ -185,8 +185,8 @@ public:
     virtual result<> read_timeout(const microseconds& to);
     /**
      * Set a timeout for read operations.
-     * Sets the timout that the device uses for read operations. Not all
-     * devices support timouts, so the caller should prepare for failure.
+     * Sets the timeout that the device uses for read operations. Not all
+     * devices support timeouts, so the caller should prepare for failure.
      * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
      */
@@ -225,16 +225,16 @@ public:
     virtual result<size_t> write(const std::vector<iovec>& ranges);
     /**
      * Set a timeout for write operations.
-     * Sets the timout that the device uses for write operations. Not all
-     * devices support timouts, so the caller should prepare for failure.
+     * Sets the timeout that the device uses for write operations. Not all
+     * devices support timeouts, so the caller should prepare for failure.
      * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
      */
     virtual result<> write_timeout(const microseconds& to);
     /**
      * Set a timeout for write operations.
-     * Sets the timout that the device uses for write operations. Not all
-     * devices support timouts, so the caller should prepare for failure.
+     * Sets the timeout that the device uses for write operations. Not all
+     * devices support timeouts, so the caller should prepare for failure.
      * @param to The amount of time to wait for the operation to complete.
      * @return @em true on success, @em false on failure.
      */
@@ -300,7 +300,7 @@ public:
         return *this;
     }
     /**
-     * Cretates a stream socket.
+     * Creates a stream socket.
      * @param protocol The particular protocol to be used with the sockets
      * @return A stream socket
      */

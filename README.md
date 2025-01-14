@@ -20,7 +20,7 @@ All code in the library lives within the `sockpp` C++ namespace.
 
 ## Latest News
 
-Version 1.0 is releaed!
+Version 1.0 is released!
 
 As breaking changes were starting to accumulate in the current development branch, the decision was made to release the API that has been fairly stable for the last few years as 1.0. This is from the latest v0.8.x line. That will make things going forward less confusing and allow us to maintain the v1.x branch.
 
@@ -108,6 +108,7 @@ SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
 SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires _Doxygen)_
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
+SOCKPP_WITH_UNIX_SOCKETS | ON (*nix), OFF (Win) | Include support for UNIX-domain sockets
 SOCKPP_WITH_CAN | OFF | Include SocketCAN support. (Linux only)
 
 Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:
@@ -153,7 +154,7 @@ Note that the options in the config file should already be present in the file b
 
 #### OpenSSL
 
-The `sockpp` OpenSSL wrapper is currenly being built and tested with OpenSSL v3.0
+The `sockpp` OpenSSL wrapper is currently being built and tested with OpenSSL v3.0
 
 ## TCP Sockets
 
@@ -256,11 +257,11 @@ Examples are in the [examples/unix](https://github.com/fpagliughi/sockpp/tree/ma
 
 ### SocketCAN (CAN bus on Linux)
 
-The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine. Linux has the _SocketCAN_ package which allows processes to share acces to a physical CAN bus interface using sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
+The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine. Linux has the _SocketCAN_ package which allows processes to share access to a physical CAN bus interface using sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
 
 At the lowest level, CAN devices write individual packets, called "frames" to a specific numeric addresses on the bus. 
 
-For examle a device with a temperature sensor might read the temperature peroidically and write it to the bus as a raw 32-bit integer, like:
+For example a device with a temperature sensor might read the temperature peirodically and write it to the bus as a raw 32-bit integer, like:
 
 ```
 can_address addr("CAN0");
@@ -324,7 +325,7 @@ In this case, _handle_connection_ would be a function that takes a socket by val
 
 Since a `socket` can not be copied, the only choice would be to move the socket to a function like this.
 
-It is a common patern, especially in client applications, to have one thread to read from a socket and another thread to write to the socket. In this case the underlying socket handle can be considered thread safe (one read thread and one write thread). But even in this scenario, a `sockpp::socket` object is still not thread-safe due especially to the cached error value. The write thread might see an error that happened on the read thread and visa versa.
+It is a common pattern, especially in client applications, to have one thread to read from a socket and another thread to write to the socket. In this case the underlying socket handle can be considered thread safe (one read thread and one write thread). But even in this scenario, a `sockpp::socket` object is still not thread-safe due especially to the cached error value. The write thread might see an error that happened on the read thread and visa versa.
 
 The solution for this case is to use the `socket::clone()` method to make a copy of the socket. This will use the system's `dup()` function or similar create another socket with a duplicated copy of the socket handle. This has the added benefit that each copy of the socket can maintain an independent lifetime. The underlying socket will not be closed until both objects go out of scope.
 

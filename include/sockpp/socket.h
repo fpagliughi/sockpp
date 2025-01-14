@@ -155,7 +155,7 @@ public:
  * This is primarily required for Win32, to startup the WinSock DLL.
  *
  * On Unix-style platforms it disables SIGPIPE signals. Errors are handled
- * by functon return values and exceptions.
+ * by function return values and exceptions.
  */
 void initialize();
 
@@ -410,8 +410,8 @@ public:
      *  			SOL_SOCKET.
      * @param optname The option passed directly to the protocol module.
      * @param optval The buffer for the value to retrieve
-     * @param optlen Initially contains the lenth of the buffer, and on return
-     *  			 contains the length of the value retrieved.
+     * @param optlen Initially contains the length of the buffer, and on
+     *               return contains the length of the value retrieved.
      *
      * @return bool @em true if the value was retrieved, @em false if an error
      *  	   occurred.
@@ -469,7 +469,7 @@ public:
      *  			SOL_SOCKET.
      * @param optname The option passed directly to the protocol module.
      * @param optval The buffer with the value to set.
-     * @param optlen Contains the lenth of the value buffer.
+     * @param optlen Contains the length of the value buffer.
      *
      * @return bool @em true if the value was set, @em false if an error
      *  	   occurred.
@@ -528,7 +528,7 @@ public:
     /**
      * Gets the value of the `SO_REUSEADDR` option on the socket.
      * @return The value of the `SO_REUSEADDR` option on the socket on
-     *         success, an error code on faliure.
+     *         success, an error code on failure.
      */
     result<bool> reuse_address() const noexcept {
         return get_option<bool>(SOL_SOCKET, SO_REUSEADDR);
@@ -545,7 +545,7 @@ public:
     /**
      * Gets the value of the `SO_REUSEPORT` option on the socket.
      * @return The value of the `SO_REUSEPORT` option on the socket on
-     *         success, an error code on faliure.
+     *         success, an error code on failure.
      */
     result<bool> reuse_port() const noexcept {
         return get_option<bool>(SOL_SOCKET, SO_REUSEPORT);

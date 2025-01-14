@@ -146,7 +146,7 @@ void mbedtls_socket::setup_bio(bool nonblocking) {
     mbedtls_ssl_recv_timeout_t* f_recv_timeout = nullptr;
     // "The two most common use cases are:
     //	- non-blocking I/O, f_recv != nullptr, f_recv_timeout == nullptr
-    //	- blocking I/O, f_recv == nullptr, f_recv_timout != nullptr"
+    //	- blocking I/O, f_recv == nullptr, f_recv_timeout != nullptr"
     if (nonblocking) {
         f_recv = [](void* ctx, uchar* buf, size_t n) {
             if (auto res = ((mbedtls_socket*)ctx)->bio_recv(buf, n); res)

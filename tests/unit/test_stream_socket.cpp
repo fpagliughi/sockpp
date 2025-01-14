@@ -106,6 +106,6 @@ TEST_CASE("stream_socket address constructor", "[stream_socket]") {
 // --------------------------------------------------------------------------
 // Connected tests
 
-TEST_CASE("stream_socket readn, writen", "[stream_socket]") {
+TEST_CASE("stream_socket readn, written", "[stream_socket]") {
     // auto lsock = stream_socket::create(AF
 }
