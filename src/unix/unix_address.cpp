@@ -36,6 +36,7 @@
 
 #include "sockpp/unix_address.h"
 
+#include <algorithm>
 #include <cstring>
 #include <stdexcept>
 
@@ -56,7 +57,8 @@ unix_address::unix_address(const string& path) {
 
     addr_.sun_family = ADDRESS_FAMILY;
     // Remember, if len==MAX, there's no NUL terminator
-    ::strncpy(addr_.sun_path, path.c_str(), MAX_PATH_NAME);
+    const size_t n = std::min(path.length()+1, MAX_PATH_NAME);
+    std::memcpy(addr_.sun_path, path.c_str(), n);
 }
 
 unix_address::unix_address(const string& path, error_code& ec) noexcept {
@@ -67,7 +69,8 @@ unix_address::unix_address(const string& path, error_code& ec) noexcept {
         ec = error_code{};
         addr_.sun_family = ADDRESS_FAMILY;
         // Remember, if len==MAX, there's no NUL terminator
-        ::strncpy(addr_.sun_path, path.c_str(), MAX_PATH_NAME);
+        const size_t n = std::min(path.length()+1, MAX_PATH_NAME);
+        std::memcpy(addr_.sun_path, path.c_str(), n);
     }
 }
 

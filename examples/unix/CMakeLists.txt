@@ -37,6 +37,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
+# Remember that Windows doesn't support datagram over UNIX sockets
+
 # --- For apps that use threads ---
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -46,15 +48,21 @@ find_package(Threads REQUIRED)
 
 set(THREADED_EXECUTABLES
     unechosvr
-    undgramechosvr
 )
+
+if(NOT WIN32)
+    list(APPEND THREADED_EXECUTABLES undgramechosvr)
+endif()
 
 set(EXECUTABLES
     unecho
     unechotest
-    undgramecho
     ${THREADED_EXECUTABLES}
 )
+
+if(NOT WIN32)
+    list(APPEND EXECUTABLES undgramecho)
+endif()
 
 # --- Executables ---
 

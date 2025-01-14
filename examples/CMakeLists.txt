@@ -36,16 +36,25 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
+# --- General TCP/IP examples ---
+
 add_subdirectory(tcp)
 add_subdirectory(udp)
 
-if(UNIX)
+# --- Optional UNIX-domain sockets (even on Windows!) ---
+
+if(SOCKPP_WITH_UNIX_SOCKETS)
 	add_subdirectory(unix)
-	if(SOCKPP_BUILD_CAN)
-		add_subdirectory(linux)
-	endif()
 endif()
 
+# --- Anything that is Linux-specific ---
+
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    add_subdirectory(linux)
+endif()
+
+# --- Optional secure sockets ---
+ 
 if(SOCKPP_WITH_TLS)
   add_subdirectory(tls)
 endif()

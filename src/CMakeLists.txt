@@ -53,16 +53,17 @@ set(SOURCES
 
 # Additional sources (platform & config)
 
-if(UNIX)
+if(SOCKPP_WITH_UNIX_SOCKETS)
     list(APPEND SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/unix/unix_address.cpp
     )
-    if(SOCKPP_WITH_CAN)
-        list(APPEND SOURCES
-            ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
-        )
-    endif()
+endif()
+
+if(SOCKPP_WITH_CAN)
+    list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
+    )
 endif()
 
 if(SOCKPP_WITH_OPENSSL)

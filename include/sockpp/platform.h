@@ -61,8 +61,13 @@
         #define _CRT_SECURE_NO_DEPRECATE
     #endif
 
+    #undef UNICODE
+
     #include <winsock2.h>
     #include <ws2tcpip.h>
+
+    #undef max
+    #undef min
 
     #define SOCKPP_SOCKET_T_DEFINED
 using socket_t = SOCKET;

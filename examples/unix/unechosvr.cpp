@@ -40,11 +40,11 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <iostream>
-#include <thread>
-
 #include "sockpp/unix_acceptor.h"
 #include "sockpp/version.h"
+
+#include <iostream>
+#include <thread>
 
 using namespace std;
 
@@ -72,11 +72,14 @@ int main(int argc, char* argv[]) {
     cout << "Sample Unix-domain echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
          << endl;
 
-    string path = "/tmp/unechosvr.sock";
 
-    if (argc > 1) {
-        path = argv[1];
-    }
+    #if defined(_WIN32)
+        const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+    #else
+        string DFLT_PATH = "/tmp/unechosvr.sock"s;
+    #endif
+
+    const string path = (argc > 1) ? argv[1] : DFLT_PATH;
 
     sockpp::initialize();
     sockpp::unix_acceptor acc;

@@ -53,7 +53,15 @@ option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
 option(SOCKPP_WITH_OPENSSL "TLS Secure Sockets with OpenSSL" OFF)
 option(SOCKPP_WITH_MBEDTLS "TLS Secure Sockets with Mbed TLS" OFF)
-option(SOCKPP_WITH_CAN "Include support for Linux SocketCAN components" OFF)
+
+if(NOT WIN32)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        option(SOCKPP_WITH_CAN "Include support for Linux SocketCAN components" OFF)
+    endif()
+    option(SOCKPP_WITH_UNIX_SOCKETS "Include support for UNIX-domain sockets" ON)
+else()
+    option(SOCKPP_WITH_UNIX_SOCKETS "Include support for UNIX-domain sockets" OFF)
+endif()
 
 # ----- Find any dependencies -----
 

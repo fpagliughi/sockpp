@@ -37,19 +37,22 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-# --- Executables ---
+# --- Optional Linux SocketCAN support ---
 
-set(EXECUTABLES 
-	cantime
-	canrecv
-)
+if(SOCKPP_WITH_CAN)
+    # --- Executables ---
 
-foreach(EXECUTABLE ${EXECUTABLES})
-    add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-    target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
-endforeach()
+    set(EXECUTABLES 
+    	cantime
+    	canrecv
+    )
 
-# --- Install examples ---
+    foreach(EXECUTABLE ${EXECUTABLES})
+        add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+        target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
+    endforeach()
 
-install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
+    # --- Install examples ---
 
+    install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
+endif()

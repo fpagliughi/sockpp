@@ -47,6 +47,10 @@
 #ifndef __sockpp_unix_dgram_socket_h
 #define __sockpp_unix_dgram_socket_h
 
+#if defined(_WIN32)
+    #error "UNIX datagram sockets not supported on Windows"
+#endif
+
 #include "sockpp/datagram_socket.h"
 #include "sockpp/unix_address.h"
 
