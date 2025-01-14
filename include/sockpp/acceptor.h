@@ -111,7 +111,7 @@ public:
      * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
      *              value of zero doesn;t set an option.
-     * @throws std::system_error
+     * @throws std::system_error on failure
      */
     acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) {
         if (auto res = open(addr, queSize, reuse); !res)
@@ -227,7 +227,7 @@ public:
      * Creates a acceptor and starts it listening on the specified address.
      * @param addr The TCP address on which to listen.
      * @param queSize The listener queue size.
-     * @throws std::system_error
+     * @throws std::system_error on failure
      */
     acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) {
         if (auto res = open(addr, queSize, reuse); !res)
@@ -260,7 +260,7 @@ public:
      * host.
      * @param port The TCP port on which to listen.
      * @param queSize The listener queue size.
-     * @throws std::system_error
+     * @throws std::system_error on failure
      */
     acceptor_tmpl(in_port_t port, int queSize = DFLT_QUE_SIZE) {
         if (auto res = open(port, queSize); !res)

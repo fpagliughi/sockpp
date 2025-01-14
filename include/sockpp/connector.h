@@ -82,7 +82,7 @@ public:
      * Creates the connector and attempts to connect to the specified
      * address.
      * @param addr The remote server address.
-     * @throws std::system_error
+     * @throws std::system_error on failure
      */
     connector(const sock_address& addr) {
         if (auto res = connect(addr); !res)
@@ -129,7 +129,7 @@ public:
      * `timed_out`.
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
-     * @throws std::system_error
+     * @throws std::system_error on failure
      */
     connector(const sock_address& addr, std::chrono::milliseconds t) {
         if (auto res = connect(addr, t); !res)
