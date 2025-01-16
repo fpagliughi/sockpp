@@ -110,9 +110,9 @@ public:
      * Specify that application should use the default locations of the CA
      * certificates as the trust store.
      */
-    auto default_trust_store() -> self& {
+    auto default_trust_locations() -> self& {
         if (!ec_) {
-            if (auto res = ctx_.set_default_trust_store(); !res)
+            if (auto res = ctx_.set_default_trust_locations(); !res)
                 ec_ = res.error();
         }
         return *this;

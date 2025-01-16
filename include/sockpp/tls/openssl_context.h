@@ -141,7 +141,7 @@ public:
      * certificates.
      * @return @em true on success, @em false on failure.
      */
-    result<> set_default_trust_store();
+    result<> set_default_trust_locations();
     /**
      * Sets a file of CA certificates as the trust store. The file should be
      * in PEM format.
@@ -173,7 +173,7 @@ public:
      *               trust store.
      * @return The error code on failure
      */
-    result<> set_trust_store(
+    result<> set_trust_locations(
         const std::optional<string>& caFile,
         const std::optional<string>& caPath = std::nullopt
     );

@@ -46,14 +46,14 @@
 #ifndef __sockpp_unix_addr_h
 #define __sockpp_unix_addr_h
 
+#include <cstring>
+#include <iostream>
+#include <string>
+
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
 #include "sockpp/sock_address.h"
 #include "sockpp/types.h"
-
-#include <cstring>
-#include <iostream>
-#include <string>
 
 #if defined(_WIN32)
     #include <afunix.h>

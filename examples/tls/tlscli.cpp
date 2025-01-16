@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     in_port_t port = (argc > 2) ? atoi(argv[2]) : 443;
     string trustStore = (argc > 3) ? argv[3] : "";
 
-    const string REQUEST = string{"GET / HTTP/1.1\r\nHost: "} + host + "\r\n\r\n";
+    const string REQUEST = string{"GET / HTTP/1.0\r\nHost: "} + host + "\r\n\r\n";
 
     sockpp::initialize();
 
@@ -66,12 +66,11 @@ int main(int argc, char* argv[]) {
     auto ctx = sockpp::tls_context_builder::client().verify_peer().finalize();
 
     if (trustStore.empty())
-        ctx.set_default_trust_store();
+        ctx.set_default_trust_locations();
     else
         ctx.set_trust_file(trustStore);
 
-    // Implicitly creates an inet_address from {host,port}
-    // and then tries the connection.
+    // Creates an inet_address from {host,port} and then try the connection.
 
     error_code ec;
 

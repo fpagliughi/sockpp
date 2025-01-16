@@ -261,15 +261,16 @@ sock_address_any socket::peer_address() const {
 
 // --------------------------------------------------------------------------
 
-result<> socket::get_option(int level, int optname, void* optval, socklen_t* optlen)
-    const noexcept {
+result<> socket::get_option(
+    int level, int optname, void* optval, socklen_t* optlen
+) const noexcept {
     result<int> res;
 #if defined(_WIN32)
     if (optval && optlen) {
         int len = static_cast<int>(*optlen);
-        res =
-            check_res(::getsockopt(handle_, level, optname, static_cast<char*>(optval), &len)
-            );
+        res = check_res(
+            ::getsockopt(handle_, level, optname, static_cast<char*>(optval), &len)
+        );
         if (res) {
             *optlen = static_cast<socklen_t>(len);
         }
@@ -286,9 +287,12 @@ result<> socket::set_option(
     int level, int optname, const void* optval, socklen_t optlen
 ) noexcept {
 #if defined(_WIN32)
-    return check_res_none(::setsockopt(
-        handle_, level, optname, static_cast<const char*>(optval), static_cast<int>(optlen)
-    ));
+    return check_res_none(
+        ::setsockopt(
+            handle_, level, optname, static_cast<const char*>(optval),
+            static_cast<int>(optlen)
+        )
+    );
 #else
     return check_res_none(::setsockopt(handle_, level, optname, optval, optlen));
 #endif

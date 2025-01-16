@@ -85,17 +85,19 @@ tls_context& tls_context::operator=(tls_context&& rhs) {
     return *this;
 }
 
-result<> tls_context::set_default_trust_store() {
+result<> tls_context::set_default_trust_locations() {
     return tls_check_res_none(::SSL_CTX_set_default_verify_paths(ctx_));
 }
 
-result<> tls_context::set_trust_store(
+result<> tls_context::set_trust_locations(
     const std::optional<string>& caFile, const std::optional<string>& caPath /*=std::nullopt*/
 ) {
-    return tls_check_res_none(::SSL_CTX_load_verify_locations(
-        ctx_, caFile ? caFile.value().c_str() : nullptr,
-        caPath ? caPath.value().c_str() : nullptr
-    ));
+    return tls_check_res_none(
+        ::SSL_CTX_load_verify_locations(
+            ctx_, caFile ? caFile.value().c_str() : nullptr,
+            caPath ? caPath.value().c_str() : nullptr
+        )
+    );
 }
 
 void tls_context::set_verify(verify_t mode) noexcept {

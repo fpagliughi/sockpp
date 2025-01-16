@@ -416,8 +416,9 @@ public:
      * @return bool @em true if the value was retrieved, @em false if an error
      *  	   occurred.
      */
-    result<> get_option(int level, int optname, void* optval, socklen_t* optlen)
-        const noexcept;
+    result<> get_option(
+        int level, int optname, void* optval, socklen_t* optlen
+    ) const noexcept;
     /**
      * Gets the value of a socket option.
      *

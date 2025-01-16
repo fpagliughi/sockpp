@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
         ctxBldr.verify_peer();
 
     if (trustStore.empty())
-        ctxBldr.default_trust_store();
+        ctxBldr.default_trust_locations();
     else
         ctxBldr.trust_file(trustStore);
 

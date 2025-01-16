@@ -124,8 +124,9 @@ public:
      */
     void set_identity(mbedtls_x509_crt* certificate, mbedtls_pk_context* private_key);
 
-    void set_identity(const string& certificate_data, const string& private_key_data)
-        override;
+    void set_identity(
+        const string& certificate_data, const string& private_key_data
+    ) override;
 
     std::unique_ptr<tls_socket> wrap_socket(
         stream_socket&& sock, role_t role = UNKNOWN, const string& peer_name = string{}
