@@ -113,25 +113,27 @@ public:
      *         this may be null if the socket failed on construction.
      */
     SSL* ssl() { return ssl_; }
-
-    uint32_t peer_certificate_status() { return 0; }
-
-    /**
-     * Returns an error message describing any problem with the peer's
-     * certificate.
-     */
-    string peer_certificate_status_message() { return string{}; }
-
-    /**
-     * Returns the peer's X.509 certificate data, in binary DER format.
-     */
-    string peer_certificate() { return string{}; }
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
      * @return A reference to this object.
      */
     tls_socket& operator=(tls_socket&& rhs);
+
+    /**
+     * Returns the peer's X.509 certificate data, in binary DER format.
+     */
+    binary peer_certificate();
+
+    /**
+     *
+     */
+    uint32_t peer_certificate_status();
+    /**
+     * Returns an error message describing any problem with the peer's
+     * certificate.
+     */
+    string peer_certificate_status_message();
 
     // I/O primitives
 

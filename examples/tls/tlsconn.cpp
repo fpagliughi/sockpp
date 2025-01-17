@@ -36,16 +36,17 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <getopt.h>
-
-#include <iostream>
-#include <string>
-
 #include "sockpp/tcp_connector.h"
 #include "sockpp/tls/connector.h"
 #include "sockpp/tls/context.h"
 #include "sockpp/tls/error.h"
 #include "sockpp/version.h"
+
+#include <getopt.h>
+
+#include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -138,6 +139,17 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    cout << "Successful connection to " << addr << endl;
+
+    if (auto cert = conn.peer_certificate(); cert.empty()) {
+        cout << "No peer certificate" << endl;
+    }
+    else {
+        ofstream fil("peer.cer", ios::binary);
+        fil.write(reinterpret_cast<const char*>(cert.data()), cert.size());
+        cout << "Wrote peer certificate to peer.cer" << endl;
+    }
+
     if (auto res = conn.write("HELO"); !res) {
         cerr << "Error sending request [0x" << hex << res.error().value()
              << "]: " << res.error_message() << endl;
@@ -150,6 +162,5 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    cout << "Successful connection to " << addr << endl;
     return 0;
 }

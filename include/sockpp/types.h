@@ -49,6 +49,7 @@
 
 #include <chrono>
 #include <string>
+#include <cstdint>
 
 namespace sockpp {
 
@@ -62,6 +63,9 @@ using std::string;
 
 /** A sockpp::duration is a std::chrono::duration */
 using std::chrono::duration;
+
+/** A binary blob as a basic string/collection of uint8_t */
+using binary = std::basic_string<uint8_t>;
 
 // Time units are std::chrono time unite.
 using std::chrono::microseconds;

@@ -179,9 +179,9 @@ public:
     );
     /**
      * Sets the verify flag in the context to the specified mode.
-     * This wraps <a
+     * This wraps <A
      * href="https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_verify.html">
-     * SSL_CTX_set_verify</a>
+     * SSL_CTX_set_verify
      * @param mode The verification mode.
      */
     void set_verify(verify_t mode) noexcept;
