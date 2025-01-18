@@ -1,14 +1,14 @@
 # sockpp
 
-Simple, modern, C++ socket library.
+Simple, modern, C++ network socket library.
 
 This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
-The base `socket` class wraps a system socket handle, and maintains its lifetime. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket can be transferred from one scope (or thread) to another using `std::move()`.
+The base `socket` class wraps a system socket handle and maintains its lifetime using the familiar [RAII](https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization) pattern. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket can be transferred from one scope (or thread) to another using `std::move()`.
 
-The library currently supports: IPv4 and IPv6 on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
+The library currently supports: IPv4/6 on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
 
-Unix-Domain Sockets are available on *nix systems that have an OS implementation for them.
+Unix-Domain Sockets are available on *nix systems that have an OS implementation for them, and can even vbe 
 
 Support for secure sockets using either the OpenSSL or MbedTLS libraries was recently added with basic coverage. This will continue to be expanded in the near future.
 
@@ -16,25 +16,27 @@ There is also some experimental support for CAN bus programming on Linux using t
 
 All code in the library lives within the `sockpp` C++ namespace.
 
-**The 'master' branch is starting the move toward the v2.0 API, and is particularly unstable at the moment. You're advised to download the latest release for general use.**
+**The 'master' branch is starting the move toward the v2.0 API, and is particularly unstable at the moment. You're advised to download the latest release for production use.**
 
 ## Latest News
+
+Version 2.0 development is underway in this branch.
+
+It moves the library to C++17, taking advantage of features first available in this version of the C++ language.
+
+The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), (which was never fully merged) is coming in the 2.0 API with a `result<T>` class. It's generic over the "success" return type with errors being represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors.
+
+Using a uniform result type removes the need for exceptions in most functions, except maybe constructors. In those cases where the function might throw, a comparable `noexcept` function is also provided which sets an error code parameter instead of throwing. So the library can be used without any exceptions if so desired by the application.
+
+All functions that might fail due to a system error will return a result. That will eliminate the need for the "last error", and thus the cached last error variable in the `socket` class will disappear. The socket classes will then only wrap the socket handle, making them safer to share across threads in the same way a handle can be shared - typically with one thread for reading and another for writing.
+
+Some work has also begun to incorporate Secure Sockets into a 2.x release of the library using either OpenSSL or MbedTLS libraries, or (likely), a build-time choice for one or the other.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years is being merged and updated, along with new work to do something comparable with OpenSSL. You will be able to chose one secure library or the other when building `sockpp`.
+
+The 2.0 version will also move up to C++17 and CMake v3.12 or later.
 
 Version 1.0 is released!
 
 As breaking changes were starting to accumulate in the current development branch, the decision was made to release the API that has been fairly stable for the last few years as 1.0. This is from the latest v0.8.x line. That will make things going forward less confusing and allow us to maintain the v1.x branch.
-
-Version 2.0 development is underway.
-
-The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), (which was never fully merged) is coming in the 2.0 API with a `result<T>` class. It will be generic over the "success" return type with errors being represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors.
-
-Using a uniform result type removes the need for exceptions in most functions, except maybe constructors. In those cases where the function might throw, a comparable `noexcept` function will also be provided which can set an error code parameter instead of throwing. So the library can be used without any exceptions if so desired by the application.
-
-All functions that might fail due to a system error will return a result. That will eliminate the need for the "last error", and thus the cached last error variable in the `socket` class will disappear. The socket classes will then only wrap the socket handle, making them safer to share across threads in the same way a handle can be shared - typically with one thread for reading and another for writing.
-
-Some work has also begun to incorporate Secure Sockets into a 2.x release of the library using either OpenSSL or MbedTLS libraries, or (likely), a build-time choice for one or the other.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years is being merged and updated, along with new work to do something comparable with OpenSSL. You will be able to chose one secure library or the other when building `sockpp`. 
-
-The 2.0 version will also move up to C++17 and CMake v3.12 or later.
 
 ### Get Updates
 
@@ -108,7 +110,7 @@ SOCKPP_BUILD_STATIC | OFF | Whether to build the static library
 SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documentation (requires _Doxygen)_
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
-SOCKPP_WITH_UNIX_SOCKETS | ON (*nix), OFF (Win) | Include support for UNIX-domain sockets
+SOCKPP_WITH_UNIX_SOCKETS | ON (*nix), OFF (Win) | Include support for UNIX-domain sockets. Windows support it experimental.
 SOCKPP_WITH_CAN | OFF | Include SocketCAN support. (Linux only)
 
 Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:
@@ -118,43 +120,6 @@ $ cd sockpp
 $ cmake -Bbuild -DSOCKPP_BUILD_DOCUMENTATION=ON -DSOCKPP_BUILD_EXAMPLES=ON .
 $ cmake --build build/
 ```
-
-### Secure Sockets
-
-To build the library with secure socket support, a TLS library needs to be chosen to provide support. Currently _OpenSSL_ or _MbedTLS_ can be used.
-
-Chose _one_ of the following when configuring the build:
-
-Variable | Default Value | Description
------------- | ------------- | -------------
-SOCKPP_WITH_MBEDTLS | OFF | Secure Sockets with MbedTLS
-SOCKPP_WITH_OPENSSL | OFF | Secure Sockets with OpenSSL
-
-#### MbedTLS
-
-The `sockpp` library currently supports MbedTLS v3.3. When building that library, the following configuration options should be defined in the config file, _include/mbedtls/mbedtls_config.h_
-
-```
-#define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK 
-```
-To support threading:
-
-```
-#define MBEDTLS_THREADING_PTHREAD
-#define MBEDTLS_THREADING_C
-```
-
-and set the CMake build option:
-
-```
-LINK_WITH_PTHREAD:BOOL=ON
-```
-
-Note that the options in the config file should already be present in the file but commented out by default. Simply uncomment them, save, and build.
-
-#### OpenSSL
-
-The `sockpp` OpenSSL wrapper is currently being built and tested with OpenSSL v3.0
 
 ## TCP Sockets
 
@@ -231,6 +196,7 @@ UDP sockets can be used for connectionless communications:
     ssize_t n = sock.recv(buf, sizeof(buf), &srcAddr);
 
 See the [udpecho.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/udp/udpecho.cpp) and [udpechosvr.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/udp/udpechosvr.cpp) examples.
+
 ### IPv6
 
 The same style of  connectors and acceptors can be used for TCP connections over IPv6 using the classes:
@@ -250,16 +216,74 @@ The same is true for local connection on *nix systems that implement Unix Domain
     unix_address
     unix_connector
     unix_acceptor
-    unix_socket  (unix_stream_socket)
+    unix_socket
+    unix_stream_socket
     unix_dgram_socket
 
 Examples are in the [examples/unix](https://github.com/fpagliughi/sockpp/tree/master/examples/unix) directory.
 
-### SocketCAN (CAN bus on Linux)
+#### [Experimental] UNIX Socket Support in Windows!
 
-The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine. Linux has the _SocketCAN_ package which allows processes to share access to a physical CAN bus interface using sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
+Later versions of Windows 10 (starting with April 2018 update from Insider Build 17063) and all versions of Windows 11 implement support for UNIX sockets. Initial support was added to this library as a CMake option (opt-in), but has not been thoroughly tested, so is still considered experimental in this library.
 
-At the lowest level, CAN devices write individual packets, called "frames" to a specific numeric addresses on the bus. 
+More information can be found in these posts from Microsoft:
+
+[AF_UNIX comes to Windows](https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/)
+[Windows/WSL Interop with AF_UNIX](https://devblogs.microsoft.com/commandline/windowswsl-interop-with-af_unix/)
+
+Some key points for UNIX sockets on Win32/64:
+
+- Only stream sockets are supported, not dgram.
+- socketpair is not supported.
+- Windoes file and directory permissions determine who can create and connect to UNIX sockets (as expected).
+- You can check if UNIX sockets are supported on a target by running the command `sc query afunix` from a Windows admin command prompt.
+
+
+### [Experimental] Secure Sockets
+
+Support for secure sockets is being added using a number of possible TLS libraries, although support is incomplete and the API is still changing.
+
+To build the library with secure socket support, a TLS library needs to be chosen to provide support. Currently _OpenSSL_ v3.x or _MbedTLS_ can be used, but only one TLS library can be compiled in at a time. When one is chosen, a `tls_context`
+
+Chose _one_ of the following when configuring the build:
+
+Variable | Default Value | Description
+------------ | ------------- | -------------
+SOCKPP_WITH_OPENSSL | OFF | Secure Sockets with OpenSSL
+SOCKPP_WITH_MBEDTLS | OFF | Secure Sockets with MbedTLS
+
+#### OpenSSL
+
+The `sockpp` OpenSSL wrapper is currently being built and tested with OpenSSL v3.x.
+
+
+#### MbedTLS
+
+The `sockpp` library currently supports MbedTLS v3.3. When building that library, the following configuration options should be defined in the config file, _include/mbedtls/mbedtls_config.h_
+
+```
+#define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
+```
+To support threading:
+
+```
+#define MBEDTLS_THREADING_PTHREAD
+#define MBEDTLS_THREADING_C
+```
+
+and set the CMake build option:
+
+```
+LINK_WITH_PTHREAD:BOOL=ON
+```
+
+Note that the options in the config file should already be present in the file but commented out by default. Simply uncomment them, save, and build.
+
+### [Experimental] SocketCAN (CANbus on Linux)
+
+The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine. Linux has the _SocketCAN_ package which allows processes to share access to a physical CAN bus interface using Raw sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
+
+At the lowest level, CAN devices write individual packets, called "frames" to a specific numeric addresses on the bus.
 
 For example a device with a temperature sensor might read the temperature peirodically and write it to the bus as a raw 32-bit integer, like:
 
@@ -311,6 +335,8 @@ The `socket::handle()` method exposes the underlying OS handle which can then be
 ### Thread Safety
 
 A socket object is not thread-safe. Applications that want to have multiple threads reading from a socket or writing to a socket should use some form of serialization, such as a `std::mutex` to protect access.
+
+As of Version 2.0 of the library
 
 A `socket` can be _moved_ from one thread to another safely. This is a common pattern for a server which uses one thread to accept incoming connections and then passes off the new socket to another thread or thread pool for handling. This can be done like:
 
