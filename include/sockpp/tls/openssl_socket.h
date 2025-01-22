@@ -46,7 +46,10 @@
 
 #include <openssl/ssl.h>
 
+#include <optional>
+
 #include "sockpp/stream_socket.h"
+#include "sockpp/tls/openssl_certificate.h"
 #include "sockpp/tls/openssl_context.h"
 #include "sockpp/tls/openssl_error.h"
 #include "sockpp/types.h"
@@ -121,10 +124,11 @@ public:
     tls_socket& operator=(tls_socket&& rhs);
 
     /**
-     * Returns the peer's X.509 certificate data, in binary DER format.
+     * Returns the peer's X.509 certificate.
      */
-    binary peer_certificate();
+    std::optional<tls_certificate> peer_certificate();
 
+#if 0
     /**
      *
      */
@@ -134,6 +138,7 @@ public:
      * certificate.
      */
     string peer_certificate_status_message();
+#endif
 
     // I/O primitives
 

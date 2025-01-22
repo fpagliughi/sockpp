@@ -1,19 +1,9 @@
-/**
- * @file types.h
- *
- * Primitive definitions for the sockpp library.
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	December 2023
- */
-
+// openssl_certificate.cpp
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2025 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,36 +34,79 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_types_h
-#define __sockpp_types_h
+#include "sockpp/tls/openssl_certificate.h"
 
-#include <chrono>
-#include <cstdint>
-#include <string>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
+
+#include <memory>
 
 namespace sockpp {
 
-/** Port used for example apps and unit tests */
-// constexpr in_port_t TEST_PORT = 12345;
-
 /////////////////////////////////////////////////////////////////////////////
 
-/** A sockpp::string is a std::string */
-using std::string;
+string tls_certificate::subject_name() const {
+    auto name = X509_get_subject_name(cert_);
+    if (!name)
+        return string{};
+    const char* name_str = X509_NAME_oneline(name, NULL, 0);
+    return (name_str) ? string{name_str} : string{};
+}
 
-/** A sockpp::duration is a std::chrono::duration */
-using std::chrono::duration;
+// int X509_set_subject_name(X509 *x, const X509_NAME *name);
 
-/** A binary blob as a basic string/collection of uint8_t */
-using binary = std::basic_string<uint8_t>;
+string tls_certificate::issuer_name() const {
+    auto name = X509_get_issuer_name(cert_);
+    if (!name)
+        return string{};
+    const char* name_str = X509_NAME_oneline(name, NULL, 0);
+    return (name_str) ? string{name_str} : string{};
+}
 
-// Time units are std::chrono time unite.
-using std::chrono::microseconds;
-using std::chrono::milliseconds;
-using std::chrono::nanoseconds;
-using std::chrono::seconds;
+// int X509_set_issuer_name(X509 *x, const X509_NAME *name);
+
+string tls_certificate::not_before_str() const {
+    auto tm = X509_get0_notBefore(cert_);
+    return (tm && tm->data) ? string{(const char*)tm->data} : string{};
+}
+
+string tls_certificate::not_after_str() const {
+    auto tm = X509_get0_notAfter(cert_);
+    return (tm && tm->data) ? string{(const char*)tm->data} : string{};
+}
+
+binary tls_certificate::to_der() const {
+    if (!cert_)
+        return binary{};
+
+    uint8_t* buf = nullptr;
+    int len = i2d_X509(cert_, &buf);
+
+    // TODO: Return an error result on <0?
+    if (len <= 0)
+        return binary{};
+
+    binary certBin{buf, size_t(len)};
+    ::OPENSSL_free(buf);
+
+    return certBin;
+}
+
+string tls_certificate::to_pem() const {
+    BIO* bio = ::BIO_new(BIO_s_mem());
+    if (!bio || !::PEM_write_bio_X509(bio, cert_)) {
+        ::BIO_vfree(bio);
+        return string{};
+    }
+
+    size_t keylen = BIO_pending(bio);
+    std::unique_ptr<char[]> key(new char[keylen]);
+
+    int len = ::BIO_read(bio, key.get(), (int)keylen);
+    ::BIO_vfree(bio);
+
+    return (len > 0) ? string{key.get(), (size_t)len} : string{};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
-
-#endif  // __sockpp_types_h

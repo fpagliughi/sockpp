@@ -73,26 +73,17 @@ tls_socket& tls_socket::operator=(tls_socket&& rhs) {
     return *this;
 }
 
-binary tls_socket::peer_certificate() {
+std::optional<tls_certificate> tls_socket::peer_certificate() {
     // TODO: Implement this
-    X509* cert = SSL_get0_peer_certificate(ssl_);
+    X509* cert = SSL_get1_peer_certificate(ssl_);
 
     if (!cert)
-        return binary{};
+        return std::nullopt;
 
-    uint8_t* buf = nullptr;
-    int len = i2d_X509(cert, &buf);
-
-    // TODO: Return an error result on <0?
-    if (len <= 0)
-        return binary{};
-
-    binary certBin{buf, size_t(len)};
-    OPENSSL_free(buf);
-
-    return certBin;
+    return tls_certificate{cert};
 }
 
+#if 0
 uint32_t tls_socket::peer_certificate_status() {
     // TODO: Implement this?
     return 0;
@@ -104,7 +95,7 @@ string tls_socket::peer_certificate_status_message() {
     // TODO: Implement this?
     return string{};
 }
-
+#endif
 
 result<size_t> tls_socket::read(void* buf, size_t n) {
     size_t nx;

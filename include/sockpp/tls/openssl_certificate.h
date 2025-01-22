@@ -1,19 +1,16 @@
 /**
- * @file types.h
+ * @file openssl_certificate.h
  *
- * Primitive definitions for the sockpp library.
+ * Socket type for OpenSSL TLS/SSL sockets.
  *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	December 2023
+ * @author Frank Pagliughi
+ * @date January 2025
  */
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2025 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,36 +41,71 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_types_h
-#define __sockpp_types_h
+#ifndef __sockpp_tls_openssl_certificate_h
+#define __sockpp_tls_openssl_certificate_h
 
-#include <chrono>
-#include <cstdint>
-#include <string>
+#include <openssl/ssl.h>
+
+#include "sockpp/types.h"
 
 namespace sockpp {
 
-/** Port used for example apps and unit tests */
-// constexpr in_port_t TEST_PORT = 12345;
+// Forward declaration
+class tls_socket;
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** A sockpp::string is a std::string */
-using std::string;
+/**
+ * An X509 certificate implemented with OpenSSL.
+ */
+class tls_certificate
+{
+    /** The certificate library struct */
+    X509* cert_;
 
-/** A sockpp::duration is a std::chrono::duration */
-using std::chrono::duration;
+    friend class tls_socket;
 
-/** A binary blob as a basic string/collection of uint8_t */
-using binary = std::basic_string<uint8_t>;
+    /** Object takes ownership of the pointer */
+    tls_certificate(X509* cert) : cert_{cert} {}
 
-// Time units are std::chrono time unite.
-using std::chrono::microseconds;
-using std::chrono::milliseconds;
-using std::chrono::nanoseconds;
-using std::chrono::seconds;
+public:
+    /**
+     * Destructor.
+     */
+    ~tls_certificate() { ::X509_free(cert_); }
+    /**
+     * Gets the subject name for the certificate.
+     * @return The subject name for the certificate.
+     */
+    string subject_name() const;
+    /**
+     * Gets the subject name for the certificate.
+     * @return The subject name for the certificate.
+     */
+    string issuer_name() const;
+    /**
+     * Gets the certificate's "not before" date as a string.
+     * @return The certificate's "not before" date as a string.
+     */
+    string not_before_str() const;
+    /**
+     * Gets the certificate's "not after" date as a string.
+     * @return The certificate's "not after" date as a string.
+     */
+    string not_after_str() const;
+    /**
+     * Gets the certificate as a DER binary blob.
+     * @return The certificate as a DER binary blob.
+     */
+    binary to_der() const;
+    /**
+     * Gets the certificate as a PEM string.
+     * @return The certificate as a PEM string.
+     */
+    string to_pem() const;
+};
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
 
-#endif  // __sockpp_types_h
+#endif  // __sockpp_tls_openssl_certificate_h

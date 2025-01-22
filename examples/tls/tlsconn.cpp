@@ -36,17 +36,17 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <getopt.h>
+
+#include <fstream>
+#include <iostream>
+#include <string>
+
 #include "sockpp/tcp_connector.h"
 #include "sockpp/tls/connector.h"
 #include "sockpp/tls/context.h"
 #include "sockpp/tls/error.h"
 #include "sockpp/version.h"
-
-#include <getopt.h>
-
-#include <iostream>
-#include <fstream>
-#include <string>
 
 using namespace std;
 
@@ -141,13 +141,27 @@ int main(int argc, char* argv[]) {
 
     cout << "Successful connection to " << addr << endl;
 
-    if (auto cert = conn.peer_certificate(); cert.empty()) {
+    if (auto opt_cert = conn.peer_certificate(); !opt_cert) {
         cout << "No peer certificate" << endl;
     }
     else {
-        ofstream fil("peer.cer", ios::binary);
-        fil.write(reinterpret_cast<const char*>(cert.data()), cert.size());
-        cout << "Wrote peer certificate to peer.cer" << endl;
+        const auto& cert = opt_cert.value();
+
+        cout << "\nCertificate info:\n"
+             << "  Subject: " << cert.subject_name() << '\n'
+             << "  Issuer: " << cert.issuer_name() << '\n'
+             << "  Valid dates: " << cert.not_before_str() << " - " << cert.not_after_str()
+             << endl;
+
+        ofstream derfil("peer.cer", ios::binary);
+        auto der = cert.to_der();
+        derfil.write(reinterpret_cast<const char*>(der.data()), der.size());
+        cout << "\nWrote peer certificate to peer.cer" << endl;
+
+        ofstream pemfil("peer.pem");
+        auto pem = cert.to_pem();
+        pemfil.write(pem.data(), pem.size());
+        cout << "\nWrote peer certificate to peer.pem" << endl;
     }
 
     if (auto res = conn.write("HELO"); !res) {
