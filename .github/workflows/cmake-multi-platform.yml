@@ -83,6 +83,8 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        -DSOCKPP_BUILD_SHARED=OFF
+        -DSOCKPP_BUILD_STATIC=ON
         -DSOCKPP_BUILD_EXAMPLES=ON
         -DSOCKPP_BUILD_TESTS=ON
 
