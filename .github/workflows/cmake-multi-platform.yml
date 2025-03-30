@@ -47,6 +47,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Catch2 v3 from Source (ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        git clone https://github.com/catchorg/Catch2.git
+        cd Catch2
+        git checkout "v3.8.0"
+        mkdir build && cd build
+        cmake .. -DBUILD_TESTING=OFF
+        sudo cmake --build . --target install
+
+    - name: Install Catch2 v3 from Source (windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        git clone https://github.com/catchorg/Catch2.git
+        cd Catch2
+        git checkout "v3.8.0"
+        mkdir build && cd build
+        cmake .. -DBUILD_TESTING=OFF -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        cmake --build . --config ${{ matrix.build_type }} --target install
+
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
@@ -63,6 +83,8 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        -DSOCKPP_BUILD_EXAMPLES=ON
+        -DSOCKPP_BUILD_TESTS=ON
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
