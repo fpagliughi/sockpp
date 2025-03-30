@@ -36,6 +36,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # --------------------------------------------------------------------------
 
+message(STATUS "Building sockpp unit tests")
+
+# --- Get Catch2 ---
+
 set(UNIT_TEST_DIR ${PROJECT_SOURCE_DIR})
 find_package(Catch2 REQUIRED)
 

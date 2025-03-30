@@ -174,6 +174,7 @@ endif()
 # --- Unit Tests ---
 
 if(SOCKPP_BUILD_TESTS)
+    enable_testing()
 	add_subdirectory(tests/unit)
 endif()
 
