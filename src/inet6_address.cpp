@@ -91,7 +91,7 @@ result<in6_addr> inet6_address::resolve_name(const string& saddr) noexcept {
     if (err != 0) {
         error_code ec{};
 #if defined(_WIN32)
-        ec = error_code{errno, system_category()};
+        ec = error_code{err, system_category()};
 #else
         if (err == EAI_SYSTEM)
             ec = result<>::last_error();
