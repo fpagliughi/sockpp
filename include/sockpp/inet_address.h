@@ -130,6 +130,15 @@ public:
 	 */
 	inet_address(const inet_address& addr) : addr_(addr.addr_) {}
 	/**
+	 * Copy assignment.
+	 * @param rhs The other connector to copy into this one.
+	 * @return A reference to this object.
+	 */
+	inet_address& operator=(const inet_address& rhs) {
+		addr_ = rhs.addr_;
+		return *this;
+	}
+	/**
 	 * Checks if the address is set to some value.
 	 * This doesn't attempt to determine if the address is valid, simply
 	 * that it's not all zero.
