@@ -2,6 +2,14 @@
 //
 // Example app showing some options for connecting to a secure server.
 //
+// This shows:
+//   - Setting up a TLS client context, w/ options from the command line
+//   - Althoug these could be done in a single call, this uses separate
+//     steps to:
+//     - Resolve the server address
+//     - Make an insecure connection
+//     - Make the TLS connector from the insecure TCP connector
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
@@ -38,6 +46,7 @@
 
 #include <getopt.h>
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -49,24 +58,28 @@
 #include "sockpp/version.h"
 
 using namespace std;
+using namespace std::chrono_literals;
+
+const string DEFAULT_HOST = "example.org";
+const in_port_t DEFAULT_PORT = 443;
+
+// --------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
     bool verify = false;
-    string trustStore, certFile, keyFile;
+    string trustStore, certFile, keyFile, hostName;
 
     int c, iOpt;
     static option longOpts[] = {
-        {"verify", no_argument, 0, 'v'},
-        {"trust-store", required_argument, 0, 't'},
-        {"cert", required_argument, 0, 'c'},
-        {"key", required_argument, 0, 'k'},
-        {0, 0, 0, 0}
+        {"verify", no_argument, 0, 'v'},         {"trust-store", required_argument, 0, 't'},
+        {"cert", required_argument, 0, 'c'},     {"key", required_argument, 0, 'k'},
+        {"hostname", required_argument, 0, 'h'}, {0, 0, 0, 0}
     };
 
     cout << "Sample TLS test connector for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
          << endl;
 
-    while ((c = getopt_long(argc, argv, "t:c:k:v", longOpts, &iOpt)) != -1) {
+    while ((c = getopt_long(argc, argv, "t:c:k:h:v", longOpts, &iOpt)) != -1) {
         switch (c) {
             case 'v':
                 verify = true;
@@ -84,6 +97,10 @@ int main(int argc, char* argv[]) {
                 keyFile = string{optarg};
                 break;
 
+            case 'h':
+                hostName = string(optarg);
+                break;
+
             default:
                 cerr << "Unknown option: " << optarg << endl;
                 return 1;
@@ -92,8 +109,12 @@ int main(int argc, char* argv[]) {
 
     int narg = argc - optind;
 
-    string host = (narg > 0) ? argv[optind] : "example.org";
+    string host = (narg > 0) ? argv[optind] : DEFAULT_HOST;
     in_port_t port = (narg > 1) ? atoi(argv[optind + 1]) : 443;
+
+    // The default host requires SNI
+    if (host == DEFAULT_HOST)
+        hostName = host;
 
     sockpp::initialize();
 
@@ -132,10 +153,32 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    sockpp::tls_connector conn{ctx, addr, ec};
+    cout << "Connecting to server at " << host << ':' << port << endl;
+    sockpp::tcp_connector tcp_conn{addr, 10s, ec};
 
     if (ec) {
         cerr << "Error connecting to server: " << ec.message() << endl;
+        return 1;
+    }
+
+    cout << "Securing the connection..." << endl;
+    sockpp::tls_connector conn{ctx};
+
+    if (ec) {
+        cerr << "Error creating the TLS connector: " << ec.message() << endl;
+        return 1;
+    }
+
+    if (!hostName.empty()) {
+        cout << "Using SNI host name: " << hostName << "..." << endl;
+        if (auto res = conn.set_host_name(hostName); !res) {
+            cerr << "Error: " << res.error_message() << endl;
+            return 1;
+        }
+    }
+
+    if (auto res = conn.tls_connect(std::move(tcp_conn)); !res) {
+        cerr << "Error securing the connection: " << res.error_message() << endl;
         return 1;
     }
 
@@ -161,7 +204,7 @@ int main(int argc, char* argv[]) {
         ofstream pemfil("peer.pem");
         auto pem = cert.to_pem();
         pemfil.write(pem.data(), pem.size());
-        cout << "\nWrote peer certificate to peer.pem" << endl;
+        cout << "Wrote peer certificate to peer.pem" << endl;
     }
 
     if (auto res = conn.write("HELO"); !res) {
@@ -170,11 +213,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    cout << "\nSuccessfully wrote to server." << endl;
+
+    /*
     char buf[512];
     if (auto res = conn.read(buf, sizeof(buf)); !res) {
         cerr << "Error: " << res.error_message() << endl;
         return 1;
     }
+    */
 
     return 0;
 }

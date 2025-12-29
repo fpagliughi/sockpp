@@ -54,7 +54,21 @@ class tls_connector : public tls_socket
 
 public:
     /**
-     * Creates a TLS connector and connects to the server.
+     * Creates an unconnected TLS connector.
+     * @param ctx The TLS context.
+     * @throws std::system_error If it fails to find the server
+     * @throws tls_error If it fails to make a secure TLS connection
+     */
+    tls_connector(const tls_context& ctx) : base{ctx} {}
+    /**
+     * Creates an unconnected TLS connector.
+     * Once created, TLS options can be set on the object
+     * @param ctx The TLS context.
+     * @param ec Gets the error code on failure
+     */
+    tls_connector(const tls_context& ctx, error_code& ec) noexcept : base{ctx, ec} {}
+    /**
+     * Creates a TLS connector and attempts to connect to the server.
      * @param ctx The TLS context.
      * @param addr The address of the remote server.
      * @throws std::system_error If it fails to find the server
@@ -66,13 +80,35 @@ public:
             throw tls_error{res.error()};
     }
     /**
+     * Creates a TLS connector, connects to the server, and checks the SNI
+     * host name..
+     * @param ctx The TLS context.
+     * @param addr The address of the remote server.
+     * @param hostname The host name for an
+     * @throws std::system_error If it fails to find the server
+     * @throws tls_error If it fails to make a secure TLS connection
+     */
+    tls_connector(const tls_context& ctx, const sock_address& addr, string& hostname)
+        : base{ctx, connector{addr}} {
+        if (auto res = set_host_name(hostname); !res)
+            throw tls_error{res.error()};
+        if (auto res = tls_connect(); !res)
+            throw tls_error{res.error()};
+    }
+    /**
      * Creates a TLS connector and connects to the server.
      * @param ctx The TLS context.
      * @param addr The address of the remote server.
      * @param ec Gets the error code on failure
      */
-    tls_connector(const tls_context& ctx, const sock_address& addr, error_code& ec) noexcept
+    tls_connector(
+        const tls_context& ctx, const sock_address& addr, string& hostname, error_code& ec
+    ) noexcept
         : base{ctx, connector{addr}, ec} {
+        if (!ec) {
+            if (auto res = set_host_name(hostname); !res)
+                ec = res.error();
+        }
         if (!ec) {
             if (auto res = tls_connect(); !res)
                 ec = res.error();
@@ -116,11 +152,22 @@ public:
     }
     /**
      * Connect the TLS session.
+     * This assumes that the underlying, insecure connection has already
+     * been made, and then this call secures the connection.
+     * @return The error code on failure.
+     */
+    result<> tls_connect() noexcept { return tls_check_res_none(::SSL_connect(ssl())); }
+    /**
+     * Connect the TLS session.
      * This assumes that the underlying, insecure, connection has already
      * been made.
      * @return The error code on failure.
      */
-    result<> tls_connect() noexcept { return tls_check_res_none(::SSL_connect(ssl())); }
+    result<> tls_connect(stream_socket&& sock) noexcept {
+        if (auto res = attach(std::move(sock)); !res)
+            return res;
+        return tls_check_res_none(::SSL_connect(ssl()));
+    }
     /**
      * Connect the TLS session.
      * @return The error code on failure.

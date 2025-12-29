@@ -43,6 +43,17 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+tls_socket::tls_socket(const tls_context& ctx) : ssl_{::SSL_new(ctx.ctx_)} {
+    if (!ssl_)
+        throw tls_error::from_last_error();
+}
+
+tls_socket::tls_socket(const tls_context& ctx, error_code& ec) noexcept
+    : ssl_{::SSL_new(ctx.ctx_)} {
+    if (!ssl_)
+        ec = tls_last_error();
+}
+
 tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock)
     : base{std::move(sock)}, ssl_{::SSL_new(ctx.ctx_)} {
     if (!ssl_)
@@ -73,6 +84,17 @@ tls_socket& tls_socket::operator=(tls_socket&& rhs) {
     return *this;
 }
 
+result<> tls_socket::attach(stream_socket&& sock) noexcept {
+    // TODO: Implement this
+    // if (!ssl_)
+    //    throw tls_error::from_last_error();
+
+    auto h = sock.release();
+    base::reset(h);
+
+    return tls_check_res_none(::SSL_set_fd(ssl_, h));
+}
+
 std::optional<tls_certificate> tls_socket::peer_certificate() {
     // TODO: Implement this
     X509* cert = SSL_get1_peer_certificate(ssl_);
@@ -96,6 +118,10 @@ string tls_socket::peer_certificate_status_message() {
     return string{};
 }
 #endif
+
+result<> tls_socket::set_host_name(const string& hostname) {
+    return tls_check_res_none(::SSL_set_tlsext_host_name(ssl_, hostname.c_str()));
+}
 
 result<size_t> tls_socket::read(void* buf, size_t n) {
     size_t nx;

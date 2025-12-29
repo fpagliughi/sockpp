@@ -99,7 +99,8 @@ result<size_t> stream_socket::read(const std::vector<iovec>& ranges) {
 #else
     std::vector<WSABUF> bufs;
     for (const auto& iovec : ranges) {
-        bufs.push_back({static_cast<ULONG>(iovec.iov_len), static_cast<CHAR*>(iovec.iov_base)}
+        bufs.push_back(
+            {static_cast<ULONG>(iovec.iov_len), static_cast<CHAR*>(iovec.iov_base)}
         );
     }
 
@@ -159,7 +160,8 @@ result<size_t> stream_socket::write(const std::vector<iovec>& ranges) {
 #else
     std::vector<WSABUF> bufs;
     for (const auto& iovec : ranges) {
-        bufs.push_back({static_cast<ULONG>(iovec.iov_len), static_cast<CHAR*>(iovec.iov_base)}
+        bufs.push_back(
+            {static_cast<ULONG>(iovec.iov_len), static_cast<CHAR*>(iovec.iov_base)}
         );
     }
 
