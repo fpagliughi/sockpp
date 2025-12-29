@@ -86,6 +86,18 @@ class tls_socket : public stream_socket
 
 public:
     /**
+     * Creates a new, unconnected, TLS socket.
+     * @param ctx The TLS context
+     * @throws tls_error on failure
+     */
+    tls_socket(const tls_context& ctx);
+    /**
+     * Creates a new, unconnected, TLS socket.
+     * @param ctx The TLS context
+     * @param ec The error code on failure
+     */
+    tls_socket(const tls_context& ctx, error_code& ec) noexcept;
+    /**
      * Creates a new TLS socket from an existing stream socket.
      * @param ctx The TLS context
      * @param sock The insecure socket to wrap.
@@ -122,7 +134,12 @@ public:
      * @return A reference to this object.
      */
     tls_socket& operator=(tls_socket&& rhs);
-
+    /**
+     * Attach an insecure stream socket to this object.
+     * @param sock A stream socket
+     */
+    result<> attach(stream_socket&& sock) noexcept;
+    ;
     /**
      * Returns the peer's X.509 certificate.
      */
@@ -139,6 +156,14 @@ public:
      */
     string peer_certificate_status_message();
 #endif
+
+    /**
+     * Sets the Server Name Indication (SNI) for use by Secure Sockets
+     * Layer (SSL).
+     *
+     * Call this before the TLS handshake.
+     */
+    result<> set_host_name(const string& hostname);
 
     // I/O primitives
 

@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2023-2025 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    sockpp::tls_connector conn{ctx, addr, ec};
+    // Connect with an SNI check
+
+    sockpp::tls_connector conn{ctx, addr, host, ec};
 
     if (ec) {
         cerr << "Error connecting to server: " << ec.message() << endl;
