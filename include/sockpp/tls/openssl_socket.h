@@ -59,7 +59,7 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * A secure TLS socket implemented with OpenSSL.
+ * A secure TLS stream socket implemented with OpenSSL.
  */
 class tls_socket : public stream_socket
 {
@@ -139,7 +139,6 @@ public:
      * @param sock A stream socket
      */
     result<> attach(stream_socket&& sock) noexcept;
-    ;
     /**
      * Returns the peer's X.509 certificate.
      */
@@ -164,6 +163,16 @@ public:
      * Call this before the TLS handshake.
      */
     result<> set_host_name(const string& hostname);
+    /**
+     * Tells the socket to automatically retry a read or write after a
+     * non-application record has been sent or received.
+     *
+     * This is enabled by default and must be turned off if not desired.
+     *
+     * @param on Whether to turn the option on or off.
+     * @return The error code on failure.
+     */
+    result<> auto_retry(bool on = true);
 
     // I/O primitives
 
@@ -186,7 +195,7 @@ public:
 
     /**
      * Determines if the socket received a shutdown from the peer.
-     * @return @em true if the socet received a shutdown from the peer, @em
+     * @return @em true if the socket received a shutdown from the peer, @em
      *         false otherwise.
      */
     bool received_shutdown();

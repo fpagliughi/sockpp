@@ -82,7 +82,16 @@ public:
         BOTH = CLIENT | SERVER,
     };
 
+    /** Options for set_verify() */
     enum class verify_t { NONE, PEER };
+
+    /** Options for set_mode() */
+    enum mode_t {
+        ENABLE_PARTIAL_WRITE = SSL_MODE_ENABLE_PARTIAL_WRITE,
+        ACCEPT_MOVING_WRITE_BUFFER = SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER,
+        AUTO_RETRY = SSL_MODE_AUTO_RETRY
+        // TODO: Add the rest
+    };
 
 private:
     /** The OpenSSL context struct. */
@@ -185,6 +194,11 @@ public:
      * @param mode The verification mode.
      */
     void set_verify(verify_t mode) noexcept;
+    /**
+     * Set to retry read or write after non-application data handled.
+     * @param on Turn auto retry on or off.
+     */
+    void set_auto_retry(bool on = true) noexcept;
     /**
      * Load the certificate chain from a file.
      * @param certFile The certificate chain file.

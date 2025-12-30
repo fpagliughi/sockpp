@@ -85,24 +85,14 @@ tls_socket& tls_socket::operator=(tls_socket&& rhs) {
 }
 
 result<> tls_socket::attach(stream_socket&& sock) noexcept {
-    // TODO: Implement this
-    // if (!ssl_)
-    //    throw tls_error::from_last_error();
-
-    auto h = sock.release();
-    base::reset(h);
-
-    return tls_check_res_none(::SSL_set_fd(ssl_, h));
+    base::operator=(std::move(sock));
+    return tls_check_res_none(::SSL_set_fd(ssl_, handle()));
 }
 
 std::optional<tls_certificate> tls_socket::peer_certificate() {
-    // TODO: Implement this
-    X509* cert = SSL_get1_peer_certificate(ssl_);
-
-    if (!cert)
-        return std::nullopt;
-
-    return tls_certificate{cert};
+    if (X509* cert = SSL_get1_peer_certificate(ssl_); cert != nullptr)
+        return tls_certificate{cert};
+    return std::nullopt;
 }
 
 #if 0
@@ -121,6 +111,17 @@ string tls_socket::peer_certificate_status_message() {
 
 result<> tls_socket::set_host_name(const string& hostname) {
     return tls_check_res_none(::SSL_set_tlsext_host_name(ssl_, hostname.c_str()));
+}
+
+result<> tls_socket::auto_retry(bool on /*=true*/) {
+    long ret;
+    if (on) {
+        ret = ::SSL_set_mode(ssl_, SSL_MODE_AUTO_RETRY);
+    }
+    else {
+        ret = ::SSL_clear_mode(ssl_, SSL_MODE_AUTO_RETRY);
+    }
+    return tls_check_res_none(ret);
 }
 
 result<size_t> tls_socket::read(void* buf, size_t n) {
