@@ -1,37 +1,10 @@
+# mdBook outputs
+book/
+
 # Directories for temporaries & build targets
 build/
 obj/
 lib/
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
 
 # Preliminary Notes
 *.fodt
@@ -41,10 +14,6 @@ lib/
 .hgignore
 .hgtags
 
-# SlickEdit files
-*.vpj
-
 # Misc
 fmt.sh
 
-.vscode/
