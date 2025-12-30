@@ -69,6 +69,7 @@ endif()
 if(SOCKPP_WITH_OPENSSL)
     list(APPEND SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_certificate.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_connector.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_context.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_socket.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_error.cpp

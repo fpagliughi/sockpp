@@ -168,6 +168,15 @@ public:
         return *this;
     }
     /**
+     * Set to retry read or write after non-application data handled.
+     * @param on Turn auto retry on or off.
+     */
+    auto auto_retry(bool on = true) -> self& {
+        if (!ec_)
+            ctx_.set_auto_retry(on);
+        return *this;
+    }
+    /**
      * Load the certificate chain from a file.
      * @param certFile The certificate chain file.
      * @return Error code on failure.

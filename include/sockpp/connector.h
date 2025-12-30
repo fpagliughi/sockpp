@@ -142,6 +142,7 @@ public:
      * `timed_out`.
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
+     * @param ec The error code on failure
      */
     connector(const sock_address& addr, milliseconds t, error_code& ec) noexcept {
         ec = connect(addr, t).error();

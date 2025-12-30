@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     //   sockpp::tls_client_context ctx;
     //   auto ctx = sockpp::tls_context::client();
 
-    auto ctx = sockpp::tls_context_builder::client().verify_peer().finalize();
+    auto ctx = sockpp::tls_context_builder::client().verify_peer().auto_retry().finalize();
 
     if (trustStore.empty())
         ctx.set_default_trust_locations();

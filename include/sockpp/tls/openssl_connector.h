@@ -74,46 +74,27 @@ public:
      * @throws std::system_error If it fails to find the server
      * @throws tls_error If it fails to make a secure TLS connection
      */
-    tls_connector(const tls_context& ctx, const sock_address& addr)
-        : base{ctx, connector{addr}} {
-        if (auto res = tls_connect(); !res)
-            throw tls_error{res.error()};
-    }
+    tls_connector(const tls_context& ctx, const sock_address& addr);
     /**
-     * Creates a TLS connector, connects to the server, and checks the SNI
-     * host name..
+     * Creates a TLS connector, attempts to connect to the server, and
+     * checks the SNI host name.
      * @param ctx The TLS context.
      * @param addr The address of the remote server.
      * @param hostname The host name for an
      * @throws std::system_error If it fails to find the server
      * @throws tls_error If it fails to make a secure TLS connection
      */
-    tls_connector(const tls_context& ctx, const sock_address& addr, string& hostname)
-        : base{ctx, connector{addr}} {
-        if (auto res = set_host_name(hostname); !res)
-            throw tls_error{res.error()};
-        if (auto res = tls_connect(); !res)
-            throw tls_error{res.error()};
-    }
+    tls_connector(const tls_context& ctx, const sock_address& addr, string& hostname);
     /**
-     * Creates a TLS connector and connects to the server.
+     * Creates a TLS connector, attempts to connect to the server, and
+     * checks the SNI host name.
      * @param ctx The TLS context.
      * @param addr The address of the remote server.
      * @param ec Gets the error code on failure
      */
     tls_connector(
         const tls_context& ctx, const sock_address& addr, string& hostname, error_code& ec
-    ) noexcept
-        : base{ctx, connector{addr}, ec} {
-        if (!ec) {
-            if (auto res = set_host_name(hostname); !res)
-                ec = res.error();
-        }
-        if (!ec) {
-            if (auto res = tls_connect(); !res)
-                ec = res.error();
-        }
-    }
+    ) noexcept;
     /**
      * Creates a new TLS socket from an existing stream socket.
      * @param ctx The TLS context
@@ -132,7 +113,7 @@ public:
         : base{ctx, std::move(sock), ec} {}
     /**
      * Move constructor.
-     * @param sock The other TLS connector to move into this one.
+     * @param conn The other TLS connector to move into this one.
      */
     tls_connector(tls_connector&& conn) noexcept : base(std::move(conn)) {}
     /**
@@ -144,35 +125,53 @@ public:
      * @param rhs The other socket to move into this one.
      * @return A reference to this object.
      */
-    tls_connector& operator=(tls_connector&& rhs) {
-        if (&rhs != this) {
-            base::operator=(std::move(rhs));
-        }
-        return *this;
+    tls_connector& operator=(tls_connector&& rhs);
+    /**
+     * Attempts to connect to the specified server.
+     * @param addr The remote server address.
+     * @return The error code on failure.
+     */
+    result<> connect(const sock_address& addr) noexcept;
+    /**
+     * Attempts to connect to the specified server, with a timeout.
+     * If the socket is currently connected, this will close the current
+     * connection and open the new one.
+     * If the operation times out, the @ref error will be `errc::timed_out`.
+     * @param addr The remote server address.
+     * @param timeout The duration after which to give up. Zero means never.
+     * @return The error code on failure.
+     */
+    result<> connect(const sock_address& addr, microseconds timeout);
+    /**
+     * Attempts to connect to the specified server, with a timeout.
+     * If the socket is currently connected, this will close the current
+     * connection and open the new one.
+     * If the operation times out, the @ref last_error will be set to
+     * `timed_out`.
+     * @param addr The remote server address.
+     * @param relTime The duration after which to give up. Zero means never.
+     * @return The error code on failure
+     */
+    template <class Rep, class Period>
+    result<> connect(const sock_address& addr, const duration<Rep, Period>& relTime) {
+        return connect(addr, microseconds(relTime));
     }
     /**
      * Connect the TLS session.
      * This assumes that the underlying, insecure connection has already
-     * been made, and then this call secures the connection.
+     * been made, and then this call secures the connection. If this
+     * completes successfully, the TLS socket is ready for communication.
      * @return The error code on failure.
      */
     result<> tls_connect() noexcept { return tls_check_res_none(::SSL_connect(ssl())); }
     /**
      * Connect the TLS session.
      * This assumes that the underlying, insecure, connection has already
-     * been made.
+     * been made. If this completes successfully, the TLS socket is ready
+     * for communication.
      * @return The error code on failure.
      */
-    result<> tls_connect(stream_socket&& sock) noexcept {
-        if (auto res = attach(std::move(sock)); !res)
-            return res;
-        return tls_check_res_none(::SSL_connect(ssl()));
-    }
-    /**
-     * Connect the TLS session.
-     * @return The error code on failure.
-     */
-    result<> connect() noexcept { return tls_check_res_none(::SSL_connect(ssl())); }
+    result<> tls_connect(stream_socket&& sock) noexcept;
 };
 
 /////////////////////////////////////////////////////////////////////////////

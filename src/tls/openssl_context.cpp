@@ -115,6 +115,13 @@ void tls_context::set_verify(verify_t mode) noexcept {
     ::SSL_CTX_set_verify(ctx_, vmode, nullptr);
 }
 
+void tls_context::set_auto_retry(bool on /*=true*/) noexcept {
+    if (on)
+        ::SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
+    else
+        ::SSL_CTX_clear_mode(ctx_, SSL_MODE_AUTO_RETRY);
+}
+
 result<> tls_context::set_cert_file(const string& certFile) {
     return tls_check_res_none(::SSL_CTX_use_certificate_chain_file(ctx_, certFile.c_str()));
 }
