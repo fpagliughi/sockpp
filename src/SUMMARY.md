@@ -6,4 +6,5 @@
 - [TCP and Stream Sockets](./tcp.md)
 - [UDP and Datagram Sockets](./udp.md)
 - [UNIX Domain Sockets](./unix_domain.md)
+- [CANbus on Linux with SocketCAN](canbus.md)
 - [Building Applications](./cmake.md)
