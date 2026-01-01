@@ -2,15 +2,15 @@
 
 Simple, modern, C++ network socket library.
 
-This is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
+_sockpp_ is a fairly low-level C++ wrapper around the Berkeley sockets library using `socket`, `acceptor,` and `connector` classes that are familiar concepts from other languages.
 
-The base `socket` class wraps a system socket handle and maintains its lifetime using the familiar [RAII](https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization) pattern. When the C++ object goes out of scope, it closes the underlying socket handle. Socket objects are generally _moveable_ but not _copyable_. A socket can be transferred from one scope (or thread) to another using `std::move()`.
+The base `socket` class wraps a system socket handle and maintains its lifetime using the familiar [RAII](https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization) pattern. When the C++ object goes out of scope, it closes the underlying socket handle. Socket C++ objects are generally _moveable_ but not _copyable_. A socket can be transferred from one scope (or thread) to another using `std::move()`.
 
-The library currently supports: IPv4/6 on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
+The library currently supports: IPv4 and IPv6 on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
 
-Unix-Domain Sockets are available on *nix systems that have an OS implementation for them, and can even vbe 
+Unix-Domain Sockets are available on *nix systems that have an OS implementation for them.
 
-Support for secure sockets using either the OpenSSL or MbedTLS libraries was recently added with basic coverage. This will continue to be expanded in the near future.
+Experimental support for secure sockets using either the OpenSSL or MbedTLS libraries was started with basic coverage. This will continue to be expanded in the near future.
 
 There is also some experimental support for CAN bus programming on Linux using the SocketCAN package. This gives CAN bus adapters a network interface, with limitations dictated by the CAN message protocol.
 
@@ -19,6 +19,23 @@ All code in the library lives within the `sockpp` C++ namespace.
 **The 'master' branch is starting the move toward the v2.0 API, and is particularly unstable at the moment. You're advised to download the latest release for production use.**
 
 ## Latest News
+
+Apologies, this library hasn't received much love from me in the last year+. The original plan was to get to a Version 2.0 with the following goals:
+
+- Move the library to C++17
+- Do a major refactor of error handling, to allow apps to use the library without exceptions and to achieve better thread safety.
+- Add support for secure (TLS) sockets.
+- Start some better documentation, particularly for new users.
+
+Much of that was done a while back, except for the TLS support. The goal was to have an initial release that supported a choice between OpenSSL and another library that was _not_ a fork of OpenSSL, to try to ensure some aspect of portability. That work stalled a while back, but is still the main focus for near-term development.
+
+So the new strategy will be to release v2.0 with everything _but_ the finished TLS support, and keep TLS marked as experimental - meaning that it will change and break in subsequent v2.x minor releases. Its formal release will target either v2.5 or v3.0, depending on whether any other breaking changes are required to accommodate it.
+
+In the meantime, though, some documentation was started in the form of an mdBook, and is live here:
+
+https://fpagliughi.github.io/sockpp/
+
+### Older News
 
 Version 2.0 development is underway in this branch.
 
@@ -32,7 +49,7 @@ All functions that might fail due to a system error will return a result. That w
 
 Some work has also begun to incorporate Secure Sockets into a 2.x release of the library using either OpenSSL or MbedTLS libraries, or (likely), a build-time choice for one or the other.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years is being merged and updated, along with new work to do something comparable with OpenSSL. You will be able to chose one secure library or the other when building `sockpp`.
 
-The 2.0 version will also move up to C++17 and CMake v3.12 or later.
+The 2.0 version will also move up to C++17 and CMake v3.15 or later.
 
 Version 1.0 is released!
 
@@ -44,10 +61,15 @@ To keep up with the latest announcements for this project, follow me at:
 
 **Mastodon:** [@fpagliughi@fosstodon.org](https://fosstodon.org/@fpagliughi)
 
-**Twitter:** [@fmpagliughi](https://twitter.com/fmpagliughi)
+If you're using this library, send me a message and let me know how you're using it.  I'm always curious to see where it winds up!
 
-If you're using this library, tweet at me or send me a message, and let me know how you're using it.  I'm always curious to see where it winds up!
+## Documentation
 
+Some documentation is live here:
+
+https://fpagliughi.github.io/sockpp/
+
+It's still in its infancy, but may be helpful.
 
 ## Building your app with CMake
 
@@ -56,7 +78,7 @@ The library, when installed can normally be discovered with `find_package(sockpp
 A simple _CMakeLists.txt_ file might look like this:
 
 ```
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 project(mysock VERSION 1.0.0)
 
 find_package(sockpp REQUIRED)
@@ -78,10 +100,10 @@ CMake is the supported build system.
 
 ### Requirements:
 
-- A conforming C++-14 compiler.
-    - _gcc_ v5.0 or later (or) _clang_ v3.8 or later.
-    - _Visual Studio 2015_, or later on WIndows.
-- _CMake_ v3.12 or newer.
+- A conforming C++-17 compiler.
+    - _gcc_ v8.0 or later (or) _clang_ v5.0 or later.
+    - _Visual Studio 2019_, or later on Windows.
+- _CMake_ v3.15 or newer.
 - _Doxygen_ (optional) to generate API docs.
 - _Catch2_ (optional) v2.x or v3.x to build and run unit tests.
 
@@ -222,7 +244,7 @@ The same is true for local connection on *nix systems that implement Unix Domain
 
 Examples are in the [examples/unix](https://github.com/fpagliughi/sockpp/tree/master/examples/unix) directory.
 
-#### [Experimental] UNIX Socket Support in Windows!
+#### UNIX Socket Support in Windows! [Very Experimental]
 
 Later versions of Windows 10 (starting with April 2018 update from Insider Build 17063) and all versions of Windows 11 implement support for UNIX sockets. Initial support was added to this library as a CMake option (opt-in), but has not been thoroughly tested, so is still considered experimental in this library.
 
@@ -235,11 +257,11 @@ Some key points for UNIX sockets on Win32/64:
 
 - Only stream sockets are supported, not dgram.
 - socketpair is not supported.
-- Windoes file and directory permissions determine who can create and connect to UNIX sockets (as expected).
+- Windows file and directory permissions determine who can create and connect to UNIX sockets (as expected).
 - You can check if UNIX sockets are supported on a target by running the command `sc query afunix` from a Windows admin command prompt.
 
 
-### [Experimental] Secure Sockets
+### Secure Sockets [Experimental]
 
 Support for secure sockets is being added using a number of possible TLS libraries, although support is incomplete and the API is still changing.
 
@@ -279,13 +301,13 @@ LINK_WITH_PTHREAD:BOOL=ON
 
 Note that the options in the config file should already be present in the file but commented out by default. Simply uncomment them, save, and build.
 
-### [Experimental] SocketCAN (CANbus on Linux)
+### CANbus on Linux with SocketCAN [Experimental]
 
-The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine. Linux has the _SocketCAN_ package which allows processes to share access to a physical CAN bus interface using Raw sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
+The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine over a twisted pair of wires. Linux has the _SocketCAN_ package which allows processes to share access to a physical CAN bus interface using raw sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
 
-At the lowest level, CAN devices write individual packets, called "frames" to a specific numeric addresses on the bus.
+At the lowest level, CAN devices write individual packets, called "frames", to a specific numeric ID (addresses) for each frame. There is no master on the bus; all nodes can read and write at will. In the event that multiple nodes transmit at the same time, the collision is won by the frame with the highest priority, determined as the one with the lowest ID. The other nodes back-off and can retry later.
 
-For example a device with a temperature sensor might read the temperature peirodically and write it to the bus as a raw 32-bit integer, like:
+As an example, consider a device with a temperature sensor. The device might read the temperature periodically and write it to the bus as a raw 32-bit integer, like:
 
 ```
 can_address addr("CAN0");
