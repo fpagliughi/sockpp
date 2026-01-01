@@ -234,10 +234,8 @@ sock_address_any socket::address() const {
     auto addrStore = sockaddr_storage{};
     socklen_t len = sizeof(sockaddr_storage);
 
-    // TODO: Return the result
-    auto res =
-        check_res(::getsockname(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len));
-    if (!res)
+    auto ret = ::getsockname(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len);
+    if (auto res = check_res(ret); !res)
         return sock_address_any{};
 
     return sock_address_any(addrStore, len);
@@ -250,10 +248,8 @@ sock_address_any socket::peer_address() const {
     auto addrStore = sockaddr_storage{};
     socklen_t len = sizeof(sockaddr_storage);
 
-    // TODO: Return the result?
-    auto res =
-        check_res(::getpeername(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len));
-    if (!res)
+    auto ret = ::getpeername(handle_, reinterpret_cast<sockaddr*>(&addrStore), &len);
+    if (auto res = check_res(ret); !res)
         return sock_address_any{};
 
     return sock_address_any(addrStore, len);

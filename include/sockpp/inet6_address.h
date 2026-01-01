@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019-2023 Frank Pagliughi
+// Copyright (c) 2019-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -123,8 +123,15 @@ public:
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
+     * @throw invalid_argument if the address is not IPv6
      */
-    inet6_address(const sock_address& addr) { std::memcpy(&addr_, addr.sockaddr_ptr(), SZ); }
+    inet6_address(const sock_address& addr);
+    /**
+     * Constructs the address by copying the specified structure.
+     * @param addr The other address
+     * @param ec Gets the error code on failure.
+     */
+    inet6_address(const sock_address& addr, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address

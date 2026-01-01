@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019-2023 Frank Pagliughi
+// Copyright (c) 2019-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,23 @@ inet6_address::inet6_address(const string& saddr, in_port_t port, error_code& ec
 
     if (res)
         addr_ = res.value().addr_;
+}
+
+inet6_address::inet6_address(const sock_address& addr) {
+    auto fam = addr.family();
+    if (fam != AF_UNSPEC && fam != ADDRESS_FAMILY)
+        throw system_error{make_error_code(errc::invalid_argument)};
+    std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
+}
+
+inet6_address::inet6_address(const sock_address& addr, error_code& ec) noexcept {
+    auto fam = addr.family();
+    if (fam == AF_UNSPEC || fam == ADDRESS_FAMILY) {
+        std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
+        ec = error_code{};
+    }
+    else
+        ec = std::make_error_code(errc::invalid_argument);
 }
 
 // --------------------------------------------------------------------------
