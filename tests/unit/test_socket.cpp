@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019-2023 Frank Pagliughi
+// Copyright (c) 2019-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -126,7 +126,11 @@ TEST_CASE("socket errors", "[socket]") {
         socklen_t len = sizeof(int);
         auto res = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
         REQUIRE(!res);
-        REQUIRE(errc::bad_file_descriptor == res);
+        #if defined(_WIN32)
+            REQUIRE(errc::not_a_socket == res);
+        #else
+            REQUIRE(errc::bad_file_descriptor == res);
+        #endif
     }
 }
 
