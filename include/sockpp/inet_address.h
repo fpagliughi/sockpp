@@ -118,7 +118,7 @@ public:
      * @param addr The other address
      * @throw invalid_argument if the address is not IPv4
      */
-    inet_address(const sockaddr& addr);
+    explicit inet_address(const sockaddr& addr);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
@@ -130,7 +130,7 @@ public:
      * @param addr The other address
      * @throw invalid_argument if the address is not IPv4
      */
-    inet_address(const sock_address& addr);
+    explicit inet_address(const sock_address& addr);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address

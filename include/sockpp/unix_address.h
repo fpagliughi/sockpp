@@ -94,7 +94,7 @@ public:
      * @param path The path to the socket file.
      * @throw system_error if the path is invalid (too long, etc)
      */
-    unix_address(const string& path);
+    explicit unix_address(const string& path);
     /**
      * Constructs an address given the specified path.
      * Sets the error code on failure.
@@ -106,7 +106,7 @@ public:
      * @param addr The other address
      * @throw invalid_argument if the address is not IPv4
      */
-    unix_address(const sockaddr& addr);
+    explicit unix_address(const sockaddr& addr);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
@@ -118,7 +118,7 @@ public:
      * @param addr The other address
      * @throw invalid_argument if the address is not IPv4
      */
-    unix_address(const sock_address& addr);
+    explicit unix_address(const sock_address& addr);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
