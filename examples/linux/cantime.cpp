@@ -67,12 +67,19 @@ int main(int argc, char* argv[]) {
 
     sockpp::initialize();
 
-    sockpp::can_address addr(canIface);
-    sockpp::can_socket sock(addr);
+    error_code ec{};
+    sockpp::can_address addr(canIface, ec);
 
-    if (!sock) {
-        cerr << "Error binding to the CAN interface " << canIface << "\n\t"
-             << sock.last_error_str() << endl;
+    if (ec) {
+        cerr << "Error finding the CAN interface: " << canIface << "\n\t" << ec.message()
+             << endl;
+        return 1;
+    }
+
+    sockpp::can_socket sock(addr, ec);
+    if (ec) {
+        cerr << "Error binding to the CAN interface " << canIface << "\n\t" << ec.message()
+             << endl;
         return 1;
     }
 

@@ -74,6 +74,40 @@ unix_address::unix_address(const string& path, error_code& ec) noexcept {
     }
 }
 
+unix_address::unix_address(const sockaddr& addr) {
+    auto fam = addr.sa_family;
+    if (fam != AF_UNSPEC && fam != ADDRESS_FAMILY)
+        throw system_error{make_error_code(errc::invalid_argument)};
+    std::memcpy(&addr_, &addr, SZ);
+}
+
+unix_address::unix_address(const sockaddr& addr, error_code& ec) noexcept {
+    auto fam = addr.sa_family;
+    if (fam == AF_UNSPEC || fam == ADDRESS_FAMILY) {
+        ec = error_code{};
+        std::memcpy(&addr_, &addr, SZ);
+    }
+    else
+        ec = std::make_error_code(errc::invalid_argument);
+}
+
+unix_address::unix_address(const sock_address& addr) {
+    auto fam = addr.family();
+    if (fam != AF_UNSPEC && fam != ADDRESS_FAMILY)
+        throw system_error{make_error_code(errc::invalid_argument)};
+    std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
+}
+
+unix_address::unix_address(const sock_address& addr, error_code& ec) noexcept {
+    auto fam = addr.family();
+    if (fam == AF_UNSPEC || fam == ADDRESS_FAMILY) {
+        std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
+        ec = error_code{};
+    }
+    else
+        ec = std::make_error_code(errc::invalid_argument);
+}
+
 // --------------------------------------------------------------------------
 
 result<unix_address> unix_address::create(const string& path) {

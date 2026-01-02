@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2021 Frank Pagliughi
+// Copyright (c) 2014-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,53 @@ can_address::can_address(const string& iface) {
 
     addr_.can_family = ADDRESS_FAMILY;
     addr_.can_ifindex = idx;
+}
+
+can_address::can_address(const string& iface, error_code& ec) {
+    unsigned idx = ::if_nametoindex(iface.c_str());
+
+    if (idx == 0) {
+        ec = result<>::last_error();
+    }
+    else {
+        ec = error_code{};
+        addr_.can_family = ADDRESS_FAMILY;
+        addr_.can_ifindex = idx;
+    }
+}
+
+can_address::can_address(const sockaddr& addr) {
+    auto fam = addr.sa_family;
+    if (fam != AF_UNSPEC && fam != ADDRESS_FAMILY)
+        throw system_error{make_error_code(errc::invalid_argument)};
+    std::memcpy(&addr_, &addr, SZ);
+}
+
+can_address::can_address(const sockaddr& addr, error_code& ec) noexcept {
+    auto fam = addr.sa_family;
+    if (fam == AF_UNSPEC || fam == ADDRESS_FAMILY) {
+        ec = error_code{};
+        std::memcpy(&addr_, &addr, SZ);
+    }
+    else
+        ec = std::make_error_code(errc::invalid_argument);
+}
+
+can_address::can_address(const sock_address& addr) {
+    auto fam = addr.family();
+    if (fam != AF_UNSPEC && fam != ADDRESS_FAMILY)
+        throw system_error{make_error_code(errc::invalid_argument)};
+    std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
+}
+
+can_address::can_address(const sock_address& addr, error_code& ec) noexcept {
+    auto fam = addr.family();
+    if (fam == AF_UNSPEC || fam == ADDRESS_FAMILY) {
+        std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
+        ec = error_code{};
+    }
+    else
+        ec = std::make_error_code(errc::invalid_argument);
 }
 
 result<can_address> can_address::create(const std::string& iface) {

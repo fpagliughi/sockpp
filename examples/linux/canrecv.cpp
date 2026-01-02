@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021-2023 Frank Pagliughi
+// Copyright (c) 2021-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -65,12 +65,19 @@ int main(int argc, char* argv[]) {
 
     sockpp::initialize();
 
-    sockpp::can_address addr(canIface);
-    sockpp::can_socket sock(addr);
+    error_code ec{};
+    sockpp::can_address addr(canIface, ec);
 
-    if (!sock) {
-        cerr << "Error binding to the CAN interface '" << canIface << "'\n\t"
-             << sock.last_error_str() << endl;
+    if (ec) {
+        cerr << "Error finding the CAN interface: " << canIface << "\n\t" << ec.message()
+             << endl;
+        return 1;
+    }
+
+    sockpp::can_socket sock(addr, ec);
+    if (ec) {
+        cerr << "Error binding to the CAN interface " << canIface << "\n\t" << ec.message()
+             << endl;
         return 1;
     }
 
