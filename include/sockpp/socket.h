@@ -620,24 +620,14 @@ public:
      * @return The number of bytes sent on success or, the error code on
      *         failure.
      */
-    result<size_t> send_to(const void* buf, size_t n, int flags, const sock_address& addr) {
-#if defined(_WIN32)
-        auto cbuf = reinterpret_cast<const char*>(buf);
-        return check_res<size_t>(
-            ::sendto(handle(), cbuf, int(n), flags, addr.sockaddr_ptr(), addr.size())
-        );
-#else
-        return check_res<ssize_t, size_t>(
-            ::sendto(handle(), buf, n, flags, addr.sockaddr_ptr(), addr.size())
-        );
-#endif
-    }
+    result<size_t> send_to(const void* buf, size_t n, int flags, const sock_address& addr);
     /**
      * Sends a message to another socket.
      * @param buf The data to send.
      * @param n The number of bytes in the data buffer.
      * @param addr The remote destination of the data.
-     * @return the number of bytes sent on success or, @em -1 on failure.
+     * @return the number of bytes sent on success or, the error code on
+     *         failure.
      */
     result<size_t> send_to(const void* buf, size_t n, const sock_address& addr) {
         return send_to(buf, n, 0, addr);
@@ -646,7 +636,8 @@ public:
      * Sends a string to another socket.
      * @param s The string to send.
      * @param addr The remote destination of the data.
-     * @return the number of bytes sent on success or, @em -1 on failure.
+     * @return The number of bytes sent on success or, the error code on
+     *         failure.
      */
     result<size_t> send_to(const string& s, const sock_address& addr) {
         return send_to(s.data(), s.length(), 0, addr);
@@ -657,23 +648,17 @@ public:
      * @param buf The date to send.
      * @param n The number of bytes in the data buffer.
      * @param flags The option bit flags. See send(2).
-     * @return @em zero on success, @em -1 on failure.
+     * @return The number of bytes sent on success or, the error code on
+     *         failure.
      */
-    result<size_t> send(const void* buf, size_t n, int flags = 0) {
-#if defined(_WIN32)
-        return check_res<ssize_t, size_t>(
-            ::send(handle(), reinterpret_cast<const char*>(buf), int(n), flags)
-        );
-#else
-        return check_res<ssize_t, size_t>(::send(handle(), buf, n, flags));
-#endif
-    }
+    result<size_t> send(const void* buf, size_t n, int flags = 0);
     /**
      * Sends a string to the socket at the default address.
      * The socket should be connected before calling this
      * @param s The string to send.
      * @param flags The option bit flags. See send(2).
-     * @return @em zero on success, @em -1 on failure.
+     * @return The number of bytes sent on success, or the error code on
+     *         failure.
      */
     result<size_t> send(const string& s, int flags = 0) {
         return send(s.data(), s.length(), flags);
@@ -685,7 +670,8 @@ public:
      * @param flags The option bit flags. See send(2).
      * @param srcAddr Receives the address of the peer that sent the
      *  			   message
-     * @return The number of bytes read or @em -1 on error.
+     * @return The number of bytes read on success, or the error code on
+     *         failure.
      */
     result<size_t> recv_from(void* buf, size_t n, int flags, sock_address* srcAddr = nullptr);
     /**
@@ -694,7 +680,8 @@ public:
      * @param n The number of bytes to read.
      * @param srcAddr Receives the address of the peer that sent the
      *  			   message
-     * @return The number of bytes read or @em -1 on error.
+     * @return The number of bytes read on success, or the error code on
+     *         failure.
      */
     result<size_t> recv_from(void* buf, size_t n, sock_address* srcAddr = nullptr) {
         return recv_from(buf, n, 0, srcAddr);
@@ -704,17 +691,10 @@ public:
      * @param buf Buffer to get the incoming data.
      * @param n The number of bytes to read.
      * @param flags The option bit flags. See send(2).
-     * @return The number of bytes read or @em -1 on error.
+     * @return The number of bytes read on success, or the error code on
+     *         failure.
      */
-    result<size_t> recv(void* buf, size_t n, int flags = 0) {
-#if defined(_WIN32)
-        return check_res<ssize_t, size_t>(
-            ::recv(handle(), reinterpret_cast<char*>(buf), int(n), flags)
-        );
-#else
-        return check_res<ssize_t, size_t>(::recv(handle(), buf, n, flags));
-#endif
-    }
+    result<size_t> recv(void* buf, size_t n, int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -327,6 +327,32 @@ result<> socket::close() {
 }
 
 // --------------------------------------------------------------------------
+// I/O
+
+result<size_t> socket::send_to(
+    const void* buf, size_t n, int flags, const sock_address& addr
+) {
+#if defined(_WIN32)
+    auto cbuf = reinterpret_cast<const char*>(buf);
+    return check_res<size_t>(
+        ::sendto(handle(), cbuf, int(n), flags, addr.sockaddr_ptr(), addr.size())
+    );
+#else
+    return check_res<ssize_t, size_t>(
+        ::sendto(handle(), buf, n, flags, addr.sockaddr_ptr(), addr.size())
+    );
+#endif
+}
+
+result<size_t> socket::send(const void* buf, size_t n, int flags /*=0*/) {
+#if defined(_WIN32)
+    return check_res<ssize_t, size_t>(
+        ::send(handle(), reinterpret_cast<const char*>(buf), int(n), flags)
+    );
+#else
+    return check_res<ssize_t, size_t>(::send(handle(), buf, n, flags));
+#endif
+}
 
 result<size_t>
 socket::recv_from(void* buf, size_t n, int flags, sock_address* srcAddr /*=nullptr*/) {
@@ -341,6 +367,16 @@ socket::recv_from(void* buf, size_t n, int flags, sock_address* srcAddr /*=nullp
     );
 #else
     return check_res<ssize_t, size_t>(::recvfrom(handle(), buf, n, flags, p, &len));
+#endif
+}
+
+result<size_t> socket::recv(void* buf, size_t n, int flags /*=0*/) {
+#if defined(_WIN32)
+    return check_res<ssize_t, size_t>(
+        ::recv(handle(), reinterpret_cast<char*>(buf), int(n), flags)
+    );
+#else
+    return check_res<ssize_t, size_t>(::recv(handle(), buf, n, flags));
 #endif
 }
 

@@ -2,6 +2,7 @@
 build/
 obj/
 lib/
+book/
 
 # Compiled Object files
 *.slo
@@ -41,10 +42,12 @@ lib/
 .hgignore
 .hgtags
 
-# SlickEdit files
+# Various editor and IDE files
+sockpp.v*
 *.vpj
+.vscode/
 
 # Misc
 fmt.sh
 
-.vscode/
+

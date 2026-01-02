@@ -125,7 +125,7 @@ public:
      * @param addr The other address
      * @throw invalid_argument if the address is not IPv6
      */
-    inet6_address(const sock_address& addr);
+    explicit inet6_address(const sock_address& addr);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
