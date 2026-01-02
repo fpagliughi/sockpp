@@ -126,11 +126,11 @@ TEST_CASE("socket errors", "[socket]") {
         socklen_t len = sizeof(int);
         auto res = sock.get_option(SOL_SOCKET, SO_REUSEADDR, &reuse, &len);
         REQUIRE(!res);
-        #if defined(_WIN32)
-            REQUIRE(errc::not_a_socket == res);
-        #else
-            REQUIRE(errc::bad_file_descriptor == res);
-        #endif
+#if defined(_WIN32)
+        REQUIRE(errc::not_a_socket == res);
+#else
+        REQUIRE(errc::bad_file_descriptor == res);
+#endif
     }
 }
 

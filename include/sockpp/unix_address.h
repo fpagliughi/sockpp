@@ -103,20 +103,28 @@ public:
     unix_address(const string& path, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
-     * @param addr The generic address. This must be a proper AF_UNIX
-     *  		   address to be valid.
+     * @param addr The other address
+     * @throw invalid_argument if the address is not IPv4
      */
-    explicit unix_address(const sockaddr& addr) {
-        std::memcpy(&addr_, &addr, sizeof(sockaddr));
-    }
+    unix_address(const sockaddr& addr);
     /**
      * Constructs the address by copying the specified structure.
-     * @param addr The other address. This must be a proper AF_UNIX address
-     *  		   to be valid.
+     * @param addr The other address
+     * @param ec Gets the error code on failure.
      */
-    unix_address(const sock_address& addr) noexcept {
-        std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
-    }
+    unix_address(const sockaddr& addr, error_code& ec) noexcept;
+    /**
+     * Constructs the address by copying the specified structure.
+     * @param addr The other address
+     * @throw invalid_argument if the address is not IPv4
+     */
+    unix_address(const sock_address& addr);
+    /**
+     * Constructs the address by copying the specified structure.
+     * @param addr The other address
+     * @param ec Gets the error code on failure.
+     */
+    unix_address(const sock_address& addr, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address

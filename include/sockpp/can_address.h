@@ -101,21 +101,36 @@ public:
      */
     can_address(const string& iface);
     /**
-     * Constructs the address by copying the specified structure.
-     * @param addr The generic address. This must be an AF_CAN address to be
-     *  		   a valid CANbus address.
+     * Constructs an address for the specified CAN interface.
+     * The interface might be "can0", "can1", "vcan0", etc.
+     * @param iface The name of the CAN interface
+     * @param ec Gets the error code on failure.
      */
-    explicit can_address(const sockaddr& addr) noexcept {
-        std::memcpy(&addr_, &addr, sizeof(sockaddr));
-    }
+    can_address(const string& iface, error_code& ec);
     /**
      * Constructs the address by copying the specified structure.
-     * @param addr The other address. This must be an AF_CAN address to be
-     *  		   a valid CANbus address.
+     * @param addr The other address
+     * @throw invalid_argument if the address is not IPv4
      */
-    can_address(const sock_address& addr) noexcept {
-        std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
-    }
+    can_address(const sockaddr& addr);
+    /**
+     * Constructs the address by copying the specified structure.
+     * @param addr The other address
+     * @param ec Gets the error code on failure.
+     */
+    can_address(const sockaddr& addr, error_code& ec) noexcept;
+    /**
+     * Constructs the address by copying the specified structure.
+     * @param addr The other address
+     * @throw invalid_argument if the address is not IPv4
+     */
+    can_address(const sock_address& addr);
+    /**
+     * Constructs the address by copying the specified structure.
+     * @param addr The other address
+     * @param ec Gets the error code on failure.
+     */
+    can_address(const sock_address& addr, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address. This must be initialized to a proper
