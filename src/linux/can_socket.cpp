@@ -62,34 +62,28 @@ result<> can_socket::open(const can_address& addr) noexcept {
     return none{};
 }
 
-system_clock::time_point can_socket::last_frame_time() {
+result<system_clock::time_point> can_socket::last_frame_time() {
     timeval tv{};
 
-    // TODO: Handle error
-    ::ioctl(handle(), SIOCGSTAMP, &tv);
+    if (auto res = check_res_none(::ioctl(handle(), SIOCGSTAMP, &tv)); !res)
+        return res.error();
     return to_timepoint(tv);
 }
 
-double can_socket::last_frame_timestamp() {
+result<double> can_socket::last_frame_timestamp() {
     timeval tv{};
 
-    // TODO: Handle error
-    ::ioctl(handle(), SIOCGSTAMP, &tv);
+    if (auto res = check_res_none(::ioctl(handle(), SIOCGSTAMP, &tv)); !res)
+        return res.error();
     return double(tv.tv_sec) + 1.0e-6 * tv.tv_usec;
 }
 
-// --------------------------------------------------------------------------
-
-#if 0
-ssize_t
-can_socket::recv_from(can_frame* frame, int flags, can_address* srcAddr /*=nullptr*/) {
-    sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
-    socklen_t len = srcAddr ? srcAddr->size() : 0;
-
-    // TODO: Check returned length
-    return check_ret(::recvfrom(handle(), frame, sizeof(can_frame), flags, p, &len));
+result<can_frame> can_socket::recv(int flags /*=0*/) {
+    can_frame frame;
+    if (auto res = recv(&frame, flags); !res)
+        return res.error();
+    return frame;
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
