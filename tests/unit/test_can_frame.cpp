@@ -1,12 +1,12 @@
-// test_can_address.cpp
+// test_can_frame.cpp
 //
-// Unit tests for the sockpp `can_address` class.
+// Unit tests for the sockpp `can_frame` and `canfd_frame` classes.
 //
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,11 @@
 #include <string>
 
 #include "catch2_version.h"
-#include "sockpp/can_address.h"
+#include "sockpp/can_frame.h"
 
 using namespace sockpp;
 using namespace std;
+using namespace std::string_literals;
 
 // *** NOTE: The "vcan0:" virtual interface must be present. Set it up:
 //   $ ip link add type vcan && ip link set up vcan0
@@ -53,24 +54,11 @@ static const string IFACE{"vcan0"};
 
 // --------------------------------------------------------------------------
 
-TEST_CASE("can_address default constructor", "[canbus][address]") {
-    can_address addr;
+TEST_CASE("can_frame conversions", "[can]") {
+    SECTION("standard to FD frames") {
+        sockpp::can_frame frame{0x42, "hello"s};
 
-    REQUIRE(!addr.is_set());
-    REQUIRE(addr.iface().empty());
-    REQUIRE(sizeof(sockaddr_can) == addr.size());
-}
-
-TEST_CASE("can_address iface constructor", "[canbus][address]") {
-    SECTION("valid interface") {
-        can_address addr(IFACE);
-
-        REQUIRE(addr);
-        REQUIRE(addr.is_set());
-        REQUIRE(IFACE == addr.iface());
-        REQUIRE(sizeof(sockaddr_can) == addr.size());
-        REQUIRE(addr.index() > 0);
+        sockpp::canfd_frame fdframe{frame};
+        REQUIRE(fdframe.id_value() == 0x42);
     }
-
-    SECTION("invalid interface") { REQUIRE_THROWS(can_address("invalid")); }
 }
