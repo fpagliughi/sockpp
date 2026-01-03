@@ -49,14 +49,16 @@
 
 #include <linux/can.h>
 
-#include <cstring>
-// #include <string>
 #include <algorithm>
+#include <cstring>
 
 #include "sockpp/platform.h"
+#include "sockpp/result.h"
 #include "sockpp/types.h"
 
 namespace sockpp {
+
+class canfd_frame;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -97,19 +99,37 @@ public:
      * @param data The data field for the frame
      * @param n The number of bytes in the data field
      */
-    can_frame(canid_t canID, const void* data, size_t n) : base{} {
-        this->can_id = canID;
-        if (data && n != 0) {
-            n = std::min(n, size_t(CAN_MAX_DLEN));
-            this->can_dlc = n;
-            ::memcpy(&this->data, data, n);
-        }
-    }
+    can_frame(canid_t canID, const void* data, size_t n);
     /**
      * Construct a frame from a C library CAN frame.
      * @param frame A C lib CAN frame.
      */
     can_frame(const base& frame) : base{frame} {}
+    /**
+     * Try to convert a CAN FD frame into a classic one.
+     * This only succeeds if the FD data fits into this object.
+     * @param fdframe The frame to convert.
+     * @throws invalid_argument if the data does not fit.
+     */
+    can_frame(const canfd_frame& fdframe);
+    /**
+     * Try to convert a CAN FD frame into a classic one.
+     * This only succeeds if the FD data fits into this object.
+     * @param fdframe The frame to convert.
+     * @param ec Gets the error code, invalid_argument, if the data does not
+     *  		 fit.
+     */
+    can_frame(const canfd_frame& fdframe, error_code& ec);
+    /**
+     * Gets a pointer to the underlying C frame.
+     * @return A pointer to the underlying C frame.
+     */
+    ::can_frame* frame_ptr() { return static_cast<::can_frame*>(this); }
+    /**
+     * Gets a const pointer to the underlying C frame.
+     * @return A const pointer to the underlying C frame.
+     */
+    const ::can_frame* frame_ptr() const { return static_cast<const ::can_frame*>(this); }
     /**
      * Determines if this frame has an extended (29-bit) CAN ID.
      * @return @em true if this frame has an extended ID, @em false if not
@@ -218,10 +238,28 @@ public:
         }
     }
     /**
+     * Construct an FD frame from a classic CAN 2.0 frame.
+     * @param frame A classic CAN 2.0 frame.
+     */
+    canfd_frame(const can_frame& frame) {
+        // TODO: Should we reject RTR or error frames?
+        std::memcpy(frame_ptr(), frame.frame_ptr(), sizeof(::can_frame));
+    }
+    /**
      * Construct a frame from a C library CAN frame.
      * @param frame A C lib CAN frame.
      */
     canfd_frame(const base& frame) : base{frame} {}
+    /**
+     * Gets a pointer to the underlying C frame.
+     * @return A pointer to the underlying C frame.
+     */
+    ::canfd_frame* frame_ptr() { return static_cast<::canfd_frame*>(this); }
+    /**
+     * Gets a const pointer to the underlying C frame.
+     * @return A const pointer to the underlying C frame.
+     */
+    const ::canfd_frame* frame_ptr() const { return static_cast<const ::canfd_frame*>(this); }
     /**
      * Determines if this frame has an extended (29-bit) CAN ID.
      * @return @em true if this frame has an extended ID, @em false if not

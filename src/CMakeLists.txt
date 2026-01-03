@@ -62,6 +62,7 @@ endif()
 if(SOCKPP_WITH_CAN)
     list(APPEND SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_address.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_frame.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/linux/can_socket.cpp
     )
 endif()
