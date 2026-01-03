@@ -222,7 +222,7 @@ public:
      *         failure.
      */
     result<size_t> send(const can_frame& frame, int flags = 0) {
-        return base::send(&frame, sizeof(can_frame), flags);
+        return base::send(frame.frame_ptr(), sizeof(can_frame), flags);
     }
     /**
      * Receives a frame on the socket.
@@ -232,11 +232,10 @@ public:
      *         failure.
      */
     result<size_t> recv(can_frame* frame, int flags = 0) {
-        return base::recv(frame, sizeof(can_frame), flags);
+        return base::recv(frame->frame_ptr(), sizeof(can_frame), flags);
     }
     /**
      * Receives a frame on the socket.
-     * @param frame CAN frame to get the incoming data.
      * @param flags The option bit flags. See send(2).
      * @return The frame read on success, or the error code on failure.
      */
@@ -252,7 +251,7 @@ public:
      *         failure.
      */
     result<size_t> send(const canfd_frame& frame, int flags = 0) {
-        return base::send(&frame, sizeof(canfd_frame), flags);
+        return base::send(frame.frame_ptr(), sizeof(canfd_frame), flags);
     }
     /**
      * Receives an FD frame on the socket.
@@ -262,11 +261,10 @@ public:
      *         failure.
      */
     result<size_t> recv(canfd_frame* frame, int flags = 0) {
-        return base::recv(frame, sizeof(canfd_frame), flags);
+        return base::recv(frame->frame_ptr(), sizeof(canfd_frame), flags);
     }
     /**
      * Receives an FD frame on the socket.
-     * @param frame CAN FD frame to get the incoming data.
      * @param flags The option bit flags. See send(2).
      * @return The frame read on success, or the error code on failure.
      */
