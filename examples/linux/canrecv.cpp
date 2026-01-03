@@ -88,7 +88,9 @@ int main(int argc, char* argv[]) {
     while (true) {
         sockpp::can_frame frame;
         sock.recv(&frame);
-        auto t = sock.last_frame_timestamp();
+        auto t = 0.0;
+        if (auto res = sock.last_frame_timestamp(); res)
+            t = res.value();
 
         cout << t << "  ";
         for (uint8_t i = 0; i < frame.can_dlc; ++i)

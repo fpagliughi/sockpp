@@ -159,7 +159,7 @@ public:
      * @return The system time of the last frame read from the socket with
      *  	   microsecond precision.
      */
-    std::chrono::system_clock::time_point last_frame_time();
+    result<std::chrono::system_clock::time_point> last_frame_time();
     /**
      * Gets a floating point timestamp of the last frame read from the
      * socket.
@@ -167,7 +167,7 @@ public:
      * floating-point, microsecond precision.
      * @return A floating-point timestamp with microsecond precision.
      */
-    double last_frame_timestamp();
+    result<double> last_frame_timestamp();
     /**
      * Turn FD mode for the socket on or off.
      *
@@ -215,29 +215,7 @@ public:
     // ----- I/O (classic) -----
 
     /**
-     * Sends a frame to the CAN interface at the specified address.
-     * @param frame The CAN frame to send.
-     * @param flags The flags. See send(2).
-     * @param addr The remote destination of the data.
-     * @return The number of bytes sent on success, or the error code on
-     *         failure.
-     */
-    result<size_t> send_to(const can_frame& frame, int flags, const can_address& addr) {
-        return base::send_to(&frame, sizeof(can_frame), flags, addr);
-    }
-    /**
-     * Sends a frame to the CAN interface at the specified address.
-     * @param frame The CAN frame to send.
-     * @param addr The remote destination of the data.
-     * @return The number of bytes sent on success, or the error code on
-     *         failure.
-     */
-    result<size_t> send_to(const can_frame& frame, const can_address& addr) {
-        return send_to(frame, 0, addr);
-    }
-    /**
      * Sends a frame to the CAN bus.
-     * The socket should be bound before calling this.
      * @param frame The CAN frame to send.
      * @param flags The option bit flags. See send(2).
      * @return The number of bytes sent on success, or the error code on
@@ -247,19 +225,7 @@ public:
         return base::send(&frame, sizeof(can_frame), flags);
     }
     /**
-     * Receives a message from the CAN interface with the specified address.
-     * @param frame CAN frame to get the incoming data.
-     * @param flags The option bit flags. See send(2).
-     * @param srcAddr Receives the address of the peer that sent the
-     *  			   message
-     * @return The number of bytes read on success, or the error code on
-     *         failure.
-     */
-    result<size_t> recv_from(can_frame* frame, int flags, can_address* srcAddr = nullptr) {
-        return base::recv_from(frame, sizeof(frame), flags, srcAddr);
-    }
-    /**
-     * Receives a message on the socket.
+     * Receives a frame on the socket.
      * @param frame CAN frame to get the incoming data.
      * @param flags The option bit flags. See send(2).
      * @return The number of bytes read on success, or the error code on
@@ -268,33 +234,18 @@ public:
     result<size_t> recv(can_frame* frame, int flags = 0) {
         return base::recv(frame, sizeof(can_frame), flags);
     }
+    /**
+     * Receives a frame on the socket.
+     * @param frame CAN frame to get the incoming data.
+     * @param flags The option bit flags. See send(2).
+     * @return The frame read on success, or the error code on failure.
+     */
+    result<can_frame> recv(int flags = 0);
 
     // ----- I/O (FD) -----
 
     /**
-     * Sends an FD frame to the CAN interface at the specified address.
-     * @param frame The CAN FD frame to send.
-     * @param flags The flags. See send(2).
-     * @param addr The remote destination of the data.
-     * @return The number of bytes sent on success, or the error code on
-     *         failure.
-     */
-    result<size_t> send_to(const canfd_frame& frame, int flags, const can_address& addr) {
-        return base::send_to(&frame, sizeof(canfd_frame), flags, addr);
-    }
-    /**
-     * Sends an FD frame to the CAN interface at the specified address.
-     * @param frame The CAN FD frame to send.
-     * @param addr The remote destination of the data.
-     * @return The number of bytes sent on success, or the error code on
-     *         failure.
-     */
-    result<size_t> send_to(const canfd_frame& frame, const can_address& addr) {
-        return send_to(frame, 0, addr);
-    }
-    /**
      * Sends an FD frame to the CAN bus.
-     * The socket should be bound before calling this.
      * @param frame The CAN FD frame to send.
      * @param flags The option bit flags. See send(2).
      * @return The number of bytes sent on success, or the error code on
@@ -302,19 +253,6 @@ public:
      */
     result<size_t> send(const canfd_frame& frame, int flags = 0) {
         return base::send(&frame, sizeof(canfd_frame), flags);
-    }
-    /**
-     * Receives an FD frame from the CAN interface with the specified
-     * address.
-     * @param frame CAN frame to get the incoming data.
-     * @param flags The option bit flags. See send(2).
-     * @param srcAddr Receives the address of the peer that sent the
-     *  			   message, if non-null.
-     * @return The number of bytes read on success, or the error code on
-     *         failure.
-     */
-    result<size_t> recv_from(canfd_frame* frame, int flags, can_address* srcAddr = nullptr) {
-        return base::recv_from(frame, sizeof(canfd_frame), flags, srcAddr);
     }
     /**
      * Receives an FD frame on the socket.
@@ -326,6 +264,13 @@ public:
     result<size_t> recv(canfd_frame* frame, int flags = 0) {
         return base::recv(frame, sizeof(canfd_frame), flags);
     }
+    /**
+     * Receives an FD frame on the socket.
+     * @param frame CAN FD frame to get the incoming data.
+     * @param flags The option bit flags. See send(2).
+     * @return The frame read on success, or the error code on failure.
+     */
+    result<canfd_frame> recv_fd(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
