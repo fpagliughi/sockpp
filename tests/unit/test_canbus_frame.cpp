@@ -1,12 +1,12 @@
-// canrecv.cpp
+// test_canbus_frame.cpp
 //
-// Linux SoxketCAN reader example.
+// Unit tests for the sockpp `canbus_frame` and `canbusfd_frame` classes.
 //
-//
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021-2026 Frank Pagliughi
+// Copyright (c) 2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,67 +36,29 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
-#include <net/if.h>
-#include <sys/ioctl.h>
-
-#include <chrono>
-#include <iomanip>
-#include <iostream>
 #include <string>
-#include <thread>
 
-#include "sockpp/can_frame.h"
-#include "sockpp/can_socket.h"
-#include "sockpp/version.h"
+#include "catch2_version.h"
+#include "sockpp/canbus_frame.h"
 
+using namespace sockpp;
 using namespace std;
+using namespace std::string_literals;
 
-// The clock to use to get time and pace the app.
-using sysclock = chrono::system_clock;
+// *** NOTE: The "vcan0:" virtual interface must be present. Set it up:
+//   $ ip link add type vcan && ip link set up vcan0
+
+static const string IFACE{"vcan0"};
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[]) {
-    cout << "Sample SocketCAN reader for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
+TEST_CASE("canbus_frame conversions", "[can]") {
+    SECTION("standard to FD frames") {
+        canbus_frame frame{0x42, "hello"s};
 
-    string canIface = (argc > 1) ? argv[1] : "can0";
-    canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
-
-    sockpp::initialize();
-
-    error_code ec{};
-    sockpp::can_address addr(canIface, ec);
-
-    if (ec) {
-        cerr << "Error finding the CAN interface: " << canIface << "\n\t" << ec.message()
-             << endl;
-        return 1;
+        canbusfd_frame fdframe{frame};
+        REQUIRE(fdframe.id_value() == 0x42);
     }
-
-    sockpp::can_socket sock(addr, ec);
-    if (ec) {
-        cerr << "Error binding to the CAN interface " << canIface << "\n\t" << ec.message()
-             << endl;
-        return 1;
-    }
-
-    cout << "Created CAN socket on " << sock.address() << endl;
-    cout.setf(ios::fixed, ios::floatfield);
-    cout << setfill('0');
-
-    while (true) {
-        sockpp::can_frame frame;
-        sock.recv(&frame);
-        auto t = 0.0;
-        if (auto res = sock.last_frame_timestamp(); res)
-            t = res.value();
-
-        cout << t << "  ";
-        for (uint8_t i = 0; i < frame.can_dlc; ++i)
-            cout << hex << uppercase << setw(2) << unsigned(frame.data[i]) << " ";
-        cout << endl;
-    }
-
-    return (!sock) ? 1 : 0;
 }

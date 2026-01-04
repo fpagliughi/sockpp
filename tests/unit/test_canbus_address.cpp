@@ -1,9 +1,12 @@
-// can_socket.cpp
+// test_canbus_address.cpp
 //
+// Unit tests for the sockpp `canbus_address` class.
+//
+
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021-2023 Frank Pagliughi
+// Copyright (c) 2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,57 +36,41 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
+//
 
-#include "sockpp/can_socket.h"
+#include <string>
 
-#include <linux/sockios.h>
-#include <sys/ioctl.h>
+#include "catch2_version.h"
+#include "sockpp/canbus_address.h"
 
-#include "sockpp/socket.h"
-
+using namespace sockpp;
 using namespace std;
-using namespace std::chrono;
 
-namespace sockpp {
+// *** NOTE: The "vcan0:" virtual interface must be present. Set it up:
+//   $ ip link add type vcan && ip link set up vcan0
 
-/////////////////////////////////////////////////////////////////////////////
+static const string IFACE{"vcan0"};
 
-result<> can_socket::open(const can_address& addr) noexcept {
-    if (auto createRes = create_handle(SOCK_RAW, CAN_RAW); !createRes) {
-        return createRes.error();
+// --------------------------------------------------------------------------
+
+TEST_CASE("canbus_address default constructor", "[canbus][address]") {
+    canbus_address addr;
+
+    REQUIRE(!addr.is_set());
+    REQUIRE(addr.iface().empty());
+    REQUIRE(sizeof(sockaddr_can) == addr.size());
+}
+
+TEST_CASE("canbus_address iface constructor", "[canbus][address]") {
+    SECTION("valid interface") {
+        canbus_address addr(IFACE);
+
+        REQUIRE(addr);
+        REQUIRE(addr.is_set());
+        REQUIRE(IFACE == addr.iface());
+        REQUIRE(sizeof(sockaddr_can) == addr.size());
+        REQUIRE(addr.index() > 0);
     }
-    else {
-        reset(createRes.value());
-        if (auto res = bind(addr); !res) {
-            close();
-            return res;
-        }
-    }
-    return none{};
+
+    SECTION("invalid interface") { REQUIRE_THROWS(canbus_address("invalid")); }
 }
-
-result<system_clock::time_point> can_socket::last_frame_time() {
-    timeval tv{};
-
-    if (auto res = check_res_none(::ioctl(handle(), SIOCGSTAMP, &tv)); !res)
-        return res.error();
-    return to_timepoint(tv);
-}
-
-result<double> can_socket::last_frame_timestamp() {
-    timeval tv{};
-
-    if (auto res = check_res_none(::ioctl(handle(), SIOCGSTAMP, &tv)); !res)
-        return res.error();
-    return double(tv.tv_sec) + 1.0e-6 * tv.tv_usec;
-}
-
-result<can_frame> can_socket::recv(int flags /*=0*/) {
-    can_frame frame;
-    if (auto res = recv(&frame, flags); !res)
-        return res.error();
-    return frame;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-}  // namespace sockpp

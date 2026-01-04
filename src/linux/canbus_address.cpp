@@ -1,4 +1,4 @@
-// can_address.cpp
+// canbus_address.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,7 +34,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/can_address.h"
+#include "sockpp/canbus_address.h"
 
 #include <net/if.h>
 #include <sys/ioctl.h>
@@ -50,16 +50,16 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-constexpr sa_family_t can_address::ADDRESS_FAMILY;
+constexpr sa_family_t canbus_address::ADDRESS_FAMILY;
 
 // --------------------------------------------------------------------------
 
-can_address::can_address(unsigned idx) noexcept {
+canbus_address::canbus_address(unsigned idx) noexcept {
     addr_.can_family = ADDRESS_FAMILY;
     addr_.can_ifindex = idx;
 }
 
-can_address::can_address(const string& iface) {
+canbus_address::canbus_address(const string& iface) {
     unsigned idx = ::if_nametoindex(iface.c_str());
 
     if (idx == 0)
@@ -69,7 +69,7 @@ can_address::can_address(const string& iface) {
     addr_.can_ifindex = idx;
 }
 
-can_address::can_address(const string& iface, error_code& ec) {
+canbus_address::canbus_address(const string& iface, error_code& ec) {
     unsigned idx = ::if_nametoindex(iface.c_str());
 
     if (idx == 0) {
@@ -82,14 +82,14 @@ can_address::can_address(const string& iface, error_code& ec) {
     }
 }
 
-can_address::can_address(const sockaddr& addr) {
+canbus_address::canbus_address(const sockaddr& addr) {
     auto fam = addr.sa_family;
     if (fam != AF_UNSPEC && fam != ADDRESS_FAMILY)
         throw system_error{make_error_code(errc::invalid_argument)};
     std::memcpy(&addr_, &addr, SZ);
 }
 
-can_address::can_address(const sockaddr& addr, error_code& ec) noexcept {
+canbus_address::canbus_address(const sockaddr& addr, error_code& ec) noexcept {
     auto fam = addr.sa_family;
     if (fam == AF_UNSPEC || fam == ADDRESS_FAMILY) {
         ec = error_code{};
@@ -99,14 +99,14 @@ can_address::can_address(const sockaddr& addr, error_code& ec) noexcept {
         ec = std::make_error_code(errc::invalid_argument);
 }
 
-can_address::can_address(const sock_address& addr) {
+canbus_address::canbus_address(const sock_address& addr) {
     auto fam = addr.family();
     if (fam != AF_UNSPEC && fam != ADDRESS_FAMILY)
         throw system_error{make_error_code(errc::invalid_argument)};
     std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
 }
 
-can_address::can_address(const sock_address& addr, error_code& ec) noexcept {
+canbus_address::canbus_address(const sock_address& addr, error_code& ec) noexcept {
     auto fam = addr.family();
     if (fam == AF_UNSPEC || fam == ADDRESS_FAMILY) {
         std::memcpy(&addr_, addr.sockaddr_ptr(), SZ);
@@ -116,7 +116,7 @@ can_address::can_address(const sock_address& addr, error_code& ec) noexcept {
         ec = std::make_error_code(errc::invalid_argument);
 }
 
-result<can_address> can_address::create(const std::string& iface) {
+result<canbus_address> canbus_address::create(const std::string& iface) {
     unsigned idx = ::if_nametoindex(iface.c_str());
 
     if (idx == 0)
@@ -125,10 +125,10 @@ result<can_address> can_address::create(const std::string& iface) {
     sockaddr_can addr{};
     addr.can_family = ADDRESS_FAMILY;
     addr.can_ifindex = idx;
-    return can_address{addr};
+    return canbus_address{addr};
 }
 
-result<string> can_address::get_iface() const noexcept {
+result<string> canbus_address::get_iface() const noexcept {
     if (addr_.can_family == AF_UNSPEC)
         return string{};
 
@@ -146,7 +146,7 @@ result<string> can_address::get_iface() const noexcept {
 
 // --------------------------------------------------------------------------
 
-string can_address::iface() const noexcept {
+string canbus_address::iface() const noexcept {
     if (addr_.can_family == AF_UNSPEC)
         return string{};
 
@@ -161,7 +161,7 @@ string can_address::iface() const noexcept {
 
 // --------------------------------------------------------------------------
 
-ostream& operator<<(ostream& os, const can_address& addr) {
+ostream& operator<<(ostream& os, const canbus_address& addr) {
     os << "can:" << addr.iface();
     return os;
 }

@@ -1,5 +1,5 @@
 /**
- * @file can_frame.h
+ * @file canbus_frame.h
  *
  * Class for the Linux SocketCAN frames.
  *
@@ -44,8 +44,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_can_frame_h
-#define __sockpp_can_frame_h
+#ifndef __sockpp_canbus_frame_h
+#define __sockpp_canbus_frame_h
 
 #include <linux/can.h>
 
@@ -58,7 +58,7 @@
 
 namespace sockpp {
 
-class canfd_frame;
+class canbusfd_frame;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -67,7 +67,7 @@ class canfd_frame;
  * This inherits from the Linux CAN frame struct, just providing easier
    construction.
  */
-class can_frame : public ::can_frame
+class canbus_frame : public ::can_frame
 {
     /** The base class is the C library CAN frame struct. */
     using base = ::can_frame;
@@ -80,38 +80,38 @@ public:
      * Constructs an empty frame.
      * The frame is initialized to all zeroes.
      */
-    can_frame() : base{} {}
+    canbus_frame() : base{} {}
     /**
      * Constructs a frame with the specified ID and no data.
      * @param canID The CAN identifier for the frame
      */
-    can_frame(canid_t canID) : can_frame{canID, nullptr, 0} {}
+    canbus_frame(canid_t canID) : canbus_frame{canID, nullptr, 0} {}
     /**
      * Constructs a frame with the specified ID and data.
      * @param canID The CAN identifier for the frame
      * @param data The data field for the frame
      */
-    can_frame(canid_t canID, const string& data)
-        : can_frame{canID, data.data(), data.length()} {}
+    canbus_frame(canid_t canID, const string& data)
+        : canbus_frame{canID, data.data(), data.length()} {}
     /**
      * Constructs a frame with the specified ID and data.
      * @param canID The CAN identifier for the frame
      * @param data The data field for the frame
      * @param n The number of bytes in the data field
      */
-    can_frame(canid_t canID, const void* data, size_t n);
+    canbus_frame(canid_t canID, const void* data, size_t n);
     /**
      * Construct a frame from a C library CAN frame.
      * @param frame A C lib CAN frame.
      */
-    can_frame(const base& frame) : base{frame} {}
+    canbus_frame(const base& frame) : base{frame} {}
     /**
      * Try to convert a CAN FD frame into a classic one.
      * This only succeeds if the FD data fits into this object.
      * @param fdframe The frame to convert.
      * @throws invalid_argument if the data does not fit.
      */
-    can_frame(const canfd_frame& fdframe);
+    canbus_frame(const canbusfd_frame& fdframe);
     /**
      * Try to convert a CAN FD frame into a classic one.
      * This only succeeds if the FD data fits into this object.
@@ -119,7 +119,7 @@ public:
      * @param ec Gets the error code, invalid_argument, if the data does not
      *  		 fit.
      */
-    can_frame(const canfd_frame& fdframe, error_code& ec);
+    canbus_frame(const canbusfd_frame& fdframe, error_code& ec);
     /**
      * Gets a pointer to the underlying C frame.
      * @return A pointer to the underlying C frame.
@@ -178,22 +178,22 @@ public:
  * A remote transfer request (RTR) frame.
  * This is a classic frame with no data and the RTR flag set.
  */
-class can_remote_frame : public can_frame
+class canbus_remote_frame : public canbus_frame
 {
     /** The base class is the CAN frame */
-    using base = can_frame;
+    using base = canbus_frame;
 
     /** The size of the underlying address struct, in bytes */
-    static constexpr size_t SZ = sizeof(can_frame);
+    static constexpr size_t SZ = sizeof(canbus_frame);
 
 public:
     /** Create a default remote frame */
-    can_remote_frame() : base{CAN_RTR_FLAG} {}
+    canbus_remote_frame() : base{CAN_RTR_FLAG} {}
     /**
      * Create a remote frame for the specified ID.
      * @param canID The CAN identifier for the frame
      */
-    can_remote_frame(canid_t canID) : base{CAN_RTR_FLAG | canID} {}
+    canbus_remote_frame(canid_t canID) : base{CAN_RTR_FLAG | canID} {}
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -203,7 +203,7 @@ public:
  * This inherits from the Linux CAN fdframe struct, just providing easier
  * construction.
  */
-class canfd_frame : public ::canfd_frame
+class canbusfd_frame : public ::canfd_frame
 {
     /** The base class is the C library CAN frame struct. */
     using base = ::canfd_frame;
@@ -216,21 +216,21 @@ public:
      * Constructs an empty frame.
      * The frame is initialized to all zeroes.
      */
-    canfd_frame() : base{} {}
+    canbusfd_frame() : base{} {}
     /**
      * Constructs a frame with the specified ID and data.
      * @param canID The CAN identifier for the frame
      * @param data The data field for the frame
      */
-    canfd_frame(canid_t canID, const string& data)
-        : canfd_frame{canID, data.data(), data.length()} {}
+    canbusfd_frame(canid_t canID, const string& data)
+        : canbusfd_frame{canID, data.data(), data.length()} {}
     /**
      * Constructs a frame with the specified ID and data.
      * @param canID The CAN identifier for the frame
      * @param data The data field for the frame
      * @param n The number of bytes in the data field
      */
-    canfd_frame(canid_t canID, const void* data, size_t n) : base{} {
+    canbusfd_frame(canid_t canID, const void* data, size_t n) : base{} {
         this->can_id = canID;
         if (data && n != 0) {
             this->len = n;
@@ -241,7 +241,7 @@ public:
      * Construct an FD frame from a classic CAN 2.0 frame.
      * @param frame A classic CAN 2.0 frame.
      */
-    canfd_frame(const can_frame& frame) {
+    canbusfd_frame(const canbus_frame& frame) {
         // TODO: Should we reject RTR or error frames?
         std::memcpy(frame_ptr(), frame.frame_ptr(), sizeof(::can_frame));
     }
@@ -249,7 +249,7 @@ public:
      * Construct a frame from a C library CAN frame.
      * @param frame A C lib CAN frame.
      */
-    canfd_frame(const base& frame) : base{frame} {}
+    canbusfd_frame(const base& frame) : base{frame} {}
     /**
      * Gets a pointer to the underlying C frame.
      * @return A pointer to the underlying C frame.
@@ -295,4 +295,4 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
 
-#endif  // __sockpp_can_frame_h
+#endif  // __sockpp_canbus_frame_h

@@ -1,4 +1,4 @@
-// can_frame.cpp
+// canbus_frame.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -34,7 +34,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/can_frame.h"
+#include "sockpp/canbus_frame.h"
 
 using namespace std;
 
@@ -42,7 +42,7 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-can_frame::can_frame(canid_t canID, const void* data, size_t n) : base{} {
+canbus_frame::canbus_frame(canid_t canID, const void* data, size_t n) : base{} {
     this->can_id = canID;
     if (data && n != 0) {
         n = std::min(n, size_t(CAN_MAX_DLEN));
@@ -51,13 +51,13 @@ can_frame::can_frame(canid_t canID, const void* data, size_t n) : base{} {
     }
 }
 
-can_frame::can_frame(const canfd_frame& fdframe) {
+canbus_frame::canbus_frame(const canbusfd_frame& fdframe) {
     if (fdframe.len > CAN_MAX_DLEN)
         throw system_error{make_error_code(errc::invalid_argument)};
     std::memcpy(frame_ptr(), fdframe.frame_ptr(), SZ);
 }
 
-can_frame::can_frame(const canfd_frame& fdframe, error_code& ec) {
+canbus_frame::canbus_frame(const canbusfd_frame& fdframe, error_code& ec) {
     if (fdframe.len > CAN_MAX_DLEN)
         ec = make_error_code(errc::invalid_argument);
     ec = error_code{};

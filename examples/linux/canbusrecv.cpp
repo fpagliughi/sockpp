@@ -1,15 +1,12 @@
-// cantime.cpp
+// canrecv.cpp
 //
-// Linux SoxketCAN writer example.
+// Linux SoxketCAN reader example.
 //
-// This writes the 1-sec, 32-bit, Linux time_t value to the CAN bus each
-// time it ticks. This is a simple (though not overly precise) way to
-// synchronize the time for nodes on the bus
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021 Frank Pagliughi
+// Copyright (c) 2021-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,12 +41,13 @@
 #include <sys/ioctl.h>
 
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <thread>
 
-#include "sockpp/can_frame.h"
-#include "sockpp/can_socket.h"
+#include "sockpp/canbus_frame.h"
+#include "sockpp/canbus_socket.h"
 #include "sockpp/version.h"
 
 using namespace std;
@@ -60,7 +58,7 @@ using sysclock = chrono::system_clock;
 // --------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
-    cout << "Sample SocketCAN writer for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
+    cout << "Sample SocketCAN reader for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
 
     string canIface = (argc > 1) ? argv[1] : "can0";
     canid_t canID = (argc > 2) ? atoi(argv[2]) : 0x20;
@@ -68,7 +66,7 @@ int main(int argc, char* argv[]) {
     sockpp::initialize();
 
     error_code ec{};
-    sockpp::can_address addr(canIface, ec);
+    sockpp::canbus_address addr(canIface, ec);
 
     if (ec) {
         cerr << "Error finding the CAN interface: " << canIface << "\n\t" << ec.message()
@@ -76,7 +74,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    sockpp::can_socket sock(addr, ec);
+    sockpp::canbus_socket sock(addr, ec);
     if (ec) {
         cerr << "Error binding to the CAN interface " << canIface << "\n\t" << ec.message()
              << endl;
@@ -84,20 +82,20 @@ int main(int argc, char* argv[]) {
     }
 
     cout << "Created CAN socket on " << sock.address() << endl;
-    time_t t = sysclock::to_time_t(sysclock::now());
+    cout.setf(ios::fixed, ios::floatfield);
+    cout << setfill('0');
 
     while (true) {
-        // Sleep until the clock ticks to the next second
-        this_thread::sleep_until(sysclock::from_time_t(t + 1));
+        sockpp::canbus_frame frame;
+        sock.recv(&frame);
+        auto t = 0.0;
+        if (auto res = sock.last_frame_timestamp(); res)
+            t = res.value();
 
-        // Re-read the time in case we fell behind
-        t = sysclock::to_time_t(sysclock::now());
-
-        // Write the time to the CAN bus as a 32-bit int
-        auto nt = uint32_t(t);
-
-        sockpp::can_frame frame{canID, &nt, sizeof(nt)};
-        sock.send(frame);
+        cout << t << "  ";
+        for (uint8_t i = 0; i < frame.can_dlc; ++i)
+            cout << hex << uppercase << setw(2) << unsigned(frame.data[i]) << " ";
+        cout << endl;
     }
 
     return (!sock) ? 1 : 0;
