@@ -1,5 +1,5 @@
 /**
- * @file can_socket.h
+ * @file canbus_socket.h
  *
  * Class (typedef) for Linux SocketCAN socket.
  *
@@ -44,15 +44,15 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_can_socket_h
-#define __sockpp_can_socket_h
+#ifndef __sockpp_canbus_socket_h
+#define __sockpp_canbus_socket_h
 
 #include <linux/can/raw.h>
 
 #include <vector>
 
-#include "sockpp/can_address.h"
-#include "sockpp/can_frame.h"
+#include "sockpp/canbus_address.h"
+#include "sockpp/canbus_frame.h"
 #include "sockpp/raw_socket.h"
 
 namespace sockpp {
@@ -76,14 +76,14 @@ namespace sockpp {
  *
  * These can all be changed by setting options on the socket.
  */
-class can_socket : public raw_socket
+class canbus_socket : public raw_socket
 {
     /** The base class */
     using base = raw_socket;
 
     // Non-copyable
-    can_socket(const can_socket&) = delete;
-    can_socket& operator=(const can_socket&) = delete;
+    canbus_socket(const canbus_socket&) = delete;
+    canbus_socket& operator=(const canbus_socket&) = delete;
 
     /**
      * We can't connect to a raw CAN socket;
@@ -110,19 +110,19 @@ public:
     /**
      * Creates an uninitialized CAN socket.
      */
-    can_socket() noexcept {}
+    canbus_socket() noexcept {}
     /**
      * Creates a CAN socket from an existing OS socket handle and
      * claims ownership of the handle.
      * @param handle A socket handle from the operating system.
      */
-    explicit can_socket(socket_t handle) noexcept : base(handle) {}
+    explicit canbus_socket(socket_t handle) noexcept : base(handle) {}
     /**
      * Creates a CAN socket and binds it to the address.
      * @param addr The address to bind.
      * @throws std::system_error on failure
      */
-    explicit can_socket(const can_address& addr) {
+    explicit canbus_socket(const canbus_address& addr) {
         if (auto res = open(addr); !res)
             throw std::system_error{res.error()};
     }
@@ -131,20 +131,20 @@ public:
      * @param addr The address to bind.
      * @param ec The error code, on failure
      */
-    explicit can_socket(const can_address& addr, error_code& ec) noexcept {
+    explicit canbus_socket(const canbus_address& addr, error_code& ec) noexcept {
         ec = open(addr).error();
     }
     /**
      * Move constructor.
      * @param other The other socket to move to this one
      */
-    can_socket(can_socket&& other) : base(std::move(other)) {}
+    canbus_socket(canbus_socket&& other) : base(std::move(other)) {}
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
      * @return A reference to this object.
      */
-    can_socket& operator=(can_socket&& rhs) {
+    canbus_socket& operator=(canbus_socket&& rhs) {
         base::operator=(std::move(rhs));
         return *this;
     }
@@ -153,7 +153,7 @@ public:
      * @param addr The address to bind the socket
      * @return The error code, on failure.
      */
-    result<> open(const can_address& addr) noexcept;
+    result<> open(const canbus_address& addr) noexcept;
     /**
      * Gets the system time of the last frame read from the socket.
      * @return The system time of the last frame read from the socket with
@@ -221,8 +221,8 @@ public:
      * @return The number of bytes sent on success, or the error code on
      *         failure.
      */
-    result<size_t> send(const can_frame& frame, int flags = 0) {
-        return base::send(frame.frame_ptr(), sizeof(can_frame), flags);
+    result<size_t> send(const canbus_frame& frame, int flags = 0) {
+        return base::send(frame.frame_ptr(), sizeof(canbus_frame), flags);
     }
     /**
      * Receives a frame on the socket.
@@ -231,15 +231,15 @@ public:
      * @return The number of bytes read on success, or the error code on
      *         failure.
      */
-    result<size_t> recv(can_frame* frame, int flags = 0) {
-        return base::recv(frame->frame_ptr(), sizeof(can_frame), flags);
+    result<size_t> recv(canbus_frame* frame, int flags = 0) {
+        return base::recv(frame->frame_ptr(), sizeof(canbus_frame), flags);
     }
     /**
      * Receives a frame on the socket.
      * @param flags The option bit flags. See send(2).
      * @return The frame read on success, or the error code on failure.
      */
-    result<can_frame> recv(int flags = 0);
+    result<canbus_frame> recv(int flags = 0);
 
     // ----- I/O (FD) -----
 
@@ -250,8 +250,8 @@ public:
      * @return The number of bytes sent on success, or the error code on
      *         failure.
      */
-    result<size_t> send(const canfd_frame& frame, int flags = 0) {
-        return base::send(frame.frame_ptr(), sizeof(canfd_frame), flags);
+    result<size_t> send(const canbusfd_frame& frame, int flags = 0) {
+        return base::send(frame.frame_ptr(), sizeof(canbusfd_frame), flags);
     }
     /**
      * Receives an FD frame on the socket.
@@ -260,18 +260,18 @@ public:
      * @return The number of bytes read on success, or the error code on
      *         failure.
      */
-    result<size_t> recv(canfd_frame* frame, int flags = 0) {
-        return base::recv(frame->frame_ptr(), sizeof(canfd_frame), flags);
+    result<size_t> recv(canbusfd_frame* frame, int flags = 0) {
+        return base::recv(frame->frame_ptr(), sizeof(canbusfd_frame), flags);
     }
     /**
      * Receives an FD frame on the socket.
      * @param flags The option bit flags. See send(2).
      * @return The frame read on success, or the error code on failure.
      */
-    result<canfd_frame> recv_fd(int flags = 0);
+    result<canbusfd_frame> recv_fd(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
 
-#endif  // __sockpp_can_socket_h
+#endif  // __sockpp_canbus_socket_h

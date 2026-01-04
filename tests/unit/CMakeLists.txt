@@ -81,8 +81,8 @@ endif()
 
 if(SOCKPP_WITH_CAN)
     target_sources(unit_tests PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_can_address.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_can_frame.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_canbus_address.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_canbus_frame.cpp
     )
 endif()
 

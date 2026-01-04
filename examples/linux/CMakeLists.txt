@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2021 Frank Pagliughi
+# Copyright (c) 2021-2026 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,8 +43,8 @@ if(SOCKPP_WITH_CAN)
     # --- Executables ---
 
     set(EXECUTABLES 
-    	cantime
-    	canrecv
+    	canbustime
+    	canbusrecv
     )
 
     foreach(EXECUTABLE ${EXECUTABLES})

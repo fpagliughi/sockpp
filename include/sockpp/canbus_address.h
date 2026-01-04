@@ -1,5 +1,5 @@
 /**
- * @file can_address.h
+ * @file canbus_address.h
  *
  * Class for the Linux SocketCAN socket address.
  *
@@ -44,8 +44,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_can_addr_h
-#define __sockpp_can_addr_h
+#ifndef __sockpp_canbus_addr_h
+#define __sockpp_canbus_addr_h
 
 #include <linux/can.h>
 #include <sys/un.h>
@@ -67,7 +67,7 @@ namespace sockpp {
  * Class that represents a Linux SocketCAN address.
  * This inherits from the CAN form of a socket address, @em sockaddr_can.
  */
-class can_address : public sock_address
+class canbus_address : public sock_address
 {
     /** The underlying C struct for SocketCAN addresses  */
     sockaddr_can addr_{};
@@ -86,62 +86,62 @@ public:
      * Constructs an empty address.
      * The address is initialized to all zeroes.
      */
-    can_address() noexcept {}
+    canbus_address() noexcept {}
     /**
      * Creates an address for binding to a specific CAN interface
      * @param idx The interface index to use. This must, obviously, be
      *  			  an index to a CAN interface.
      */
-    explicit can_address(unsigned idx) noexcept;
+    explicit canbus_address(unsigned idx) noexcept;
     /**
      * Constructs an address for the specified CAN interface.
      * The interface might be "can0", "can1", "vcan0", etc.
      * @param iface The name of the CAN interface
      * @throw system_error on failure
      */
-    can_address(const string& iface);
+    canbus_address(const string& iface);
     /**
      * Constructs an address for the specified CAN interface.
      * The interface might be "can0", "can1", "vcan0", etc.
      * @param iface The name of the CAN interface
      * @param ec Gets the error code on failure.
      */
-    can_address(const string& iface, error_code& ec);
+    canbus_address(const string& iface, error_code& ec);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
      * @throw invalid_argument if the address is not IPv4
      */
-    can_address(const sockaddr& addr);
+    canbus_address(const sockaddr& addr);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
      * @param ec Gets the error code on failure.
      */
-    can_address(const sockaddr& addr, error_code& ec) noexcept;
+    canbus_address(const sockaddr& addr, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
      * @throw invalid_argument if the address is not IPv4
      */
-    can_address(const sock_address& addr);
+    canbus_address(const sock_address& addr);
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address
      * @param ec Gets the error code on failure.
      */
-    can_address(const sock_address& addr, error_code& ec) noexcept;
+    canbus_address(const sock_address& addr, error_code& ec) noexcept;
     /**
      * Constructs the address by copying the specified structure.
      * @param addr The other address. This must be initialized to a proper
      *  		   AF_CAN address to be valid.
      */
-    can_address(const sockaddr_can& addr) noexcept : addr_(addr) {}
+    canbus_address(const sockaddr_can& addr) noexcept : addr_(addr) {}
     /**
      * Constructs the address by copying the specified address.
      * @param addr The other address.
      */
-    can_address(const can_address& addr) noexcept : addr_(addr.addr_) {}
+    canbus_address(const canbus_address& addr) noexcept : addr_(addr.addr_) {}
     /**
      * Attempts to get the address for the specified CAN interface
      *
@@ -149,7 +149,7 @@ public:
      * @return A result with a CAN address, if successful, or an error code
      *  	   on failure.
      */
-    static result<can_address> create(const string& iface);
+    static result<canbus_address> create(const string& iface);
     /**
      * Checks if the address is set to some value.
      * This doesn't attempt to determine if the address is valid, simply
@@ -220,9 +220,9 @@ public:
  * @param addr The address
  * @return A reference to the output stream.
  */
-std::ostream& operator<<(std::ostream& os, const can_address& addr);
+std::ostream& operator<<(std::ostream& os, const canbus_address& addr);
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
 
-#endif  // __sockpp_can_addr_h
+#endif  // __sockpp_canbus_addr_h

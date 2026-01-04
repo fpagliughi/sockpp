@@ -1,12 +1,9 @@
-// test_can_frame.cpp
+// canbus_socket.cpp
 //
-// Unit tests for the sockpp `can_frame` and `canfd_frame` classes.
-//
-
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2026 Frank Pagliughi
+// Copyright (c) 2021-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,29 +33,57 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
-//
 
-#include <string>
+#include "sockpp/canbus_socket.h"
 
-#include "catch2_version.h"
-#include "sockpp/can_frame.h"
+#include <linux/sockios.h>
+#include <sys/ioctl.h>
 
-using namespace sockpp;
+#include "sockpp/socket.h"
+
 using namespace std;
-using namespace std::string_literals;
+using namespace std::chrono;
 
-// *** NOTE: The "vcan0:" virtual interface must be present. Set it up:
-//   $ ip link add type vcan && ip link set up vcan0
+namespace sockpp {
 
-static const string IFACE{"vcan0"};
+/////////////////////////////////////////////////////////////////////////////
 
-// --------------------------------------------------------------------------
-
-TEST_CASE("can_frame conversions", "[can]") {
-    SECTION("standard to FD frames") {
-        sockpp::can_frame frame{0x42, "hello"s};
-
-        sockpp::canfd_frame fdframe{frame};
-        REQUIRE(fdframe.id_value() == 0x42);
+result<> canbus_socket::open(const canbus_address& addr) noexcept {
+    if (auto createRes = create_handle(SOCK_RAW, CAN_RAW); !createRes) {
+        return createRes.error();
     }
+    else {
+        reset(createRes.value());
+        if (auto res = bind(addr); !res) {
+            close();
+            return res;
+        }
+    }
+    return none{};
 }
+
+result<system_clock::time_point> canbus_socket::last_frame_time() {
+    timeval tv{};
+
+    if (auto res = check_res_none(::ioctl(handle(), SIOCGSTAMP, &tv)); !res)
+        return res.error();
+    return to_timepoint(tv);
+}
+
+result<double> canbus_socket::last_frame_timestamp() {
+    timeval tv{};
+
+    if (auto res = check_res_none(::ioctl(handle(), SIOCGSTAMP, &tv)); !res)
+        return res.error();
+    return double(tv.tv_sec) + 1.0e-6 * tv.tv_usec;
+}
+
+result<canbus_frame> canbus_socket::recv(int flags /*=0*/) {
+    canbus_frame frame;
+    if (auto res = recv(&frame, flags); !res)
+        return res.error();
+    return frame;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+}  // namespace sockpp

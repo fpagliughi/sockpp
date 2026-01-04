@@ -310,8 +310,8 @@ At the lowest level, CAN devices write individual packets, called "frames", to a
 As an example, consider a device with a temperature sensor. The device might read the temperature periodically and write it to the bus as a raw 32-bit integer, like:
 
 ```
-can_address addr("CAN0");
-can_socket sock(addr);
+canbus_address addr("CAN0");
+canbus_socket sock(addr);
 
 // The agreed ID to broadcast temperature on the bus
 canid_t canID = 0x40;
@@ -322,7 +322,7 @@ while (true) {
     // Write the time to the CAN bus as a 32-bit int
     int32_t t = read_temperature();
 
-    can_frame frame { canID, &t, sizeof(t) };
+    canbus_frame frame { canID, &t, sizeof(t) };
     sock.send(frame);
 }
 ```
@@ -330,10 +330,10 @@ while (true) {
 A receiver to get a frame might look like this:
 
 ```
-can_address addr("CAN0");
-can_socket sock(addr);
+canbus_address addr("CAN0");
+canbus_socket sock(addr);
 
-can_frame frame;
+canbus_frame frame;
 sock.recv(&frame);
 ```
 
