@@ -194,7 +194,9 @@ public:
      * @return @em true if the filters were set, @em false otherwise.
      */
     result<> set_filters(const can_filter* filters, size_t n) {
-        return set_option(SOL_CAN_RAW, CAN_RAW_FILTER, filters, socklen_t(n));
+        return set_option(
+            SOL_CAN_RAW, CAN_RAW_FILTER, filters, socklen_t(n * sizeof(can_filter))
+        );
     }
 
     /**

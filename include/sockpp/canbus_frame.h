@@ -233,6 +233,7 @@ public:
     canbusfd_frame(canid_t canID, const void* data, size_t n) : base{} {
         this->can_id = canID;
         if (data && n != 0) {
+            n = std::min(n, size_t(CANFD_MAX_DLEN));
             this->len = n;
             ::memcpy(&this->data, data, n);
         }
@@ -241,7 +242,7 @@ public:
      * Construct an FD frame from a classic CAN 2.0 frame.
      * @param frame A classic CAN 2.0 frame.
      */
-    canbusfd_frame(const canbus_frame& frame) {
+    canbusfd_frame(const canbus_frame& frame) : base{} {
         // TODO: Should we reject RTR or error frames?
         std::memcpy(frame_ptr(), frame.frame_ptr(), sizeof(::can_frame));
     }

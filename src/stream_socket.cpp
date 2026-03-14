@@ -79,10 +79,14 @@ result<size_t> stream_socket::read_n(void* buf, size_t n) {
 
     while (nx < n) {
         auto res = read(b + nx, n - nx);
-        if (!res && res != errc::interrupted)
+        if (!res) {
+            if (res == errc::interrupted)
+                continue;
             return res.error();
-
-        nx += size_t(res.value());
+        }
+        if (res.value() == 0)
+            break;  // EOF: peer closed connection
+        nx += res.value();
     }
 
     return nx;
@@ -144,9 +148,14 @@ result<size_t> stream_socket::write_n(const void* buf, size_t n) {
 
     while (nx < n) {
         auto res = write(b + nx, n - nx);
-        if (!res && res != errc::interrupted)
+        if (!res) {
+            if (res == errc::interrupted)
+                continue;
             return res.error();
-        nx += size_t(res.value());
+        }
+        if (res.value() == 0)
+            break;
+        nx += res.value();
     }
 
     return nx;

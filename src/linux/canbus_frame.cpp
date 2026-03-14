@@ -58,8 +58,10 @@ canbus_frame::canbus_frame(const canbusfd_frame& fdframe) {
 }
 
 canbus_frame::canbus_frame(const canbusfd_frame& fdframe, error_code& ec) {
-    if (fdframe.len > CAN_MAX_DLEN)
+    if (fdframe.len > CAN_MAX_DLEN) {
         ec = make_error_code(errc::invalid_argument);
+        return;
+    }
     ec = error_code{};
     std::memcpy(frame_ptr(), fdframe.frame_ptr(), SZ);
 }

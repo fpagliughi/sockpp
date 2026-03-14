@@ -85,8 +85,10 @@ result<> connector::connect(const sock_address& addr, microseconds timeout) {
         is_non_blocking();
 #endif
 
-    if (!non_blocking)
-        set_non_blocking(true);
+    if (!non_blocking) {
+        if (auto res = set_non_blocking(true); !res)
+            return res;
+    }
 
     auto res = check_res(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
 

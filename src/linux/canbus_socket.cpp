@@ -85,5 +85,12 @@ result<canbus_frame> canbus_socket::recv(int flags /*=0*/) {
     return frame;
 }
 
+result<canbusfd_frame> canbus_socket::recv_fd(int flags /*=0*/) {
+    canbusfd_frame frame;
+    if (auto res = recv(&frame, flags); !res)
+        return res.error();
+    return frame;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
