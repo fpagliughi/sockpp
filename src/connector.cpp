@@ -37,12 +37,8 @@
 #include "sockpp/connector.h"
 
 #include <cerrno>
-#if !defined(_WIN32)
-    #include <sys/poll.h>
-    #if defined(__APPLE__)
-        #include <net/if.h>
-    #endif
-#endif
+
+#include "sockpp/poller.h"
 
 using namespace std::chrono;
 
@@ -90,39 +86,25 @@ result<> connector::connect(const sock_address& addr, microseconds timeout) {
             return res;
     }
 
-    auto res = check_res(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
+    auto res = check_res_none(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
 
     if (!res) {
         auto err = res.error();
         if (err == errc::operation_in_progress || err == errc::operation_would_block) {
-// TODO: Windows has a WSAPoll() function we can use.
-#if defined(_WIN32)
-            // Non-blocking connect -- call `select` to wait until the timeout:
-            // Note:  Windows returns errors in exceptset so check it too, the
-            // logic afterwords doesn't change
-            fd_set readset;
-            FD_ZERO(&readset);
-            FD_SET(handle(), &readset);
-            fd_set writeset = readset;
-            fd_set exceptset = readset;
-            timeval tv = to_timeval(timeout);
-            res =
-                check_res(::select(int(handle()) + 1, &readset, &writeset, &exceptset, &tv));
-#else
-            pollfd fds = {handle(), POLLIN | POLLOUT, 0};
-            int ms = int(duration_cast<milliseconds>(timeout).count());
-            res = check_res(::poll(&fds, 1, ms));
-#endif
-            if (res) {
-                if (res && res.value() > 0) {
-                    // Got a socket event, but it might be an error, so check:
-                    int err;
-                    if (get_option(SOL_SOCKET, SO_ERROR, &err))
-                        res = result<int>::from_error(err);
-                }
-                else {
-                    res = errc::timed_out;
-                }
+            poller p(1);
+            p.add(*this, poller::POLL_INOUT);
+
+            if (auto wres = p.wait(ceil<milliseconds>(timeout)); !wres) {
+                res = wres.error();
+            }
+            else if (wres.value().empty()) {
+                res = errc::timed_out;
+            }
+            else {
+                // Got a socket event, but it might be an error, so check:
+                int soerr = 0;
+                get_option(SOL_SOCKET, SO_ERROR, &soerr);
+                res = result<>::from_error(soerr);
             }
         }
 

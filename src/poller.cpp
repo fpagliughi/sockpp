@@ -46,18 +46,16 @@ using namespace std::chrono;
 
 namespace sockpp {
 
-/////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
 
-void poller::add(socket& sock, short events /*=POLL_IN*/)
-{
+void poller::add(socket& sock, short events /*=POLL_IN*/) {
     socks_.push_back(&sock);
     pfds_.push_back(pollfd{sock.handle(), events, 0});
 }
 
-/////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
 
-void poller::remove(const socket& sock)
-{
+void poller::remove(const socket& sock) {
     auto it = std::find(socks_.begin(), socks_.end(), &sock);
     if (it == socks_.end())
         return;
@@ -67,10 +65,9 @@ void poller::remove(const socket& sock)
     pfds_.erase(pfds_.begin() + idx);
 }
 
-/////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
 
-result<vector<poller::event>> poller::wait(milliseconds timeout /*=milliseconds{-1}*/)
-{
+result<vector<poller::event>> poller::wait(milliseconds timeout /*=milliseconds{-1}*/) {
     if (pfds_.empty())
         return vector<event>{};
 
@@ -98,4 +95,4 @@ result<vector<poller::event>> poller::wait(milliseconds timeout /*=milliseconds{
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp
-}
+}  // namespace sockpp

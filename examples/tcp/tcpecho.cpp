@@ -57,8 +57,8 @@ int main(int argc, char* argv[]) {
     sockpp::initialize();
     sockpp::tcp_connector conn;
 
-    // Attempt to connect with a 10 sec timeout.
-    if (auto res = conn.connect(host, port, 10s); !res) {
+    // Attempt to connect with a 5sec timeout.
+    if (auto res = conn.connect(host, port, 5s); !res) {
         cerr << "Error connecting to server at: '" << host << "':\n\t" << res.error_message()
              << endl;
         return 1;
