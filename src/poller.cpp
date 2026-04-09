@@ -1,19 +1,9 @@
-/**
- * @file types.h
- *
- * Primitive definitions for the sockpp library.
- *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
- * @author  www.sorosys.com
- *
- * @date	December 2023
- */
-
+// poller.cpp
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,40 +34,68 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#ifndef __sockpp_types_h
-#define __sockpp_types_h
+#include "sockpp/poller.h"
 
-#include <chrono>
-#include <cstdint>
-#include <string>
-#include <vector>
+#include <algorithm>
+
+#if !defined(_WIN32)
+    #include <sys/poll.h>
+#endif
+
+using namespace std::chrono;
 
 namespace sockpp {
 
-/** Port used for example apps and unit tests */
-// constexpr in_port_t TEST_PORT = 12345;
+/////////////////////////////////////////////////////////////////////////////
+
+void poller::add(socket& sock, short events /*=POLL_IN*/)
+{
+    socks_.push_back(&sock);
+    pfds_.push_back(pollfd{sock.handle(), events, 0});
+}
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** A sockpp::string is a std::string */
-using std::string;
+void poller::remove(const socket& sock)
+{
+    auto it = std::find(socks_.begin(), socks_.end(), &sock);
+    if (it == socks_.end())
+        return;
 
-/** A sockpp::vector is a std::vector */
-using std::vector;
-
-/** A sockpp::duration is a std::chrono::duration */
-using std::chrono::duration;
-
-/** A binary blob as a basic string/collection of uint8_t */
-using binary = std::basic_string<uint8_t>;
-
-// Time units are std::chrono time unite.
-using std::chrono::microseconds;
-using std::chrono::milliseconds;
-using std::chrono::nanoseconds;
-using std::chrono::seconds;
+    auto idx = std::distance(socks_.begin(), it);
+    socks_.erase(it);
+    pfds_.erase(pfds_.begin() + idx);
+}
 
 /////////////////////////////////////////////////////////////////////////////
-}  // namespace sockpp
 
-#endif  // __sockpp_types_h
+result<vector<poller::event>> poller::wait(milliseconds timeout /*=milliseconds{-1}*/)
+{
+    if (pfds_.empty())
+        return vector<event>{};
+
+    int ms = (timeout.count() < 0) ? -1 : int(timeout.count());
+
+#if defined(_WIN32)
+    int n = ::WSAPoll(pfds_.data(), ULONG(pfds_.size()), ms);
+#else
+    int n = ::poll(pfds_.data(), nfds_t(pfds_.size()), ms);
+#endif
+
+    if (n < 0)
+        return result<vector<event>>::from_last_error();
+
+    vector<event> evts;
+    evts.reserve(size_t(n));
+
+    for (size_t i = 0; i < pfds_.size(); ++i) {
+        if (pfds_[i].revents != 0)
+            evts.push_back(event{socks_[i], pfds_[i].revents});
+    }
+
+    return evts;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// end namespace sockpp
+}
