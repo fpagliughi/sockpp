@@ -91,7 +91,7 @@ result<> connector::connect(const sock_address& addr, microseconds timeout) {
     if (!res) {
         auto err = res.error();
         if (err == errc::operation_in_progress || err == errc::operation_would_block) {
-            poller p(*this, poller::POLL_INOUT);
+            poller p(*this, poller::POLL_READ_WRITE);
 
             if (auto wres = p.wait(ceil<milliseconds>(timeout)); !wres) {
                 res = wres.error();

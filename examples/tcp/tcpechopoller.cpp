@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
     list<sockpp::tcp_socket> connections;
 
     // Start the poller watching the acceptor for incoming connections.
-    sockpp::poller poller(acc, sockpp::poller::POLL_IN);
+    sockpp::poller poller(acc, sockpp::poller::POLL_READ);
 
     while (true) {
         auto res = poller.wait();
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
                 if (auto connRes = acc.accept(&peer); connRes) {
                     cout << "Incoming connection from " << peer << endl;
                     auto& sock = connections.emplace_back(connRes.release());
-                    poller.add(sock, sockpp::poller::POLL_IN);
+                    poller.add(sock, sockpp::poller::POLL_READ);
                 }
                 else {
                     cerr << "Error accepting connection: " << connRes.error_message() << endl;

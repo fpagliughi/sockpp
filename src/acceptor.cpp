@@ -92,7 +92,7 @@ result<> acceptor::open(
 result<stream_socket> acceptor::accept(
     microseconds timeout, sock_address* clientAddr /*=nullptr*/
 ) noexcept {
-    poller p(*this, poller::POLL_IN);
+    poller p(*this, poller::POLL_READ);
 
     if (auto res = p.wait(ceil<milliseconds>(timeout)); !res)
         return res.error();

@@ -83,31 +83,31 @@ public:
      * Event flag indicating the socket is ready to read.
      * Maps to POLLIN on all platforms.
      */
-    static constexpr short POLL_IN = POLLIN;
+    static constexpr short POLL_READ = POLLIN;
     /**
      * Event flag indicating the socket is ready to write.
      * Maps to POLLOUT on all platforms.
      */
-    static constexpr short POLL_OUT = POLLOUT;
+    static constexpr short POLL_WRITE = POLLOUT;
     /**
      * Event flag indicating both read and write readiness.
      */
-    static constexpr short POLL_INOUT = POLLIN | POLLOUT;
+    static constexpr short POLL_READ_WRITE = POLLIN | POLLOUT;
     /**
      * Event flag indicating an error condition on the socket.
      * This is an output-only flag set in revents; it cannot be requested.
      */
-    static constexpr short POLL_ERR = POLLERR;
+    static constexpr short POLL_ERROR = POLLERR;
     /**
      * Event flag indicating the peer has closed the connection.
      * This is an output-only flag set in revents; it cannot be requested.
      */
-    static constexpr short POLL_HUP = POLLHUP;
+    static constexpr short POLL_HANGUP = POLLHUP;
     /**
      * Event flag indicating the socket handle is invalid.
      * This is an output-only flag set in revents; it cannot be requested.
      */
-    static constexpr short POLL_NVAL = POLLNVAL;
+    static constexpr short POLL_INVALID = POLLNVAL;
 
     /**
      * A single poll result, pairing a socket pointer with the events
@@ -140,7 +140,7 @@ public:
      * @param sock The socket to watch.
      * @param events The event mask to monitor (e.g. POLL_IN, POLL_OUT).
      */
-    poller(socket& sock, short events = POLL_IN) { add(sock, events); }
+    poller(socket& sock, short events = POLL_READ) { add(sock, events); }
 
     /**
      * Registers a socket with the poller.
@@ -151,7 +151,7 @@ public:
      * @param sock The socket to watch.
      * @param events The event mask to monitor (e.g. POLL_IN, POLL_OUT).
      */
-    void add(socket& sock, short events = POLL_IN);
+    void add(socket& sock, short events = POLL_READ);
 
     /**
      * Removes a previously registered socket.

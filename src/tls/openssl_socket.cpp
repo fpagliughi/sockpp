@@ -59,14 +59,24 @@ tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock)
     if (!ssl_)
         throw tls_error::from_last_error();
 
-    if (auto res = tls_check_res(::SSL_set_fd(ssl_, handle())); !res)
-        throw res;
+    if (::SSL_set_fd(ssl_, handle()) <= 0) {
+		auto err = tls_error::from_last_error();
+        ::SSL_free(ssl_);
+        ssl_ = nullptr;
+        throw err;
+    }
 }
 
 tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock, error_code& ec) noexcept
     : base{std::move(sock)}, ssl_{::SSL_new(ctx.ctx_)} {
-    if (!ssl_ || ::SSL_set_fd(ssl_, handle()) <= 0)
+    if (!ssl_) {
         ec = tls_last_error();
+    }
+    else if (::SSL_set_fd(ssl_, handle()) <= 0) {
+        ec = tls_last_error();
+        ::SSL_free(ssl_);
+        ssl_ = nullptr;
+    }
 }
 
 tls_socket::~tls_socket() {

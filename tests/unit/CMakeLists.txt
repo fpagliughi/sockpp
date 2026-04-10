@@ -97,5 +97,12 @@ target_link_libraries(unit_tests
 include(CTest)
 include(Catch)
 
-catch_discover_tests(unit_tests)
+if(WIN32 AND SOCKPP_BUILD_SHARED)
+    # Tell Windows where to find the DLLs to run the unit test app
+    catch_discover_tests(unit_tests
+        DL_PATHS $<TARGET_FILE_DIR:sockpp-shared>
+    )
+else()
+    catch_discover_tests(unit_tests)
+endif()
 

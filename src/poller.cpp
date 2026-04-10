@@ -37,6 +37,7 @@
 #include "sockpp/poller.h"
 
 #include <algorithm>
+#include <climits>
 
 #if !defined(_WIN32)
     #include <sys/poll.h>
@@ -48,7 +49,7 @@ namespace sockpp {
 
 // --------------------------------------------------------------------------
 
-void poller::add(socket& sock, short events /*=POLL_IN*/) {
+void poller::add(socket& sock, short events /*=POLL_READ*/) {
     socks_.push_back(&sock);
     pfds_.push_back(pollfd{sock.handle(), events, 0});
 }
@@ -71,7 +72,9 @@ result<vector<poller::event>> poller::wait(milliseconds timeout /*=milliseconds{
     if (pfds_.empty())
         return vector<event>{};
 
-    int ms = (timeout.count() < 0) ? -1 : int(timeout.count());
+    int ms = (timeout.count() < 0) ? -1 : int(std::clamp(timeout.count(),
+        decltype(timeout.count()){0},
+        decltype(timeout.count()){INT_MAX}));
 
 #if defined(_WIN32)
     int n = ::WSAPoll(pfds_.data(), ULONG(pfds_.size()), ms);
