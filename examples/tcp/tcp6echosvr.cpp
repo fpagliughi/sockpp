@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     sockpp::initialize();
 
     error_code ec;
-    sockpp::tcp6_acceptor acc(port, 4, ec);
+    sockpp::tcp6_acceptor acc(port, 4, sockpp::tcp6_acceptor::REUSE, ec);
 
     if (ec) {
         cerr << "Error creating the acceptor: " << ec.message() << endl;

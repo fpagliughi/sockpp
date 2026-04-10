@@ -47,6 +47,7 @@
 #include "sockpp/version.h"
 
 using namespace std;
+using namespace std::chrono;
 
 // --------------------------------------------------------------------------
 // The thread function. This is run in a separate thread for each socket.
@@ -76,20 +77,28 @@ int main(int argc, char* argv[]) {
     sockpp::initialize();
 
     error_code ec;
-    sockpp::tcp_acceptor acc{port, 4, ec};
+    sockpp::tcp_acceptor acc{port, 4, sockpp::tcp_acceptor::REUSE, ec};
 
     if (ec) {
         cerr << "Error creating the acceptor: " << ec.message() << endl;
         return 1;
     }
     cout << "Awaiting connections on port " << port << "..." << endl;
+    auto timeout = 10s;
 
     while (true) {
         sockpp::inet_address peer;
 
         // Accept a new client connection
-        if (auto res = acc.accept(&peer); !res) {
-            cerr << "Error accepting incoming connection: " << res.error_message() << endl;
+        if (auto res = acc.accept(timeout, &peer); !res) {
+            if (res == errc::timed_out) {
+                cout << "  No activity yet" << endl;
+                // Negative duration means no more timeouts;
+                timeout = -1s;
+            }
+            else {
+                cerr << "Error accepting connection: " << res.error_message() << endl;
+            }
         }
         else {
             cout << "Received a connection request from " << peer << endl;

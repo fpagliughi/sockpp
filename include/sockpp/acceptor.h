@@ -191,6 +191,29 @@ public:
      * @return A socket to the remote client.
      */
     result<stream_socket> accept(sock_address* clientAddr = nullptr) noexcept;
+    /**
+     * Accepts an incoming TCP connection with a timeout.
+     * @param timeout The maximum duration to wait for an incoming connection.
+     * @param clientAddr Pointer to the variable that will get the address of
+     *                   a client when it connects.
+     * @return A socket to the remote client, or errc::timed_out on timeout.
+     */
+    result<stream_socket> accept(
+        microseconds timeout, sock_address* clientAddr = nullptr
+    ) noexcept;
+    /**
+     * Accepts an incoming TCP connection with a timeout.
+     * @param timeout The maximum duration to wait for an incoming connection.
+     * @param clientAddr Pointer to the variable that will get the address of
+     *                   a client when it connects.
+     * @return A socket to the remote client, or errc::timed_out on timeout.
+     */
+    template <class Rep, class Period>
+    result<stream_socket> accept(
+        const duration<Rep, Period>& timeout, sock_address* clientAddr = nullptr
+    ) noexcept {
+        return accept(microseconds(timeout), clientAddr);
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -361,6 +384,32 @@ public:
             return stream_sock_t{res.release()};
         else
             return res.error();
+    }
+    /**
+     * Accepts an incoming connection with a timeout.
+     * @param timeout The maximum duration to wait for an incoming connection.
+     * @param clientAddr Pointer to the variable that will get the address of
+     *                   a client when it connects.
+     * @return A socket to the remote client, or errc::timed_out on timeout.
+     */
+    result<stream_sock_t> accept(microseconds timeout, addr_t* clientAddr = nullptr) {
+        if (auto res = base::accept(timeout, clientAddr); res)
+            return stream_sock_t{res.release()};
+        else
+            return res.error();
+    }
+    /**
+     * Accepts an incoming connection with a timeout.
+     * @param timeout The maximum duration to wait for an incoming connection.
+     * @param clientAddr Pointer to the variable that will get the address of
+     *                   a client when it connects.
+     * @return A socket to the remote client, or errc::timed_out on timeout.
+     */
+    template <class Rep, class Period>
+    result<stream_sock_t> accept(
+        const duration<Rep, Period>& timeout, addr_t* clientAddr = nullptr
+    ) {
+        return accept(microseconds(timeout), clientAddr);
     }
 };
 
