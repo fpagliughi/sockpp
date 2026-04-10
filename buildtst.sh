@@ -11,8 +11,8 @@ BUILD_JOBS=4
 # Add or remove any compilers here. If any are not found on the local system,
 # it reports the missing compiler and continues to the next one.
 
-GCC="g++-5 g++-6 g++-7 g++-8 g++-9"
-CLANG="clang++-4.0 clang++-5.0 clang++-6.0 clang++-7 clang++-8"
+GCC="g++-9 g++-12 g++-15"
+CLANG="clang++-17 clang++-19 clang++-22"
 
 for COMPILER in ${GCC} ${CLANG}
 do
