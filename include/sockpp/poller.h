@@ -64,7 +64,7 @@ namespace sockpp {
  * Polls a collection of sockets for I/O readiness.
  *
  * Sockets are registered with an event mask (POLLIN, POLLOUT, etc.) and
- * the poller keeps a non-owning pointer to each one alongside the
+ * the poller keeps a **non-owning** pointer to each one alongside the
  * corresponding pollfd entry used by the OS call. The sockets must remain
  * alive for as long as they are registered.
  *
@@ -93,6 +93,21 @@ public:
      * Event flag indicating both read and write readiness.
      */
     static constexpr short POLL_INOUT = POLLIN | POLLOUT;
+    /**
+     * Event flag indicating an error condition on the socket.
+     * This is an output-only flag set in revents; it cannot be requested.
+     */
+    static constexpr short POLL_ERR = POLLERR;
+    /**
+     * Event flag indicating the peer has closed the connection.
+     * This is an output-only flag set in revents; it cannot be requested.
+     */
+    static constexpr short POLL_HUP = POLLHUP;
+    /**
+     * Event flag indicating the socket handle is invalid.
+     * This is an output-only flag set in revents; it cannot be requested.
+     */
+    static constexpr short POLL_NVAL = POLLNVAL;
 
     /**
      * A single poll result, pairing a socket pointer with the events
@@ -119,6 +134,13 @@ public:
         socks_.reserve(n);
         pfds_.reserve(n);
     }
+    /**
+     * Creates a poller with a single registered socket.
+     * Equivalent to constructing empty and calling add().
+     * @param sock The socket to watch.
+     * @param events The event mask to monitor (e.g. POLL_IN, POLL_OUT).
+     */
+    poller(socket& sock, short events = POLL_IN) { add(sock, events); }
 
     /**
      * Registers a socket with the poller.

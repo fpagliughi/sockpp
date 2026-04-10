@@ -52,6 +52,7 @@ set(THREADED_EXECUTABLES
 
 set(EXECUTABLES
     tcpecho
+    tcpechopoller
     tcpechotest
     tcp6echo
     ${THREADED_EXECUTABLES}
