@@ -4,7 +4,7 @@
 //
 // This shows:
 //   - Setting up a TLS client context, w/ options from the command line
-//   - Althoug these could be done in a single call, this uses separate
+//   - Although these could be done in a single call, this uses separate
 //     steps to:
 //     - Resolve the server address
 //     - Make an insecure connection

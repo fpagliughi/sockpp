@@ -56,8 +56,8 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    cout << "Single-threaded TCP echo server (poller) for 'sockpp' "
-         << sockpp::SOCKPP_VERSION << '\n'
+    cout << "Single-threaded TCP echo server (poller) for 'sockpp' " << sockpp::SOCKPP_VERSION
+         << '\n'
          << endl;
 
     in_port_t port = (argc > 1) ? in_port_t(atoi(argv[1])) : sockpp::TEST_PORT;
@@ -100,8 +100,7 @@ int main(int argc, char* argv[]) {
                     poller.add(sock, sockpp::poller::POLL_IN);
                 }
                 else {
-                    cerr << "Error accepting connection: "
-                         << connRes.error_message() << endl;
+                    cerr << "Error accepting connection: " << connRes.error_message() << endl;
                 }
             }
             else {
@@ -116,8 +115,7 @@ int main(int argc, char* argv[]) {
                         [sock](const auto& s) { return &s == sock; }
                     );
                     if (it != connections.end()) {
-                        cout << "Connection closed from " << it->peer_address()
-                             << endl;
+                        cout << "Connection closed from " << it->peer_address() << endl;
                         poller.remove(*sock);
                         connections.erase(it);
                     }

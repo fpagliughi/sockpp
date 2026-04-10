@@ -96,7 +96,7 @@ result<stream_socket> acceptor::accept(
 
     if (auto res = p.wait(ceil<milliseconds>(timeout)); !res)
         return res.error();
-	else if (res.value().empty())
+    else if (res.value().empty())
         return errc::timed_out;
 
     return accept(clientAddr);

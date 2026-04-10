@@ -1,9 +1,12 @@
 [default.extend-words]
 thr = "thr"
 PNG = "PNG"
+HELO = "HELO"
 
 [files]
 extend-exclude = [
-    "*.fodt"
+    "*.fodt",
+    "doc/Doxyfile.cmake",
+    "Doxyfile"
 ]
-    
+

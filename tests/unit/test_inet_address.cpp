@@ -96,7 +96,7 @@ TEST_CASE("inet_address default constructor", "[address]") {
 }
 
 // When created using only a port number this should use the
-// "any" address to bind to all interfaces (typ for server)
+// "any" address to bind to all interfaces (type for server)
 TEST_CASE("inet_address port-only constructor", "[address]") {
     inet_address addr(PORT);
 

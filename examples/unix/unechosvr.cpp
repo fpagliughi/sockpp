@@ -40,9 +40,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <csignal>
 #include <iostream>
 #include <thread>
-#include <csignal>
 
 #include "sockpp/unix_acceptor.h"
 #include "sockpp/version.h"
@@ -50,9 +50,9 @@
 using namespace std;
 
 #if defined(_WIN32)
-    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
 #else
-    const string DFLT_PATH = "/tmp/unechosvr.sock"s;
+const string DFLT_PATH = "/tmp/unechosvr.sock"s;
 #endif
 
 // --------------------------------------------------------------------------
@@ -87,8 +87,8 @@ int main(int argc, char* argv[]) {
     auto res = acc.open(sockpp::unix_address(path));
 
     if (!res) {
-        cerr << "Error creating the acceptor at: " << path << "\n\t"
-            << res.error_message() << endl;
+        cerr << "Error creating the acceptor at: " << path << "\n\t" << res.error_message()
+             << endl;
         return 1;
     }
     cout << "Acceptor bound to address: '" << acc.address() << "'..." << endl;

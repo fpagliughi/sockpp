@@ -53,9 +53,9 @@ const size_t DFLT_SZ = 512;
 using fpsec = std::chrono::duration<double, std::chrono::seconds::period>;
 
 #if defined(_WIN32)
-    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
 #else
-    const string DFLT_PATH = "/tmp/unechosvr.sock"s;
+const string DFLT_PATH = "/tmp/unechosvr.sock"s;
 #endif
 
 // --------------------------------------------------------------------------
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
     if (auto res = conn.connect(sockpp::unix_address(path)); !res) {
         cerr << "Error connecting to UNIX socket at: " << path << "\n\t"
-            << res.error_message() << endl;
+             << res.error_message() << endl;
         return 1;
     }
 
