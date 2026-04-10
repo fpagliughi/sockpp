@@ -1,6 +1,8 @@
 // udpecho.cpp
 //
-// Simple Unix-domain UDP echo client
+// Simple Unix-domain UDP echo client.
+//
+// Note that UNIX datagram sockets are not supported on Windows.
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.

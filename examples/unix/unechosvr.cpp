@@ -42,11 +42,18 @@
 
 #include <iostream>
 #include <thread>
+#include <csignal>
 
 #include "sockpp/unix_acceptor.h"
 #include "sockpp/version.h"
 
 using namespace std;
+
+#if defined(_WIN32)
+    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+#else
+    const string DFLT_PATH = "/tmp/unechosvr.sock"s;
+#endif
 
 // --------------------------------------------------------------------------
 // The thread function. This is run in a separate thread for each socket.
@@ -72,12 +79,6 @@ int main(int argc, char* argv[]) {
     cout << "Sample Unix-domain echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
          << endl;
 
-#if defined(_WIN32)
-    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
-#else
-    string DFLT_PATH = "/tmp/unechosvr.sock"s;
-#endif
-
     const string path = (argc > 1) ? argv[1] : DFLT_PATH;
 
     sockpp::initialize();
@@ -86,7 +87,8 @@ int main(int argc, char* argv[]) {
     auto res = acc.open(sockpp::unix_address(path));
 
     if (!res) {
-        cerr << "Error creating the acceptor: " << res.error_message() << endl;
+        cerr << "Error creating the acceptor at: " << path << "\n\t"
+            << res.error_message() << endl;
         return 1;
     }
     cout << "Acceptor bound to address: '" << acc.address() << "'..." << endl;

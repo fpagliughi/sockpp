@@ -44,17 +44,17 @@
 
 using namespace std;
 
+#if defined(_WIN32)
+    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+#else
+    const string DFLT_PATH = "/tmp/unechosvr.sock"s;
+#endif
+
 // --------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
     cout << "Sample Unix-domain echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
          << endl;
-
-#if defined(_WIN32)
-    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
-#else
-    string DFLT_PATH = "/tmp/unechosvr.sock"s;
-#endif
 
     const string path = (argc > 1) ? argv[1] : DFLT_PATH;
 
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     sockpp::unix_connector conn;
 
     if (auto res = conn.connect(sockpp::unix_address(path)); !res) {
-        cerr << "Error connecting to UNIX socket at " << path << "\n\t" << res.error_message()
+        cerr << "Error connecting to UNIX socket at: " << path << "\n\t" << res.error_message()
              << endl;
         return 1;
     }

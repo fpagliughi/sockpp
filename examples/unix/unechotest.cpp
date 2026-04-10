@@ -52,18 +52,18 @@ const size_t DFLT_SZ = 512;
 
 using fpsec = std::chrono::duration<double, std::chrono::seconds::period>;
 
+#if defined(_WIN32)
+    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+#else
+    const string DFLT_PATH = "/tmp/unechosvr.sock"s;
+#endif
+
 // --------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
     cout << "Unix-domain echo timing test client for 'sockpp' " << sockpp::SOCKPP_VERSION
          << '\n'
          << endl;
-
-#if defined(_WIN32)
-    const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
-#else
-    string DFLT_PATH = "/tmp/unechosvr.sock"s;
-#endif
 
     const string path = (argc > 1) ? argv[1] : DFLT_PATH;
     size_t n = (argc > 2) ? size_t(atoll(argv[2])) : DFLT_N;
@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
     sockpp::unix_connector conn;
 
     if (auto res = conn.connect(sockpp::unix_address(path)); !res) {
-        cerr << "Error connecting to UNIX socket at " << path << "\n\t" << res.error_message()
-             << endl;
+        cerr << "Error connecting to UNIX socket at: " << path << "\n\t"
+            << res.error_message() << endl;
         return 1;
     }
 

@@ -13,6 +13,8 @@
 // 		$ nc -u localhost 12345		# IPv4
 // 		$ nc -6u localhost 12345	# IPv6
 //
+// Note that UNIX datagram sockets are not supported on Windows.
+//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
