@@ -76,11 +76,12 @@ protected:
      * classified (derived from) a streaming socket, since it doesn't
      * support read and write to the socket.
      * @param domain The communications domain (address family).
+     * @param protocol The protocol for socket creation (0 = default).
      * @return An OS handle to a stream socket on success, or an error code
      *         on failure.
      */
-    static result<socket_t> create_handle(int domain) {
-        return stream_socket::create_handle(domain);
+    static result<socket_t> create_handle(int domain, int protocol = 0) {
+        return stream_socket::create_handle(domain, protocol);
     }
 
 public:
@@ -153,7 +154,7 @@ public:
      * @param domain The communications domain (address family).
      * @return An open, but unbound acceptor socket.
      */
-    static result<acceptor> create(int domain) noexcept;
+    static result<acceptor> create(int domain, int protocol = 0) noexcept;
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
@@ -182,7 +183,7 @@ public:
      * @return The error code on failure.
      */
     result<> open(
-        const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0
+        const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0, int protocol = 0
     ) noexcept;
     /**
      * Accepts an incoming TCP connection and gets the address of the client.
@@ -226,7 +227,8 @@ public:
  * like:
  *     using tcp_acceptor = acceptor_tmpl<tcp_socket>;
  */
-template <typename STREAM_SOCK, typename ADDR = typename STREAM_SOCK::addr_t>
+template <
+    typename STREAM_SOCK, typename ADDR = typename STREAM_SOCK::addr_t, int PROTOCOL = 0>
 class acceptor_tmpl : public acceptor
 {
     /** The base class */
@@ -326,7 +328,9 @@ public:
      * acceptor to get incoming connections.
      * @return An open, but unbound acceptor socket.
      */
-    static result<acceptor_tmpl> create() { return base::create(addr_t::ADDRESS_FAMILY); }
+    static result<acceptor_tmpl> create() {
+        return base::create(addr_t::ADDRESS_FAMILY, PROTOCOL);
+    }
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
@@ -358,7 +362,7 @@ public:
      * @return @em true on success, @em false on error
      */
     result<> open(const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) noexcept {
-        return base::open(addr, queSize, reuse);
+        return base::open(addr, queSize, reuse, PROTOCOL);
     }
     /**
      * Opens the acceptor socket, binds the socket to all adapters and starts it

@@ -47,8 +47,8 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-result<acceptor> acceptor::create(int domain) noexcept {
-    if (auto res = create_handle(domain); !res)
+result<acceptor> acceptor::create(int domain, int protocol /*=0*/) noexcept {
+    if (auto res = create_handle(domain, protocol); !res)
         return res.error();
     else
         return acceptor(res.value());
@@ -63,13 +63,14 @@ result<acceptor> acceptor::create(int domain) noexcept {
 // without doing anything.
 
 result<> acceptor::open(
-    const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, int reuse /*=0*/
+    const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, int reuse /*=0*/,
+    int protocol /*=0*/
 ) noexcept {
     // TODO: Should we fail if we're bound to a different address?
     if (is_open())
         return none{};
 
-    if (auto res = create_handle(addr.family()); !res)
+    if (auto res = create_handle(addr.family(), protocol); !res)
         return res.error();
     else
         reset(res.value());

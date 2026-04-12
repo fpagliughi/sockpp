@@ -70,9 +70,6 @@ class connector : public stream_socket
     connector(const connector&) = delete;
     connector& operator=(const connector&) = delete;
 
-    /** Recreate the socket with a new handle, closing any old one. */
-    result<> recreate(const sock_address& addr);
-
 public:
     /**
      * Creates an unconnected connector.
@@ -164,26 +161,25 @@ public:
     }
     /**
      * Attempts to connect to the specified server.
-     * If the socket is currently connected, this will close the current
-     * connection and open the new one.
+     * Fails if the socket is already connected; call disconnect() first.
      * @param addr The remote server address.
+     * @param protocol The protocol for socket creation (0 = default).
      * @return The error code on failure.
      */
-    result<> connect(const sock_address& addr);
+    result<> connect(const sock_address& addr, int protocol = 0);
     /**
      * Attempts to connect to the specified server, with a timeout.
-     * If the socket is currently connected, this will close the current
-     * connection and open the new one.
+     * Fails if the socket is already connected; call disconnect() first.
      * If the operation times out, the @ref error will be `errc::timed_out`.
      * @param addr The remote server address.
      * @param timeout The duration after which to give up. Zero means never.
+     * @param protocol The protocol for socket creation (0 = default).
      * @return The error code on failure.
      */
-    result<> connect(const sock_address& addr, microseconds timeout);
+    result<> connect(const sock_address& addr, microseconds timeout, int protocol = 0);
     /**
      * Attempts to connect to the specified server, with a timeout.
-     * If the socket is currently connected, this will close the current
-     * connection and open the new one.
+     * Fails if the socket is already connected; call disconnect() first.
      * If the operation times out, the @ref last_error will be set to
      * `timed_out`.
      * @param addr The remote server address.
@@ -194,6 +190,13 @@ public:
     result<> connect(const sock_address& addr, const duration<Rep, Period>& relTime) {
         return connect(addr, microseconds(relTime));
     }
+    /**
+     * Disconnects the socket, shutting down the connection and resetting
+     * the handle to an invalid state. A new connection can be made by
+     * calling connect() again.
+     * @return The error code on failure.
+     */
+    result<> disconnect() { return close(); }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -201,7 +204,8 @@ public:
 /**
  * Class to create a client TCP connection.
  */
-template <typename STREAM_SOCK, typename ADDR = typename STREAM_SOCK::addr_t>
+template <
+    typename STREAM_SOCK, typename ADDR = typename STREAM_SOCK::addr_t, int PROTOCOL = 0>
 class connector_tmpl : public connector
 {
     /** The base class */
@@ -227,14 +231,19 @@ public:
      * @param addr The remote server address.
      * @throws std::system_error on failure.
      */
-    connector_tmpl(const addr_t& addr) : base(addr) {}
+    connector_tmpl(const addr_t& addr) {
+        if (auto res = connect(addr); !res)
+            throw std::system_error{res.error()};
+    }
     /**
      * Creates the connector and attempts to connect to the specified
      * address.
      * @param addr The remote server address.
      * @param ec The error code on failure.
      */
-    connector_tmpl(const addr_t& addr, error_code& ec) noexcept : base(addr, ec) {}
+    connector_tmpl(const addr_t& addr, error_code& ec) noexcept {
+        ec = connect(addr).error();
+    }
     /**
      * Creates the connector and attempts to connect to the specified
      * server, with a timeout.
@@ -243,8 +252,10 @@ public:
      * @throws std::system_error on failure
      */
     template <class Rep, class Period>
-    connector_tmpl(const addr_t& addr, const duration<Rep, Period>& relTime)
-        : base(addr, relTime) {}
+    connector_tmpl(const addr_t& addr, const duration<Rep, Period>& relTime) {
+        if (auto res = connect(addr, microseconds(relTime)); !res)
+            throw std::system_error{res.error()};
+    }
     /**
      * Creates the connector and attempts to connect to the specified
      * server, with a timeout.
@@ -255,8 +266,9 @@ public:
     template <class Rep, class Period>
     connector_tmpl(
         const addr_t& addr, const duration<Rep, Period>& relTime, error_code& ec
-    ) noexcept
-        : base(addr, relTime, ec) {}
+    ) noexcept {
+        ec = connect(addr, microseconds(relTime)).error();
+    }
     /**
      * Move constructor.
      * Creates a connector by moving the other connector to this one.
@@ -291,28 +303,26 @@ public:
      */
     result<> bind(const addr_t& addr) { return base::bind(addr); }
     /**
-     * Attempts to connects to the specified server.
-     * If the socket is currently connected, this will close the current
-     * connection and open the new one.
+     * Attempts to connect to the specified server.
+     * Injects the PROTOCOL template parameter into the socket creation call.
+     * Fails if already connected; call disconnect() first.
      * @param addr The remote server address.
-     * @return @em true on success, @em false on error
+     * @return The result of the operation, with an error code on failure.
      */
-    result<> connect(const addr_t& addr) { return base::connect(addr); }
+    result<> connect(const addr_t& addr) { return base::connect(addr, PROTOCOL); }
     /**
      * Attempts to connect to the specified server, with a timeout.
-     * If the socket is currently connected, this will close the current
-     * connection and open the new one.
+     * Injects the PROTOCOL template parameter into the socket creation call.
+     * Fails if already connected; call disconnect() first.
      * If the operation times out, the @ref last_error will be set to
      * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
-     * @return @em true on success, @em false on error
+     * @return The result of the operation, with an error code on failure.
      */
     template <class Rep, class Period>
-    result<> connect(
-        const sock_address& addr, const std::chrono::duration<Rep, Period>& relTime
-    ) {
-        return base::connect(addr, std::chrono::microseconds(relTime));
+    result<> connect(const addr_t& addr, const std::chrono::duration<Rep, Period>& relTime) {
+        return base::connect(addr, std::chrono::microseconds(relTime), PROTOCOL);
     }
     /**
      * Attempts to connect to the server at the specified port.

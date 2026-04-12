@@ -46,33 +46,32 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-result<> connector::recreate(const sock_address& addr) {
-    if (auto res = create_handle(addr.family()); !res)
+result<none> connector::connect(const sock_address& addr, int protocol /*=0*/) {
+    if (is_open())
+        return errc::already_connected;
+
+    if (auto res = create_handle(addr.family(), protocol); !res)
         return res.error();
-    else {
-        // This will close the old connection, if any.
+    else
         reset(res.value());
-        return none{};
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-result<none> connector::connect(const sock_address& addr) {
-    if (auto res = recreate(addr); !res)
-        return res;
 
     return check_res_none(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
 }
 
-/////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
 
-result<> connector::connect(const sock_address& addr, microseconds timeout) {
+result<>
+connector::connect(const sock_address& addr, microseconds timeout, int protocol /*=0*/) {
     if (timeout.count() <= 0)
-        return connect(addr);
+        return connect(addr, protocol);
 
-    if (auto res = recreate(addr); !res)
-        return res;
+    if (is_open())
+        return errc::already_connected;
+
+    if (auto res = create_handle(addr.family(), protocol); !res)
+        return res.error();
+    else
+        reset(res.value());
 
     bool non_blocking =
 #if defined(_WIN32)

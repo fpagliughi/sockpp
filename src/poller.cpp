@@ -72,9 +72,11 @@ result<vector<poller::event>> poller::wait(milliseconds timeout /*=milliseconds{
     if (pfds_.empty())
         return vector<event>{};
 
-    int ms = (timeout.count() < 0) ? -1 : int(std::clamp(timeout.count(),
-        decltype(timeout.count()){0},
-        decltype(timeout.count()){INT_MAX}));
+    int ms = (timeout.count() < 0) ? -1
+                                   : int(std::clamp(
+                                         timeout.count(), decltype(timeout.count()){0},
+                                         decltype(timeout.count()){INT_MAX}
+                                     ));
 
 #if defined(_WIN32)
     int n = ::WSAPoll(pfds_.data(), ULONG(pfds_.size()), ms);

@@ -60,7 +60,7 @@ tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock)
         throw tls_error::from_last_error();
 
     if (::SSL_set_fd(ssl_, handle()) <= 0) {
-		auto err = tls_error::from_last_error();
+        auto err = tls_error::from_last_error();
         ::SSL_free(ssl_);
         ssl_ = nullptr;
         throw err;
