@@ -111,12 +111,24 @@ public:
      * @param queSize The listener queue size.
      * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
-     *              value of zero doesn;t set an option.
+     *              value of zero doesn't set an option.
+     * @param protocol The protocol for socket creation (0 = default).
      * @throws std::system_error on failure
      */
-    acceptor(const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) {
-        if (auto res = open(addr, queSize, reuse); !res)
+    explicit acceptor(
+        const sock_address& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0, int protocol = 0
+    ) {
+        if (auto res = open(addr, queSize, reuse, protocol); !res)
             throw std::system_error{res.error()};
+    }
+    /**
+     * Creates an acceptor socket and starts it listening to the specified
+     * address.
+     * @param addr The address to which this server should be bound.
+     * @param ec The error code, on failure
+     */
+    acceptor(const sock_address& addr, error_code& ec) noexcept {
+        ec = open(addr).error();
     }
     /**
      * Creates an acceptor socket and starts it listening to the specified
@@ -135,11 +147,27 @@ public:
      * @param queSize The listener queue size.
      * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
-     *              value of zero doesn;t set an option.
+     *              value of zero doesn't set an option.
      * @param ec The error code, on failure
      */
     acceptor(const sock_address& addr, int queSize, int reuse, error_code& ec) noexcept {
         ec = open(addr, queSize, reuse).error();
+    }
+    /**
+     * Creates an acceptor socket and starts it listening to the specified
+     * address.
+     * @param addr The address to which this server should be bound.
+     * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn't set an option.
+     * @param protocol The protocol for socket creation (0 = default).
+     * @param ec The error code, on failure
+     */
+    acceptor(
+        const sock_address& addr, int queSize, int reuse, int protocol, error_code& ec
+    ) noexcept {
+        ec = open(addr, queSize, reuse, protocol).error();
     }
     /**
      * Move constructor.

@@ -79,31 +79,36 @@ public:
      * Creates the connector and attempts to connect to the specified
      * address.
      * @param addr The remote server address.
+     * @param protocol The protocol for socket creation (0 = default).
      * @throws std::system_error on failure
      */
-    connector(const sock_address& addr) {
-        if (auto res = connect(addr); !res)
+    connector(const sock_address& addr, int protocol = 0) {
+        if (auto res = connect(addr, protocol); !res)
             throw std::system_error{res.error()};
     }
     /**
      * Creates the connector and attempts to connect to the specified
      * address.
      * @param addr The remote server address.
+     * @param protocol The protocol for socket creation (0 = default).
      * @param ec The error code on failure.
      */
-    connector(const sock_address& addr, error_code& ec) noexcept {
-        ec = connect(addr).error();
+    connector(const sock_address& addr, int protocol, error_code& ec) noexcept {
+        ec = connect(addr, protocol).error();
     }
     /**
      * Creates the connector and attempts to connect to the specified
      * server, with a timeout.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
+     * @param protocol The protocol for socket creation (0 = default).
      * @throws std::system_error on failure
      */
     template <class Rep, class Period>
-    connector(const sock_address& addr, const duration<Rep, Period>& relTime) {
-        if (auto res = connect(addr, microseconds(relTime)); !res)
+    connector(
+        const sock_address& addr, const duration<Rep, Period>& relTime, int protocol = 0
+    ) {
+        if (auto res = connect(addr, microseconds(relTime), protocol); !res)
             throw std::system_error{res.error()};
     }
     /**
@@ -111,13 +116,15 @@ public:
      * server, with a timeout.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
+     * @param protocol The protocol for socket creation (0 = default).
      * @param ec The error code on failure
      */
     template <class Rep, class Period>
     connector(
-        const sock_address& addr, const duration<Rep, Period>& relTime, error_code& ec
+        const sock_address& addr, const duration<Rep, Period>& relTime, int protocol,
+        error_code& ec
     ) noexcept {
-        ec = connect(addr, microseconds(relTime)).error();
+        ec = connect(addr, microseconds(relTime), protocol).error();
     }
     /**
      * Creates the connector and attempts to connect to the specified
@@ -126,10 +133,11 @@ public:
      * `timed_out`.
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
+     * @param protocol The protocol for socket creation (0 = default).
      * @throws std::system_error on failure
      */
-    connector(const sock_address& addr, std::chrono::milliseconds t) {
-        if (auto res = connect(addr, t); !res)
+    connector(const sock_address& addr, milliseconds t, int protocol = 0) {
+        if (auto res = connect(addr, t, protocol); !res)
             throw std::system_error{res.error()};
     }
     /**
@@ -139,10 +147,11 @@ public:
      * `timed_out`.
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
+     * @param protocol The protocol for socket creation (0 = default).
      * @param ec The error code on failure
      */
-    connector(const sock_address& addr, milliseconds t, error_code& ec) noexcept {
-        ec = connect(addr, t).error();
+    connector(const sock_address& addr, milliseconds t, int protocol, error_code& ec) noexcept {
+        ec = connect(addr, t, protocol).error();
     }
     /**
      * Move constructor.
@@ -184,11 +193,14 @@ public:
      * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
+     * @param protocol The protocol for socket creation (0 = default).
      * @return The error code on failure
      */
     template <class Rep, class Period>
-    result<> connect(const sock_address& addr, const duration<Rep, Period>& relTime) {
-        return connect(addr, microseconds(relTime));
+    result<> connect(
+        const sock_address& addr, const duration<Rep, Period>& relTime, int protocol = 0
+    ) {
+        return connect(addr, microseconds(relTime), protocol);
     }
     /**
      * Disconnects the socket, shutting down the connection and resetting
