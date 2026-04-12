@@ -88,11 +88,22 @@ endif()
 
 # --- Link for executables ---
 
-target_link_libraries(unit_tests 
+target_link_libraries(unit_tests
     Sockpp::sockpp
     Catch2::Catch2
     Threads::Threads
 )
+
+if(UNIX AND SOCKPP_BUILD_SHARED)
+    # Look for the shared lib in the build path first before install path.
+    set_target_properties(unit_tests PROPERTIES
+    BUILD_RPATH $<TARGET_FILE_DIR:sockpp-shared>
+        BUILD_RPATH_USE_ORIGIN TRUE
+    )
+    target_link_options(unit_tests PRIVATE
+        -Wl,--disable-new-dtags
+    )
+endif()
 
 include(CTest)
 include(Catch)

@@ -51,6 +51,7 @@ set(THREADED_EXECUTABLES
 )
 
 if(NOT WIN32)
+    # Windows doesn't support UNIX datagram sockets
     list(APPEND THREADED_EXECUTABLES undgramechosvr)
 endif()
 
@@ -61,6 +62,7 @@ set(EXECUTABLES
 )
 
 if(NOT WIN32)
+    # Windows doesn't support UNIX datagram sockets
     list(APPEND EXECUTABLES undgramecho)
 endif()
 

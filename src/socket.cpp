@@ -102,12 +102,18 @@ void initialize() { socket_initializer::initialize(); }
 //									socket
 /////////////////////////////////////////////////////////////////////////////
 
-result<> socket::close(socket_t h) noexcept {
-#if defined(_WIN32)
-    return check_res_none(::closesocket(h));
-#else
-    return check_res_none(::close(h));
-#endif
+socket::socket(int domain, int type, int protocol /*=0*/) {
+    if (auto res = create_handle(domain, type, protocol); !res)
+        throw std::system_error{res.error()};
+    else
+        handle_ = res.value();
+}
+
+socket::socket(int domain, int type, int protocol, error_code& ec) noexcept {
+    if (auto res = create_handle(domain, type, protocol); !res)
+        ec = res.error();
+    else
+        handle_ = res.value();
 }
 
 // --------------------------------------------------------------------------
@@ -117,6 +123,16 @@ result<socket> socket::create(int domain, int type, int protocol /*=0*/) noexcep
         return res.error();
     else
         return socket(res.value());
+}
+
+// --------------------------------------------------------------------------
+
+result<> socket::close(socket_t h) noexcept {
+#if defined(_WIN32)
+    return check_res_none(::closesocket(h));
+#else
+    return check_res_none(::close(h));
+#endif
 }
 
 // --------------------------------------------------------------------------

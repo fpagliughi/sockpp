@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2022 Frank Pagliughi
+# Copyright (c) 2022-2026 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,13 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
+
+if(UNIX AND SOCKPP_BUILD_SHARED)
+    # Look for the shared lib in the build path first before install path.
+    set(CMAKE_BUILD_RPATH $<TARGET_FILE_DIR:sockpp-shared>)
+        set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+    add_link_options(-Wl,--disable-new-dtags)
+endif()
 
 # --- General TCP/IP examples ---
 
