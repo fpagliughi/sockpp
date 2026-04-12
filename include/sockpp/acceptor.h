@@ -127,9 +127,7 @@ public:
      * @param addr The address to which this server should be bound.
      * @param ec The error code, on failure
      */
-    acceptor(const sock_address& addr, error_code& ec) noexcept {
-        ec = open(addr).error();
-    }
+    acceptor(const sock_address& addr, error_code& ec) noexcept { ec = open(addr).error(); }
     /**
      * Creates an acceptor socket and starts it listening to the specified
      * address.

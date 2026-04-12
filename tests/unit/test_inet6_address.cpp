@@ -41,7 +41,7 @@
 #include <string>
 
 #include "catch2_version.h"
-#include "sockpp/inet6_address.h"
+#include "sockpp/inet_address.h"
 
 using namespace sockpp;
 

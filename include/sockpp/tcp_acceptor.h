@@ -1,18 +1,19 @@
-/// @file tcp_acceptor.h
-///
-/// Class for a TCP server to accept incoming connections.
-///
-/// @author	Frank Pagliughi
-///	@author	SoRo Systems, Inc.
-///	@author	www.sorosys.com
-///
-/// @date	December 2014
+/**
+ * @file tcp_acceptor.h
+ *
+ * Classes for TCP server acceptor sockets (IPv4 and IPv6).
+ *
+ * @author Frank Pagliughi
+ * @author SoRo Systems, Inc.
+ * @author www.sorosys.com
+ *
+ * @date December 2014
+ */
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2019 Frank Pagliughi
-// All rights reserved.
+// Copyright (c) 2014-2026 Frank Pagliughi All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -52,14 +53,28 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/// Class for creating a TCP server.
-/// Objects of this class bind and listen on TCP ports for incoming
-/// connections. Normally, a server thread creates one of these and blocks
-/// on the call to accept incoming connections. The call to accept creates
-/// and returns a @ref tcp_socket which can then be used for the actual
-/// communications.
-
+/**
+ * TCP v4 server acceptor socket.
+ * Objects of this class bind and listen on TCP v4 ports for incoming
+ * connections. Normally, a server thread creates one of these and blocks
+ * on the call to accept incoming connections. The call to accept creates
+ * and returns a @ref tcp_socket which can then be used for the actual
+ * communications.
+ */
 using tcp_acceptor = acceptor_tmpl<tcp_socket>;
+
+/** Alias for a TCP v4 server acceptor socket. */
+using tcp4_acceptor = tcp_acceptor;
+
+/**
+ * TCP v6 server acceptor socket.
+ * Objects of this class bind and listen on TCP v6 ports for incoming
+ * connections. Normally, a server thread creates one of these and blocks
+ * on the call to accept incoming connections. The call to accept creates
+ * and returns a @ref tcp6_socket which can then be used for the actual
+ * communications.
+ */
+using tcp6_acceptor = acceptor_tmpl<tcp6_socket>;
 
 /////////////////////////////////////////////////////////////////////////////
 };  // namespace sockpp

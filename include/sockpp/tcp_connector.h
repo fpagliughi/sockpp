@@ -54,8 +54,14 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** IPv4 active, connector (client) socket. */
+/** IPv4 connector (client) socket. */
 using tcp_connector = connector_tmpl<tcp_socket>;
+
+/** Alias for IPv4 connector (client) socket. */
+using tcp4_connector = connector_tmpl<tcp_socket>;
+
+/** IPv6 connector (client) socket. */
+using tcp6_connector = connector_tmpl<tcp6_socket>;
 
 /////////////////////////////////////////////////////////////////////////////
 };  // namespace sockpp

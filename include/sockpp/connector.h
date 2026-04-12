@@ -150,7 +150,9 @@ public:
      * @param protocol The protocol for socket creation (0 = default).
      * @param ec The error code on failure
      */
-    connector(const sock_address& addr, milliseconds t, int protocol, error_code& ec) noexcept {
+    connector(
+        const sock_address& addr, milliseconds t, int protocol, error_code& ec
+    ) noexcept {
         ec = connect(addr, t, protocol).error();
     }
     /**

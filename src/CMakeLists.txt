@@ -46,7 +46,6 @@ set(SOURCES
     datagram_socket.cpp
     error.cpp
     inet_address.cpp
-    inet6_address.cpp
     poller.cpp
     socket.cpp
     stream_socket.cpp

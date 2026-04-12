@@ -155,28 +155,32 @@ For IPv4 the `tcp_acceptor` and `tcp_connector` classes are used to create serve
 
 The `tcp_acceptor` is used to set up a server and listen for incoming connections.
 
-    int16_t port = 12345;
-    sockpp::tcp_acceptor acc(port);
+    in_port_t port = 12345;
+    error_code ec;
+    sockpp::tcp_acceptor acc{port, ec};
 
-    if (!acc)
-        report_error(acc.last_error_str());
+    if (ec)
+        report_error(ec.message());
 
     // Accept a new client connection
-    sockpp::tcp_socket sock = acc.accept();
+    if (auto res = acc.accept(); !res)
+        report_error(res.error_message());
+    else {
+        sockpp::tcp_socket sock = res.release();
+        // use sock...
+    }
 
 The acceptor normally sits in a loop accepting new connections, and passes them off to another process, thread, or thread pool to interact with the client. In standard C++, this could look like:
 
     while (true) {
         // Accept a new client connection
-        sockpp::tcp_socket sock = acc.accept();
-
-        if (!sock) {
+        if (auto res = acc.accept(); !res) {
             cerr << "Error accepting incoming connection: "
-                << acc.last_error_str() << endl;
+                << res.error_message() << endl;
         }
         else {
             // Create a thread and transfer the new stream to it.
-            thread thr(run_echo, std::move(sock));
+            thread thr(run_echo, res.release());
             thr.detach();
         }
     }
@@ -189,16 +193,21 @@ See the [tcpechosvr.cpp](https://github.com/fpagliughi/sockpp/blob/master/exampl
 
 The TCP client is somewhat simpler in that a `tcp_connector` object is created and connected, then can be used to read and write data directly.
 
+    in_port_t port = 12345;
     sockpp::tcp_connector conn;
-    int16_t port = 12345;
 
-    if (!conn.connect(sockpp::inet_address("localhost", port)))
-        report_error(conn.last_error_str());
+    if (auto res = conn.connect(sockpp::inet_address("localhost", port)); !res)
+        report_error(res.error_message());
 
     conn.write_n("Hello", 5);
 
     char buf[16];
-    ssize_t n = conn.read(buf, sizeof(buf));
+    if (auto res = conn.read(buf, sizeof(buf)); !res)
+        report_error(res.error_message());
+    else {
+        size_t n = res.value();
+        // use buf[0..n-1]...
+    }
 
 See the [tcpecho.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/tcp/tcpecho.cpp) example.
 
@@ -213,9 +222,13 @@ UDP sockets can be used for connectionless communications:
     sock.send_to(msg, addr);
 
     sockpp::inet_address srcAddr;
-
     char buf[16];
-    ssize_t n = sock.recv(buf, sizeof(buf), &srcAddr);
+    if (auto res = sock.recv_from(buf, sizeof(buf), &srcAddr); !res)
+        report_error(res.error_message());
+    else {
+        size_t n = res.value();
+        // use buf[0..n-1]...
+    }
 
 See the [udpecho.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/udp/udpecho.cpp) and [udpechosvr.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/udp/udpechosvr.cpp) examples.
 
@@ -343,10 +356,11 @@ The socket class hierarchy is built upon a base `socket` class. Most simple appl
 
 The socket objects keep a handle to an underlying OS socket handle and a cached value for the last error that occurred for that socket. The socket handle is typically an integer file descriptor, with values >=0 for open sockets, and -1 for an unopened or invalid socket. The value used for unopened sockets is defined as a constant, `INVALID_SOCKET`, although it usually doesn't need to be tested directly, as the object itself will evaluate to _false_ if it's uninitialized or in an error state. A typical error check would be like this:
 
-    tcp_connector conn({"localhost", 12345});
+    error_code ec;
+    tcp_connector conn({"localhost", 12345}, ec);
 
-    if (!conn)
-        cerr << conn.last_error_str() << std::endl;
+    if (ec)
+        cerr << ec.message() << std::endl;
 
 The default constructors for each of the socket classes do nothing, and simply set the underlying handle to `INVALID_SOCKET`. They do not create a socket object. The call to actively connect a `connector` object or open an `acceptor` object will create an underlying OS socket and then perform the requested operation.
 
@@ -362,14 +376,15 @@ As of Version 2.0 of the library
 
 A `socket` can be _moved_ from one thread to another safely. This is a common pattern for a server which uses one thread to accept incoming connections and then passes off the new socket to another thread or thread pool for handling. This can be done like:
 
-    sockpp::tcp6_socket sock = acc.accept(&peer);
-
-    // Create a thread and transfer the new socket to it.
-    std::thread thr(handle_connection, std::move(sock));
+    if (auto res = acc.accept(&peer); res) {
+        // Create a thread and transfer the new socket to it.
+        std::thread thr(handle_connection, res.release());
+        thr.detach();
+    }
 
 In this case, _handle_connection_ would be a function that takes a socket by value, like:
 
-    void handle_connection(sockpp::tcp6_socket sock) { ... }
+    void handle_connection(sockpp::tcp_socket sock) { ... }
 
 Since a `socket` can not be copied, the only choice would be to move the socket to a function like this.
 
@@ -379,8 +394,10 @@ The solution for this case is to use the `socket::clone()` method to make a copy
 
     sockpp::tcp_connector conn({host, port});
 
-    auto rdSock = conn.clone();
-    std::thread rdThr(read_thread_func, std::move(rdSock));
+    auto cloneRes = conn.clone();
+    if (!cloneRes)
+        report_error(cloneRes.error_message());
+    std::thread rdThr(read_thread_func, cloneRes.release());
 
 The `socket::shutdown()` method can be used to communicate the intent to close the socket from one of these objects to the other without needing another thread signaling mechanism.
 

@@ -39,7 +39,7 @@
 #include <iostream>
 #include <string>
 
-#include "sockpp/tcp6_connector.h"
+#include "sockpp/tcp_connector.h"
 #include "sockpp/version.h"
 
 using namespace std;
