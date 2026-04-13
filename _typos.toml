@@ -1,0 +1,14 @@
+[default.extend-identifiers]
+thr = "thr"
+typ = "typ"
+
+[default.extend-words]
+thr = "thr"
+dout = "dout"
+clonable = "clonable"
+
+[files]
+extend-exclude = [
+    "*.vpw*",
+    "*.vpj"
+]

@@ -16,7 +16,7 @@ Many API functions that expect an address take a pointer and size to a generic, 
 int bind(int socket, const struct sockaddr *address, socklen_t address_len);
 ```
 
-Here, essentialy, the `bind()` call takes a socket descriptor and an address. The address is provided as a pointer to a struct and the length of the struct, noting that the addresses from different families can be of different length.
+Here, essentially, the `bind()` call takes a socket descriptor and an address. The address is provided as a pointer to a struct and the length of the struct, noting that the addresses from different families can be of different length.
 
 The `sockaddr` struct is usually defined something like this:
 
@@ -27,7 +27,7 @@ struct sockaddr {
 };
 ```
 
-The contains a single, concrete member, `sa_family` as a short (2-byte) integer, providing the addess family, which defines the actual type that will follow. All addresses simply need this as the first field in their family-specific address structures to properly align with `sockaddr`.
+The struct contains a single, concrete member, `sa_family` as a short (2-byte) integer, providing the network address family. This defines the actual type that will follow. All addresses simply need this as the first field in their family-specific address structures to properly align with `sockaddr`.
 
 Addresses for specific protocols have concrete structures defined in the API which overlap with this. For example the IPv4 family address structure often looks like this:
 
@@ -77,6 +77,45 @@ Since the other addresses are derived from this, they can se sent to any functio
 result<size_t> socket::send_to(const string& s, const sock_address& addr);
 ```
 
+In the library, the address classes are generally defined using composition, with the underlying C type contained within. For example, the IPv4 address looks like this:
+
+```cpp
+class inet_address : public sock_address
+{
+    /** The underlying C struct for IPv4 addresses */
+    sockaddr_in addr_{};
+
+    /** The size of the underlying address struct, in bytes */
+    static constexpr size_t SZ = sizeof(sockaddr_in);
+
+public:
+    // ...
+    
+    socklen_t size() const override { return socklen_t(SZ); }
+
+    const sockaddr* sockaddr_ptr() const override {
+        return reinterpret_cast<const sockaddr*>(&addr_);
+    }
+
+    sockaddr* sockaddr_ptr() override { return reinterpret_cast<sockaddr*>(&addr_); }
+    
+};
+```
+
+The C struct for the address is contained within the C++ class, but its address is _not_ the same as the address for the C++ type. To pass the address and length of the address to an OS socket function, you must use the `sockaddr_ptr()` and `size()` member functions, respectively.
+
+For example, a simplified version of the `socket::bin()` function might look something like this:
+
+```cpp
+result<> socket::bind(const sock_address& addr) noexcept {
+    return check_res_none(
+        ::bind(handle_, addr.sockaddr_ptr(), addr.size())
+    );
+}
+```
+
+
+
 ## IPv4 and IPv6 Addresses: *inet_address* and *inet6_address*
 
 The `inet_address` is the address type for the **AF_INET** family, and wraps the C `sockaddr_in` struct. It is the IPv4 address type, consisting of a 32-bit address and 16-bit port number. All integer values use native (host) byte ordering going into or out of the objects.
@@ -100,7 +139,7 @@ The `inet6_address` is the address type for the **AF_INET6** family, and wraps t
 
 The _sockpp_ library has additional address types for other supported families, like `unix_address` for UNIX-domain sockets, `can_address` for Linux SocketCAN, etc. These are described in the sections about those protocols.
 
-## The "Any" Address Type: *sock_address_any*
+## The "Any" Address Type
 
 The library also provides the generic `sock_address_any` type, which contains enough storage space for any of the supported addresses on the platform. This wraps the `sockaddr_storage` type from the C API. Applications can use an address of this type when receiving addresses of an unknown family.
 
@@ -137,5 +176,4 @@ if (!ec) {
     cout << "The peer is not using IPv4" << endl;
 }
 ```
-
 
