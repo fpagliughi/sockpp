@@ -39,6 +39,10 @@
 //
 
 #include <string>
+#if __cplusplus >= 202002L
+    #include <array>
+    #include <span>
+#endif
 
 #include "catch2_version.h"
 #include "sockpp/unix_stream_socket.h"
@@ -47,7 +51,7 @@ using namespace sockpp;
 
 // Test that we can create a Unix-domain stream socket pair and send
 // data from one of the sockets to the other.
-TEST_CASE("unix stream socket pair", "[unix_stream_socket]") {
+TEST_CASE("unix stream socket pair write/read", "[unix_stream_socket]") {
     auto res = unix_stream_socket::pair();
     REQUIRE(res);
 
@@ -70,3 +74,35 @@ TEST_CASE("unix stream socket pair", "[unix_stream_socket]") {
     std::string msg{buf, buf + N};
     REQUIRE(msg == MSG);
 }
+
+#if __cplusplus >= 202002L
+
+// Test span-based read/write overloads on stream sockets.
+TEST_CASE("unix stream socket pair span write/read", "[unix_stream_socket]") {
+    auto res = unix_stream_socket::pair();
+    REQUIRE(res);
+
+    auto [sock1, sock2] = res.release();
+
+    const std::string MSG{"Hello span!"};
+    const size_t N = MSG.length();
+
+    // View the string data as a read-only byte span for writing
+    auto wbuf = std::as_bytes(std::span{MSG.data(), N});
+
+    SECTION("write(span) / read(span)") {
+        std::array<std::byte, 512> rbuf{};
+        REQUIRE(sock1.write(wbuf).value() == N);
+        REQUIRE(sock2.read(std::span{rbuf}.first(N)).value() == N);
+        REQUIRE(std::string(reinterpret_cast<const char*>(rbuf.data()), N) == MSG);
+    }
+
+    SECTION("write_n(span) / read_n(span)") {
+        std::array<std::byte, 512> rbuf{};
+        REQUIRE(sock1.write_n(wbuf).value() == N);
+        REQUIRE(sock2.read_n(std::span{rbuf}.first(N)).value() == N);
+        REQUIRE(std::string(reinterpret_cast<const char*>(rbuf.data()), N) == MSG);
+    }
+}
+
+#endif  // __cplusplus >= 202002L
