@@ -47,6 +47,10 @@
 #ifndef __sockpp_datagram_socket_h
 #define __sockpp_datagram_socket_h
 
+#if __cplusplus >= 202002L
+    #include <span>
+#endif
+
 #include "sockpp/socket.h"
 
 namespace sockpp {
@@ -333,6 +337,46 @@ public:
     result<size_t> recv_from(void* buf, size_t n, ADDR* srcAddr = nullptr) {
         return base::recv_from(buf, n, srcAddr);
     }
+#if __cplusplus >= 202002L
+    /**
+     * Sends a span of bytes to the socket at the specified address.
+     * @param buf Span of bytes to send.
+     * @param flags The flags. See send(2).
+     * @param addr The remote destination of the data.
+     * @return The number of bytes sent on success, or the error code on failure.
+     */
+    result<size_t> send_to(std::span<const std::byte> buf, int flags, const ADDR& addr) {
+        return base::send_to(buf.data(), buf.size(), flags, addr);
+    }
+    /**
+     * Sends a span of bytes to the socket at the specified address.
+     * @param buf Span of bytes to send.
+     * @param addr The remote destination of the data.
+     * @return The number of bytes sent on success, or the error code on failure.
+     */
+    result<size_t> send_to(std::span<const std::byte> buf, const ADDR& addr) {
+        return base::send_to(buf.data(), buf.size(), 0, addr);
+    }
+    /**
+     * Receives into a span on the socket.
+     * @param buf Span of bytes to fill with incoming data.
+     * @param flags The option bit flags. See recv(2).
+     * @param srcAddr Receives the address of the peer that sent the message.
+     * @return The number of bytes read on success, or the error code on failure.
+     */
+    result<size_t> recv_from(std::span<std::byte> buf, int flags, ADDR* srcAddr) {
+        return base::recv_from(buf.data(), buf.size(), flags, srcAddr);
+    }
+    /**
+     * Receives into a span on the socket.
+     * @param buf Span of bytes to fill with incoming data.
+     * @param srcAddr Receives the address of the peer that sent the message.
+     * @return The number of bytes read on success, or the error code on failure.
+     */
+    result<size_t> recv_from(std::span<std::byte> buf, ADDR* srcAddr = nullptr) {
+        return base::recv_from(buf.data(), buf.size(), 0, srcAddr);
+    }
+#endif
 };
 
 /////////////////////////////////////////////////////////////////////////////

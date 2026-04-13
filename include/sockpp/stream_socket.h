@@ -48,6 +48,9 @@
 #define __sockpp_stream_socket_h
 
 #include <vector>
+#if __cplusplus >= 202002L
+    #include <span>
+#endif
 
 #include "sockpp/socket.h"
 #include "types.h"
@@ -217,6 +220,38 @@ public:
      *  	   the string.
      */
     virtual result<size_t> write(const string& s) { return write_n(s.data(), s.size()); }
+#if __cplusplus >= 202002L
+    /**
+     * Reads from the socket into a span.
+     * @param buf Span of bytes to fill with incoming data.
+     * @return The number of bytes read on success, or the error code on failure.
+     */
+    result<size_t> read(std::span<std::byte> buf) { return read(buf.data(), buf.size()); }
+    /**
+     * Best effort attempt to read the entire span from the socket.
+     * @param buf Span of bytes to fill with incoming data.
+     * @return The number of bytes read on success, or the error code on failure.
+     *         On success, the count should always equal the span size.
+     */
+    result<size_t> read_n(std::span<std::byte> buf) { return read_n(buf.data(), buf.size()); }
+    /**
+     * Writes a span of bytes to the socket.
+     * @param buf Span of bytes to send.
+     * @return The number of bytes written on success, or the error code on failure.
+     */
+    result<size_t> write(std::span<const std::byte> buf) {
+        return write(buf.data(), buf.size());
+    }
+    /**
+     * Best effort attempt to write the entire span to the socket.
+     * @param buf Span of bytes to send.
+     * @return The number of bytes written on success, or the error code on failure.
+     *         On success, the count should always equal the span size.
+     */
+    result<size_t> write_n(std::span<const std::byte> buf) {
+        return write_n(buf.data(), buf.size());
+    }
+#endif
     /**
      * Writes discontiguous memory ranges to the socket.
      * @param ranges The vector of memory ranges to write

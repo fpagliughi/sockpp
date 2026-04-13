@@ -50,6 +50,9 @@
 #include <chrono>
 #include <string>
 #include <tuple>
+#if __cplusplus >= 202002L
+    #include <span>
+#endif
 
 #include "sockpp/result.h"
 #include "sockpp/sock_address.h"
@@ -749,6 +752,69 @@ public:
      *         failure.
      */
     result<size_t> recv(void* buf, size_t n, int flags = 0);
+#if __cplusplus >= 202002L
+    /**
+     * Sends a span of bytes to the socket at the specified address.
+     * @param buf Span of bytes to send.
+     * @param flags The flags. See send(2).
+     * @param addr The remote destination of the data.
+     * @return The number of bytes sent on success, or the error code on failure.
+     */
+    result<size_t> send_to(
+        std::span<const std::byte> buf, int flags, const sock_address& addr
+    ) {
+        return send_to(buf.data(), buf.size(), flags, addr);
+    }
+    /**
+     * Sends a span of bytes to the socket at the specified address.
+     * @param buf Span of bytes to send.
+     * @param addr The remote destination of the data.
+     * @return The number of bytes sent on success, or the error code on failure.
+     */
+    result<size_t> send_to(std::span<const std::byte> buf, const sock_address& addr) {
+        return send_to(buf.data(), buf.size(), 0, addr);
+    }
+    /**
+     * Sends a span of bytes to the socket at the default address.
+     * The socket should be connected before calling this.
+     * @param buf Span of bytes to send.
+     * @param flags The option bit flags. See send(2).
+     * @return The number of bytes sent on success, or the error code on failure.
+     */
+    result<size_t> send(std::span<const std::byte> buf, int flags = 0) {
+        return send(buf.data(), buf.size(), flags);
+    }
+    /**
+     * Receives into a span on the socket.
+     * @param buf Span of bytes to fill with incoming data.
+     * @param flags The option bit flags. See recv(2).
+     * @param srcAddr Receives the address of the peer that sent the message.
+     * @return The number of bytes read on success, or the error code on failure.
+     */
+    result<size_t> recv_from(
+        std::span<std::byte> buf, int flags, sock_address* srcAddr = nullptr
+    ) {
+        return recv_from(buf.data(), buf.size(), flags, srcAddr);
+    }
+    /**
+     * Receives into a span on the socket.
+     * @param buf Span of bytes to fill with incoming data.
+     * @param srcAddr Receives the address of the peer that sent the message.
+     * @return The number of bytes read on success, or the error code on failure.
+     */
+    result<size_t> recv_from(std::span<std::byte> buf, sock_address* srcAddr = nullptr) {
+        return recv_from(buf.data(), buf.size(), 0, srcAddr);
+    }
+    /**
+     * Receives into a span on the socket.
+     * @param buf Span of bytes to fill with incoming data.
+     * @param flags The option bit flags. See recv(2).
+     * @return The number of bytes read on success, or the error code on failure.
+     */
+    result<size_t> recv(std::span<std::byte> buf, int flags = 0) {
+        return recv(buf.data(), buf.size(), flags);
+    }
+#endif
 };
 
 /////////////////////////////////////////////////////////////////////////////
