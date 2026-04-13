@@ -251,3 +251,45 @@ jobs:
         ASAN_OPTIONS: strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
         UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
       run: ctest --output-on-failure
+
+  mingw:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release, Debug]
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-catch2
+          mingw-w64-x86_64-ninja
+
+    - name: Configure CMake
+      run: >
+        cmake -B build -G Ninja
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DSOCKPP_BUILD_SHARED=OFF
+        -DSOCKPP_BUILD_STATIC=ON
+        -DSOCKPP_BUILD_EXAMPLES=ON
+        -DSOCKPP_BUILD_TESTS=ON
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Test
+      working-directory: build
+      run: ctest --output-on-failure

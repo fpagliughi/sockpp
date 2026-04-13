@@ -108,11 +108,9 @@ inet_address::inet_address(const sock_address& addr, error_code& ec) noexcept {
 // --------------------------------------------------------------------------
 
 result<in_addr_t> inet_address::resolve_name(const string& saddr) noexcept {
-#if !defined(_WIN32)
     in_addr ia;
     if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
         return ia.s_addr;
-#endif
 
     addrinfo *res, hints = addrinfo{};
     hints.ai_family = ADDRESS_FAMILY;
@@ -123,7 +121,7 @@ result<in_addr_t> inet_address::resolve_name(const string& saddr) noexcept {
     if (err != 0) {
         error_code ec{};
 #if defined(_WIN32)
-        ec = error_code{errno, system_category()};
+        ec = error_code{err, system_category()};
 #else
         if (err == EAI_SYSTEM)
             ec = result<>::last_error();
@@ -235,11 +233,9 @@ inet6_address::inet6_address(const sock_address& addr, error_code& ec) noexcept 
 // --------------------------------------------------------------------------
 
 result<in6_addr> inet6_address::resolve_name(const string& saddr) noexcept {
-#if !defined(_WIN32)
     in6_addr ia;
     if (::inet_pton(ADDRESS_FAMILY, saddr.c_str(), &ia) == 1)
         return ia;
-#endif
 
     addrinfo *res, hints = addrinfo{};
     hints.ai_family = ADDRESS_FAMILY;
