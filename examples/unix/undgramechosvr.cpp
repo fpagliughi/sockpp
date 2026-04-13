@@ -4,7 +4,7 @@
 //
 // This runs a UDP echo server for both IPv4 and IPv6, each in a separate
 // thread. They both use the same port number, either as provided by the user
-// on the command line, or defaulting to 12345.
+// on the command line, or defaulting to TEST_PORT.
 //
 // USAGE:
 //  	undgramechosvr [port]
@@ -12,6 +12,8 @@
 // You can test with a netcat client, like:
 // 		$ nc -u localhost 12345		# IPv4
 // 		$ nc -6u localhost 12345	# IPv6
+//
+// Note that UNIX datagram sockets are not supported on Windows.
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -48,46 +50,48 @@
 // --------------------------------------------------------------------------
 
 #include <iostream>
+
 #include "sockpp/unix_dgram_socket.h"
 #include "sockpp/version.h"
 
 using namespace std;
 
+const string UNSOCK_FILE{"/tmp/undgramechosvr.sock"};
+
 // --------------------------------------------------------------------------
 // The main thread creates the UDP socket, and then starts them running the
 // echo service in a loop.
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample Unix-domain datagram echo server for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample Unix-domain datagram echo server for 'sockpp' " << sockpp::SOCKPP_VERSION
+         << '\n'
+         << endl;
 
-	sockpp::initialize();
+    sockpp::initialize();
+    sockpp::unix_dgram_socket sock;
 
-	sockpp::unix_dgram_socket sock;
-	if (!sock) {
-		cerr << "Error creating the socket: " << sock.last_error_str() << endl;
-		return 1;
-	}
+    if (auto res = sock.bind(sockpp::unix_address(UNSOCK_FILE)); !res) {
+        cerr << "Error binding the socket: " << res.error_message() << endl;
+        return 1;
+    }
 
-	if (!sock.bind(sockpp::unix_address("/tmp/undgramechosvr.sock"))) {
-		cerr << "Error binding the socket: " << sock.last_error_str() << endl;
-		return 1;
-	}
+    // Run the socket in this thread.
+    char buf[512];
 
-	// Run the socket in this thread.
-	ssize_t n;
-	char buf[512];
+    sockpp::unix_address srcAddr;
+    cout << "Awaiting packets on: '" << sock.address() << "'" << endl;
 
-	sockpp::unix_address srcAddr;
+    // Read some data, also getting the address of the sender,
+    // then just send it back.
+    while (true) {
+        if (auto res = sock.recv_from(buf, sizeof(buf), &srcAddr); !res || res.value() == 0) {
+            cerr << "Error receiving data: " << res.error_message() << endl;
+            return 1;
+        }
+        else {
+            sock.send_to(buf, res.value(), srcAddr);
+        }
+    }
 
-	cout << "Awaiting packets on: '" << sock.address() << "'" << endl;
-
-	// Read some data, also getting the address of the sender,
-	// then just send it back.
-	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
-		sock.send_to(buf, n, srcAddr);
-
-	return 0;
+    return 0;
 }
-

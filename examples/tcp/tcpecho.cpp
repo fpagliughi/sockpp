@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2024 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,60 +38,57 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/tcp_connector.h"
 #include "sockpp/version.h"
 
 using namespace std;
 using namespace std::chrono;
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample TCP echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+// --------------------------------------------------------------------------
 
-	string host = (argc > 1) ? argv[1] : "localhost";
-	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+int main(int argc, char* argv[]) {
+    cout << "Sample IPv4 TCP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
-	sockpp::initialize();
+    string host = (argc > 1) ? argv[1] : "localhost";
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : sockpp::TEST_PORT;
 
-	// Implicitly creates an inet_address from {host,port}
-	// and then tries the connection.
+    sockpp::initialize();
+    sockpp::tcp_connector conn;
 
-	sockpp::tcp_connector conn({host, port}, seconds{5});
-	if (!conn) {
-		cerr << "Error connecting to server at "
-			<< sockpp::inet_address(host, port)
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
-
-	cout << "Created a connection from " << conn.address() << endl;
-
-    // Set a timeout for the responses
-    if (!conn.read_timeout(seconds(5))) {
-        cerr << "Error setting timeout on TCP stream: "
-                << conn.last_error_str() << endl;
+    // Attempt to connect with a 5sec timeout.
+    if (auto res = conn.connect(host, port, 5s); !res) {
+        cerr << "Error connecting to server at: '" << host << "':\n\t" << res.error_message()
+             << endl;
+        return 1;
     }
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+    cout << "Created a connection from " << conn.address() << endl;
 
-		sret.resize(s.length());
-		ssize_t n = conn.read_n(&sret[0], s.length());
+    // Set a timeout for the responses
+    if (auto res = conn.read_timeout(5s); !res) {
+        cerr << "Error setting timeout on TCP stream: " << res.error_message() << endl;
+    }
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        const size_t N = s.length();
 
-		cout << sret << endl;
-	}
+        // TODO: Do we need to check length (res.value()) for write or read?
+        if (auto res = conn.write(s); res != N) {
+            cerr << "Error writing to the TCP stream: " << res.error_message() << endl;
+            break;
+        }
 
-	return (!conn) ? 1 : 0;
+        sret.resize(N);
+        if (auto res = conn.read_n(&sret[0], N); res != N) {
+            cerr << "Error reading from TCP stream: " << res.error_message() << endl;
+            break;
+        }
+
+        cout << sret << endl;
+    }
+
+    return (!conn) ? 1 : 0;
 }

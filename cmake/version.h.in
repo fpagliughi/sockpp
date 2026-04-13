@@ -45,6 +45,18 @@
 
 #include <string>
 
+// Define which secure socket library compiled in (if any) 
+
+#cmakedefine SOCKPP_WITH_OPENSSL
+#if defined(SOCKPP_WITH_OPENSSL)
+    #define SOCKPP_OPENSSL
+#endif
+
+#cmakedefine SOCKPP_WITH_MBEDTLS
+#if defined(SOCKPP_WITH_MBEDTLS)
+    #define SOCKPP_MBEDTLS
+#endif
+
 namespace sockpp {
 
     constexpr int SOCKPP_VERSION_MAJOR = @PROJECT_VERSION_MAJOR@;

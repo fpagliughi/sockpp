@@ -34,21 +34,24 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <cstring>
 #include "sockpp/acceptor.h"
 
+#include <cstring>
+
+#include "sockpp/poller.h"
+
 using namespace std;
+using namespace std::chrono;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-acceptor acceptor::create(int domain)
-{
-	acceptor acc(create_handle(domain));
-	if (!acc)
-		acc.clear(get_last_error());
-	return acc;
+result<acceptor> acceptor::create(int domain, int protocol /*=0*/) noexcept {
+    if (auto res = create_handle(domain, protocol); !res)
+        return res.error();
+    else
+        return acceptor(res.value());
 }
 
 // --------------------------------------------------------------------------
@@ -59,52 +62,58 @@ acceptor acceptor::create(int domain)
 // If the acceptor appears to already be opened, this will quietly succeed
 // without doing anything.
 
-bool acceptor::open(const sock_address& addr,
-					int queSize /*=DFLT_QUE_SIZE*/,
-					bool reuseSock /*=true*/)
-{
-	// TODO: What to do if we are open but bound to a different address?
-	if (is_open())
-		return true;
+result<> acceptor::open(
+    const sock_address& addr, int queSize /*=DFLT_QUE_SIZE*/, int reuse /*=0*/,
+    int protocol /*=0*/
+) noexcept {
+    // TODO: Should we fail if we're bound to a different address?
+    if (is_open())
+        return none{};
 
-	sa_family_t domain = addr.family();
-	socket_t h = create_handle(domain);
+    if (auto res = create_handle(addr.family(), protocol); !res)
+        return res.error();
+    else
+        reset(res.value());
 
-	if (!check_socket_bool(h))
-		return false;
+    if (auto res = bind(addr, reuse); !res) {
+        close();
+        return res;
+    }
 
-	reset(h);
+    if (auto res = listen(queSize); !res) {
+        close();
+        return res;
+    }
 
-	#if defined(_WIN32) || defined(__CYGWIN__)
-		const int REUSE = SO_REUSEADDR;
-	#else
-		const int REUSE = SO_REUSEPORT;
-	#endif
-	
-	if (reuseSock && (domain == AF_INET || domain == AF_INET6)) {
-		int reuse = 1;
-		if (!set_option(SOL_SOCKET, REUSE, reuse))
-			return close_on_err();
-	}
-
-	if (!bind(addr) || !listen(queSize))
-		return close_on_err();
-
-	return true;
+    return none{};
 }
 
 // --------------------------------------------------------------------------
 
-stream_socket acceptor::accept(sock_address* clientAddr /*=nullptr*/)
-{
-	sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
-	socklen_t len = clientAddr ? clientAddr->size() : 0;
+result<stream_socket> acceptor::accept(
+    microseconds timeout, sock_address* clientAddr /*=nullptr*/
+) noexcept {
+    poller p(*this, poller::POLL_READ);
 
-	socket_t s = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr));
-	return stream_socket(s);
+    if (auto res = p.wait(ceil<milliseconds>(timeout)); !res)
+        return res.error();
+    else if (res.value().empty())
+        return errc::timed_out;
+
+    return accept(clientAddr);
+}
+
+// --------------------------------------------------------------------------
+
+result<stream_socket> acceptor::accept(sock_address* clientAddr /*=nullptr*/) noexcept {
+    sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
+    socklen_t len = clientAddr ? clientAddr->size() : 0;
+
+    if (auto res = check_socket(::accept(handle(), p, clientAddr ? &len : nullptr)); !res)
+        return res.error();
+    else
+        return stream_socket{res.value()};
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
-
+}  // namespace sockpp

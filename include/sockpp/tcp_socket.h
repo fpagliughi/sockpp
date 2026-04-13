@@ -1,7 +1,7 @@
 /**
  * @file tcp_socket.h
  *
- * Class (typedef) for IPv4 TCP socket.
+ * Classes (typedefs) for IPv4 and IPv6 TCP sockets.
  *
  * @author Frank Pagliughi
  * @author SoRo Systems, Inc.
@@ -47,8 +47,8 @@
 #ifndef __sockpp_tcp_socket_h
 #define __sockpp_tcp_socket_h
 
-#include "sockpp/stream_socket.h"
 #include "sockpp/inet_address.h"
+#include "sockpp/stream_socket.h"
 
 namespace sockpp {
 
@@ -57,9 +57,13 @@ namespace sockpp {
 /** IPv4 streaming TCP socket */
 using tcp_socket = stream_socket_tmpl<inet_address>;
 
+/** Alias for IPv4 streaming TCP socket */
+using tcp4_socket = tcp_socket;
+
+/** IPv6 streaming TCP socket */
+using tcp6_socket = stream_socket_tmpl<inet6_address>;
+
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_tcp_socket_h
-
+#endif  // __sockpp_tcp_socket_h

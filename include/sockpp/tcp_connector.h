@@ -44,7 +44,6 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-
 #ifndef __sockpp_tcp_connector_h
 #define __sockpp_tcp_connector_h
 
@@ -55,11 +54,16 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** IPv4 active, connector (client) socket. */
+/** IPv4 connector (client) socket. */
 using tcp_connector = connector_tmpl<tcp_socket>;
 
-/////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-};
+/** Alias for IPv4 connector (client) socket. */
+using tcp4_connector = connector_tmpl<tcp_socket>;
 
-#endif		// __sockpp_tcp_connector_h
+/** IPv6 connector (client) socket. */
+using tcp6_connector = connector_tmpl<tcp6_socket>;
+
+/////////////////////////////////////////////////////////////////////////////
+};  // namespace sockpp
+
+#endif  // __sockpp_tcp_connector_h

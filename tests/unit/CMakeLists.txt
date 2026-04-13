@@ -36,8 +36,19 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # --------------------------------------------------------------------------
 
+message(STATUS "Building sockpp unit tests")
+
+# --- Get Catch2 ---
+
 set(UNIT_TEST_DIR ${PROJECT_SOURCE_DIR})
 find_package(Catch2 REQUIRED)
+
+message(STATUS "Catch2 v${Catch2_VERSION}")
+if (Catch2_VERSION VERSION_LESS "3.0")
+    add_definitions(-DCATCH2_V2)
+    # Put this in if/when deprecating v2.
+    #message(DEPRECATION "Catch2 version 2.x is deprecated")
+endif()
 
 # --- For apps that use threads ---
 
@@ -47,46 +58,62 @@ find_package(Threads REQUIRED)
 # --- Executables ---
 
 add_executable(unit_tests 
-	unit_tests.cpp
-	test_inet_address.cpp
-	test_socket.cpp
-	test_stream_socket.cpp
-	test_tcp_socket.cpp
-	test_datagram_socket.cpp
-	test_acceptor.cpp
-	test_connector.cpp
+    unit_tests.cpp
+    test_inet_address.cpp
+    test_inet6_address.cpp
+    test_socket.cpp
+    test_sock_address.cpp
+    test_stream_socket.cpp
+    test_tcp_socket.cpp
+    test_datagram_socket.cpp
+    test_acceptor.cpp
+    test_connector.cpp
+    test_result.cpp
 )
 
 if(UNIX)
-	target_sources(unit_tests 
-		PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_address.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_stream_socket.cpp
-			${CMAKE_CURRENT_SOURCE_DIR}/test_unix_dgram_socket.cpp
-	)
+    target_sources(unit_tests PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_address.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_stream_socket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_unix_dgram_socket.cpp
+    )
 endif()
 
-target_include_directories(unit_tests
-	PUBLIC
-		${SOCKPP_INCLUDE_DIR}
-	PRIVATE 
-		${SOCKPP_GENERATED_DIR}/include
-)
-
-set_target_properties(unit_tests PROPERTIES
-  CXX_EXTENSIONS OFF
-)
+if(SOCKPP_WITH_CAN)
+    target_sources(unit_tests PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_canbus_address.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_canbus_frame.cpp
+    )
+endif()
 
 # --- Link for executables ---
 
-target_link_libraries(unit_tests 
-	${SOCKPP_LIB} 
-	Catch2::Catch2
-	Threads::Threads
+target_link_libraries(unit_tests
+    Sockpp::sockpp
+    Catch2::Catch2
+    Threads::Threads
 )
+
+if(UNIX AND SOCKPP_BUILD_SHARED)
+    # Look for the shared lib in the build path first before install path.
+    set_target_properties(unit_tests PROPERTIES
+    BUILD_RPATH $<TARGET_FILE_DIR:sockpp-shared>
+        BUILD_RPATH_USE_ORIGIN TRUE
+    )
+    target_link_options(unit_tests PRIVATE
+        -Wl,--disable-new-dtags
+    )
+endif()
 
 include(CTest)
 include(Catch)
 
-catch_discover_tests(unit_tests)
+if(WIN32 AND SOCKPP_BUILD_SHARED)
+    # Tell Windows where to find the DLLs to run the unit test app
+    catch_discover_tests(unit_tests
+        DL_PATHS $<TARGET_FILE_DIR:sockpp-shared>
+    )
+else()
+    catch_discover_tests(unit_tests)
+endif()
 

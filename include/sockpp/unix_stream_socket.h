@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -61,8 +61,6 @@ using unix_stream_socket = stream_socket_tmpl<unix_address>;
 using unix_socket = unix_stream_socket;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_unix_stream_socket_h
-
+#endif  // __sockpp_unix_stream_socket_h

@@ -47,6 +47,10 @@
 #ifndef __sockpp_unix_dgram_socket_h
 #define __sockpp_unix_dgram_socket_h
 
+#if defined(_WIN32)
+    #error "UNIX datagram sockets not supported on Windows"
+#endif
+
 #include "sockpp/datagram_socket.h"
 #include "sockpp/unix_address.h"
 
@@ -61,8 +65,6 @@ using unix_datagram_socket = datagram_socket_tmpl<unix_address>;
 using unix_dgram_socket = unix_datagram_socket;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_unix_dgram_socket_h
-
+#endif  // __sockpp_unix_dgram_socket_h

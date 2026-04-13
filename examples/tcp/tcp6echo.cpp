@@ -1,11 +1,11 @@
-// tcpecho.cpp
+// tcp6echo.cpp
 //
 // Simple TCP echo client
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2017 Frank Pagliughi
+// Copyright (c) 2014-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,8 @@
 
 #include <iostream>
 #include <string>
-#include "sockpp/tcp6_connector.h"
+
+#include "sockpp/tcp_connector.h"
 #include "sockpp/version.h"
 
 using namespace std;
@@ -46,54 +47,65 @@ using namespace std::chrono;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample IPv6 TCP echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample IPv6 TCP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
-	std::string host = (argc > 1) ? argv[1] : "::1";
-	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+    std::string host = (argc > 1) ? argv[1] : "::1";
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : sockpp::TEST_PORT;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	// Implicitly creates an inet6_address from {host,port}
-	// and then tries the connection.
+    // Try to resolve the address
 
-	sockpp::tcp6_connector conn({host, port});
-	if (!conn) {
-		cerr << "Error connecting to server at "
-			<< sockpp::inet6_address(host, port)
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
+    // Note that this works if the library was compiled with or without exceptions.
+    // Applications normally only handles the exception or the return code.
 
-	cout << "Created a connection from " << conn.address() << endl;
+    auto addrRes = sockpp::inet6_address::create(host, port);
 
-    // Set a timeout for the responses
-    if (!conn.read_timeout(seconds(5))) {
-        cerr << "Error setting timeout on TCP stream: "
-                << conn.last_error_str() << endl;
+    if (!addrRes) {
+        cerr << "Error resolving address for '" << host << "':\n\t"
+             << addrRes.error().message() << endl;
+        return 1;
     }
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+    auto addr = addrRes.value();
 
-		sret.resize(s.length());
-		ssize_t n = conn.read_n(&sret[0], s.length());
+    // TODO: Shouldn't this work?
+    // sockpp::tcp6_connector conn(addr);
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from TCP stream: "
-				<< conn.last_error_str() << endl;
-			break;
-		}
+    sockpp::tcp6_connector conn;
 
-		cout << sret << endl;
-	}
+    if (auto res = conn.connect(addr); !res) {
+        cerr << "Error connecting to server at " << addr << "\n\t" << res.error_message()
+             << endl;
+        return 1;
+    }
 
-	return (!conn) ? 1 : 0;
+    cout << "Created a connection from " << conn.address() << endl;
+
+    // Set a timeout for the responses
+    if (auto res = conn.read_timeout(5s); !res) {
+        cerr << "Error setting timeout on TCP stream: " << res.error_message() << endl;
+    }
+
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        const size_t N = s.length();
+
+        if (auto res = conn.write(s); res != N) {
+            cerr << "Error writing to the TCP stream: " << res.error_message() << endl;
+            break;
+        }
+
+        sret.resize(N);
+        if (auto res = conn.read_n(&sret[0], N); res != N) {
+            cerr << "Error reading from TCP stream: " << res.error_message() << endl;
+            break;
+        }
+
+        cout << sret << endl;
+    }
+
+    return (!conn) ? 1 : 0;
 }

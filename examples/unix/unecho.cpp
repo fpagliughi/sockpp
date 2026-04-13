@@ -38,50 +38,54 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/unix_connector.h"
 #include "sockpp/version.h"
 
 using namespace std;
 
+#if defined(_WIN32)
+const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+#else
+const string DFLT_PATH = "/tmp/unechosvr.sock"s;
+#endif
+
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample Unix-domain echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample Unix-domain echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
-	string path = (argc > 1) ? argv[1] : "/tmp/unechosvr.sock";
+    const string path = (argc > 1) ? argv[1] : DFLT_PATH;
 
-	sockpp::initialize();
+    sockpp::initialize();
+    sockpp::unix_connector conn;
 
-	sockpp::unix_connector conn;
+    if (auto res = conn.connect(sockpp::unix_address(path)); !res) {
+        cerr << "Error connecting to UNIX socket at: " << path << "\n\t"
+             << res.error_message() << endl;
+        return 1;
+    }
 
-    bool ok = conn.connect(sockpp::unix_address(path));
-	if (!ok) {
-		cerr << "Error connecting to UNIX socket at " << path
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
+    cout << "Created a connection to '" << conn.peer_address() << "'" << endl;
 
-	cout << "Created a connection to '" << conn.peer_address() << "'" << endl;
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        const size_t N = s.length();
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != (int) s.length()) {
-			cerr << "Error writing to the UNIX stream" << endl;
-			break;
-		}
+        if (auto res = conn.write(s); !res || res != N) {
+            cerr << "Error writing to the UNIX stream" << endl;
+            break;
+        }
 
-		sret.resize(s.length());
-		int n = conn.read_n(&sret[0], s.length());
+        sret.resize(N);
+        if (auto res = conn.read_n(&sret[0], N); !res || res != N) {
+            cerr << "Error reading from UNIX stream" << endl;
+            break;
+        }
 
-		if (n != (int) s.length()) {
-			cerr << "Error reading from UNIX stream" << endl;
-			break;
-		}
+        cout << sret << endl;
+    }
 
-		cout << sret << endl;
-	}
-
-	return (!conn) ? 1 : 0;
+    return (!conn) ? 1 : 0;
 }

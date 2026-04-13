@@ -39,6 +39,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+
 #include "sockpp/tcp_connector.h"
 #include "sockpp/version.h"
 
@@ -49,76 +50,79 @@ using namespace std;
 // server and writing them to the console. When the main (write) thread
 // shuts down the socket, we exit.
 
-void read_thr(sockpp::tcp_socket rdSock)
-{
-	char buf[512];
-	ssize_t n;
+void read_thr(sockpp::tcp_socket rdSock) {
+    char buf[512];
 
-	while ((n = rdSock.read(buf, sizeof(buf))) > 0) {
-		cout.write(buf, n);
-		cout << endl;
-	}
+    while (true) {
+        if (auto res = rdSock.read(buf, sizeof(buf)); !res || res.value() == 0) {
+            cerr << "Read error: " << res.error_message() << endl;
+            break;
+        }
+        else {
+            cout.write(buf, res.value());
+            cout << endl;
+        }
+    }
 
-	if (n < 0) {
-		cout << "Read error [" << rdSock.last_error() << "]: " 
-			<< rdSock.last_error_str() << endl;
-	}
-	rdSock.shutdown();
+    rdSock.shutdown();
 }
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample multi-threaded TCP echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample multi-threaded TCP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION
+         << '\n'
+         << endl;
 
-	string host = (argc > 1) ? argv[1] : "localhost";
-	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+    string host = (argc > 1) ? argv[1] : "localhost";
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : sockpp::TEST_PORT;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	// Implicitly creates an inet_address from {host,port}
-	// and then tries the connection.
+    // Implicitly creates an inet_address from {host,port}
+    // and then tries the connection.
 
-	sockpp::tcp_connector conn({host, port});
-	if (!conn) {
-		cerr << "Error connecting to server at "
-			<< sockpp::inet_address(host, port)
-			<< "\n\t" << conn.last_error_str() << endl;
-		return 1;
-	}
+    error_code ec;
+    sockpp::tcp_connector conn({host, port}, ec);
 
-	cout << "Created a connection from " << conn.address() << endl;
+    if (ec) {
+        cerr << "Error connecting to server at " << sockpp::inet_address(host, port) << "\n\t"
+             << ec.message() << endl;
+        return 1;
+    }
 
-	// We create a read thread and send it a clone (dup) of the
-	// connector socket. 
+    cout << "Created a connection from " << conn.address() << endl;
 
-	std::thread rdThr(read_thr, std::move(conn.clone()));
+    // We create a read thread and send it a clone (dup) of the
+    // connector socket.
 
-	// The write loop get user input and writes it to the socket.
+    auto cloneRes = conn.clone();
+    if (!cloneRes) {
+        cerr << "Error cloning socket: " << cloneRes.error_message() << endl;
+        return 1;
+    }
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (conn.write(s) != (int) s.length()) {
-			if (conn.last_error() == EPIPE) {
-				cerr << "It appears that the socket was closed." << endl;
-			}
-			else {
-				cerr << "Error writing to the TCP stream ["
-					<< conn.last_error() << "]: "
-					<< conn.last_error_str() << endl;
-			}
-			break;
-		}
-	}
-	int ret = !conn ? 1 : 0;
+    std::thread rdThr(read_thr, std::move(cloneRes.release()));
 
-	// Shutting down the socket will cause the read thread to exit.
-	// We wait for it to exit before we leave the app.
+    // The write loop get user input and writes it to the socket.
 
-	conn.shutdown(SHUT_WR);
-	rdThr.join();
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        if (auto res = conn.write(s); !res || res != s.length()) {
+            if (res == errc::broken_pipe)
+                cerr << "It appears that the socket was closed." << endl;
+            else
+                cerr << "Error writing to the TCP stream :" << res.error_message() << endl;
+            break;
+        }
+    }
+    int ret = !conn ? 1 : 0;
 
-	return ret;
+    // Shutting down the socket will cause the read thread to exit.
+    // We wait for it to exit before we leave the app.
+
+    conn.shutdown(SHUT_WR);
+    rdThr.join();
+
+    return ret;
 }

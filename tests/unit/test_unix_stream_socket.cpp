@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,34 +38,35 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/unix_stream_socket.h"
-#include "catch2/catch.hpp"
 #include <string>
+
+#include "catch2_version.h"
+#include "sockpp/unix_stream_socket.h"
 
 using namespace sockpp;
 
 // Test that we can create a Unix-domain stream socket pair and send
 // data from one of the sockets to the other.
 TEST_CASE("unix stream socket pair", "[unix_stream_socket]") {
-	unix_stream_socket sock1, sock2;
-	std::tie(sock1, sock2) = std::move(unix_stream_socket::pair());
+    auto res = unix_stream_socket::pair();
+    REQUIRE(res);
 
-	REQUIRE(sock1);
-	REQUIRE(sock2);
+    auto [sock1, sock2] = res.release();
 
-	REQUIRE(sock1.is_open());
-	REQUIRE(sock2.is_open());
+    REQUIRE(sock1);
+    REQUIRE(sock2);
 
-	const std::string MSG { "Hello there!" };
-	const size_t N = MSG.length();
+    REQUIRE(sock1.is_open());
+    REQUIRE(sock2.is_open());
 
-	char buf[512];
+    const std::string MSG{"Hello there!"};
+    const size_t N = MSG.length();
 
-	REQUIRE(sock1.write(MSG) == N);
-	REQUIRE(sock2.read_n(buf, N) == N);
+    char buf[512];
 
-	std::string msg { buf, buf+N };
-	REQUIRE(msg == MSG);
+    REQUIRE(sock1.write(MSG).value() == N);
+    REQUIRE(sock2.read_n(buf, N).value() == N);
+
+    std::string msg{buf, buf + N};
+    REQUIRE(msg == MSG);
 }
-
-

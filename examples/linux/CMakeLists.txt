@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2021 Frank Pagliughi
+# Copyright (c) 2021-2026 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,31 +37,22 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-# --- Executables ---
+# --- Optional Linux SocketCAN support ---
 
-set(EXECUTABLES 
-	cantime
-	canrecv
-)
+if(SOCKPP_WITH_CAN)
+    # --- Executables ---
 
-foreach(EXECUTABLE ${EXECUTABLES})
-	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-	
-	target_include_directories(${EXECUTABLE}
-		PUBLIC
-			${SOCKPP_INCLUDE_DIR}
-		PRIVATE
-			${SOCKPP_GENERATED_DIR}/include
-	)
+    set(EXECUTABLES 
+    	canbustime
+    	canbusrecv
+    )
 
-  set_target_properties(${EXECUTABLE} PROPERTIES
-    CXX_EXTENSIONS OFF
-  )
+    foreach(EXECUTABLE ${EXECUTABLES})
+        add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+        target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
+    endforeach()
 
-  target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
-endforeach()
+    # --- Install examples ---
 
-# --- Install examples ---
-
-install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
-
+    install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
+endif()

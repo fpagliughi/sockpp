@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,93 +38,103 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/acceptor.h"
-#include "sockpp/inet_address.h"
-#include "catch2/catch.hpp"
 #include <string>
 
+#include "catch2_version.h"
+#include "sockpp/acceptor.h"
+#include "sockpp/inet_address.h"
+
+using namespace std;
 using namespace sockpp;
 
 TEST_CASE("acceptor default constructor", "[acceptor]") {
-	acceptor sock;
-	REQUIRE(!sock);
-	REQUIRE(!sock.is_open());
+    acceptor sock;
+    REQUIRE(!sock);
+    REQUIRE(!sock.is_open());
 }
 
 TEST_CASE("acceptor handle constructor", "[acceptor]") {
-	constexpr auto HANDLE = socket_t(3);
+    constexpr auto HANDLE = socket_t(3);
 
-	SECTION("valid handle") {
-		acceptor sock(HANDLE);
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-	}
+    SECTION("valid handle") {
+        acceptor sock(HANDLE);
+        REQUIRE(sock);
+        REQUIRE(HANDLE == sock.handle());
+    }
 
-	SECTION("invalid handle") {
-		acceptor sock(INVALID_SOCKET);
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
-		// TODO: Should this set an error?
-		REQUIRE(sock.last_error() == 0);
-	}
+    SECTION("invalid handle") {
+        acceptor sock(INVALID_SOCKET);
+        REQUIRE(!sock);
+    }
 }
 
 TEST_CASE("acceptor address constructor", "[acceptor]") {
-	SECTION("valid address") {
-		const auto ADDR = inet_address("localhost", 12345);
+    SECTION("valid address") {
+        const auto ADDR = inet_address("localhost", TEST_PORT);
 
-		acceptor sock(ADDR);
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-		REQUIRE(sock.last_error() == 0);
-		REQUIRE(sock.address() == ADDR);
-	}
+        acceptor sock{ADDR, 4, acceptor::REUSE};
+        REQUIRE(sock);
+        REQUIRE(sock.address() == ADDR);
+    }
 
-	SECTION("invalid address") {
-		const auto ADDR = sock_address_any{};
+    SECTION("invalid address throw") {
+        const auto ADDR = sock_address_any{};
 
-		acceptor sock(ADDR);
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
+        // TODO: Throw/err?
+        try {
+            acceptor sock(ADDR);
+        }
+        catch (const system_error& exc) {
+#if defined(_WIN32)
+            REQUIRE(exc.code() == errc::invalid_argument);
+#else
+            REQUIRE(exc.code() == errc::address_family_not_supported);
+#endif
+        }
+    }
 
-        // Windows returns a different error code than *nix
-        #if defined(_WIN32)
-            REQUIRE(sock.last_error() == WSAEINVAL);
-        #else
-            REQUIRE(sock.last_error() == EAFNOSUPPORT);
-        #endif
-	}
+    SECTION("invalid address ec") {
+        const auto ADDR = sock_address_any{};
+
+        error_code ec;
+        acceptor sock(ADDR, 4, ec);
+        REQUIRE(ec);
+        REQUIRE(!sock);
+
+#if defined(_WIN32)
+        REQUIRE(ec == errc::invalid_argument);
+#else
+        REQUIRE(ec == errc::address_family_not_supported);
+#endif
+    }
 }
 
 TEST_CASE("acceptor create", "[acceptor]") {
-	SECTION("valid domain") {
-		auto sock = acceptor::create(AF_INET);
+    SECTION("valid domain") {
+        auto res = acceptor::create(AF_INET);
+        REQUIRE(res);
+        auto sock = res.release();
 
-		REQUIRE(sock);
-		REQUIRE(sock.is_open());
-		REQUIRE(sock.last_error() == 0);
+        REQUIRE(sock);
+        REQUIRE(sock.is_open());
 
-        // Windows returns unknown family for unbound socket
-        // Windows returns a different error code than *nix
-        #if defined(_WIN32)
-            REQUIRE(sock.family() == AF_UNSPEC);
-        #else
-            REQUIRE(sock.family() == AF_INET);
-        #endif
-	}
+// Windows returns unknown family for unbound socket
+#if defined(_WIN32)
+        REQUIRE(sock.family() == AF_UNSPEC);
+#else
+        REQUIRE(sock.family() == AF_INET);
+#endif
+    }
 
-	SECTION("invalid domain") {
-		auto sock = acceptor::create(AF_UNSPEC);
+    SECTION("invalid domain") {
+        auto res = acceptor::create(AF_UNSPEC);
+        REQUIRE(!res);
 
-		REQUIRE(!sock);
-		REQUIRE(!sock.is_open());
-
-        // Windows returns a different error code than *nix
-        #if defined(_WIN32)
-            REQUIRE(sock.last_error() == WSAEINVAL);
-        #else
-            REQUIRE(sock.last_error() == EAFNOSUPPORT);
-        #endif
-	}
+// Windows returns a different error code than *nix
+#if defined(_WIN32)
+        REQUIRE(res == errc::invalid_argument);
+#else
+        REQUIRE(res == errc::address_family_not_supported);
+#endif
+    }
 }
-

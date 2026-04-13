@@ -1,7 +1,7 @@
 /**
  * @file udp_socket.h
  *
- * Class (typedef) for UDP v4 socket.
+ * Classes (typedefs) for UDP v4 and v6 sockets.
  *
  * @author Frank Pagliughi
  * @author SoRo Systems, Inc.
@@ -57,9 +57,13 @@ namespace sockpp {
 /** UDP datagram socket type for IPv4 */
 using udp_socket = datagram_socket_tmpl<inet_address>;
 
+/** Alias for UDP datagram socket type for IPv4 */
+using udp4_socket = udp_socket;
+
+/** UDP datagram socket type for IPv6 */
+using udp6_socket = datagram_socket_tmpl<inet6_address>;
+
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-}
+}  // namespace sockpp
 
-#endif		// __sockpp_udp_socket_h
-
+#endif  // __sockpp_udp_socket_h

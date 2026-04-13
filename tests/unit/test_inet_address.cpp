@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2018 Frank Pagliughi
+// Copyright (c) 2018-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,36 +38,41 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/inet_address.h"
-#include "catch2/catch.hpp"
 #include <string>
+
+#include "catch2_version.h"
+#include "sockpp/inet_address.h"
 
 using namespace sockpp;
 
-const uint32_t      ANY_ADDR        { INADDR_ANY };         // Any iface 0x00000000
-const uint32_t      LOCALHOST_ADDR  { INADDR_LOOPBACK };    // Localhost 0x7F000001
-const std::string   LOCALHOST_STR   { "localhost" };
-const in_port_t     PORT { 12345 };
+const uint32_t ANY_ADDR{INADDR_ANY};             // Any iface 0x00000000
+const uint32_t LOCALHOST_ADDR{INADDR_LOOPBACK};  // Localhost 0x7F000001
+const std::string LOCALHOST_STR{"localhost"};
+const in_port_t PORT{sockpp::TEST_PORT};
 
 TEST_CASE("inet_address default constructor", "[address]") {
-    inet_address addr;
+    SECTION("default address") {
+        inet_address addr;
 
-    REQUIRE(!addr.is_set());
-    REQUIRE(0 == addr.address());
-    REQUIRE(0 == addr.port());
-    REQUIRE(sizeof(sockaddr_in) == addr.size());
+        REQUIRE(!addr);
+        REQUIRE(!addr.is_set());
+        REQUIRE(0 == addr.address());
+        REQUIRE(0 == addr.port());
+        REQUIRE(sizeof(sockaddr_in) == addr.size());
+    }
 
     SECTION("creating address from int32") {
-        addr.create(LOCALHOST_ADDR, PORT);
+        inet_address addr{LOCALHOST_ADDR, PORT};
 
+        REQUIRE(addr);
         REQUIRE(addr.is_set());
         REQUIRE(LOCALHOST_ADDR == addr.address());
         REQUIRE(PORT == addr.port());
 
-        REQUIRE(uint8_t((LOCALHOST_ADDR >>  0) &0xFF) == addr[0]);
-        REQUIRE(uint8_t((LOCALHOST_ADDR >>  8) &0xFF) == addr[1]);
-        REQUIRE(uint8_t((LOCALHOST_ADDR >> 16) &0xFF) == addr[2]);
-        REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) &0xFF) == addr[3]);
+        REQUIRE(uint8_t((LOCALHOST_ADDR >> 0) & 0xFF) == addr[0]);
+        REQUIRE(uint8_t((LOCALHOST_ADDR >> 8) & 0xFF) == addr[1]);
+        REQUIRE(uint8_t((LOCALHOST_ADDR >> 16) & 0xFF) == addr[2]);
+        REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) & 0xFF) == addr[3]);
 
         // Check the low-level struct
         REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
@@ -76,8 +81,9 @@ TEST_CASE("inet_address default constructor", "[address]") {
     }
 
     SECTION("creating address from name") {
-        addr.create(LOCALHOST_STR, PORT);
+        inet_address addr(LOCALHOST_STR, PORT);
 
+        REQUIRE(addr);
         REQUIRE(addr.is_set());
         REQUIRE(LOCALHOST_ADDR == addr.address());
         REQUIRE(PORT == addr.port());
@@ -90,7 +96,7 @@ TEST_CASE("inet_address default constructor", "[address]") {
 }
 
 // When created using only a port number this should use the
-// "any" address to bind to all interfaces (typ for server)
+// "any" address to bind to all interfaces (type for server)
 TEST_CASE("inet_address port-only constructor", "[address]") {
     inet_address addr(PORT);
 
@@ -105,14 +111,15 @@ TEST_CASE("inet_address port-only constructor", "[address]") {
 TEST_CASE("inet_address int32_t constructor", "[address]") {
     inet_address addr(LOCALHOST_ADDR, PORT);
 
+    REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(LOCALHOST_ADDR == addr.address());
     REQUIRE(PORT == addr.port());
 
-    REQUIRE(uint8_t((LOCALHOST_ADDR >>  0) &0xFF) == addr[0]);
-    REQUIRE(uint8_t((LOCALHOST_ADDR >>  8) &0xFF) == addr[1]);
-    REQUIRE(uint8_t((LOCALHOST_ADDR >> 16) &0xFF) == addr[2]);
-    REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) &0xFF) == addr[3]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 0) & 0xFF) == addr[0]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 8) & 0xFF) == addr[1]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 16) & 0xFF) == addr[2]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) & 0xFF) == addr[3]);
 
     // Check the low-level struct
     REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
@@ -123,14 +130,15 @@ TEST_CASE("inet_address int32_t constructor", "[address]") {
 TEST_CASE("inet_address name constructor", "[address]") {
     inet_address addr(LOCALHOST_STR, PORT);
 
+    REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(LOCALHOST_ADDR == addr.address());
     REQUIRE(PORT == addr.port());
 
-    REQUIRE(uint8_t((LOCALHOST_ADDR >>  0) &0xFF) == addr[0]);
-    REQUIRE(uint8_t((LOCALHOST_ADDR >>  8) &0xFF) == addr[1]);
-    REQUIRE(uint8_t((LOCALHOST_ADDR >> 16) &0xFF) == addr[2]);
-    REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) &0xFF) == addr[3]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 0) & 0xFF) == addr[0]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 8) & 0xFF) == addr[1]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 16) & 0xFF) == addr[2]);
+    REQUIRE(uint8_t((LOCALHOST_ADDR >> 24) & 0xFF) == addr[3]);
 
     // Check the low-level struct
     REQUIRE(AF_INET == addr.sockaddr_in_ptr()->sin_family);
@@ -138,7 +146,69 @@ TEST_CASE("inet_address name constructor", "[address]") {
     REQUIRE(PORT == ntohs(addr.sockaddr_in_ptr()->sin_port));
 }
 
-TEST_CASE("IPv4 resolve_address", "[address]") {
-	REQUIRE(inet_address::resolve_name("127.0.0.1") == htonl(LOCALHOST_ADDR));
-	REQUIRE(inet_address::resolve_name(LOCALHOST_STR) == htonl(LOCALHOST_ADDR));
+TEST_CASE("IPv4 resolve address", "[address]") {
+    SECTION("localhost numeric") {
+        auto res = inet_address::resolve_name("127.0.0.1");
+        REQUIRE(res.is_ok());
+
+        auto addr = res.value();
+        REQUIRE(addr == htonl(LOCALHOST_ADDR));
+    }
+
+    SECTION("localhost name") {
+        auto res = inet_address::resolve_name(LOCALHOST_STR);
+        REQUIRE(res.is_ok());
+
+        auto addr = res.value();
+        REQUIRE(addr == htonl(LOCALHOST_ADDR));
+    }
+
+// According to RFC6761, "invalid." domain should not resolve
+#if !defined(_WIN32)
+    SECTION("resolve failure", "[address]") {
+        auto res = inet_address::resolve_name("invalid");
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+    }
+#endif
+}
+
+TEST_CASE("IPv4 create address", "[address]") {
+    SECTION("localhost numeric") {
+        auto res = inet_address::create("127.0.0.1", PORT);
+        REQUIRE(res.is_ok());
+
+        auto addr = res.value();
+
+        REQUIRE(PORT == addr.port());
+        REQUIRE(LOCALHOST_ADDR == addr.address());
+        REQUIRE(inet_address{LOCALHOST_ADDR, PORT} == addr);
+    }
+
+    SECTION("localhost name") {
+        auto res = inet_address::create(LOCALHOST_STR, PORT);
+        REQUIRE(res.is_ok());
+
+        auto addr = res.value();
+        REQUIRE(PORT == addr.port());
+        REQUIRE(LOCALHOST_ADDR == addr.address());
+        REQUIRE(inet_address{LOCALHOST_ADDR, PORT} == addr);
+    }
+
+// According to RFC6761, "invalid." domain should not resolve
+#if !defined(_WIN32)
+    SECTION("create failure", "[address]") {
+        auto res = inet_address::create("invalid", PORT);
+        REQUIRE(!res);
+        REQUIRE(res.is_error());
+    }
+#endif
+}
+
+TEST_CASE("inet_address with any", "[address]") {
+    auto addr = inet_address::create("127.0.0.1", PORT).value();
+
+    sock_address_any addrAny(addr);
+    REQUIRE(addrAny.size() == addr.size());
+    REQUIRE(addr == addrAny);
 }

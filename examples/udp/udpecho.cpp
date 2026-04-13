@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/udp_socket.h"
 #include "sockpp/version.h"
 
@@ -45,45 +46,44 @@ using namespace std;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample UDP echo client for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample UDP echo client for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
-	string host = (argc > 1) ? argv[1] : "localhost";
-	in_port_t port = (argc > 2) ? atoi(argv[2]) : 12345;
+    string host = (argc > 1) ? argv[1] : "localhost";
+    in_port_t port = (argc > 2) ? atoi(argv[2]) : sockpp::TEST_PORT;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	sockpp::udp_socket sock;
+    sockpp::udp_socket sock;
 
-	if (!sock.connect(sockpp::inet_address(host, port))) {
-		cerr << "Error connecting to server at " << host << ":" << port 
-			<< "\n\t" << sock.last_error_str() << endl;
-		return 1;
-	}
+    try {
+        sock.connect(sockpp::inet_address(host, port));
+    }
+    catch (system_error& exc) {
+        cerr << "Error connecting to server at " << host << ":" << port << "\n\t"
+             << exc.what() << endl;
+        return 1;
+    }
 
-	cout << "Created UDP socket at: " << sock.address() << endl;
+    cout << "Created UDP socket at: " << sock.address() << endl;
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (sock.send(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        const size_t N = s.length();
 
-		sret.resize(s.length());
-		ssize_t n = sock.recv(&sret[0], s.length());
+        if (auto res = sock.send(s); res != N) {
+            cerr << "Error writing to the UDP socket: " << res.error_message() << endl;
+            break;
+        }
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+        sret.resize(N);
+        if (auto res = sock.recv(&sret[0], N); res != N) {
+            cerr << "Error reading from UDP socket: " << res.error_message() << endl;
+            break;
+        }
 
-		cout << sret << endl;
-	}
+        cout << sret << endl;
+    }
 
-	return (!sock) ? 1 : 0;
+    return (!sock) ? 1 : 0;
 }

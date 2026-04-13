@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2018 Frank Pagliughi
+// Copyright (c) 2018-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,21 +38,25 @@
 // --------------------------------------------------------------------------
 //
 
-#include "sockpp/unix_address.h"
-#include "catch2/catch.hpp"
 #include <string>
 
-using namespace sockpp;
+#include "catch2_version.h"
+#include "sockpp/unix_address.h"
 
-std::string PATH { "/tmp/sock" };
+using namespace sockpp;
+using namespace std;
+
+static const string PATH{"/tmp/sock"};
+
+// --------------------------------------------------------------------------
 
 TEST_CASE("unix_address sizes", "[address]") {
-	#if defined(__linux__)
-		REQUIRE(108 == unix_address::MAX_PATH_NAME);
-	#endif
+#if defined(__linux__)
+    REQUIRE(108 == unix_address::MAX_PATH_NAME);
+#endif
 
-	// On most systems, size should be 104, 108, or larger.
-	REQUIRE(unix_address::MAX_PATH_NAME > 64);
+    // On most systems, size should be 104, 108, or larger.
+    REQUIRE(unix_address::MAX_PATH_NAME > 64);
 }
 
 TEST_CASE("unix_address default constructor", "[address]") {
@@ -61,97 +65,112 @@ TEST_CASE("unix_address default constructor", "[address]") {
     REQUIRE(!addr.is_set());
     REQUIRE(addr.path().empty());
     REQUIRE(sizeof(sockaddr_un) == addr.size());
-
-    // TODO: Do we have a unix_address::create() method yet?
 }
 
 TEST_CASE("unix_address path constructor", "[address]") {
     unix_address addr(PATH);
 
+    REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(PATH == addr.path());
     REQUIRE(sizeof(sockaddr_un) == addr.size());
 
     // Check the low-level struct
     REQUIRE(AF_UNIX == addr.sockaddr_un_ptr()->sun_family);
-    REQUIRE(0 == strncmp(PATH.c_str(),
-                         (const char*) &addr.sockaddr_un_ptr()->sun_path,
-                         unix_address::MAX_PATH_NAME));
+    REQUIRE(
+        0 == strncmp(
+                 PATH.c_str(), (const char*)&addr.sockaddr_un_ptr()->sun_path,
+                 unix_address::MAX_PATH_NAME
+             )
+    );
 
     SECTION("copy constructor") {
         unix_address addr2(addr);
 
+        REQUIRE(addr2);
         REQUIRE(addr2.is_set());
         REQUIRE(PATH == addr2.path());
         REQUIRE(sizeof(sockaddr_un) == addr2.size());
 
         // Check the low-level struct
         REQUIRE(AF_UNIX == addr2.sockaddr_un_ptr()->sun_family);
-        REQUIRE(0 == strncmp(PATH.c_str(),
-                            (const char*) &addr2.sockaddr_un_ptr()->sun_path,
-                            unix_address::MAX_PATH_NAME));
+        REQUIRE(
+            0 == strncmp(
+                     PATH.c_str(), (const char*)&addr2.sockaddr_un_ptr()->sun_path,
+                     unix_address::MAX_PATH_NAME
+                 )
+        );
     }
 
     SECTION("sockaddr conversions") {
         auto sa = addr.sockaddr_ptr();
         unix_address addr2(*sa);
 
+        REQUIRE(addr2);
         REQUIRE(addr2.is_set());
         REQUIRE(PATH == addr2.path());
         REQUIRE(sizeof(sockaddr_un) == addr2.size());
 
         // Check the low-level struct
         REQUIRE(AF_UNIX == addr2.sockaddr_un_ptr()->sun_family);
-        REQUIRE(0 == strncmp(PATH.c_str(),
-                             (const char*) &addr2.sockaddr_un_ptr()->sun_path,
-                             unix_address::MAX_PATH_NAME));
+        REQUIRE(
+            0 == strncmp(
+                     PATH.c_str(), (const char*)&addr2.sockaddr_un_ptr()->sun_path,
+                     unix_address::MAX_PATH_NAME
+                 )
+        );
     }
 
-	SECTION("full path") {
-		// Test what happens if 'sun_path' is full, with no NUL termination
-		std::string path;
-		sockaddr_un unaddr;
-		unaddr.sun_family = AF_UNIX;
+    SECTION("full path") {
+        string path;
+        path.insert(0, unix_address::MAX_PATH_NAME, 'x');
 
-		for (size_t i=0; i<unix_address::MAX_PATH_NAME; ++i) {
-			char c = 'a' + (i % 26);
-			unaddr.sun_path[i] = c;
-			path.push_back(c);
-		}
+        // Test what happens if 'sun_path' is full, with no NUL termination
+        sockaddr_un unaddr;
+        unaddr.sun_family = AF_UNIX;
+        memcpy(unaddr.sun_path, path.data(), unix_address::MAX_PATH_NAME);
 
-		// sockaddr_un constructor
-		unix_address addr(unaddr);
-		REQUIRE(unix_address::MAX_PATH_NAME == addr.path().size());
-		REQUIRE(path == addr.path());
+        // sockaddr_un constructor
+        unix_address addr(unaddr);
+        REQUIRE(unix_address::MAX_PATH_NAME == addr.path().size());
+        REQUIRE(path == addr.path());
 
-		// path (string) constructor
-		unix_address addr2(path);
-		REQUIRE(unix_address::MAX_PATH_NAME == addr2.path().size());
-		REQUIRE(path == addr2.path());
-	}
+        // path (string) constructor
+        unix_address addr2(path);
+        REQUIRE(unix_address::MAX_PATH_NAME == addr2.path().size());
+        REQUIRE(path == addr2.path());
+    }
+
+    SECTION("too long path") {
+        string path;
+        path.insert(0, unix_address::MAX_PATH_NAME + 5, 'x');
+
+        REQUIRE_THROWS(unix_address{path});
+    }
 }
 
 TEST_CASE("unix_address sockaddr_un constructor", "[address]") {
-    sockaddr_un unaddr;
+    sockaddr_un unaddr{};
     unaddr.sun_family = AF_UNIX;
     strcpy(unaddr.sun_path, PATH.c_str());
 
     unix_address addr(unaddr);
 
+    REQUIRE(addr);
     REQUIRE(addr.is_set());
     REQUIRE(PATH == addr.path());
     REQUIRE(sizeof(sockaddr_un) == addr.size());
 
     // Check the low-level struct
     REQUIRE(AF_UNIX == addr.sockaddr_un_ptr()->sun_family);
-    REQUIRE(0 == strncmp(PATH.c_str(),
-                         (const char*) &addr.sockaddr_un_ptr()->sun_path,
-                         unix_address::MAX_PATH_NAME));
+    REQUIRE(
+        0 == strncmp(
+                 PATH.c_str(), (const char*)&addr.sockaddr_un_ptr()->sun_path,
+                 unix_address::MAX_PATH_NAME
+             )
+    );
 
-    SECTION("reject bad sockaddr_un") {
-        unaddr.sun_family = AF_INET;
-        REQUIRE_THROWS_AS([&] {
-            unix_address addr2(unaddr);
-        }(), std::invalid_argument);
-    }
+    unaddr.sun_family = AF_INET;
+    unix_address addr2(unaddr);
+    REQUIRE(!addr2);
 }

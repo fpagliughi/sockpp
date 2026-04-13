@@ -40,27 +40,34 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <csignal>
 #include <iostream>
 #include <thread>
+
 #include "sockpp/unix_acceptor.h"
 #include "sockpp/version.h"
 
 using namespace std;
+
+#if defined(_WIN32)
+const string DFLT_PATH = "C:\\TEMP\\unechosvr.sock"s;
+#else
+const string DFLT_PATH = "/tmp/unechosvr.sock"s;
+#endif
 
 // --------------------------------------------------------------------------
 // The thread function. This is run in a separate thread for each socket.
 // Ownership of the socket object is transferred to the thread, so when this
 // function exits, the socket is automatically closed.
 
-void run_echo(sockpp::unix_socket sock)
-{
-	int n;
-	char buf[512];
+void run_echo(sockpp::unix_socket sock) {
+    char buf[512];
+    sockpp::result<size_t> res;
 
-	while ((n = sock.read(buf, sizeof(buf))) > 0)
-		sock.write_n(buf, n);
+    while ((res = sock.read(buf, sizeof(buf))) && res.value() > 0)
+        sock.write_n(buf, res.value());
 
-	cout << "Connection closed" << endl;
+    cout << "Connection closed" << endl;
 }
 
 // --------------------------------------------------------------------------
@@ -68,44 +75,36 @@ void run_echo(sockpp::unix_socket sock)
 // Each time a connection is made, a new thread is spawned to handle it,
 // leaving this main thread to immediately wait for the next connection.
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample Unix-domain echo server for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample Unix-domain echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
-	string path = "/tmp/unechosvr.sock";
+    const string path = (argc > 1) ? argv[1] : DFLT_PATH;
 
-	if (argc > 1) {
-		path = argv[1];
-	}
+    sockpp::initialize();
+    sockpp::unix_acceptor acc;
 
-	sockpp::initialize();
-	sockpp::unix_acceptor acc;
+    auto res = acc.open(sockpp::unix_address(path));
 
-	bool ok = acc.open(sockpp::unix_address(path));
-
-	if (!ok) {
-		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
-		return 1;
-	}
+    if (!res) {
+        cerr << "Error creating the acceptor at: " << path << "\n\t" << res.error_message()
+             << endl;
+        return 1;
+    }
     cout << "Acceptor bound to address: '" << acc.address() << "'..." << endl;
 
-	while (true) {
-		// Accept a new client connection
-		auto sock = acc.accept();
-		cout << "Received a connection" << endl;
+    while (true) {
+        // Accept a new client connection
+        if (auto res = acc.accept(); !res) {
+            cerr << "Error accepting incoming connection: " << res.error_message() << endl;
+        }
+        else {
+            cout << "Received a connection" << endl;
+            // Create a thread and transfer the new stream to it.
+            thread thr(run_echo, res.release());
+            thr.detach();
+        }
+    }
 
-		if (!sock) {
-			cerr << "Error accepting incoming connection: " 
-				<< acc.last_error_str() << endl;
-		}
-		else {
-			// Create a thread and transfer the new stream to it.
-			thread thr(run_echo, std::move(sock));
-			thr.detach();
-		}
-	}
-
-	return 0;
+    return 0;
 }
-

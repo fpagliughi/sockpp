@@ -42,25 +42,26 @@
 
 #include <iostream>
 #include <thread>
+
 #include "sockpp/tcp_acceptor.h"
 #include "sockpp/version.h"
 
 using namespace std;
+using namespace std::chrono;
 
 // --------------------------------------------------------------------------
 // The thread function. This is run in a separate thread for each socket.
 // Ownership of the socket object is transferred to the thread, so when this
 // function exits, the socket is automatically closed.
 
-void run_echo(sockpp::tcp_socket sock)
-{
-	ssize_t n;
-	char buf[512];
+void run_echo(sockpp::tcp_socket sock) {
+    char buf[512];
+    sockpp::result<size_t> res;
 
-	while ((n = sock.read(buf, sizeof(buf))) > 0)
-		sock.write_n(buf, n);
+    while ((res = sock.read(buf, sizeof(buf))) && res.value() > 0)
+        sock.write_n(buf, res.value());
 
-	cout << "Connection closed from " << sock.peer_address() << endl;
+    cout << "Connection closed from " << sock.peer_address() << endl;
 }
 
 // --------------------------------------------------------------------------
@@ -68,43 +69,46 @@ void run_echo(sockpp::tcp_socket sock)
 // made a new thread is spawned to handle it leaving this main thread to
 // immediately wait for the next incoming connection.
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample TCP echo server for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample TCP echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
-	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+    in_port_t port = (argc > 1) ? atoi(argv[1]) : sockpp::TEST_PORT;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	sockpp::tcp_acceptor acc(port);
+    error_code ec;
+    sockpp::tcp_acceptor acc{port, 4, sockpp::tcp_acceptor::REUSE, ec};
 
-	if (!acc) {
-		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
-		return 1;
-	}
-	cout << "Awaiting connections on port " << port << "..." << endl;
+    if (ec) {
+        cerr << "Error creating the acceptor: " << ec.message() << endl;
+        return 1;
+    }
+    cout << "Awaiting connections on port " << port << "..." << endl;
+    auto timeout = 10s;
 
-	while (true) {
-		sockpp::inet_address peer;
+    while (true) {
+        sockpp::inet_address peer;
 
-		// Accept a new client connection
-		sockpp::tcp_socket sock = acc.accept(&peer);
-		cout << "Received a connection request from " << peer << endl;
+        // Accept a new client connection
+        if (auto res = acc.accept(timeout, &peer); !res) {
+            if (res == errc::timed_out) {
+                cout << "  No activity yet" << endl;
+                // Negative duration means no more timeouts;
+                timeout = -1s;
+            }
+            else {
+                cerr << "Error accepting connection: " << res.error_message() << endl;
+            }
+        }
+        else {
+            cout << "Received a connection request from " << peer << endl;
+            sockpp::tcp_socket sock = res.release();
 
-		if (!sock) {
-			cerr << "Error accepting incoming connection: " 
-				<< acc.last_error_str() << endl;
-		}
-		else {
-			// Create a thread and transfer the new stream to it.
-			thread thr(run_echo, std::move(sock));
-			thr.detach();
-		}
-	}
+            // Create a thread and transfer the new stream to it.
+            thread thr(run_echo, std::move(sock));
+            thr.detach();
+        }
+    }
 
-	return 0;
+    return 0;
 }
-
-
-

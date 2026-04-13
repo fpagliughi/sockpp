@@ -9,7 +9,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019 Frank Pagliughi
+// Copyright (c) 2019-2023 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,8 @@
 
 #include <iostream>
 #include <thread>
-#include "sockpp/tcp6_acceptor.h"
+
+#include "sockpp/tcp_acceptor.h"
 #include "sockpp/version.h"
 
 using namespace std;
@@ -52,15 +53,14 @@ using namespace std;
 // Ownership of the socket object is transferred to the thread, so when this
 // function exits, the socket is automatically closed.
 
-void run_echo(sockpp::tcp6_socket sock)
-{
-	ssize_t n;
-	char buf[512];
+void run_echo(sockpp::tcp6_socket sock) {
+    char buf[512];
+    sockpp::result<size_t> res;
 
-    while ((n = sock.read(buf, sizeof(buf))) > 0)
-		sock.write_n(buf, n);
+    while ((res = sock.read(buf, sizeof(buf))) && res.value() > 0)
+        sock.write_n(buf, res.value());
 
-	cout << "Connection closed from " << sock.peer_address() << endl;
+    cout << "Connection closed from " << sock.peer_address() << endl;
 }
 
 // --------------------------------------------------------------------------
@@ -68,42 +68,39 @@ void run_echo(sockpp::tcp6_socket sock)
 // made a new thread is spawned to handle it leaving this main thread to
 // immediately wait for the next connection.
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample IPv6 TCP echo server for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample IPv6 TCP echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n'
+         << endl;
 
-	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+    in_port_t port = (argc > 1) ? atoi(argv[1]) : sockpp::TEST_PORT;
 
-	sockpp::initialize();
-	sockpp::tcp6_acceptor acc(port);
+    sockpp::initialize();
 
-	if (!acc) {
-		cerr << "Error creating the acceptor: " << acc.last_error_str() << endl;
-		return 1;
-	}
-	cout << "Awaiting connections on port " << port << "..." << endl;
+    error_code ec;
+    sockpp::tcp6_acceptor acc(port, 4, sockpp::tcp6_acceptor::REUSE, ec);
 
-	while (true) {
-		sockpp::inet6_address peer;
+    if (ec) {
+        cerr << "Error creating the acceptor: " << ec.message() << endl;
+        return 1;
+    }
+    cout << "Awaiting connections on port " << port << "..." << endl;
 
-		// Accept a new client connection
-		sockpp::tcp6_socket sock = acc.accept(&peer);
-		cout << "Received a connection request from " << peer << endl;
+    while (true) {
+        sockpp::inet6_address peer;
 
-		if (!sock) {
-			cerr << "Error accepting incoming connection: " 
-				<< acc.last_error_str() << endl;
-		}
-		else {
-			// Create a thread and transfer the new stream to it.
-			thread thr(run_echo, std::move(sock));
-			thr.detach();
-		}
-	}
+        // Accept a new client connection
+        if (auto res = acc.accept(&peer); !res) {
+            cerr << "Error accepting incoming connection: " << res.error_message() << endl;
+        }
+        else {
+            cout << "Received a connection request from " << peer << endl;
+            sockpp::tcp6_socket sock = res.release();
 
-	return 0;
+            // Create a thread and transfer the new stream to it.
+            thread thr(run_echo, std::move(sock));
+            thr.detach();
+        }
+    }
+
+    return 0;
 }
-
-
-

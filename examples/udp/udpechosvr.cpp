@@ -4,7 +4,7 @@
 //
 // This runs a UDP echo server for both IPv4 and IPv6, each in a separate
 // thread. They both use the same port number, either as provided by the user
-// on the command line, or defaulting to 12345.
+// on the command line, or defaulting to TEST_PORT.
 //
 // USAGE:
 //  	uspechosvr [port]
@@ -49,8 +49,8 @@
 
 #include <iostream>
 #include <thread>
+
 #include "sockpp/udp_socket.h"
-#include "sockpp/udp6_socket.h"
 #include "sockpp/version.h"
 
 using namespace std;
@@ -61,61 +61,51 @@ using namespace std;
 // function exits, the socket is automatically closed.
 
 template <typename UDPSOCK>
-void run_echo(UDPSOCK sock)
-{
-	ssize_t n;
-	char buf[512];
+void run_echo(UDPSOCK sock) {
+    char buf[512];
 
-	// Each UDP socket type knows its address type as `addr_t`
-	typename UDPSOCK::addr_t srcAddr;
+    // Each UDP socket type knows its address type as `addr_t`
+    typename UDPSOCK::addr_t srcAddr;
 
-	// Read some data, also getting the address of the sender,
-	// then just send it back.
-	while ((n = sock.recv_from(buf, sizeof(buf), &srcAddr)) > 0)
-		sock.send_to(buf, n, srcAddr);
+    // Read some data, also getting the address of the sender,
+    // then just send it back.
+    while (true) {
+        auto res = sock.recv_from(buf, sizeof(buf), &srcAddr);
+        if (!res || res.value() == 0)
+            break;
+
+        sock.send_to(buf, res.value(), srcAddr);
+    }
 }
 
 // --------------------------------------------------------------------------
 // The main thread creates the two UDP sockets (one each for IPv4 and IPv6),
 // and then starts them running the echo function each in a separate thread.
 
-int main(int argc, char* argv[])
-{
-	cout << "Sample UDP echo server for 'sockpp' "
-		<< sockpp::SOCKPP_VERSION << '\n' << endl;
+int main(int argc, char* argv[]) {
+    cout << "Sample UDP echo server for 'sockpp' " << sockpp::SOCKPP_VERSION << '\n' << endl;
 
-	in_port_t port = (argc > 1) ? atoi(argv[1]) : 12345;
+    in_port_t port = (argc > 1) ? atoi(argv[1]) : sockpp::TEST_PORT;
 
-	sockpp::initialize();
+    sockpp::initialize();
 
-	sockpp::udp_socket	udpsock;
-	if (!udpsock) {
-		cerr << "Error creating the UDP v4 socket: " << udpsock.last_error_str() << endl;
-		return 1;
-	}
+    sockpp::udp_socket udpsock;
+    if (auto res = udpsock.bind(sockpp::inet_address("localhost", port)); !res) {
+        cerr << "Error binding the UDP v4 socket: " << res.error_message() << endl;
+        return 1;
+    }
 
-	if (!udpsock.bind(sockpp::inet_address("localhost", port))) {
-		cerr << "Error binding the UDP v4 socket: " << udpsock.last_error_str() << endl;
-		return 1;
-	}
+    sockpp::udp6_socket udp6sock;
+    if (auto res = udp6sock.bind(sockpp::inet6_address("localhost", port)); !res) {
+        cerr << "Error binding the UDP v6 socket: " << res.error_message() << endl;
+        return 1;
+    }
 
-	sockpp::udp6_socket	udp6sock;
-	if (!udp6sock) {
-		cerr << "Error creating the UDP v6 socket: " << udp6sock.last_error_str() << endl;
-		return 1;
-	}
+    // Spin up a thread to run the IPv4 socket.
+    thread thr(run_echo<sockpp::udp_socket>, std::move(udpsock));
+    thr.detach();
 
-	if (!udp6sock.bind(sockpp::inet6_address("localhost", port))) {
-		cerr << "Error binding the UDP v6 socket: " << udp6sock.last_error_str() << endl;
-		return 1;
-	}
-
-	// Spin up a thread to run the IPv4 socket.
-	thread thr(run_echo<sockpp::udp_socket>, std::move(udpsock));
-	thr.detach();
-
-	// Run the IPv6 socket in this thread. (Call doesn't return)
-	run_echo(std::move(udp6sock));
-	return 0;
+    // Run the IPv6 socket in this thread. (Call doesn't return)
+    run_echo(std::move(udp6sock));
+    return 0;
 }
-

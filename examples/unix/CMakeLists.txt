@@ -37,6 +37,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
+# Remember that Windows doesn't support datagram over UNIX sockets
+
 # --- For apps that use threads ---
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -45,40 +47,36 @@ find_package(Threads REQUIRED)
 # --- Executables ---
 
 set(THREADED_EXECUTABLES
-  unechosvr
-  undgramechosvr
+    unechosvr
 )
 
+if(NOT WIN32)
+    # Windows doesn't support UNIX datagram sockets
+    list(APPEND THREADED_EXECUTABLES undgramechosvr)
+endif()
+
 set(EXECUTABLES
-  unecho
-  unechotest
-  undgramecho
-  ${THREADED_EXECUTABLES}
+    unecho
+    unechotest
+    ${THREADED_EXECUTABLES}
 )
+
+if(NOT WIN32)
+    # Windows doesn't support UNIX datagram sockets
+    list(APPEND EXECUTABLES undgramecho)
+endif()
 
 # --- Executables ---
 
 foreach(EXECUTABLE ${EXECUTABLES})
-	add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-	
-	target_include_directories(${EXECUTABLE}
-		PUBLIC
-			${SOCKPP_INCLUDE_DIR}
-		PRIVATE
-			${SOCKPP_GENERATED_DIR}/include
-	)
-	
-  set_target_properties(${EXECUTABLE} PROPERTIES
-    CXX_EXTENSIONS OFF
-  )
-
-	target_link_libraries(${EXECUTABLE} ${SOCKPP_LIB})
+    add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+    target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
 endforeach()
 
 # --- Additional linkage to Threads ---
 
 foreach(EXECUTABLE ${THREADED_EXECUTABLES})
-  target_link_libraries(${EXECUTABLE} Threads::Threads)
+    target_link_libraries(${EXECUTABLE} Threads::Threads)
 endforeach()
 
 # --- Install examples ---

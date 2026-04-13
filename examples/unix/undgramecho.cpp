@@ -1,6 +1,8 @@
 // udpecho.cpp
 //
-// Simple Unix-domain UDP echo client
+// Simple Unix-domain UDP echo client.
+//
+// Note that UNIX datagram sockets are not supported on Windows.
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -38,60 +40,56 @@
 
 #include <iostream>
 #include <string>
+
 #include "sockpp/unix_dgram_socket.h"
 
 using namespace std;
 
 // --------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
-{
-	sockpp::initialize();
+int main(int argc, char* argv[]) {
+    sockpp::initialize();
 
-	string	cliAddr { "/tmp/undgramecho.sock" },
-			svrAddr { "/tmp/undgramechosvr.sock" };
+    string cliAddr{"/tmp/undgramecho.sock"}, svrAddr{"/tmp/undgramechosvr.sock"};
 
-	sockpp::unix_dgram_socket sock;
+    sockpp::unix_dgram_socket sock;
 
-	// A Unix-domain UDP client needs to bind to its own address
-	// before it can send or receive packets
+    // A Unix-domain UDP client needs to bind to its own address
+    // before it can send or receive packets
 
-	if (!sock.bind(sockpp::unix_address(cliAddr))) {
-		cerr << "Error connecting to client address at '" << cliAddr << "'"
-			<< "\n\t" << sock.last_error_str() << endl;
-		return 1;
-	}
+    if (auto res = sock.bind(sockpp::unix_address(cliAddr)); !res) {
+        cerr << "Error connecting to client address at '" << cliAddr << "'"
+             << "\n\t" << res.error_message() << endl;
+        return 1;
+    }
 
-	// "Connect" to the server address. This is a convenience to set the
-	// default 'send_to' address, as there is no real connection.
+    // "Connect" to the server address. This is a convenience to set the
+    // default 'send_to' address, as there is no real connection.
 
-	if (!sock.connect(sockpp::unix_address(svrAddr))) {
-		cerr << "Error connecting to server at '" << svrAddr << "'"
-			<< "\n\t" << sock.last_error_str() << endl;
-		return 1;
-	}
+    if (auto res = sock.connect(sockpp::unix_address(svrAddr)); !res) {
+        cerr << "Error connecting to server at '" << svrAddr << "'"
+             << "\n\t" << res.error_message() << endl;
+        return 1;
+    }
 
-	cout << "Created UDP socket at: " << sock.address() << endl;
+    cout << "Created UDP socket at: " << sock.address() << endl;
 
-	string s, sret;
-	while (getline(cin, s) && !s.empty()) {
-		if (sock.send(s) != ssize_t(s.length())) {
-			cerr << "Error writing to the UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+    string s, sret;
+    while (getline(cin, s) && !s.empty()) {
+        const size_t N = s.length();
 
-		sret.resize(s.length());
-		ssize_t n = sock.recv(&sret[0], s.length());
+        if (auto res = sock.send(s); res != N) {
+            cerr << "Error writing to the UDP socket: " << res.error_message() << endl;
+            break;
+        }
 
-		if (n != ssize_t(s.length())) {
-			cerr << "Error reading from UDP socket: "
-				<< sock.last_error_str() << endl;
-			break;
-		}
+        sret.resize(N);
+        if (auto res = sock.recv(&sret[0], N); res != N) {
+            cerr << "Error reading from UDP socket: " << res.error_message() << endl;
+            break;
+        }
+    }
 
-		cout << sret << endl;
-	}
-
-	return (!sock) ? 1 : 0;
+    cout << sret << endl;
+    return (!sock) ? 1 : 0;
 }

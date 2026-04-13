@@ -3,11 +3,11 @@
  *
  * Class for creating client-side UNIX-domain socket connections.
  *
- * @author	Frank Pagliughi
- * @author	SoRo Systems, Inc.
+ * @author  Frank Pagliughi
+ * @author  SoRo Systems, Inc.
  * @author  www.sorosys.com
  *
- * @date	December 2018
+ * @date  December 2018
  */
 
 // --------------------------------------------------------------------------
@@ -58,8 +58,6 @@ namespace sockpp {
 using unix_connector = connector_tmpl<unix_socket, unix_address>;
 
 /////////////////////////////////////////////////////////////////////////////
-// end namespace sockpp
-};
+};  // namespace sockpp
 
-#endif		// __sockpp_unix_connector_h
-
+#endif  // __sockpp_unix_connector_h
