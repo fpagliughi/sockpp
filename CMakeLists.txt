@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
 #
-# Copyright (c) 2017-2024 Frank Pagliughi
+# Copyright (c) 2017-2026 Frank Pagliughi
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 
 # --- CMake required version ---
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.15)
 
 # --- Project setup ---
 
@@ -51,16 +51,16 @@ option(SOCKPP_BUILD_STATIC "Build static library" OFF)
 option(SOCKPP_BUILD_EXAMPLES "Build example applications" OFF)
 option(SOCKPP_BUILD_TESTS "Build unit tests" OFF)
 option(SOCKPP_BUILD_DOCUMENTATION "Create Doxygen reference documentation" OFF)
-option(SOCKPP_WITH_OPENSSL "TLS Secure Sockets with OpenSSL" OFF)
-option(SOCKPP_WITH_MBEDTLS "TLS Secure Sockets with Mbed TLS" OFF)
+option(SOCKPP_WITH_OPENSSL "[EXPERIMENTAL] TLS Secure Sockets with OpenSSL" OFF)
+option(SOCKPP_WITH_MBEDTLS "[EXPERIMENTAL] TLS Secure Sockets with MbedTLS" OFF)
 
-if(NOT WIN32)
-    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        option(SOCKPP_WITH_CAN "Include support for Linux SocketCAN components" OFF)
-    endif()
-    option(SOCKPP_WITH_UNIX_SOCKETS "Include support for UNIX-domain sockets" ON)
+if(WIN32)
+    option(SOCKPP_WITH_UNIX_SOCKETS "[EXPERIMENTAL] Support for UNIX-domain sockets" OFF)
 else()
-    option(SOCKPP_WITH_UNIX_SOCKETS "Include support for UNIX-domain sockets" OFF)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        option(SOCKPP_WITH_CAN "[EXPERIMENTAL] Support for Linux SocketCAN" OFF)
+    endif()
+    option(SOCKPP_WITH_UNIX_SOCKETS "Support for UNIX-domain sockets" ON)
 endif()
 
 # ----- Find any dependencies -----

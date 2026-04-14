@@ -8,7 +8,7 @@ The base `socket` class wraps a system socket handle and maintains its lifetime 
 
 The library currently supports: IPv4 and IPv6 on Linux, Mac, and Windows. Other *nix and POSIX systems should work with little or no modification.
 
-Unix-Domain Sockets are available on *nix systems that have an OS implementation for them.
+Unix-Domain Sockets are available on *nix systems that have an OS implementation for them. There's experimental support for them on recent versions of Windows, although only UNIX stream sockets are supported on that platform.
 
 Experimental support for secure sockets using either the OpenSSL or MbedTLS libraries was started with basic coverage. This will continue to be expanded in the near future.
 
@@ -16,44 +16,26 @@ There is also some experimental support for CAN bus programming on Linux using t
 
 All code in the library lives within the `sockpp` C++ namespace.
 
-**The 'master' branch is starting the move toward the v2.0 API, and is particularly unstable at the moment. You're advised to download the latest release for production use.**
+**The 'master' branch is moving toward the v2.0 API, and is particularly unstable at the moment. You're advised to download the latest release for production use.**
 
 ## Latest News
 
-Apologies, this library hasn't received much love from me in the last year+. The original plan was to get to a Version 2.0 with the following goals:
+Work is proceeding toward Version 2.0 with the following goals:
 
 - Move the library to C++17
-- Do a major refactor of error handling, to allow apps to use the library without exceptions and to achieve better thread safety.
-- Add support for secure (TLS) sockets.
+- Do a major refactor of error handling, to allow apps to use the library without exceptions.
+- Achieve better thread safety.
+- Add a portable socket `poller` class
+- MinGW-w64 support on Windows
+- Fix a number of known bugs and build issues.
 - Start some better documentation, particularly for new users.
+- Start experimental support for:
+  - Secure TLS sockets.
+  - SocketCAN (CANbus) on Linux
+  - [Optional] Start support for Bluetooth on Linux
 
-Much of that was done a while back, except for the TLS support. The goal was to have an initial release that supported a choice between OpenSSL and another library that was _not_ a fork of OpenSSL, to try to ensure some aspect of portability. That work stalled a while back, but is still the main focus for near-term development.
 
-So the new strategy will be to release v2.0 with everything _but_ the finished TLS support, and keep TLS marked as experimental - meaning that it will change and break in subsequent v2.x minor releases. Its formal release will target either v2.5 or v3.0, depending on whether any other breaking changes are required to accommodate it.
-
-In the meantime, though, some documentation was started in the form of an mdBook, and is live here:
-
-https://fpagliughi.github.io/sockpp/
-
-### Older News
-
-Version 2.0 development is underway in this branch.
-
-It moves the library to C++17, taking advantage of features first available in this version of the C++ language.
-
-The idea of having "stateless" I/O operations introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), (which was never fully merged) is coming in the 2.0 API with a `result<T>` class. It's generic over the "success" return type with errors being represented by a `std::error_code`. This should help to significantly reduce platform issues for tracking and reporting errors.
-
-Using a uniform result type removes the need for exceptions in most functions, except maybe constructors. In those cases where the function might throw, a comparable `noexcept` function is also provided which sets an error code parameter instead of throwing. So the library can be used without any exceptions if so desired by the application.
-
-All functions that might fail due to a system error will return a result. That will eliminate the need for the "last error", and thus the cached last error variable in the `socket` class will disappear. The socket classes will then only wrap the socket handle, making them safer to share across threads in the same way a handle can be shared - typically with one thread for reading and another for writing.
-
-Some work has also begun to incorporate Secure Sockets into a 2.x release of the library using either OpenSSL or MbedTLS libraries, or (likely), a build-time choice for one or the other.  [PR #17](https://github.com/fpagliughi/sockpp/pull/17), which has been sitting dormant for a few years is being merged and updated, along with new work to do something comparable with OpenSSL. You will be able to chose one secure library or the other when building `sockpp`.
-
-The 2.0 version will also move up to C++17 and CMake v3.15 or later.
-
-Version 1.0 is released!
-
-As breaking changes were starting to accumulate in the current development branch, the decision was made to release the API that has been fairly stable for the last few years as 1.0. This is from the latest v0.8.x line. That will make things going forward less confusing and allow us to maintain the v1.x branch.
+The strategy for experimental features is to allow them to be optionally built into the library, but that they are not production-ready and will likely experience breaking changes within the major version as they evolve.
 
 ### Get Updates
 
@@ -65,7 +47,7 @@ If you're using this library, send me a message and let me know how you're using
 
 ## Documentation
 
-Some documentation is live here:
+Documentation is live here in the form of an mdBook:
 
 https://fpagliughi.github.io/sockpp/
 
@@ -133,6 +115,12 @@ SOCKPP_BUILD_DOCUMENTATION | OFF | Create and install the HTML based API documen
 SOCKPP_BUILD_EXAMPLES | OFF | Build example programs
 SOCKPP_BUILD_TESTS | OFF | Build the unit tests (requires _Catch2_)
 SOCKPP_WITH_UNIX_SOCKETS | ON (*nix), OFF (Win) | Include support for UNIX-domain sockets. Windows support it experimental.
+
+**Experimental Features**
+Variable | Default Value | Description
+------------ | ------------- | -------------
+SOCKPP_WITH_OPENSSL | OFF | TLS support with OpenSSL
+SOCKPP_WITH_MBEDTLS | OFF | TLS support with MbedTLS
 SOCKPP_WITH_CAN | OFF | Include SocketCAN support. (Linux only)
 
 Set these using the '-D' switch in the CMake configuration command. For example, to build documentation and example apps:
@@ -143,11 +131,29 @@ $ cmake -Bbuild -DSOCKPP_BUILD_DOCUMENTATION=ON -DSOCKPP_BUILD_EXAMPLES=ON .
 $ cmake --build build/
 ```
 
+### Error Handling
+
+Version 2.0 substantially changed the way the errors are reported by the library.
+
+The initial versions, up to v1.0, stayed close to the original C-style of error reporting. Most class functions returned an integer value where 0 indicated success, and -1 indicated failure. Behind the scenes, the object grabbed the _errno_ value for the failure and the application could query it by calling `socket::last_error()`. But having a cached error return made it difficult to share the socket across threads, and to reliably tie the error with the exact operation.
+
+The idea of having "stateless" I/O operations which was introduced in [PR #17](https://github.com/fpagliughi/sockpp/pull/17), but the PR was never fully merged. The idea was generalized and arrived in the 2.0 API with a `result<T>` class. The result is generic over the "success" type, but errors are always represented by a C++ `std::error_code`. This fixes the problem of the cached error state in socket objects, but also helps to significantly reduce platform issues for tracking and reporting errors, since the error codes are more portable.
+
+In addition, using a uniform result type removes the need for exceptions in most functions - except for constructors which can't return a result. In those cases where the constructor might throw, a comparable `noexcept` function is also provided which sets an error code parameter instead of throwing. So the library can be used without any exceptions if so desired by the application.
+
+For example, to create a `socket` object, you might see these two similar constructors:
+```
+socket(int domain, int type);   // This might throw an error
+socket(int domain, int type, error_code& ec) noexcept;  // This will never throw. 'ec' gets any error.
+```
+
+Now, without the cached error value, the basic socket classes only wrap the socket handle, making them safer to share across threads in the same way a handle can be shared - typically with one thread for reading and another for writing.
+
 ## TCP Sockets
 
 TCP and other "streaming" network applications are usually set up as either servers or clients. An acceptor is used to create a TCP/streaming server. It binds an address and listens on a known port to accept incoming connections. When a connection is accepted, a new, streaming socket is created. That new socket can be handled directly or moved to a thread (or thread pool) for processing.
 
-Conversely, to create a TCP client, a connector object is created and connected to a server at a known address (typically host and socket). When connected, the socket is a streaming one which can be used to read and write, directly.
+Conversely, to create a TCP client, a connector object is created and connected to a server at a known address (typically host and port). When connected, the socket is a streaming one which can be used to read and write, directly.
 
 For IPv4 the `tcp_acceptor` and `tcp_connector` classes are used to create servers and clients, respectively. These use the `inet_address` class to specify endpoint addresses composed of a 32-bit host address and a 16-bit port number.
 
@@ -276,11 +282,11 @@ Some key points for UNIX sockets on Win32/64:
 
 ### Secure Sockets [Experimental]
 
-Support for secure sockets is being added using a number of possible TLS libraries, although support is incomplete and the API is still changing.
+Support for secure sockets is being added using a number of possible TLS libraries, although support is incomplete and the API is still changing. The idea is that one (and _only_ one) supported TLS library can be built into _sockpp_ at a time.
 
-To build the library with secure socket support, a TLS library needs to be chosen to provide support. Currently _OpenSSL_ v3.x or _MbedTLS_ can be used, but only one TLS library can be compiled in at a time. When one is chosen, a `tls_context`
+To build the library with secure socket support, a TLS library needs to be chosen to provide the encryption implementation. Currently _OpenSSL_ v3.x or _MbedTLS_ can be used. When one is chosen, a `tls_context` and `tls_socket` are included that wrap the functionality of the target library.
 
-Chose _one_ of the following when configuring the build:
+Choose _one_ of the following when configuring the build:
 
 Variable | Default Value | Description
 ------------ | ------------- | -------------
@@ -332,7 +338,7 @@ canid_t canID = 0x40;
 while (true) {
     this_thread::sleep_for(1s);
 
-    // Write the time to the CAN bus as a 32-bit int
+    // Write the temperature to the CAN bus as a 32-bit int
     int32_t t = read_temperature();
 
     canbus_frame frame { canID, &t, sizeof(t) };
@@ -354,31 +360,39 @@ sock.recv(&frame);
 
 The socket class hierarchy is built upon a base `socket` class. Most simple applications will probably not use `socket` directly, but rather use derived classes defined for a specific address family like `tcp_connector` and `tcp_acceptor`.
 
-The socket objects keep a handle to an underlying OS socket handle and a cached value for the last error that occurred for that socket. The socket handle is typically an integer file descriptor, with values >=0 for open sockets, and -1 for an unopened or invalid socket. The value used for unopened sockets is defined as a constant, `INVALID_SOCKET`, although it usually doesn't need to be tested directly, as the object itself will evaluate to _false_ if it's uninitialized or in an error state. A typical error check would be like this:
+The socket objects keep a handle to an underlying OS socket handle which is typically an integer file descriptor, with values >=0 for open sockets, and -1 for an unopened or invalid socket, with the exception of Win32 which uses a `HANDLE` object for the sockets. The value used for unopened sockets is defined as a constant, `INVALID_SOCKET`, which is true for all platforms, including Windows. That value doesn't need to be tested directly, as the object itself will evaluate to _false_ if it's uninitialized or in an error state.
 
-    error_code ec;
-    tcp_connector conn({"localhost", 12345}, ec);
-
-    if (ec)
-        cerr << ec.message() << std::endl;
-
-The default constructors for each of the socket classes do nothing, and simply set the underlying handle to `INVALID_SOCKET`. They do not create a socket object. The call to actively connect a `connector` object or open an `acceptor` object will create an underlying OS socket and then perform the requested operation.
+The default constructors for each of the socket classes do nothing, and simply set the underlying handle to `INVALID_SOCKET`. They do not create a socket object. The call to actively connect a `connector` object or open an `acceptor` object will create an underlying OS socket and then perform the requested operation, reporting an appropriate error if either the socket could not be created or the operation failed.
 
 An application can generally perform most low-level operations with the library. Unconnected and unbound sockets can be created with the static `create()` function in most of the classes, and then manually bind and listen on those sockets.
 
-The `socket::handle()` method exposes the underlying OS handle which can then be sent to any platform API call that is not exposed by the library.
+The `socket::handle()` method exposes the underlying OS handle which can be sent to any platform API calls that are not exposed by the library.
 
 ### Thread Safety
 
-A socket object is not thread-safe. Applications that want to have multiple threads reading from a socket or writing to a socket should use some form of serialization, such as a `std::mutex` to protect access.
+A socket object is not thread-safe. Applications that want to have multiple threads reading from a socket or writing to a socket should use some form of serialization, such as a `std::mutex` to protect access. As of Version 2.0 of the library, nearly all of the socket objects only contain the socket handle in the object, and do not carry any other state than what the OS keeps behind the handle.
 
-As of Version 2.0 of the library
+It is a common pattern, especially in client applications, to have one thread to read from a socket and another thread to write to the same socket. In this case the underlying socket handle can be considered thread safe (one read thread and one write thread). But a socket object can not be copied as is common in C++ with an assignment or pass-by-value.
 
-A `socket` can be _moved_ from one thread to another safely. This is a common pattern for a server which uses one thread to accept incoming connections and then passes off the new socket to another thread or thread pool for handling. This can be done like:
+The solution for this case is to use the `socket::clone()` method to make a copy of the socket. This will use the system's `dup()` function or similar to create another socket object with a duplicated copy of the socket handle. This has the added benefit that each copy of the socket can maintain an independent lifetime. The underlying socket will not be closed until both objects go out of scope. This work well with the library's RAII philosophy.
 
-    if (auto res = acc.accept(&peer); res) {
+    sockpp::tcp_connector conn({host, port});
+
+    if (auto res = conn.clone(); !res) {
+        report_error(res.error_message());
+    }
+    else {
+        auto conn_clone = res.release();
+        std::thread rdThr(read_thread_func, std::move(conn_clone));
+    }
+
+When using a pair of cloned sockets like this, the `socket::shutdown()` method can be used to communicate the intent to close the socket from one of these objects to the other without needing a separate thread signaling mechanism.
+
+As stated, a `socket` can not be copied, but it can be _moved_ from one thread to another safely. This is a common pattern for a server which uses one thread to accept incoming connections and then passes off the new socket to another thread or thread pool for handling. For example with an `acceptor` variable, _acc_, this can be done like:
+
+    if (auto res = acc.accept(); res) {
         // Create a thread and transfer the new socket to it.
-        std::thread thr(handle_connection, res.release());
+        std::thread thr(handle_connection, std::move(res.release()));
         thr.detach();
     }
 
@@ -388,17 +402,5 @@ In this case, _handle_connection_ would be a function that takes a socket by val
 
 Since a `socket` can not be copied, the only choice would be to move the socket to a function like this.
 
-It is a common pattern, especially in client applications, to have one thread to read from a socket and another thread to write to the socket. In this case the underlying socket handle can be considered thread safe (one read thread and one write thread). But even in this scenario, a `sockpp::socket` object is still not thread-safe due especially to the cached error value. The write thread might see an error that happened on the read thread and visa versa.
-
-The solution for this case is to use the `socket::clone()` method to make a copy of the socket. This will use the system's `dup()` function or similar create another socket with a duplicated copy of the socket handle. This has the added benefit that each copy of the socket can maintain an independent lifetime. The underlying socket will not be closed until both objects go out of scope.
-
-    sockpp::tcp_connector conn({host, port});
-
-    auto cloneRes = conn.clone();
-    if (!cloneRes)
-        report_error(cloneRes.error_message());
-    std::thread rdThr(read_thread_func, cloneRes.release());
-
-The `socket::shutdown()` method can be used to communicate the intent to close the socket from one of these objects to the other without needing another thread signaling mechanism.
 
 See the [tcpechomt.cpp](https://github.com/fpagliughi/sockpp/blob/master/examples/tcp/tcpechomt.cpp) example.
