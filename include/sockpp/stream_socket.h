@@ -179,25 +179,6 @@ public:
      */
     result<size_t> read(const std::vector<iovec>& ranges);
     /**
-     * Set a timeout for read operations.
-     * Sets the timeout that the device uses for read operations. Not all
-     * devices support timeouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
-     */
-    virtual result<> read_timeout(const microseconds& to);
-    /**
-     * Set a timeout for read operations.
-     * Sets the timeout that the device uses for read operations. Not all
-     * devices support timeouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
-     */
-    template <class Rep, class Period>
-    result<> read_timeout(const duration<Rep, Period>& to) {
-        return read_timeout(std::chrono::duration_cast<microseconds>(to));
-    }
-    /**
      * Writes the buffer to the socket.
      * @param buf The buffer to write
      * @param n The number of bytes in the buffer.
@@ -258,25 +239,6 @@ public:
      * @return The number of bytes written, or @em -1 on error.
      */
     virtual result<size_t> write(const std::vector<iovec>& ranges);
-    /**
-     * Set a timeout for write operations.
-     * Sets the timeout that the device uses for write operations. Not all
-     * devices support timeouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
-     */
-    virtual result<> write_timeout(const microseconds& to);
-    /**
-     * Set a timeout for write operations.
-     * Sets the timeout that the device uses for write operations. Not all
-     * devices support timeouts, so the caller should prepare for failure.
-     * @param to The amount of time to wait for the operation to complete.
-     * @return @em true on success, @em false on failure.
-     */
-    template <class Rep, class Period>
-    result<> write_timeout(const duration<Rep, Period>& to) {
-        return write_timeout(std::chrono::duration_cast<microseconds>(to));
-    }
 };
 
 /////////////////////////////////////////////////////////////////////////////

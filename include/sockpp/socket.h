@@ -650,6 +650,38 @@ public:
         return set_option<unsigned int>(SOL_SOCKET, SO_SNDBUF, sz);
     }
     /**
+     * Sets the timeout for receive operations on the socket.
+     * @param to The amount of time to wait for a receive operation to
+     *           complete.
+     * @return An error code on failure.
+     */
+    virtual result<> read_timeout(const microseconds& to);
+    /**
+     * Sets the timeout for receive operations on the socket.
+     * @param to The amount of time to wait for a receive operation to
+     *           complete.
+     * @return An error code on failure.
+     */
+    template <class Rep, class Period>
+    result<> read_timeout(const duration<Rep, Period>& to) {
+        return read_timeout(std::chrono::duration_cast<microseconds>(to));
+    }
+    /**
+     * Sets the timeout for send operations on the socket.
+     * @param to The amount of time to wait for a send operation to complete.
+     * @return An error code on failure.
+     */
+    virtual result<> write_timeout(const microseconds& to);
+    /**
+     * Sets the timeout for send operations on the socket.
+     * @param to The amount of time to wait for a send operation to complete.
+     * @return An error code on failure.
+     */
+    template <class Rep, class Period>
+    result<> write_timeout(const duration<Rep, Period>& to) {
+        return write_timeout(std::chrono::duration_cast<microseconds>(to));
+    }
+    /**
      * Shuts down all or part of the full-duplex connection.
      * @param how Which part of the connection should be shut:
      *  	@li SHUT_RD   (0) Further reads disallowed.

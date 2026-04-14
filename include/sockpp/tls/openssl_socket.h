@@ -178,14 +178,14 @@ public:
 
     using base::read;
     result<size_t> read(void* buf, size_t n);
-    result<> read_timeout(const microseconds& to);
+    result<> read_timeout(const microseconds& to) override;
 
     using base::write;
     result<size_t> write(const void* buf, size_t n);
     result<size_t> write(const std::vector<iovec>& ranges) {
         return ranges.empty() ? 0 : write(ranges[0].iov_base, ranges[0].iov_len);
     }
-    result<> write_timeout(const microseconds& to);
+    result<> write_timeout(const microseconds& to) override;
 
     result<> set_non_blocking(bool on) {
         // TODO: Implement

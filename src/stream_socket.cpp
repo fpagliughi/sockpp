@@ -119,18 +119,6 @@ result<size_t> stream_socket::read(const std::vector<iovec>& ranges) {
 
 // --------------------------------------------------------------------------
 
-result<> stream_socket::read_timeout(const microseconds& to) {
-    auto tv =
-#if defined(_WIN32)
-        DWORD(duration_cast<milliseconds>(to).count());
-#else
-        to_timeval(to);
-#endif
-    return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
-}
-
-// --------------------------------------------------------------------------
-
 result<size_t> stream_socket::write(const void* buf, size_t n) {
 #if defined(_WIN32)
     auto cbuf = reinterpret_cast<const char*>(buf);
@@ -181,19 +169,6 @@ result<size_t> stream_socket::write(const std::vector<iovec>& ranges) {
         return result<size_t>::from_last_error();
     return size_t(nwritten);
 #endif
-}
-
-// --------------------------------------------------------------------------
-
-result<> stream_socket::write_timeout(const microseconds& to) {
-    auto tv =
-#if defined(_WIN32)
-        DWORD(duration_cast<milliseconds>(to).count());
-#else
-        to_timeval(to);
-#endif
-
-    return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -69,6 +69,30 @@ timeval to_timeval(const microseconds& dur) {
     return tv;
 }
 
+// --------------------------------------------------------------------------
+
+result<> socket::read_timeout(const microseconds& to) {
+    auto tv =
+#if defined(_WIN32)
+        DWORD(duration_cast<milliseconds>(to).count());
+#else
+        to_timeval(to);
+#endif
+    return set_option(SOL_SOCKET, SO_RCVTIMEO, tv);
+}
+
+// --------------------------------------------------------------------------
+
+result<> socket::write_timeout(const microseconds& to) {
+    auto tv =
+#if defined(_WIN32)
+        DWORD(duration_cast<milliseconds>(to).count());
+#else
+        to_timeval(to);
+#endif
+    return set_option(SOL_SOCKET, SO_SNDTIMEO, tv);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 //							socket_initializer
 /////////////////////////////////////////////////////////////////////////////
