@@ -275,7 +275,7 @@ jobs:
         install: >-
           mingw-w64-x86_64-gcc
           mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-catch2
+          mingw-w64-x86_64-catch
           mingw-w64-x86_64-ninja
 
     - name: Configure CMake
