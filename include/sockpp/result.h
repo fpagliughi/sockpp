@@ -209,28 +209,50 @@ public:
         int err = get_last_errno();
 #if defined(_WIN32)
         switch (err) {
-            case WSAEWOULDBLOCK:   return std::make_error_code(errc::operation_would_block);
-            case WSAEINPROGRESS:   return std::make_error_code(errc::operation_in_progress);
-            case WSAEALREADY:      return std::make_error_code(errc::already_connected);
-            case WSAENOTSOCK:      return std::make_error_code(errc::not_a_socket);
-            case WSAECONNREFUSED:  return std::make_error_code(errc::connection_refused);
-            case WSAECONNRESET:    return std::make_error_code(errc::connection_reset);
-            case WSAECONNABORTED:  return std::make_error_code(errc::connection_aborted);
-            case WSAETIMEDOUT:     return std::make_error_code(errc::timed_out);
-            case WSAEHOSTUNREACH:  return std::make_error_code(errc::host_unreachable);
-            case WSAENETUNREACH:   return std::make_error_code(errc::network_unreachable);
-            case WSAEADDRINUSE:    return std::make_error_code(errc::address_in_use);
-            case WSAEADDRNOTAVAIL: return std::make_error_code(errc::address_not_available);
-            case WSAEMSGSIZE:      return std::make_error_code(errc::message_size);
-            case WSAEACCES:        return std::make_error_code(errc::permission_denied);
-            case WSAEFAULT:        return std::make_error_code(errc::bad_address);
-            case WSAEINVAL:        return std::make_error_code(errc::invalid_argument);
-            case WSAEMFILE:        return std::make_error_code(errc::too_many_files_open);
-            case WSAEISCONN:       return std::make_error_code(errc::already_connected);
-            case WSAENOTCONN:      return std::make_error_code(errc::not_connected);
-            case WSAESHUTDOWN:     return std::make_error_code(errc::broken_pipe);
-            case WSAENETDOWN:      return std::make_error_code(errc::network_down);
-            default:               return error_code{err, std::system_category()};
+            case WSAEWOULDBLOCK:
+                return std::make_error_code(errc::operation_would_block);
+            case WSAEINPROGRESS:
+                return std::make_error_code(errc::operation_in_progress);
+            case WSAEALREADY:
+                return std::make_error_code(errc::already_connected);
+            case WSAENOTSOCK:
+                return std::make_error_code(errc::not_a_socket);
+            case WSAECONNREFUSED:
+                return std::make_error_code(errc::connection_refused);
+            case WSAECONNRESET:
+                return std::make_error_code(errc::connection_reset);
+            case WSAECONNABORTED:
+                return std::make_error_code(errc::connection_aborted);
+            case WSAETIMEDOUT:
+                return std::make_error_code(errc::timed_out);
+            case WSAEHOSTUNREACH:
+                return std::make_error_code(errc::host_unreachable);
+            case WSAENETUNREACH:
+                return std::make_error_code(errc::network_unreachable);
+            case WSAEADDRINUSE:
+                return std::make_error_code(errc::address_in_use);
+            case WSAEADDRNOTAVAIL:
+                return std::make_error_code(errc::address_not_available);
+            case WSAEMSGSIZE:
+                return std::make_error_code(errc::message_size);
+            case WSAEACCES:
+                return std::make_error_code(errc::permission_denied);
+            case WSAEFAULT:
+                return std::make_error_code(errc::bad_address);
+            case WSAEINVAL:
+                return std::make_error_code(errc::invalid_argument);
+            case WSAEMFILE:
+                return std::make_error_code(errc::too_many_files_open);
+            case WSAEISCONN:
+                return std::make_error_code(errc::already_connected);
+            case WSAENOTCONN:
+                return std::make_error_code(errc::not_connected);
+            case WSAESHUTDOWN:
+                return std::make_error_code(errc::broken_pipe);
+            case WSAENETDOWN:
+                return std::make_error_code(errc::network_down);
+            default:
+                return error_code{err, std::system_category()};
         }
 #else
         return error_code{err, std::system_category()};

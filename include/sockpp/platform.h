@@ -50,11 +50,12 @@
 #include <cstdint>
 
 #if defined(_WIN32)
-    // #pragma warning(4 : 4996)	// Deprecated functions (CRT & all)
-    // #pragma warning(4 : 4250)	// Inheritance via dominance
-
     #if !defined(_WIN32_WINNT)
-        #define _WIN32_WINNT 0x0600
+        // Fix for MinGW to set Winsock compat version
+        // 0x0600 (Vista) Seems the bare minimum
+        // 0x0601 (Win7)  Decent mix of compatibilty and features
+        // 0x0A00 (Win10) Modern Windows
+        #define _WIN32_WINNT 0x0601
     #endif
 
     #if !defined(WIN32_LEAN_AND_MEAN)
