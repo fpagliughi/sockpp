@@ -53,6 +53,10 @@
     // #pragma warning(4 : 4996)	// Deprecated functions (CRT & all)
     // #pragma warning(4 : 4250)	// Inheritance via dominance
 
+    #if !defined(_WIN32_WINNT)
+        #define _WIN32_WINNT 0x0600
+    #endif
+
     #if !defined(WIN32_LEAN_AND_MEAN)
         #define WIN32_LEAN_AND_MEAN
     #endif
