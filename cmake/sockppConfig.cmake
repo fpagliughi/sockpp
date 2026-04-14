@@ -4,7 +4,7 @@
 #
 #   Sockpp::sockpp
 #
-# This is for whichever target is build (shared or static). 
+# This is for whichever target is build (shared or static).
 # If both are built it is for the shared target.
 #
 # One or both of the following import targets will be created depending

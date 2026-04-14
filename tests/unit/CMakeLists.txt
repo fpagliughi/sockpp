@@ -57,7 +57,7 @@ find_package(Threads REQUIRED)
 
 # --- Executables ---
 
-add_executable(unit_tests 
+add_executable(unit_tests
     unit_tests.cpp
     test_inet_address.cpp
     test_inet6_address.cpp

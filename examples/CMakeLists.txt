@@ -61,7 +61,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 # --- Optional secure sockets ---
- 
+
 if(SOCKPP_WITH_TLS)
   add_subdirectory(tls)
 endif()

@@ -146,7 +146,7 @@ write_basic_package_version_file(
 )
 
 install(
-    DIRECTORY 
+    DIRECTORY
         include/
         ${SOCKPP_GENERATED_DIR}/include/
     DESTINATION

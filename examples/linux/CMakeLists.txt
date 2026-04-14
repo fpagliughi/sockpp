@@ -1,6 +1,6 @@
 # CMakeLists.txt
 #
-# CMake file for the Linux SocketCAN sample applications in the 
+# CMake file for the Linux SocketCAN sample applications in the
 # 'sockpp' library.
 #
 # ---------------------------------------------------------------------------
@@ -42,7 +42,7 @@
 if(SOCKPP_WITH_CAN)
     # --- Executables ---
 
-    set(EXECUTABLES 
+    set(EXECUTABLES
     	canbustime
     	canbusrecv
     )

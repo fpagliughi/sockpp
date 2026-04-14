@@ -147,11 +147,11 @@ foreach(TARGET ${SOCKPP_TARGETS})
 
     if(SOCKPP_WITH_OPENSSL)
         target_link_libraries(${TARGET} PUBLIC
-            OpenSSL::SSL 
+            OpenSSL::SSL
             OpenSSL::Crypto
         )
     elseif(SOCKPP_WITH_MBEDTLS)
-        target_link_libraries(${TARGET} PUBLIC 
+        target_link_libraries(${TARGET} PUBLIC
             MbedTLS::mbedtls
             MbedTLS::mbedcrypto
             MbedTLS::mbedx509
