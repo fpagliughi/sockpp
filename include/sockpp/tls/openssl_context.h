@@ -45,6 +45,7 @@
 #define __sockpp_tls_openssl_context_h
 
 #include <openssl/ssl.h>
+#include <openssl/x509.h>
 
 #include <functional>
 #include <memory>
@@ -54,6 +55,7 @@
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
 #include "sockpp/tls/error.h"
+#include "sockpp/tls/openssl_certificate.h"
 #include "sockpp/types.h"
 #include "sockpp/version.h"
 
@@ -101,12 +103,17 @@ private:
 
     mutable int status_ = 0;
     std::function<bool(const string&)> auth_callback_;
+    /** Pinned certificate for allow_only_certificate(), if set. */
+    std::optional<tls_certificate> pinned_cert_;
 
     // Non-copyable
     tls_context(const tls_context&) = delete;
     tls_context& operator=(const tls_context&) = delete;
 
     friend class tls_socket;
+
+    /** Verify callback used when a certificate is pinned. */
+    static int pin_verify_cb(X509_STORE_CTX* store_ctx, void* arg);
 
 public:
     /**
@@ -213,35 +220,43 @@ public:
     result<> set_key_file(const string& keyFile);
     /**
      * Overrides the set of trusted root certificates used for validation.
+     * The @p certData should be a PEM-encoded string containing one or more
+     * CA certificates. This replaces the entire existing trust store.
+     * @param certData PEM-encoded CA certificate(s).
+     * @return Error code on failure.
      */
-    void set_root_certs(const string& certData);
+    result<> set_root_certs(const string& certData);
     /**
-     * Configures whether the peer is required to present a valid
-     * certificate, for a connection using the given role.
+     * Configures whether the peer is required to present a valid certificate.
      *
-     * @li For the CLIENT role the default is true; if you change to false,
-     *   you take responsibility for validating the server certificate
-     *   yourself!
-     * @li For the SERVER role the default is false; you can change it to
-     *   true to require client certificate authentication.
+     * @li For a CLIENT context, the default is to verify the server certificate.
+     *   Pass @p require=false to disable this (you then take responsibility for
+     *   validating the server certificate yourself).
+     * @li For a SERVER context, the default is to not request a client
+     *   certificate. Pass @p require=true to enable mutual TLS (mTLS).
      *
-     * @param role  The role you are configuring this setting for
      * @param require Pass true to require a valid peer certificate, false
-     *  			  to not require.
-     * @param sendCAList Pass true to automatically generate a list of
-     *  				 trusted CAs for the received client cert, if
-     *  				 possible (only applies when role == SERVER)
+     *                to not require one.
+     * @param sendCAList Pass true to send the list of trusted CA names to the
+     *                   client in the TLS handshake (server only; derived from
+     *                   the configured trust store).
      */
-    void require_peer_cert(role_t role, bool require, bool sendCAList);
+    void require_peer_cert(bool require, bool sendCAList = false);
 
     /**
-     * Requires that the peer have the exact certificate given.
-     * This is known as "cert-pinning". It's more secure, but requires that the client
-     * update its copy of the certificate whenever the server updates it.
-     * @param certData The X.509 certificate in DER or PEM form; or an empty string for
-     *  				no pinning (the default).
+     * Pins the connection to a specific peer certificate (cert-pinning).
+     *
+     * When set, the TLS handshake will succeed only if the peer presents this
+     * exact certificate somewhere in its chain, in addition to normal CA
+     * validation.
+     *
+     * Pass an invalid (default-constructed) certificate to clear the pin
+     * and revert to normal CA-only validation.
+     *
+     * @param cert The certificate to pin to, or a default-constructed
+     *             @ref tls_certificate to clear the pin.
      */
-    void allow_only_certificate(const string& certData);
+    void allow_only_certificate(const tls_certificate& cert);
     /**
      * A function that can be called during the TLS handshake to examine the peer's
      * certificate.
@@ -260,7 +275,16 @@ public:
      */
     const auth_callback& get_auth_callback() const { return auth_callback_; }
 
-    void set_identity(const string& certificate_data, const string& private_key_data);
+    /**
+     * Loads the local certificate chain and private key from PEM strings.
+     * This is the in-memory equivalent of calling @ref set_cert_file and
+     * @ref set_key_file. The certificate string may contain a full chain
+     * (leaf cert followed by any intermediate certs).
+     * @param cert_pem PEM-encoded certificate chain.
+     * @param key_pem PEM-encoded private key.
+     * @return Error code on failure.
+     */
+    result<> set_identity(const string& cert_pem, const string& key_pem);
     /**
      * Creates a new \ref tls_socket instance that wraps the given connector
      * socket.
@@ -276,7 +300,7 @@ public:
      *  				validation.
      * @return A new \ref tls_socket to use for secure I/O.
      */
-    tls_socket wrap_socket(stream_socket&& sock, const string& peer_name = string{});
+    result<tls_socket> wrap_socket(stream_socket&& sock, const string& peer_name = string{});
 };
 
 /////////////////////////////////////////////////////////////////////////////

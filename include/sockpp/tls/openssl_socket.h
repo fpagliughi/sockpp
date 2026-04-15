@@ -67,7 +67,7 @@ class tls_socket : public stream_socket
     using base = stream_socket;
 
     /** The SSL structure */
-    SSL* ssl_;
+    SSL* ssl_ = nullptr;
 
     /**
      * Checks the return value from an OpenSSL I/O function and return a
@@ -85,6 +85,10 @@ class tls_socket : public stream_socket
     tls_socket& operator=(const socket&) = delete;
 
 public:
+    /**
+     * Creates an empty, invalid TLS socket.
+     */
+    tls_socket() = default;
     /**
      * Creates a new, unconnected, TLS socket.
      * @param ctx The TLS context
@@ -177,17 +181,17 @@ public:
     // I/O primitives
 
     using base::read;
-    result<size_t> read(void* buf, size_t n);
+    result<size_t> read(void* buf, size_t n) override;
     result<> read_timeout(const microseconds& to) override;
 
     using base::write;
-    result<size_t> write(const void* buf, size_t n);
-    result<size_t> write(const std::vector<iovec>& ranges) {
+    result<size_t> write(const void* buf, size_t n) override;
+    result<size_t> write(const std::vector<iovec>& ranges) override {
         return ranges.empty() ? 0 : write(ranges[0].iov_base, ranges[0].iov_len);
     }
     result<> write_timeout(const microseconds& to) override;
 
-    result<> set_non_blocking(bool on) {
+    result<> set_non_blocking(bool on) override {
         // TODO: Implement
         (void)on;
         return none{};

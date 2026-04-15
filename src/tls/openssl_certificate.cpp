@@ -45,6 +45,32 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
+result<tls_certificate> tls_certificate::from_pem(const string& pem) {
+    auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
+    std::unique_ptr<BIO, decltype(bio_deleter)> bio{
+        ::BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())),
+        bio_deleter
+    };
+    if (!bio)
+        return tls_last_error();
+
+    ::ERR_clear_error();
+    X509* cert = ::PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr);
+    if (!cert)
+        return tls_last_error();
+
+    return tls_certificate{cert};
+}
+
+result<tls_certificate> tls_certificate::from_der(const binary& der) {
+    const uint8_t* p = der.data();
+    X509* cert = ::d2i_X509(nullptr, &p, static_cast<long>(der.size()));
+    if (!cert)
+        return tls_last_error();
+
+    return tls_certificate{cert};
+}
+
 string tls_certificate::subject_name() const {
     auto name = X509_get_subject_name(cert_);
     if (!name)

@@ -10,7 +10,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2025 Frank Pagliughi
+// Copyright (c) 2025-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,11 +46,14 @@
 
 #include <openssl/ssl.h>
 
+#include "sockpp/result.h"
+#include "sockpp/tls/openssl_error.h"
 #include "sockpp/types.h"
 
 namespace sockpp {
 
-// Forward declaration
+// Forward declarations
+class tls_context;
 class tls_socket;
 
 /////////////////////////////////////////////////////////////////////////////
@@ -61,26 +64,83 @@ class tls_socket;
 class tls_certificate
 {
     /** The certificate library struct */
-    X509* cert_;
+    X509* cert_ = nullptr;
 
+    friend class tls_context;
     friend class tls_socket;
 
-    /** Object takes ownership of the pointer */
+    /** Takes ownership of an existing X509 pointer. */
     tls_certificate(X509* cert) : cert_{cert} {}
 
 public:
     /**
-     * Destructor.
+     * Creates an empty, invalid certificate.
+     */
+    tls_certificate() = default;
+    /**
+     * Copy constructor. Increments the OpenSSL reference count.
+     */
+    tls_certificate(const tls_certificate& other) : cert_{other.cert_} {
+        if (cert_)
+            ::X509_up_ref(cert_);
+    }
+    /**
+     * Move constructor.
+     */
+    tls_certificate(tls_certificate&& other) noexcept : cert_{other.cert_} {
+        other.cert_ = nullptr;
+    }
+    /**
+     * Destructor. Decrements the OpenSSL reference count.
      */
     ~tls_certificate() { ::X509_free(cert_); }
+    /**
+     * Parses a PEM-encoded certificate string.
+     * @param pem A PEM-encoded X.509 certificate.
+     * @return The certificate, or an error code on failure.
+     */
+    static result<tls_certificate> from_pem(const string& pem);
+    /**
+     * Parses a DER-encoded certificate blob.
+     * @param der A DER-encoded X.509 certificate.
+     * @return The certificate, or an error code on failure.
+     */
+    static result<tls_certificate> from_der(const binary& der);
+    /**
+     * Copy assignment. Increments the OpenSSL reference count.
+     */
+    tls_certificate& operator=(const tls_certificate& rhs) {
+        if (&rhs != this) {
+            ::X509_free(cert_);
+            cert_ = rhs.cert_;
+            if (cert_)
+                ::X509_up_ref(cert_);
+        }
+        return *this;
+    }
+    /**
+     * Move assignment.
+     */
+    tls_certificate& operator=(tls_certificate&& rhs) noexcept {
+        if (&rhs != this) {
+            ::X509_free(cert_);
+            cert_ = rhs.cert_;
+            rhs.cert_ = nullptr;
+        }
+        return *this;
+    }
+    /**
+     * Checks whether this object holds a valid certificate.
+     */
+    bool is_valid() const { return cert_ != nullptr; }
     /**
      * Gets the subject name for the certificate.
      * @return The subject name for the certificate.
      */
     string subject_name() const;
     /**
-     * Gets the subject name for the certificate.
-     * @return The subject name for the certificate.
+     * Gets the issuer name for the certificate.
+     * @return The issuer name for the certificate.
      */
     string issuer_name() const;
     /**
