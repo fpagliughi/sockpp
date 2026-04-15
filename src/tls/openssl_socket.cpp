@@ -119,6 +119,14 @@ string tls_socket::peer_certificate_status_message() {
 }
 #endif
 
+uint32_t tls_socket::peer_certificate_status() {
+    return (uint32_t)::SSL_get_verify_result(ssl_);
+}
+
+string tls_socket::peer_certificate_status_message() {
+    return string{::X509_verify_cert_error_string(::SSL_get_verify_result(ssl_))};
+}
+
 result<> tls_socket::set_host_name(const string& hostname) {
     return tls_check_res_none(::SSL_set_tlsext_host_name(ssl_, hostname.c_str()));
 }
@@ -141,7 +149,6 @@ result<size_t> tls_socket::read(void* buf, size_t n) {
 }
 
 result<> tls_socket::read_timeout(const microseconds& to) {
-    // TODO: Is this adequate?
     return stream_socket::read_timeout(to);
 }
 
@@ -152,7 +159,6 @@ result<size_t> tls_socket::write(const void* buf, size_t n) {
 }
 
 result<> tls_socket::write_timeout(const microseconds& to) {
-    // TODO: Is this adequate?
     return stream_socket::write_timeout(to);
 }
 

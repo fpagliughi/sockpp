@@ -70,14 +70,32 @@ class tls_socket : public stream_socket
     SSL* ssl_ = nullptr;
 
     /**
-     * Checks the return value from an OpenSSL I/O function and return a
+     * Checks the return value from an OpenSSL I/O function and returns a
      * result for the success or failure.
-     * @param ret The return value from the function
-     * @param nx The number of bytes read/written on success.
-     * @return The result of the operation
+     *
+     * Must be called immediately after the OpenSSL I/O call since it reads
+     * SSL_get_error() and ERR_get_error() which are consumed on each call.
+     *
+     * @param ret The return value from the OpenSSL I/O function.
+     * @param nx The number of bytes read/written reported by OpenSSL.
+     * @return The number of bytes transferred on success, or an error code.
+     *         Returns @c errc::operation_would_block for SSL_ERROR_WANT_READ
+     *         or SSL_ERROR_WANT_WRITE (non-blocking mode); the caller must
+     *         wait for the fd to become ready and retry with identical
+     *         arguments.
      */
     result<size_t> tls_check_io(int ret, size_t nx) {
-        return (ret <= 0) ? result<size_t>{tls_last_error()} : result<size_t>{nx};
+        if (ret > 0)
+            return nx;
+        switch (::SSL_get_error(ssl_, ret)) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+                return errc::operation_would_block;
+            case SSL_ERROR_SYSCALL:
+                return error_code{errno, std::system_category()};
+            default:
+                return tls_last_error();
+        }
     }
 
     // Non-copyable.
@@ -148,17 +166,19 @@ public:
      */
     std::optional<tls_certificate> peer_certificate();
 
-#if 0
+    // TODO: The MbedTLS implementation returns a bitmask of MBEDTLS_X509_BADCERT_*
+    // flags, where multiple bits can be set simultaneously. Here, OpenSSL returns
+    // a single X509_V_* error code. Consider whether the API should be unified.
     /**
-     *
+     * Returns the result of peer certificate verification after the handshake.
+     * @return Zero (@ref X509_V_OK) on success, or an X509_V_ERR_* error code.
      */
     uint32_t peer_certificate_status();
     /**
-     * Returns an error message describing any problem with the peer's
-     * certificate.
+     * Returns a human-readable description of the peer certificate verification
+     * result.
      */
     string peer_certificate_status_message();
-#endif
 
     /**
      * Sets the Server Name Indication (SNI) for use by Secure Sockets
@@ -191,11 +211,7 @@ public:
     }
     result<> write_timeout(const microseconds& to) override;
 
-    result<> set_non_blocking(bool on) override {
-        // TODO: Implement
-        (void)on;
-        return none{};
-    }
+    result<> set_non_blocking(bool on) override { return base::set_non_blocking(on); }
 
     /**
      * Determines if the socket received a shutdown from the peer.
