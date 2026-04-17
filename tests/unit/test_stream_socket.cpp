@@ -6,7 +6,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2019-2023 Frank Pagliughi
+// Copyright (c) 2019-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,14 +38,39 @@
 // --------------------------------------------------------------------------
 //
 
+#include <cstring>
 #include <string>
 
 #include "catch2_version.h"
 #include "sockpp/inet_address.h"
 #include "sockpp/stream_socket.h"
+#include "sockpp/tcp_acceptor.h"
+#include "sockpp/tcp_connector.h"
 
 using namespace std;
 using namespace sockpp;
+
+// --------------------------------------------------------------------------
+// Helper: create a connected TCP loopback pair.
+// The acceptor binds to port 0 so the OS picks a free port.
+// --------------------------------------------------------------------------
+
+static auto make_tcp_pair() {
+    tcp_acceptor acc{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(acc);
+    auto addr = acc.address();
+    tcp_connector cli{inet_address(INADDR_LOOPBACK, addr.port())};
+    REQUIRE(cli);
+    auto srv_res = acc.accept();
+    REQUIRE(srv_res);
+    return std::pair<stream_socket, stream_socket>{
+        std::move(cli), srv_res.release()
+    };
+}
+
+// --------------------------------------------------------------------------
+// Construction
+// --------------------------------------------------------------------------
 
 TEST_CASE("stream_socket default constructor", "[stream_socket]") {
     stream_socket sock;
@@ -68,44 +93,106 @@ TEST_CASE("stream_socket handle constructor", "[stream_socket]") {
     }
 }
 
-#if 0
-TEST_CASE("stream_socket address constructor", "[stream_socket]") {
-	SECTION("valid address") {
-		const auto ADDR = inet_address("localhost", TEST_PORT);
+// --------------------------------------------------------------------------
+// I/O on invalid socket
+// --------------------------------------------------------------------------
 
-		stream_socket sock(ADDR);
-		REQUIRE(sock);
-		REQUIRE(sock.address() == ADDR);
-	}
+TEST_CASE("stream_socket write on invalid socket fails", "[stream_socket][io]") {
+    stream_socket sock;
+    REQUIRE(!sock);
 
-	SECTION("invalid address throws") {
-		const auto ADDR = sock_address_any();
+    const string MSG{"hello"};
+    auto res = sock.write(MSG);
 
-		try {
-			stream_socket sock(ADDR);
-			REQUIRE(false);
-		}
-		catch (const system_error& exc) {
-			REQUIRE(exc.code() == errc::address_family_not_supported);
-		}
-	}
-
-	SECTION("invalid address ec") {
-		const auto ADDR = sock_address_any();
-
-		error_code ec;
-		stream_socket sock{ADDR, ec};
-
-		REQUIRE(ec);
-		REQUIRE(!sock);
-		REQUIRE(ec == errc::address_family_not_supported);
-	}
+    REQUIRE(!res);
 }
-#endif
+
+TEST_CASE("stream_socket read on invalid socket fails", "[stream_socket][io]") {
+    stream_socket sock;
+    REQUIRE(!sock);
+
+    char buf[8];
+    auto res = sock.read(buf, sizeof(buf));
+
+    REQUIRE(!res);
+}
 
 // --------------------------------------------------------------------------
-// Connected tests
+// Connected I/O
+// --------------------------------------------------------------------------
 
-TEST_CASE("stream_socket readn, written", "[stream_socket]") {
-    // auto lsock = stream_socket::create(AF
+TEST_CASE("stream_socket write and read", "[stream_socket][io]") {
+    auto [writer, reader] = make_tcp_pair();
+
+    const string MSG{"Hello, world!"};
+
+    auto wres = writer.write(MSG);
+    REQUIRE(wres);
+    REQUIRE(wres.value() == MSG.size());
+
+    char buf[64]{};
+    auto rres = reader.read(buf, MSG.size());
+    REQUIRE(rres);
+    REQUIRE(rres.value() == MSG.size());
+    REQUIRE(string(buf, MSG.size()) == MSG);
+}
+
+TEST_CASE("stream_socket write_n and read_n", "[stream_socket][io]") {
+    auto [writer, reader] = make_tcp_pair();
+
+    const string MSG{"Guaranteed full write and read"};
+
+    auto wres = writer.write_n(MSG.data(), MSG.size());
+    REQUIRE(wres);
+    REQUIRE(wres.value() == MSG.size());
+
+    char buf[64]{};
+    auto rres = reader.read_n(buf, MSG.size());
+    REQUIRE(rres);
+    REQUIRE(rres.value() == MSG.size());
+    REQUIRE(string(buf, MSG.size()) == MSG);
+}
+
+TEST_CASE("stream_socket write string overload", "[stream_socket][io]") {
+    auto [writer, reader] = make_tcp_pair();
+
+    const string MSG{"string overload test"};
+
+    // write(const string&) is the convenience overload
+    auto wres = writer.write(MSG);
+    REQUIRE(wres);
+    REQUIRE(wres.value() == MSG.size());
+
+    char buf[64]{};
+    auto rres = reader.read(buf, MSG.size());
+    REQUIRE(rres);
+    REQUIRE(string(buf, MSG.size()) == MSG);
+}
+
+TEST_CASE("stream_socket EOF on closed writer", "[stream_socket][io]") {
+    auto [writer, reader] = make_tcp_pair();
+
+    // Closing the writer causes the reader to get EOF (0-byte read).
+    writer.close();
+
+    char buf[8];
+    auto rres = reader.read(buf, sizeof(buf));
+    REQUIRE(rres);
+    REQUIRE(rres.value() == 0);
+}
+
+// --------------------------------------------------------------------------
+// clone()
+// --------------------------------------------------------------------------
+
+TEST_CASE("stream_socket clone", "[stream_socket]") {
+    auto sock = stream_socket::create(AF_INET).release();
+    REQUIRE(sock.is_open());
+
+    auto res = sock.clone();
+    REQUIRE(res);
+
+    auto dup = res.release();
+    REQUIRE(dup.is_open());
+    REQUIRE(dup.handle() != sock.handle());
 }

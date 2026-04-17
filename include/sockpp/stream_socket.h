@@ -147,7 +147,7 @@ public:
      *         successful, an error code on failure.
      */
     result<bool> nodelay() const noexcept {
-        return get_option<bool>(IPPROTO_TCP, TCP_NODELAY);
+        return get_option(IPPROTO_TCP, TCP_NODELAY);
     }
     /**
      * Sets the value of the `TCP_NODELAY` option on the socket.

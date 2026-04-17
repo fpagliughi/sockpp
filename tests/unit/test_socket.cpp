@@ -44,6 +44,10 @@
 #include "sockpp/inet_address.h"
 #include "sockpp/socket.h"
 
+#if !defined(_WIN32)
+    #include "sockpp/unix_stream_socket.h"
+#endif
+
 using namespace sockpp;
 using namespace std::chrono;
 
@@ -265,6 +269,304 @@ TEST_CASE("socket non-blocking mode", "[socket]") {
     REQUIRE(sock.set_non_blocking(false));
 #if !defined(_WIN32)
     REQUIRE(!sock.is_non_blocking());
+#endif
+}
+
+// --------------------------------------------------------------------------
+// Aux function: to_duration / to_timepoint
+// --------------------------------------------------------------------------
+
+TEST_CASE("test to_duration", "[socket][aux]") {
+    SECTION("zero timeval") {
+        timeval tv{0, 0};
+        REQUIRE(to_duration(tv) == microseconds(0));
+    }
+
+    SECTION("seconds only") {
+        timeval tv{3, 0};
+        REQUIRE(to_duration(tv) == seconds(3));
+    }
+
+    SECTION("microseconds only") {
+        timeval tv{0, 750000};
+        REQUIRE(to_duration(tv) == microseconds(750000));
+    }
+
+    SECTION("seconds and microseconds") {
+        timeval tv{2, 500000};
+        REQUIRE(to_duration(tv) == microseconds(2500000));
+    }
+
+    SECTION("round-trip with to_timeval") {
+        const auto orig = microseconds(1234567);
+        REQUIRE(to_duration(to_timeval(orig)) == orig);
+    }
+}
+
+TEST_CASE("test to_timepoint", "[socket][aux]") {
+    SECTION("epoch") {
+        timeval tv{0, 0};
+        auto tp = to_timepoint(tv);
+        REQUIRE(tp.time_since_epoch().count() == 0);
+    }
+
+    SECTION("one second past epoch") {
+        timeval tv{1, 0};
+        auto tp = to_timepoint(tv);
+        auto secs = duration_cast<seconds>(tp.time_since_epoch());
+        REQUIRE(secs.count() == 1);
+    }
+}
+
+// --------------------------------------------------------------------------
+// Domain constructors
+// --------------------------------------------------------------------------
+
+TEST_CASE("socket domain constructors", "[socket]") {
+    SECTION("throwing constructor valid domain") {
+        sockpp::socket sock(AF_INET, SOCK_STREAM);
+        REQUIRE(sock.is_open());
+    }
+
+    SECTION("throwing constructor invalid domain") {
+        REQUIRE_THROWS_AS(sockpp::socket(AF_UNSPEC, SOCK_STREAM), std::system_error);
+    }
+
+    SECTION("error_code constructor valid domain") {
+        error_code ec;
+        sockpp::socket sock(AF_INET, SOCK_STREAM, ec);
+        REQUIRE(!ec);
+        REQUIRE(sock.is_open());
+    }
+
+    SECTION("error_code constructor invalid domain") {
+        error_code ec;
+        sockpp::socket sock(AF_UNSPEC, SOCK_STREAM, ec);
+        REQUIRE(ec);
+        REQUIRE(!sock.is_open());
+    }
+}
+
+// --------------------------------------------------------------------------
+// Move assignment
+// --------------------------------------------------------------------------
+
+TEST_CASE("socket move assignment", "[socket]") {
+    auto res = socket::create(AF_INET, SOCK_STREAM);
+    REQUIRE(res);
+    auto src = res.release();
+    const auto h = src.handle();
+
+    sockpp::socket dst;
+    REQUIRE(!dst.is_open());
+
+    dst = std::move(src);
+
+    REQUIRE(dst.is_open());
+    REQUIRE(dst.handle() == h);
+    REQUIRE(!src.is_open());
+    REQUIRE(src.handle() == INVALID_SOCKET);
+}
+
+// --------------------------------------------------------------------------
+// close()
+// --------------------------------------------------------------------------
+
+TEST_CASE("socket close", "[socket]") {
+    SECTION("close open socket succeeds") {
+        auto sock = socket::create(AF_INET, SOCK_STREAM).release();
+        REQUIRE(sock.is_open());
+        REQUIRE(sock.close());
+        REQUIRE(!sock.is_open());
+    }
+
+    SECTION("close already-closed socket is a no-op") {
+        sockpp::socket sock;
+        REQUIRE(!sock.is_open());
+        // Should succeed silently (nothing to close)
+        REQUIRE(sock.close());
+    }
+}
+
+// --------------------------------------------------------------------------
+// clone()
+// --------------------------------------------------------------------------
+
+TEST_CASE("socket clone", "[socket]") {
+    auto sock = socket::create(AF_INET, SOCK_STREAM).release();
+    REQUIRE(sock.is_open());
+
+    auto res = sock.clone();
+    REQUIRE(res);
+
+    auto dup = res.release();
+
+    REQUIRE(dup.is_open());
+    // The duplicate must be a distinct file descriptor.
+    REQUIRE(dup.handle() != sock.handle());
+
+    // Closing one does not invalidate the other.
+    REQUIRE(sock.close());
+    REQUIRE(!sock.is_open());
+    REQUIRE(dup.is_open());
+
+    // The duplicate should still be usable.
+    // On Windows, getsockname() on an unbound socket returns AF_UNSPEC.
+#if defined(_WIN32)
+    REQUIRE(dup.family() == AF_UNSPEC);
+#else
+    REQUIRE(dup.family() == AF_INET);
+#endif
+}
+
+// --------------------------------------------------------------------------
+// peer_address()
+// --------------------------------------------------------------------------
+
+TEST_CASE("socket peer_address", "[socket]") {
+    SECTION("unconnected socket returns empty address") {
+        auto sock = socket::create(AF_INET, SOCK_STREAM).release();
+        REQUIRE(sock.peer_address() == sock_address_any{});
+    }
+
+#if !defined(_WIN32)
+    SECTION("connected socket returns non-empty address") {
+        // socket::pair gives a connected pair of unnamed Unix sockets.
+        auto res = socket::pair(AF_UNIX, SOCK_STREAM);
+        REQUIRE(res);
+        auto [s1, s2] = res.release();
+
+        // An unnamed socket peer has AF_UNIX family even though the path is empty.
+        REQUIRE(s1.peer_address().family() == AF_UNIX);
+        REQUIRE(s2.peer_address().family() == AF_UNIX);
+    }
+#endif
+}
+
+// --------------------------------------------------------------------------
+// Socket options
+// --------------------------------------------------------------------------
+
+TEST_CASE("socket reuse_address", "[socket][options]") {
+    auto sock = socket::create(AF_INET, SOCK_STREAM).release();
+
+    REQUIRE(sock.reuse_address(true));
+    auto res = sock.reuse_address();
+    REQUIRE(res);
+    REQUIRE(res.value() == true);
+
+// macOS treats SO_REUSEADDR as a one-way latch: once set it cannot be cleared.
+#if !defined(__APPLE__)
+    REQUIRE(sock.reuse_address(false));
+    res = sock.reuse_address();
+    REQUIRE(res);
+    REQUIRE(res.value() == false);
+#endif
+}
+
+// SO_REUSEPORT round-trip is only meaningful on Linux.  On macOS/BSD,
+// setsockopt(SO_REUSEPORT) on an unbound SOCK_STREAM socket may succeed but
+// getsockopt reads back 0 — the option is silently ignored, making the
+// round-trip unreliable.  Windows/Cygwin don't expose the option at all.
+#if defined(__linux__)
+TEST_CASE("socket reuse_port", "[socket][options]") {
+    auto sock = socket::create(AF_INET, SOCK_STREAM).release();
+
+    REQUIRE(sock.reuse_port(true));
+    auto res = sock.reuse_port();
+    REQUIRE(res);
+    REQUIRE(res.value() == true);
+}
+#endif
+
+TEST_CASE("socket buffer sizes", "[socket][options]") {
+    auto sock = socket::create(AF_INET, SOCK_STREAM).release();
+
+    SECTION("recv_buffer_size") {
+        // Default size is system-defined but must be positive.
+        auto res = sock.recv_buffer_size();
+        REQUIRE(res);
+        REQUIRE(res.value() > 0);
+
+        // Setting a size succeeds (kernel may round up, so just check no error).
+        REQUIRE(sock.recv_buffer_size(16384));
+        REQUIRE(sock.recv_buffer_size());
+    }
+
+    SECTION("send_buffer_size") {
+        auto res = sock.send_buffer_size();
+        REQUIRE(res);
+        REQUIRE(res.value() > 0);
+
+        REQUIRE(sock.send_buffer_size(16384));
+        REQUIRE(sock.send_buffer_size());
+    }
+}
+
+TEST_CASE("socket timeouts", "[socket][options]") {
+    auto sock = socket::create(AF_INET, SOCK_STREAM).release();
+
+    SECTION("read_timeout succeeds") {
+        REQUIRE(sock.read_timeout(milliseconds(100)));
+    }
+
+    SECTION("write_timeout succeeds") {
+        REQUIRE(sock.write_timeout(milliseconds(200)));
+    }
+
+#if !defined(_WIN32)
+    SECTION("read_timeout causes recv to return an error") {
+        auto res = socket::pair(AF_UNIX, SOCK_STREAM);
+        REQUIRE(res);
+        auto [s1, s2] = res.release();
+
+        // Set a very short timeout; no data will arrive.
+        REQUIRE(s2.read_timeout(milliseconds(1)));
+
+        char buf[1];
+        auto recv_res = s2.recv(buf, sizeof(buf));
+
+        REQUIRE(!recv_res);
+        // Linux reports EAGAIN; some platforms report ETIMEDOUT.
+        REQUIRE((recv_res == errc::resource_unavailable_try_again ||
+                 recv_res == errc::timed_out ||
+                 recv_res == errc::operation_would_block));
+    }
+#endif
+}
+
+// --------------------------------------------------------------------------
+// shutdown()
+// --------------------------------------------------------------------------
+
+TEST_CASE("socket shutdown", "[socket]") {
+    SECTION("shutdown on invalid socket fails") {
+        sockpp::socket sock;
+        REQUIRE(!sock.shutdown(SHUT_RDWR));
+    }
+
+#if !defined(_WIN32)
+    SECTION("shutdown SHUT_WR stops sends, peer reads EOF") {
+        auto res = socket::pair(AF_UNIX, SOCK_STREAM);
+        REQUIRE(res);
+        auto [s1, s2] = res.release();
+
+        REQUIRE(s1.shutdown(SHUT_WR));
+
+        // After the writer shuts down, the reader gets EOF (0 bytes).
+        char buf[4];
+        auto recv_res = s2.recv(buf, sizeof(buf));
+        REQUIRE(recv_res);
+        REQUIRE(recv_res.value() == 0);
+    }
+
+    SECTION("shutdown SHUT_RDWR succeeds on valid socket") {
+        auto res = socket::pair(AF_UNIX, SOCK_STREAM);
+        REQUIRE(res);
+        auto [s1, s2] = res.release();
+
+        REQUIRE(s1.shutdown(SHUT_RDWR));
+    }
 #endif
 }
 

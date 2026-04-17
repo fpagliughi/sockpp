@@ -69,6 +69,7 @@ add_executable(unit_tests
     test_acceptor.cpp
     test_connector.cpp
     test_result.cpp
+    test_poller.cpp
 )
 
 if(UNIX)
