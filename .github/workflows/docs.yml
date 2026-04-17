@@ -4,11 +4,7 @@
 #   /          — mdBook
 #   /api/      — Doxygen HTML
 #
-# Trigger: every push to master, or manually via workflow_dispatch.
-#
-# IMPORTANT: the mdbook.yml workflow on the gh-pages branch must be disabled
-# (remove the deploy step or delete the workflow) to prevent it from
-# overwriting this combined deployment.
+# Triggers on push to master or gh-pages, and supports manual dispatch.
 
 name: Deploy documentation to Pages
 
@@ -59,13 +55,13 @@ jobs:
 
       - name: Build Doxygen
         run: |
-          # Override GENERATE_LATEX and stamp the version from the git tag.
+          # Stamp the version from the git tag if available.
           version=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          {
-            cat Doxyfile
-            echo "GENERATE_LATEX = NO"
-            [ -n "$version" ] && echo "PROJECT_NUMBER = $version"
-          } | doxygen -
+          if [ -n "$version" ]; then
+            ( cat Doxyfile; echo "PROJECT_NUMBER = $version" ) | doxygen -
+          else
+            doxygen Doxyfile
+          fi
 
       - name: Assemble site
         run: |
