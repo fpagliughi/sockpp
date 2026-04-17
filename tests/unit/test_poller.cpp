@@ -63,9 +63,7 @@ static auto make_pair() {
     REQUIRE(cli);
     auto srv_res = acc.accept();
     REQUIRE(srv_res);
-    return std::pair<stream_socket, stream_socket>{
-        std::move(cli), srv_res.release()
-    };
+    return std::pair<stream_socket, stream_socket>{std::move(cli), srv_res.release()};
 #else
     auto res = unix_stream_socket::pair();
     REQUIRE(res);
@@ -280,8 +278,10 @@ TEST_CASE("poller remove middle socket preserves index integrity", "[poller][rem
 
     bool saw_a = false, saw_c = false;
     for (const auto& e : evts) {
-        if (e.sock == &s2a) saw_a = true;
-        if (e.sock == &s2c) saw_c = true;
+        if (e.sock == &s2a)
+            saw_a = true;
+        if (e.sock == &s2c)
+            saw_c = true;
     }
     REQUIRE(saw_a);
     REQUIRE(saw_c);

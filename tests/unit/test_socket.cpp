@@ -506,13 +506,9 @@ TEST_CASE("socket buffer sizes", "[socket][options]") {
 TEST_CASE("socket timeouts", "[socket][options]") {
     auto sock = socket::create(AF_INET, SOCK_STREAM).release();
 
-    SECTION("read_timeout succeeds") {
-        REQUIRE(sock.read_timeout(milliseconds(100)));
-    }
+    SECTION("read_timeout succeeds") { REQUIRE(sock.read_timeout(milliseconds(100))); }
 
-    SECTION("write_timeout succeeds") {
-        REQUIRE(sock.write_timeout(milliseconds(200)));
-    }
+    SECTION("write_timeout succeeds") { REQUIRE(sock.write_timeout(milliseconds(200))); }
 
 #if !defined(_WIN32)
     SECTION("read_timeout causes recv to return an error") {
@@ -528,9 +524,10 @@ TEST_CASE("socket timeouts", "[socket][options]") {
 
         REQUIRE(!recv_res);
         // Linux reports EAGAIN; some platforms report ETIMEDOUT.
-        REQUIRE((recv_res == errc::resource_unavailable_try_again ||
-                 recv_res == errc::timed_out ||
-                 recv_res == errc::operation_would_block));
+        REQUIRE(
+            (recv_res == errc::resource_unavailable_try_again ||
+             recv_res == errc::timed_out || recv_res == errc::operation_would_block)
+        );
     }
 #endif
 }

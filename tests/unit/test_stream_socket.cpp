@@ -63,9 +63,7 @@ static auto make_tcp_pair() {
     REQUIRE(cli);
     auto srv_res = acc.accept();
     REQUIRE(srv_res);
-    return std::pair<stream_socket, stream_socket>{
-        std::move(cli), srv_res.release()
-    };
+    return std::pair<stream_socket, stream_socket>{std::move(cli), srv_res.release()};
 }
 
 // --------------------------------------------------------------------------

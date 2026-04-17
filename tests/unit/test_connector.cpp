@@ -110,11 +110,9 @@ TEST_CASE("tcp_connector connect() method succeeds", "[connector]") {
 
 TEST_CASE("tcp_connector connection refused", "[connector]") {
     // Create a TCP socket bound to port 0 but never listening.
-    // The connector should fail and set ec.
+    // The connector should fail, set ec, and leave the socket closed.
     // Note: the exact error code is platform-dependent — Linux gives
     // ECONNREFUSED, macOS/BSD may give ECONNRESET or a related code.
-    // The connector also keeps its OS socket open even on failure, so
-    // is_open() is not a reliable indicator of success.
     auto bound = socket::create(AF_INET, SOCK_STREAM).release();
     REQUIRE(bound.is_open());
     inet_address bind_addr{INADDR_LOOPBACK, 0};
@@ -125,4 +123,6 @@ TEST_CASE("tcp_connector connection refused", "[connector]") {
     tcp_connector cli{inet_address(INADDR_LOOPBACK, port), ec};
 
     REQUIRE(ec);
+    REQUIRE(!cli.is_open());
+    REQUIRE(!cli);
 }

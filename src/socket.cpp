@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2023 Frank Pagliughi
+// Copyright (c) 2014-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -399,8 +399,6 @@ socket::recv_from(void* buf, size_t n, int flags, sock_address* srcAddr /*=nullp
     sockaddr* p = srcAddr ? srcAddr->sockaddr_ptr() : nullptr;
     socklen_t len = srcAddr ? srcAddr->size() : 0;
     // Winsock requires fromlen to be nullptr whenever from is nullptr;
-    // passing a non-null fromlen with a null from pointer is undefined and
-    // causes WSAEFAULT on some Winsock versions.
     socklen_t* lenp = srcAddr ? &len : nullptr;
 
     // TODO: Check returned length

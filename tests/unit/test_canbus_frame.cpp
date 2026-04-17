@@ -100,9 +100,8 @@ TEST_CASE("canbus_frame raw data constructor", "[canbus][frame]") {
 TEST_CASE("canbus_frame raw data constructor clamps to max length", "[canbus][frame]") {
     constexpr canid_t ID = 0x1;
     // Build a buffer larger than CAN_MAX_DLEN (8 bytes)
-    const uint8_t BUF[CAN_MAX_DLEN + 4] = {
-        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC
-    };
+    const uint8_t BUF[CAN_MAX_DLEN + 4] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66,
+                                           0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC};
 
     canbus_frame frame{ID, BUF, sizeof(BUF)};
 
@@ -314,7 +313,9 @@ TEST_CASE("canbusfd_frame string data constructor", "[canbus][fdframe]") {
     REQUIRE(memcmp(frame.data, DATA.data(), DATA.size()) == 0);
 }
 
-TEST_CASE("canbusfd_frame raw data constructor clamps to max FD length", "[canbus][fdframe]") {
+TEST_CASE(
+    "canbusfd_frame raw data constructor clamps to max FD length", "[canbus][fdframe]"
+) {
     constexpr canid_t ID = 0x2;
     const size_t OVERSIZED = CANFD_MAX_DLEN + 8;
     vector<uint8_t> buf(OVERSIZED, 0xAA);

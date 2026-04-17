@@ -106,7 +106,9 @@ TEST_CASE("sock_address_any equality", "[address]") {
     REQUIRE(!(wa == wc));
 }
 
-TEST_CASE("sock_address equality cross-type (inet_address vs sock_address_any)", "[address]") {
+TEST_CASE(
+    "sock_address equality cross-type (inet_address vs sock_address_any)", "[address]"
+) {
     const inet_address addr{INADDR_LOOPBACK, in_port_t(TEST_PORT)};
     const sock_address_any any_addr{addr};
 

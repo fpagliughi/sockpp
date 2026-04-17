@@ -55,7 +55,13 @@ result<none> connector::connect(const sock_address& addr, int protocol /*=0*/) {
     else
         reset(res.value());
 
-    return check_res_none(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
+    if (auto res = check_res_none(::connect(handle(), addr.sockaddr_ptr(), addr.size()));
+        !res) {
+        close();
+        return res.error();
+    }
+
+    return none{};
 }
 
 // --------------------------------------------------------------------------
@@ -73,11 +79,10 @@ connector::connect(const sock_address& addr, microseconds timeout, int protocol 
     else
         reset(res.value());
 
-    bool non_blocking =
 #if defined(_WIN32)
-        false;
+    bool non_blocking = false;
 #else
-        is_non_blocking();
+    bool non_blocking = is_non_blocking();
 #endif
 
     if (!non_blocking) {
