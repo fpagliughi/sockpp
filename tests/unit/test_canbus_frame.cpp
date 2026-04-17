@@ -54,7 +54,7 @@ static const string IFACE{"vcan0"};
 
 // --------------------------------------------------------------------------
 
-TEST_CASE("canbus_frame construction", "[can]") {
+TEST_CASE("canbus_frame construction", "[canbus]") {
     SECTION("canbus_frame default constructor") {
         canbus_frame frame{};
         REQUIRE(frame.id_value() == 0);
@@ -65,7 +65,7 @@ TEST_CASE("canbus_frame construction", "[can]") {
     }
 }
 
-TEST_CASE("canbus_frame conversions", "[can]") {
+TEST_CASE("canbus_frame conversions", "[canbus]") {
     SECTION("classic to FD frames") {
         canbus_frame frame{0x42, "hello"s};
 
