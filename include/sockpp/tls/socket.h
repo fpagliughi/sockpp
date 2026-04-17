@@ -1,5 +1,5 @@
 /**
- * @file tls_socket.h
+ * @file socket.h
  *
  * Master include for sockpp `tls_socket` objects.
  *

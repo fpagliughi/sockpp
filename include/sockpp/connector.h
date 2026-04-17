@@ -129,7 +129,7 @@ public:
     /**
      * Creates the connector and attempts to connect to the specified
      * address, with a timeout.
-     * If the operation times out, the \ref last_error will be set to
+     * If the operation times out, the error code will be set to
      * `timed_out`.
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
@@ -143,7 +143,7 @@ public:
     /**
      * Creates the connector and attempts to connect to the specified
      * address, with a timeout.
-     * If the operation times out, the \ref last_error will be set to
+     * If the operation times out, the error code will be set to
      * `timed_out`.
      * @param addr The remote server address.
      * @param t The duration after which to give up. Zero means never.
@@ -181,7 +181,7 @@ public:
     /**
      * Attempts to connect to the specified server, with a timeout.
      * Fails if the socket is already connected; call disconnect() first.
-     * If the operation times out, the @ref error will be `errc::timed_out`.
+     * If the operation times out, the error code will be `errc::timed_out`.
      * @param addr The remote server address.
      * @param timeout The duration after which to give up. Zero means never.
      * @param protocol The protocol for socket creation (0 = default).
@@ -191,7 +191,7 @@ public:
     /**
      * Attempts to connect to the specified server, with a timeout.
      * Fails if the socket is already connected; call disconnect() first.
-     * If the operation times out, the @ref last_error will be set to
+     * If the operation times out, the error code will be set to
      * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.
@@ -328,7 +328,7 @@ public:
      * Attempts to connect to the specified server, with a timeout.
      * Injects the PROTOCOL template parameter into the socket creation call.
      * Fails if already connected; call disconnect() first.
-     * If the operation times out, the @ref last_error will be set to
+     * If the operation times out, the error code will be set to
      * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.

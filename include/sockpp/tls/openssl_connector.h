@@ -48,6 +48,11 @@
 
 namespace sockpp {
 
+/**
+ * A TLS client socket that connects to a remote server.
+ * Wraps a @c tls_socket with constructors that perform the TCP connection
+ * and TLS handshake in one step.
+ */
 class tls_connector : public tls_socket
 {
     using base = tls_socket;
@@ -80,7 +85,7 @@ public:
      * checks the SNI host name.
      * @param ctx The TLS context.
      * @param addr The address of the remote server.
-     * @param hostname The host name for an
+     * @param hostname The SNI host name to verify against the server certificate.
      * @throws std::system_error If it fails to find the server
      * @throws tls_error If it fails to make a secure TLS connection
      */
@@ -90,6 +95,7 @@ public:
      * checks the SNI host name.
      * @param ctx The TLS context.
      * @param addr The address of the remote server.
+     * @param hostname The SNI host name to verify against the server certificate.
      * @param ec Gets the error code on failure
      */
     tls_connector(
@@ -136,7 +142,7 @@ public:
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
-     * If the operation times out, the @ref error will be `errc::timed_out`.
+     * If the operation times out, the error code will be `errc::timed_out`.
      * @param addr The remote server address.
      * @param timeout The duration after which to give up. Zero means never.
      * @return The error code on failure.
@@ -146,7 +152,7 @@ public:
      * Attempts to connect to the specified server, with a timeout.
      * If the socket is currently connected, this will close the current
      * connection and open the new one.
-     * If the operation times out, the @ref last_error will be set to
+     * If the operation times out, the error code will be set to
      * `timed_out`.
      * @param addr The remote server address.
      * @param relTime The duration after which to give up. Zero means never.

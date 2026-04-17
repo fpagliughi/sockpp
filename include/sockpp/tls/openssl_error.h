@@ -108,12 +108,17 @@ inline ::std::error_code tls_last_error() {
 /**
  * An error from a secure operation implemented with OpenSSL.
  */
+/**
+ * An error from a secure operation implemented with OpenSSL.
+ */
 class tls_error : public ::std::system_error
 {
 public:
+    /** Constructs a TLS error from an existing error code. */
     tls_error(::std::error_code err) : ::std::system_error{err} {}
+    /** Constructs a TLS error from an OpenSSL error integer. */
     tls_error(int err) : ::std::system_error{make_tls_error_code(err)} {}
-
+    /** Creates a TLS error from the most recent OpenSSL error. */
     static tls_error from_last_error() { return tls_error{tls_last_error()}; }
 };
 

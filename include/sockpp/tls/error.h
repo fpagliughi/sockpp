@@ -1,5 +1,5 @@
 /**
- * @file tls_error.h
+ * @file error.h
  *
  * Master include for sockpp TLS error objects.
  *

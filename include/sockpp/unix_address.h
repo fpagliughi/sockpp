@@ -99,6 +99,7 @@ public:
      * Constructs an address given the specified path.
      * Sets the error code on failure.
      * @param path The path to the socket file.
+     * @param ec Set to the error code on failure.
      */
     unix_address(const string& path, error_code& ec) noexcept;
     /**

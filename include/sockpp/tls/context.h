@@ -75,6 +75,10 @@ public:
     /** This class */
     using self = tls_context_builder;
 
+    /**
+     * Creates a builder for a TLS context with the given role.
+     * @param role Whether the context will be used for client or server connections.
+     */
     explicit tls_context_builder(tls_context::role_t role = tls_context::role_t::CLIENT)
         : ctx_{role} {}
     /**
