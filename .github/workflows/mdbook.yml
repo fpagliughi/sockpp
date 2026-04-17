@@ -1,47 +1,29 @@
-# Simple workflow for building and deploying a mdBook site to GitHub Pages
-#
-# To get started with mdBook see: 
-#   https://rust-lang.github.io/mdBook/index.html
-#   https://github.com/rust-lang/mdBook/wiki/Automated-Deployment%3A-GitHub-Actions#GitHub-Pages-Deploy
-#
+# Validates the mdBook builds cleanly on every push or PR to the gh-pages
+# branch. Deployment is handled by docs.yml on the master branch, which
+# builds both the mdBook and the Doxygen API reference together.
 
-name: Deploy mdBook site to Pages
+name: Validate mdBook
 
 on:
   push:
-    branches:
-      - gh-pages
+    branches: ["gh-pages"]
+  pull_request:
+    branches: ["gh-pages"]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # To push a branch 
-      pages: write  # To push to a GitHub Pages site
-      id-token: write # To update the deployment status
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install latest mdbook
+
+      - name: Install latest mdBook
         run: |
-          tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
+          tag=$(curl -s 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' \
+            | jq -r '.tag_name')
           url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
           mkdir mdbook
-          curl -sSL $url | tar -xz --directory=./mdbook
-          echo `pwd`/mdbook >> $GITHUB_PATH
+          curl -sSL "$url" | tar -xz --directory=./mdbook
+          echo "$PWD/mdbook" >> "$GITHUB_PATH"
+
       - name: Build Book
-        run: |
-          # This assumes your book is in the root of your repository.
-          # Just add a `cd` here if you need to change to another directory.
-          mdbook build
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload entire repository
-          path: 'book'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        run: mdbook build
