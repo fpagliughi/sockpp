@@ -135,6 +135,12 @@ if(${SOCKPP_BUILD_STATIC})
 endif()
 
 foreach(TARGET ${SOCKPP_TARGETS})
+    set_target_properties(${TARGET} PROPERTIES
+        CXX_STANDARD ${SOCKPP_CXX_STANDARD}
+        CXX_STANDARD_REQUIRED YES
+        CXX_EXTENSIONS NO
+    )
+
     target_include_directories(${TARGET} PUBLIC
         $<BUILD_INTERFACE:${SOCKPP_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${SOCKPP_GENERATED_DIR}/include>

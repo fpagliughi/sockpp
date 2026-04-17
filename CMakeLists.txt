@@ -92,13 +92,28 @@ if(NOT SOCKPP_TARGETS)
     message(FATAL_ERROR "No targets are specified")
 endif()
 
-# --- Project uses C++17 minimum (can be overridden with -DCMAKE_CXX_STANDARD) ---
+# --- C++ standard: Minimum C++17 ---
 
-if(NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
+set(SOCKPP_MIN_CXX_STANDARD 17)
+
+if(DEFINED CMAKE_CXX_STANDARD)
+    if(CMAKE_CXX_STANDARD LESS SOCKPP_MIN_CXX_STANDARD)
+        message(FATAL_ERROR
+            "sockpp requires C++${SOCKPP_MIN_CXX_STANDARD} or later. "
+            "CMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} is not supported"
+        )
+    else(DEFINED CMAKE_CXX_STANDARD)
+        set(SOCKPP_CXX_STANDARD ${CMAKE_CXX_STANDARD})
+    endif()
+else()
+    set(SOCKPP_CXX_STANDARD ${SOCKPP_MIN_CXX_STANDARD})
 endif()
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+
+unset(SOCKPP_MIN_CXX_STANDARD)
+
+set(CMAKE_CXX_STANDARD ${SOCKPP_CXX_STANDARD})
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+set(CMAKE_CXX_EXTENSIONS NO)
 
 if(WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
