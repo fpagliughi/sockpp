@@ -89,8 +89,8 @@ public:
     canbus_address() noexcept {}
     /**
      * Creates an address for binding to a specific CAN interface
-     * @param idx The interface index to use. This must, obviously, be
-     *  			  an index to a CAN interface.
+     * @param idx The interface index to use. This must be an index to a CAN
+     *  		  interface.
      */
     explicit canbus_address(unsigned idx) noexcept;
     /**

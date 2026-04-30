@@ -132,8 +132,13 @@ namespace sockpp {
 // Declare a global function returning a static instance of the custom category
 const ::detail::gai_errc_category& gai_errc_category();
 
-// Overload the global make_error_code() free function with our
-// custom enum. It will be found via ADL by the compiler if needed.
+/**
+ * Creates an `std::error_code` from a `gai_errc` value.
+ * Found via ADL; maps `gai_errc::system_error` to the system category
+ * and all other values to the `gai_errc` category.
+ * @param e The `getaddrinfo` error value.
+ * @return The corresponding `std::error_code`.
+ */
 inline ::std::error_code make_error_code(gai_errc e) {
     if (e == gai_errc::system_error)
         return {errno, std::system_category()};

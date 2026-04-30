@@ -58,7 +58,7 @@ namespace sockpp {
  * Objects of this class bind and listen on TCP v4 ports for incoming
  * connections. Normally, a server thread creates one of these and blocks
  * on the call to accept incoming connections. The call to accept creates
- * and returns a @ref tcp_socket which can then be used for the actual
+ * and returns a @c tcp_socket which can then be used for the actual
  * communications.
  */
 using tcp_acceptor = acceptor_tmpl<tcp_socket>;
@@ -71,7 +71,7 @@ using tcp4_acceptor = tcp_acceptor;
  * Objects of this class bind and listen on TCP v6 ports for incoming
  * connections. Normally, a server thread creates one of these and blocks
  * on the call to accept incoming connections. The call to accept creates
- * and returns a @ref tcp6_socket which can then be used for the actual
+ * and returns a @c tcp6_socket which can then be used for the actual
  * communications.
  */
 using tcp6_acceptor = acceptor_tmpl<tcp6_socket>;

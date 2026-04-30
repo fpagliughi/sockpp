@@ -88,6 +88,11 @@ public:
     /** The default listener queue size. */
     static constexpr int DFLT_QUE_SIZE = 4;
 
+    /**
+     * Portable reuse option: SO_REUSEADDR on Windows/Cygwin, SO_REUSEPORT
+     * elsewhere. Pass as the @p reuse argument to the constructor or open()
+     * to allow re-binding a port that is in TIME_WAIT.
+     */
 #if defined(_WIN32) || defined(__CYGWIN__)
     static constexpr int REUSE = SO_REUSEADDR;
 #else
@@ -178,6 +183,7 @@ public:
      * An application would need to manually bind and listen to this
      * acceptor to get incoming connections.
      * @param domain The communications domain (address family).
+     * @param protocol The protocol for socket creation (0 = default).
      * @return An open, but unbound acceptor socket.
      */
     static result<acceptor> create(int domain, int protocol = 0) noexcept;
@@ -205,7 +211,8 @@ public:
      * @param queSize The listener queue size.
      * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
      *              or SO_REUSEPORT, and is set before it tries to bind. A
-     *              value of zero doesn;t set an option.
+     *              value of zero doesn't set an option.
+     * @param protocol The protocol for socket creation (0 = default).
      * @return The error code on failure.
      */
     result<> open(
@@ -275,9 +282,12 @@ public:
      */
     acceptor_tmpl() noexcept {}
     /**
-     * Creates a acceptor and starts it listening on the specified address.
+     * Creates an acceptor and starts it listening on the specified address.
      * @param addr The TCP address on which to listen.
      * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket (SO_REUSEADDR or SO_REUSEPORT).
+     *              Use the #REUSE constant for the portable default. A value of
+     *              zero doesn't set an option.
      * @throws std::system_error on failure
      */
     acceptor_tmpl(const addr_t& addr, int queSize = DFLT_QUE_SIZE, int reuse = 0) {

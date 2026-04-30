@@ -38,11 +38,13 @@
 // --------------------------------------------------------------------------
 //
 
+#include <cstring>
 #include <string>
 
 #include "catch2_version.h"
 #include "sockpp/datagram_socket.h"
 #include "sockpp/inet_address.h"
+#include "sockpp/udp_socket.h"
 
 using namespace std;
 using namespace sockpp;
@@ -110,4 +112,104 @@ TEST_CASE("datagram_socket address constructor", "[datagram_socket]") {
         REQUIRE(ec == errc::address_family_not_supported);
 #endif
     }
+}
+
+// --------------------------------------------------------------------------
+// open()
+// --------------------------------------------------------------------------
+
+TEST_CASE("datagram_socket open", "[datagram_socket]") {
+    SECTION("open with valid inet address succeeds") {
+        datagram_socket sock;
+        REQUIRE(!sock.is_open());
+
+        const auto ADDR = inet_address(INADDR_LOOPBACK, in_port_t(TEST_PORT));
+        auto res = sock.open(ADDR);
+        REQUIRE(res);
+        REQUIRE(sock.is_open());
+    }
+
+    SECTION("open with invalid address fails") {
+        datagram_socket sock;
+        auto res = sock.open(sock_address_any{});
+        REQUIRE(!res);
+    }
+}
+
+// --------------------------------------------------------------------------
+// clone()
+// --------------------------------------------------------------------------
+
+TEST_CASE("datagram_socket clone", "[datagram_socket]") {
+    const auto ADDR = inet_address(INADDR_LOOPBACK, in_port_t(TEST_PORT + 1));
+    datagram_socket sock{ADDR};
+    REQUIRE(sock.is_open());
+
+    auto res = sock.clone();
+    REQUIRE(res);
+
+    auto dup = res.release();
+    REQUIRE(dup.is_open());
+    REQUIRE(dup.handle() != sock.handle());
+}
+
+// --------------------------------------------------------------------------
+// UDP send_to / recv_from
+// --------------------------------------------------------------------------
+
+TEST_CASE("udp_socket send_to and recv_from", "[datagram_socket][udp]") {
+    // Bind two UDP sockets to loopback with OS-assigned ports.
+    udp_socket sender{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(sender);
+
+    udp_socket receiver{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(receiver);
+
+    const auto recv_addr = receiver.address();
+    REQUIRE(recv_addr.port() != 0);
+
+    // Set a short timeout so the test fails cleanly if no data arrives.
+    REQUIRE(receiver.read_timeout(std::chrono::milliseconds{250}));
+
+    const string MSG{"ping"};
+
+    auto sres = sender.send_to(MSG, recv_addr);
+    REQUIRE(sres);
+    REQUIRE(sres.value() == MSG.size());
+
+    char buf[64]{};
+    inet_address src_addr;
+    auto rres = receiver.recv_from(buf, sizeof(buf) - 1, &src_addr);
+    REQUIRE(rres);
+    REQUIRE(rres.value() == MSG.size());
+    REQUIRE(string(buf, MSG.size()) == MSG);
+
+    // The source address should be the loopback address.
+    REQUIRE(src_addr.address() == INADDR_LOOPBACK);
+}
+
+TEST_CASE("udp_socket connect and send/recv", "[datagram_socket][udp]") {
+    udp_socket sender{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(sender);
+
+    udp_socket receiver{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(receiver);
+
+    const auto recv_addr = receiver.address();
+    REQUIRE(receiver.read_timeout(std::chrono::milliseconds{250}));
+
+    // connect() on a UDP socket sets the default destination.
+    REQUIRE(sender.connect(recv_addr));
+
+    const string MSG{"connected udp"};
+    // After connect(), send() goes to the connected address.
+    auto sres = sender.send(MSG);
+    REQUIRE(sres);
+    REQUIRE(sres.value() == MSG.size());
+
+    char buf[64]{};
+    auto rres = receiver.recv_from(buf, sizeof(buf) - 1, nullptr);
+    REQUIRE(rres);
+    REQUIRE(rres.value() == MSG.size());
+    REQUIRE(string(buf, MSG.size()) == MSG);
 }

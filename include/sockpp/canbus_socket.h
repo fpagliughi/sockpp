@@ -1,7 +1,7 @@
 /**
  * @file canbus_socket.h
  *
- * Class (typedef) for Linux SocketCAN socket.
+ * Class for Linux SocketCAN socket.
  *
  * @author Frank Pagliughi
  * @author SoRo Systems, Inc.
@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021 Frank Pagliughi
+// Copyright (c) 2021-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -228,16 +228,24 @@ public:
     }
     /**
      * Receives a frame on the socket.
+     *
+     * Don't call this function if the socket is in FD mode; call recv_fd
+     * instead. If this is used and an FD frame arrives, an error is
+     * returned and the FD frame is lost.
+     *
      * @param frame CAN frame to get the incoming data.
      * @param flags The option bit flags. See send(2).
      * @return The number of bytes read on success, or the error code on
      *         failure.
      */
-    result<size_t> recv(canbus_frame* frame, int flags = 0) {
-        return base::recv(frame->frame_ptr(), sizeof(canbus_frame), flags);
-    }
+    result<size_t> recv(canbus_frame* frame, int flags = 0);
     /**
      * Receives a frame on the socket.
+     *
+     * Don't call this function if the socket is in FD mode; call recv_fd
+     * instead. If this is used and an FD frame arrives, an error is
+     * returned and the FD frame is lost.
+     *
      * @param flags The option bit flags. See send(2).
      * @return The frame read on success, or the error code on failure.
      */

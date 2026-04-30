@@ -1,0 +1,90 @@
+# Builds the mdBook (from the gh-pages branch) and the Doxygen API reference
+# (from master), then deploys them together as a single GitHub Pages site:
+#
+#   /          — mdBook
+#   /api/      — Doxygen HTML
+#
+# Triggers on push to master or gh-pages, and supports manual dispatch.
+
+name: Deploy documentation to Pages
+
+on:
+  push:
+    branches: ["master", "gh-pages"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; do not cancel in-progress deployments.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout master (Doxygen sources)
+        uses: actions/checkout@v4
+
+      - name: Checkout gh-pages (mdBook source)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-src
+
+      - name: Install mdBook
+        run: |
+          tag=$(curl -s 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' \
+            | jq -r '.tag_name')
+          url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
+          mkdir mdbook-bin
+          curl -sSL "$url" | tar -xz --directory=./mdbook-bin
+          echo "$PWD/mdbook-bin" >> "$GITHUB_PATH"
+
+      - name: Install Doxygen
+        run: sudo apt-get install -y --no-install-recommends doxygen graphviz
+
+      - name: Build mdBook
+        working-directory: gh-pages-src
+        run: mdbook build
+
+      - name: Build Doxygen
+        run: |
+          # Stamp the version from the git tag if available.
+          version=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$version" ]; then
+            ( cat Doxyfile; echo "PROJECT_NUMBER = $version" ) | doxygen -
+          else
+            doxygen Doxyfile
+          fi
+
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp -r gh-pages-src/book/. site/
+          cp -r doc/html site/api
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

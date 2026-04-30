@@ -589,7 +589,7 @@ public:
      *         success, an error code on failure.
      */
     result<bool> reuse_address() const noexcept {
-        return get_option<bool>(SOL_SOCKET, SO_REUSEADDR);
+        return get_option(SOL_SOCKET, SO_REUSEADDR);
     }
     /**
      * Sets the value of the `SO_REUSEADDR` option on the socket.
@@ -605,9 +605,7 @@ public:
      * @return The value of the `SO_REUSEPORT` option on the socket on
      *         success, an error code on failure.
      */
-    result<bool> reuse_port() const noexcept {
-        return get_option<bool>(SOL_SOCKET, SO_REUSEPORT);
-    }
+    result<bool> reuse_port() const noexcept { return get_option(SOL_SOCKET, SO_REUSEPORT); }
     /**
      * Sets the value of the `SO_REUSEPORT` option on the socket.
      * @param on The desired value of the `SO_REUSEPORT` option

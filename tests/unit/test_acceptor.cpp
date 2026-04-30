@@ -43,6 +43,8 @@
 #include "catch2_version.h"
 #include "sockpp/acceptor.h"
 #include "sockpp/inet_address.h"
+#include "sockpp/tcp_acceptor.h"
+#include "sockpp/tcp_connector.h"
 
 using namespace std;
 using namespace sockpp;
@@ -107,6 +109,54 @@ TEST_CASE("acceptor address constructor", "[acceptor]") {
         REQUIRE(ec == errc::address_family_not_supported);
 #endif
     }
+}
+
+// --------------------------------------------------------------------------
+// accept() via TCP loopback
+// --------------------------------------------------------------------------
+
+TEST_CASE("tcp_acceptor accept returns connected socket", "[acceptor][accept]") {
+    // Bind to port 0 so the OS assigns a free port.
+    tcp_acceptor acc{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(acc);
+
+    const auto bound = acc.address();
+    REQUIRE(bound.port() != 0);
+
+    // Connect from the client side; the connection goes into the backlog.
+    tcp_connector cli{inet_address(INADDR_LOOPBACK, bound.port())};
+    REQUIRE(cli);
+
+    // accept() should return immediately since the connection is already pending.
+    auto res = acc.accept();
+    REQUIRE(res);
+
+    auto srv = res.release();
+    REQUIRE(srv.is_open());
+    REQUIRE(srv.handle() != cli.handle());
+}
+
+TEST_CASE("tcp_acceptor accept with timeout fires", "[acceptor][accept]") {
+    using namespace std::chrono;
+
+    tcp_acceptor acc{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(acc);
+
+    // Nobody connects — accept should time out.
+    auto res = acc.accept(milliseconds{1});
+    REQUIRE(!res);
+    REQUIRE(res == errc::timed_out);
+}
+
+TEST_CASE("tcp_acceptor typed address", "[acceptor]") {
+    tcp_acceptor acc{inet_address(INADDR_LOOPBACK, 0)};
+    REQUIRE(acc);
+
+    // address() on the typed acceptor returns an inet_address.
+    auto addr = acc.address();
+    REQUIRE(addr.family() == AF_INET);
+    REQUIRE(addr.port() != 0);
+    REQUIRE(addr.address() == INADDR_LOOPBACK);
 }
 
 TEST_CASE("acceptor create", "[acceptor]") {

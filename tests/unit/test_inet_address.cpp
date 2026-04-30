@@ -38,6 +38,7 @@
 // --------------------------------------------------------------------------
 //
 
+#include <sstream>
 #include <string>
 
 #include "catch2_version.h"
@@ -212,3 +213,70 @@ TEST_CASE("inet_address with any", "[address]") {
     REQUIRE(addrAny.size() == addr.size());
     REQUIRE(addr == addrAny);
 }
+
+// --------------------------------------------------------------------------
+// Equality / inequality
+// --------------------------------------------------------------------------
+
+TEST_CASE("inet_address equality", "[address]") {
+    const inet_address a{LOCALHOST_ADDR, PORT};
+    const inet_address b{LOCALHOST_ADDR, PORT};
+    const inet_address c{LOCALHOST_ADDR, in_port_t(PORT + 1)};
+    const inet_address d{ANY_ADDR, PORT};
+
+    REQUIRE(a == b);
+    REQUIRE(!(a != b));
+
+    // Different port
+    REQUIRE(a != c);
+    REQUIRE(!(a == c));
+
+    // Different address
+    REQUIRE(a != d);
+    REQUIRE(!(a == d));
+}
+
+// --------------------------------------------------------------------------
+// to_string / operator<<
+// --------------------------------------------------------------------------
+
+TEST_CASE("inet_address to_string", "[address]") {
+    SECTION("localhost with port") {
+        inet_address addr{LOCALHOST_ADDR, PORT};
+        const auto s = addr.to_string();
+
+        // Format is "dotted.decimal:port"
+        REQUIRE(s == std::string("127.0.0.1:") + std::to_string(PORT));
+    }
+
+    SECTION("any address with port") {
+        inet_address addr{PORT};
+        const auto s = addr.to_string();
+
+        REQUIRE(s == std::string("0.0.0.0:") + std::to_string(PORT));
+    }
+}
+
+TEST_CASE("inet_address stream output", "[address]") {
+    inet_address addr{LOCALHOST_ADDR, PORT};
+    std::ostringstream os;
+    os << addr;
+    const auto s = os.str();
+
+    REQUIRE(s == std::string("127.0.0.1:") + std::to_string(PORT));
+}
+
+// --------------------------------------------------------------------------
+// Error-path constructors
+// --------------------------------------------------------------------------
+
+// According to RFC6761, "invalid." domain should not resolve on POSIX.
+#if !defined(_WIN32)
+TEST_CASE("inet_address error_code constructor failure", "[address]") {
+    error_code ec;
+    inet_address addr("invalid.", PORT, ec);
+
+    REQUIRE(ec);
+    REQUIRE(!addr.is_set());
+}
+#endif

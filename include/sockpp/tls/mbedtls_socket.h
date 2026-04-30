@@ -144,20 +144,37 @@ class mbedtls_socket : public tls_socket
     }
 
 public:
+    /**
+     * Constructs an mbedTLS socket by wrapping an existing stream socket.
+     * Performs the TLS handshake immediately.
+     * @param sock The insecure stream socket to wrap.
+     * @param ctx The mbedTLS context providing certificates and configuration.
+     * @param hostname The expected server host name for SNI and certificate verification.
+     */
     mbedtls_socket(stream_socket&& sock, mbedtls_context& ctx, const string& hostname);
     ~mbedtls_socket();
 
+    /**
+     * Configures the mbedTLS BIO callbacks for this socket.
+     * @param nonblocking Whether the underlying socket is in non-blocking mode.
+     */
     void setup_bio(bool nonblocking);
 
     result<> close() override;
 
     // -------- certificate / trust API
 
+    /**
+     * Returns the mbedTLS certificate verification result flags.
+     * A return value of zero means the peer certificate was accepted.
+     */
     uint32_t peer_certificate_status() override {
         return mbedtls_ssl_get_verify_result(&ssl_);
     }
 
+    /** Returns a human-readable description of the peer certificate verification result. */
     string peer_certificate_status_message() override;
+    /** Returns the PEM-encoded certificate received from the peer, if any. */
     string peer_certificate() override;
 
     // -------- stream_socket I/O
@@ -172,8 +189,16 @@ public:
 
     // -------- mbedTLS BIO callbacks
 
+    /** BIO send callback invoked by mbedTLS to write data to the socket. */
     result<size_t> bio_send(const void* buf, size_t n);
+    /** BIO receive callback invoked by mbedTLS to read data from the socket. */
     result<size_t> bio_recv(void* buf, size_t n);
+    /**
+     * BIO receive-with-timeout callback invoked by mbedTLS.
+     * @param buf The buffer to receive data into.
+     * @param n Maximum number of bytes to read.
+     * @param timeout Timeout in milliseconds.
+     */
     result<size_t> bio_recv_timeout(void* buf, size_t n, uint32_t timeout);
 };
 

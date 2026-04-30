@@ -41,7 +41,7 @@ The strategy for experimental features is to allow them to be optionally built i
 
 To keep up with the latest announcements for this project, follow me at:
 
-**Mastodon:** [@fpagliughi@fosstodon.org](https://fosstodon.org/@fpagliughi)
+**Mastodon:** [\@fpagliughi\@fosstodon.org](https://fosstodon.org/@fpagliughi)
 
 If you're using this library, send me a message and let me know how you're using it.  I'm always curious to see where it winds up!
 

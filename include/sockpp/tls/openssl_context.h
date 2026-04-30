@@ -77,11 +77,12 @@ class stream_socket;
 class tls_context
 {
 public:
+    /** The role for which a context or connection is used. */
     enum class role_t {
-        DEFAULT = 0x00,
-        CLIENT = 0x01,
-        SERVER = 0x02,
-        BOTH = CLIENT | SERVER,
+        DEFAULT = 0x00, ///< No role specified; use the context default.
+        CLIENT  = 0x01, ///< Act as a TLS client.
+        SERVER  = 0x02, ///< Act as a TLS server.
+        BOTH    = CLIENT | SERVER, ///< Support both client and server roles.
     };
 
     /** Options for set_verify() */
@@ -195,9 +196,7 @@ public:
     );
     /**
      * Sets the verify flag in the context to the specified mode.
-     * This wraps <A
-     * href="https://www.openssl.org/docs/manmaster/man3/SSL_CTX_set_verify.html">
-     * SSL_CTX_set_verify
+     * Wraps SSL_CTX_set_verify.
      * @param mode The verification mode.
      */
     void set_verify(verify_t mode) noexcept;

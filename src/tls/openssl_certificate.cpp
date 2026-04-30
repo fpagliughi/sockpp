@@ -48,8 +48,7 @@ namespace sockpp {
 result<tls_certificate> tls_certificate::from_pem(const string& pem) {
     auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
     std::unique_ptr<BIO, decltype(bio_deleter)> bio{
-        ::BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())),
-        bio_deleter
+        ::BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
     };
     if (!bio)
         return tls_last_error();

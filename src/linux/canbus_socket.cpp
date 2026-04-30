@@ -78,6 +78,17 @@ result<double> canbus_socket::last_frame_timestamp() {
     return double(tv.tv_sec) + 1.0e-6 * tv.tv_usec;
 }
 
+result<size_t> canbus_socket::recv(canbus_frame* frame, int flags /*=0*/) {
+    canbusfd_frame tmp;
+    auto res = base::recv(tmp.frame_ptr(), sizeof(canbusfd_frame), flags);
+    if (!res)
+        return res.error();
+    if (res.value() > sizeof(canbus_frame))
+        return errc::message_size;
+    *frame = canbus_frame{tmp};
+    return res;
+}
+
 result<canbus_frame> canbus_socket::recv(int flags /*=0*/) {
     canbus_frame frame;
     if (auto res = recv(&frame, flags); !res)

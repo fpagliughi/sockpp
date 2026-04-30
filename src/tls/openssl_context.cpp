@@ -142,8 +142,7 @@ result<> tls_context::set_key_file(const string& keyFile) {
 result<> tls_context::set_root_certs(const string& certData) {
     auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
     std::unique_ptr<BIO, decltype(bio_deleter)> bio{
-        ::BIO_new_mem_buf(certData.data(), static_cast<int>(certData.size())),
-        bio_deleter
+        ::BIO_new_mem_buf(certData.data(), static_cast<int>(certData.size())), bio_deleter
     };
     if (!bio)
         return tls_last_error();
@@ -151,8 +150,7 @@ result<> tls_context::set_root_certs(const string& certData) {
     // Build a fresh store to replace the existing one (true "set" semantics).
     auto store_deleter = [](X509_STORE* s) { ::X509_STORE_free(s); };
     std::unique_ptr<X509_STORE, decltype(store_deleter)> store{
-        ::X509_STORE_new(),
-        store_deleter
+        ::X509_STORE_new(), store_deleter
     };
     if (!store)
         return tls_last_error();
@@ -165,8 +163,7 @@ result<> tls_context::set_root_certs(const string& certData) {
     for (;;) {
         // PEM_read_bio_X509_AUX handles both CERTIFICATE and TRUSTED CERTIFICATE blocks.
         std::unique_ptr<X509, decltype(cert_deleter)> cert{
-            ::PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr),
-            cert_deleter
+            ::PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr), cert_deleter
         };
 
         if (!cert) {
@@ -219,8 +216,7 @@ void tls_context::require_peer_cert(bool require, bool sendCAList /*=false*/) {
 
     // Advertise trusted CA names to the client in the TLS CertificateRequest
     // message (server only, and only meaningful when requiring a client cert).
-    if (sendCAList && require &&
-        (role_ == role_t::SERVER || role_ == role_t::BOTH)) {
+    if (sendCAList && require && (role_ == role_t::SERVER || role_ == role_t::BOTH)) {
         X509_STORE* store = ::SSL_CTX_get_cert_store(ctx_);
         if (store) {
             STACK_OF(X509_NAME)* ca_names = sk_X509_NAME_new_null();
@@ -295,16 +291,14 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
     // --- Certificate chain ---
 
     std::unique_ptr<BIO, decltype(bio_deleter)> cert_bio{
-        ::BIO_new_mem_buf(cert_pem.data(), static_cast<int>(cert_pem.size())),
-        bio_deleter
+        ::BIO_new_mem_buf(cert_pem.data(), static_cast<int>(cert_pem.size())), bio_deleter
     };
     if (!cert_bio)
         return tls_last_error();
 
     // Load the leaf certificate.
     std::unique_ptr<X509, decltype(cert_deleter)> leaf{
-        ::PEM_read_bio_X509_AUX(cert_bio.get(), nullptr, nullptr, nullptr),
-        cert_deleter
+        ::PEM_read_bio_X509_AUX(cert_bio.get(), nullptr, nullptr, nullptr), cert_deleter
     };
     if (!leaf)
         return tls_last_error();
@@ -318,8 +312,7 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
 
     for (;;) {
         std::unique_ptr<X509, decltype(cert_deleter)> ca{
-            ::PEM_read_bio_X509(cert_bio.get(), nullptr, nullptr, nullptr),
-            cert_deleter
+            ::PEM_read_bio_X509(cert_bio.get(), nullptr, nullptr, nullptr), cert_deleter
         };
         if (!ca) {
             unsigned long err = ::ERR_peek_last_error();
@@ -339,16 +332,14 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
     // --- Private key ---
 
     std::unique_ptr<BIO, decltype(bio_deleter)> key_bio{
-        ::BIO_new_mem_buf(key_pem.data(), static_cast<int>(key_pem.size())),
-        bio_deleter
+        ::BIO_new_mem_buf(key_pem.data(), static_cast<int>(key_pem.size())), bio_deleter
     };
     if (!key_bio)
         return tls_last_error();
 
     auto key_deleter = [](EVP_PKEY* k) { ::EVP_PKEY_free(k); };
     std::unique_ptr<EVP_PKEY, decltype(key_deleter)> key{
-        ::PEM_read_bio_PrivateKey(key_bio.get(), nullptr, nullptr, nullptr),
-        key_deleter
+        ::PEM_read_bio_PrivateKey(key_bio.get(), nullptr, nullptr, nullptr), key_deleter
     };
     if (!key)
         return tls_last_error();

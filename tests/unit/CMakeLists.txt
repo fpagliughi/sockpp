@@ -69,6 +69,7 @@ add_executable(unit_tests
     test_acceptor.cpp
     test_connector.cpp
     test_result.cpp
+    test_poller.cpp
 )
 
 if(UNIX)
@@ -83,6 +84,7 @@ if(SOCKPP_WITH_CAN)
     target_sources(unit_tests PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/test_canbus_address.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_canbus_frame.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_canbus_socket.cpp
     )
 endif()
 

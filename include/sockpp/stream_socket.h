@@ -146,9 +146,7 @@ public:
      * @return The value of the `TCP_NODELAY` option on the socket if
      *         successful, an error code on failure.
      */
-    result<bool> nodelay() const noexcept {
-        return get_option<bool>(IPPROTO_TCP, TCP_NODELAY);
-    }
+    result<bool> nodelay() const noexcept { return get_option(IPPROTO_TCP, TCP_NODELAY); }
     /**
      * Sets the value of the `TCP_NODELAY` option on the socket.
      * @return The value of the `TCP_NODELAY` option on the socket if

@@ -72,7 +72,7 @@ public:
 }  // namespace detail
 
 namespace sockpp {
-// Declare a global function returning a static instance of the custom category
+/** Returns a reference to the singleton mbedTLS error category. */
 const ::detail::tls_errc_category& tls_errc_category();
 
 #if 0
@@ -86,11 +86,20 @@ inline ::std::error_code make_error_code(tls_errc e) {
 }
 #endif
 
+/**
+ * Creates an `std::error_code` from an mbedTLS error integer.
+ * @param err The mbedTLS error value (typically negative).
+ * @return The corresponding `std::error_code` in the TLS category.
+ */
 inline ::std::error_code make_tls_error_code(int err) { return {err, tls_errc_category()}; }
 
+/**
+ * An error from a secure operation implemented with mbedTLS.
+ */
 class tls_error : public ::std::system_error
 {
 public:
+    /** Constructs a TLS error from an mbedTLS error integer. */
     tls_error(int err) : system_error{make_tls_error_code(err)} {}
 };
 
