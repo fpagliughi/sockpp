@@ -130,17 +130,14 @@ unique_ptr<mbedtls_context::cert> mbedtls_context::parse_cert(
     const string& cert_data, bool partialOk
 ) {
     unique_ptr<cert> c(new cert);
-    mbedtls_x509_crt_init(c.get());
     int ret = mbedtls_x509_crt_parse(
         c.get(), (const uint8_t*)cert_data.data(), cert_data.size() + 1
     );
     if (ret != 0) {
         if (ret < 0 || !partialOk) {
-            if (ret > 0) {
+            if (ret > 0)
                 ret = MBEDTLS_ERR_X509_CERT_VERIFY_FAILED;
-            }
-
-            throw std::system_error{result<>::last_error()};
+            throw std::system_error{make_tls_error_code(-ret)};
         }
     }
     return c;
@@ -189,6 +186,60 @@ mbedtls_context::mbedtls_context(role_t r /*=CLIENT*/) : ssl_config_(new mbedtls
 }
 
 mbedtls_context::~mbedtls_context() { mbedtls_ssl_config_free(ssl_config_.get()); }
+
+// Re-registers the ssl_config_ callbacks to point at the current `this` after a move.
+void mbedtls_context::reregister_callbacks() {
+    if (!ssl_config_)
+        return;
+    mbedtls_ssl_conf_verify(
+        ssl_config_.get(),
+        [](void* ctx, mbedtls_x509_crt* crt, int depth, uint32_t* flags) {
+            return static_cast<mbedtls_context*>(ctx)->verify_callback(crt, depth, flags);
+        },
+        this
+    );
+    if (root_cert_locator_cb_) {
+        mbedtls_ssl_conf_ca_cb(
+            ssl_config_.get(),
+            [](void* ctx, mbedtls_x509_crt const* child, mbedtls_x509_crt** cand) {
+                return static_cast<mbedtls_context*>(ctx)
+                    ->trusted_cert_callback(ctx, child, cand);
+            },
+            this
+        );
+    }
+}
+
+mbedtls_context::mbedtls_context(mbedtls_context&& other) noexcept
+    : status_{other.status_},
+      auth_callback_{std::move(other.auth_callback_)},
+      ssl_config_{std::move(other.ssl_config_)},
+      root_cert_locator_cb_{std::move(other.root_cert_locator_cb_)},
+      root_certs_{std::move(other.root_certs_)},
+      pinned_cert_{std::move(other.pinned_cert_)},
+      pinned_cert_validation_result_{other.pinned_cert_validation_result_},
+      received_cert_data_{std::move(other.received_cert_data_)},
+      identity_cert_{std::move(other.identity_cert_)},
+      identity_key_{std::move(other.identity_key_)} {
+    reregister_callbacks();
+}
+
+mbedtls_context& mbedtls_context::operator=(mbedtls_context&& other) noexcept {
+    if (this != &other) {
+        status_ = other.status_;
+        auth_callback_ = std::move(other.auth_callback_);
+        ssl_config_ = std::move(other.ssl_config_);
+        root_cert_locator_cb_ = std::move(other.root_cert_locator_cb_);
+        root_certs_ = std::move(other.root_certs_);
+        pinned_cert_ = std::move(other.pinned_cert_);
+        pinned_cert_validation_result_ = other.pinned_cert_validation_result_;
+        received_cert_data_ = std::move(other.received_cert_data_);
+        identity_cert_ = std::move(other.identity_cert_);
+        identity_key_ = std::move(other.identity_key_);
+        reregister_callbacks();
+    }
+    return *this;
+}
 
 int mbedtls_context::trusted_cert_callback(
     void* /*context*/, mbedtls_x509_crt const* child, mbedtls_x509_crt** candidates
@@ -327,9 +378,8 @@ void mbedtls_context::set_identity(
         private_key_data.size(),
         nullptr, 0
     );
-    if (err != 0) {
-        throw std::system_error{result<>::last_error()};
-    }
+    if (err != 0)
+        throw std::system_error{make_tls_error_code(-err)};
 
     set_identity(ident_cert.get(), ident_key.get());
     identity_cert_ = move(ident_cert);

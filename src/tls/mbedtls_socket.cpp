@@ -1,4 +1,4 @@
-// mbedtls_context.cpp
+// mbedtls_socket.cpp
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
@@ -91,10 +91,10 @@ mbedtls_socket::mbedtls_socket(
         // TODO: Is this the right error type?
         throw tls_error{ctx.status()};
 
-    if (check_mbed_setup(mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get())))
+    if (check_mbed_setup(mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get())) != 0)
         return;
     if (!hostname.empty() &&
-        check_mbed_setup(mbedtls_ssl_set_hostname(&ssl_, hostname.c_str())))
+        check_mbed_setup(mbedtls_ssl_set_hostname(&ssl_, hostname.c_str())) != 0)
         return;
 
 #if defined(_WIN32)
@@ -184,7 +184,7 @@ string mbedtls_socket::peer_certificate_status_message() {
         message, sizeof(message), "", verify_flags & ~MBEDTLS_X509_BADCERT_OTHER
     );
     size_t len = strlen(message);
-    if (len > 0 && message[len] == '\0')
+    if (len > 0 && message[len - 1] == '\n')
         --len;
 
     string result(message, len);

@@ -103,6 +103,9 @@ class mbedtls_context
 
     int verify_callback(mbedtls_x509_crt* crt, int depth, uint32_t* flags);
 
+    /** Re-registers ssl_config_ callbacks with the current `this` after a move. */
+    void reregister_callbacks();
+
     int trusted_cert_callback(
         void* context, mbedtls_x509_crt const* child, mbedtls_x509_crt** candidates
     );
@@ -143,8 +146,8 @@ public:
     mbedtls_context& operator=(const mbedtls_context&) = delete;
 
     // Movable
-    mbedtls_context(mbedtls_context&&) = default;
-    mbedtls_context& operator=(mbedtls_context&&) = default;
+    mbedtls_context(mbedtls_context&&) noexcept;
+    mbedtls_context& operator=(mbedtls_context&&) noexcept;
 
     /** Returns the current status code (0 = success). */
     int status() const { return status_; }
@@ -215,7 +218,7 @@ public:
      * @param required Whether a certificate must be presented.
      * @param verified Whether the presented certificate must pass verification.
      */
-    void require_peer_cert(role_t role, bool required, bool verified);
+    void require_peer_cert(role_t role, bool required, bool sendCAList = false);
 
     /**
      * Restricts accepted connections to peers presenting a specific certificate.
