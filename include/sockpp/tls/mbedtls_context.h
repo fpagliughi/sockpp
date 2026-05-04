@@ -1,11 +1,11 @@
 /**
- * @file mbedtls_socket.h
+ * @file mbedtls_context.h
  *
- * TLS (SSL) socket implementation using mbedTLS.
+ * TLS context implementation using mbedTLS.
  *
  * @author Jens Alfke
  * @author Couchbase, Inc.
- * @author www.couchbase.com
+ * @author Frank Pagliughi
  *
  * @date August 2019
  */
@@ -51,8 +51,8 @@
 #include <memory>
 #include <string>
 
-#include "sockpp/tls/tls_context.h"
-#include "sockpp/tls/tls_socket.h"
+#include "sockpp/result.h"
+#include "sockpp/types.h"
 
 struct mbedtls_pk_context;
 struct mbedtls_ssl_config;
@@ -60,19 +60,32 @@ struct mbedtls_x509_crt;
 
 namespace sockpp {
 
+class stream_socket;
+class mbedtls_socket;
+
 using root_cert_locator_cb = std::function<bool(string cert, string& root)>;
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * A concrete implementation of \ref tls_context, using the mbedTLS library.
- * You probably don't want to use this class directly, unless you want to instantiate a
- * custom context so you can have different contexts for different sockets.
+ * TLS context for the mbedTLS backend.
+ *
+ * Acts as a factory for @ref mbedtls_socket objects and holds all
+ * shared configuration (trust store, identity certificate, etc.).
+ * A single context can be used by multiple sockets simultaneously.
+ *
+ * The public name @c tls_context is an alias for this class:
+ * @code
+ *   using tls_context = mbedtls_context;
+ * @endcode
  */
-class mbedtls_context : public tls_context_iface
+class mbedtls_context
 {
     struct cert;
     struct key;
+
+    mutable int status_ = 0;
+    std::function<bool(const string&)> auth_callback_;
 
     std::unique_ptr<mbedtls_ssl_config> ssl_config_;
     root_cert_locator_cb root_cert_locator_cb_;
@@ -96,24 +109,90 @@ class mbedtls_context : public tls_context_iface
 
     static std::unique_ptr<cert> parse_cert(const string& cert_data, bool partialOk);
 
+protected:
+    /** Records an initialization status code (non-zero means failure). */
+    void set_status(int s) { status_ = s; }
+
 public:
+    /** The role for which a context or connection is used. */
+    enum role_t {
+        UNKNOWN = 0, ///< No role specified; use the context default.
+        CLIENT  = 1, ///< Act as a TLS client.
+        SERVER  = 2, ///< Act as a TLS server.
+    };
+
+    /** Options for set_verify(). */
+    enum class verify_t { NONE, PEER };
+
+    /**
+     * A function called during the TLS handshake to examine the peer certificate.
+     * @param certData  The DER-encoded certificate.
+     * @return @em true to accept the cert, @em false to reject and abort.
+     */
+    using auth_callback = std::function<bool(const string& certData)>;
+
     /**
      * Creates an mbedTLS context for the specified role.
      * @param role Whether the context will be used for client or server connections.
      */
     explicit mbedtls_context(role_t role = CLIENT);
-    ~mbedtls_context() override;
+    ~mbedtls_context();
+
+    // Non-copyable
+    mbedtls_context(const mbedtls_context&) = delete;
+    mbedtls_context& operator=(const mbedtls_context&) = delete;
+
+    // Movable
+    mbedtls_context(mbedtls_context&&) = default;
+    mbedtls_context& operator=(mbedtls_context&&) = default;
+
+    /** Returns the current status code (0 = success). */
+    int status() const { return status_; }
+
+    // ---- Auth callback ----
+
+    /**
+     * Registers a callback invoked during the TLS handshake that can accept or
+     * reject the peer certificate.
+     */
+    void set_auth_callback(auth_callback cb) { auth_callback_ = std::move(cb); }
+
+    /** Returns the authentication callback, if any. */
+    const auth_callback& get_auth_callback() const { return auth_callback_; }
+
+    // ---- Trust store ----
 
     /**
      * Sets the trusted root certificates from a PEM-encoded string.
      * @param certData PEM-encoded CA certificate data.
      */
-    void set_root_certs(const string& certData) override;
+    void set_root_certs(const string& certData);
+
     /**
      * Configures the context to use the system default certificate verification paths.
      * @return @em true on success.
      */
-    bool set_default_verify_paths() override { return true; }
+    bool set_default_verify_paths() { return true; }
+
+    /**
+     * Loads the system default CA trust locations.
+     * Delegates to set_default_verify_paths().
+     */
+    result<> set_default_trust_locations() {
+        return set_default_verify_paths() ? result<>{} : result<>{std::errc::no_such_file_or_directory};
+    }
+
+    /**
+     * Loads a PEM CA bundle file into the trust store.
+     * @param caFile Path to a PEM-format CA certificate file.
+     */
+    result<> set_trust_file(const string& caFile);
+
+    /**
+     * Loads all PEM CA certificate files from a directory into the trust store.
+     * @param caPath Directory containing PEM CA certificate files.
+     */
+    result<> set_trust_path(const string& caPath);
 
     /**
      * Callback function that looks up the trusted root certificate that
@@ -124,8 +203,11 @@ public:
      * error occurs.
      */
     void set_root_cert_locator(root_cert_locator_cb loc);
+
     /** Returns the root certificate locator callback, if one has been set. */
     root_cert_locator_cb root_cert_locator() const { return root_cert_locator_cb_; }
+
+    // ---- Peer certificate policy ----
 
     /**
      * Configures whether a peer certificate is required and verified.
@@ -133,18 +215,32 @@ public:
      * @param required Whether a certificate must be presented.
      * @param verified Whether the presented certificate must pass verification.
      */
-    void require_peer_cert(role_t role, bool required, bool verified) override;
+    void require_peer_cert(role_t role, bool required, bool verified);
+
     /**
      * Restricts accepted connections to peers presenting a specific certificate.
      * @param certData PEM-encoded certificate data.
      */
-    void allow_only_certificate(const string& certData) override;
+    void allow_only_certificate(const string& certData);
 
     /**
      * Restricts accepted connections to peers presenting a specific certificate.
      * @param certificate Pointer to a parsed mbedTLS certificate structure.
      */
     void allow_only_certificate(mbedtls_x509_crt* certificate);
+
+    // ---- Verify mode ----
+
+    /**
+     * Sets the peer verification mode.
+     * @param mode NONE disables verification; PEER requires a valid peer certificate.
+     */
+    void set_verify(verify_t mode);
+
+    /** No-op stub for API compatibility with the OpenSSL backend. */
+    void set_auto_retry(bool /*on*/ = true) {}
+
+    // ---- Identity (local certificate + key) ----
 
     /**
      * Sets the identity certificate and private key using mbedTLS objects.
@@ -158,20 +254,34 @@ public:
      * @param certificate_data PEM-encoded certificate chain.
      * @param private_key_data PEM-encoded private key.
      */
-    void set_identity(
-        const string& certificate_data, const string& private_key_data
-    ) override;
+    void set_identity(const string& certificate_data, const string& private_key_data);
+
+    /**
+     * Loads the local certificate chain from a PEM file.
+     * @param certFile Path to the certificate chain file.
+     */
+    result<> set_cert_file(const string& certFile);
+
+    /**
+     * Loads the local private key from a PEM file.
+     * @param keyFile Path to the private key file.
+     */
+    result<> set_key_file(const string& keyFile);
+
+    // ---- Socket factory ----
 
     /**
      * Wraps an existing stream socket in a TLS layer.
      * @param sock The insecure stream socket to wrap.
-     * @param role The role for this connection (CLIENT, SERVER, or UNKNOWN to use context default).
+     * @param role The role for this connection (CLIENT, SERVER, or UNKNOWN).
      * @param peer_name The expected peer host name for SNI and certificate verification.
      * @return A new TLS socket wrapping the given stream socket.
      */
-    std::unique_ptr<tls_socket_iface> wrap_socket(
+    std::unique_ptr<mbedtls_socket> wrap_socket(
         stream_socket&& sock, role_t role = UNKNOWN, const string& peer_name = string{}
-    ) override;
+    );
+
+    // ---- Accessors ----
 
     /** Returns the role for which this context was created. */
     role_t role();
@@ -179,7 +289,7 @@ public:
     /** Returns a pointer to the system root certificate store, or nullptr if unavailable. */
     static mbedtls_x509_crt* get_system_root_certs();
 
-    /** Returns the PEM-encoded certificate received from the peer, if any. */
+    /** Returns the DER-encoded certificate received from the peer during the last handshake. */
     const string& get_peer_certificate() const { return received_cert_data_; }
 
     /**

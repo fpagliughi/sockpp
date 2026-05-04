@@ -51,7 +51,6 @@
 #include "sockpp/result.h"
 #include "sockpp/tls/mbedtls_context.h"
 #include "sockpp/tls/mbedtls_socket.h"
-#include "sockpp/tls/tls_socket.h"
 
 namespace sockpp {
 

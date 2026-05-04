@@ -342,13 +342,42 @@ void mbedtls_context::set_identity(
     mbedtls_ssl_conf_own_cert(ssl_config_.get(), certificate, private_key);
 }
 
+void mbedtls_context::set_verify(verify_t mode) {
+    int authMode = (mode == verify_t::PEER) ? MBEDTLS_SSL_VERIFY_REQUIRED
+                                            : MBEDTLS_SSL_VERIFY_NONE;
+    mbedtls_ssl_conf_authmode(ssl_config_.get(), authMode);
+}
+
+// File-based trust/identity loading — read the file and call the PEM-string overload.
+// Full implementations are tracked in MbedTLSPlan.md §2.1.
+
+result<> mbedtls_context::set_trust_file(const string& /*caFile*/) {
+    // TODO: read file, call set_root_certs()
+    return {};
+}
+
+result<> mbedtls_context::set_trust_path(const string& /*caPath*/) {
+    // TODO: iterate directory, call set_root_certs() for each cert file
+    return {};
+}
+
+result<> mbedtls_context::set_cert_file(const string& /*certFile*/) {
+    // TODO: read file, store pending identity cert
+    return {};
+}
+
+result<> mbedtls_context::set_key_file(const string& /*keyFile*/) {
+    // TODO: read file; if identity cert already set, call set_identity()
+    return {};
+}
+
 mbedtls_context::role_t mbedtls_context::role() {
     return (mbedtls_ssl_conf_get_endpoint(ssl_config_.get()) == MBEDTLS_SSL_IS_CLIENT)
                ? CLIENT
                : SERVER;
 }
 
-unique_ptr<tls_socket_iface> mbedtls_context::wrap_socket(
+unique_ptr<mbedtls_socket> mbedtls_context::wrap_socket(
     stream_socket&& sock, role_t /*r*/, const string& peer_name
 ) {
     // TODO: Verify supported role at runtime?

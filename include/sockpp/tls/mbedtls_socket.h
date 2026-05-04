@@ -92,13 +92,11 @@ using uchar = unsigned char;
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** Concrete implementation of tls_socket_iface using mbedTLS. */
-class mbedtls_socket : public tls_socket_iface
+/** TLS stream socket implemented with mbedTLS. */
+class mbedtls_socket : public stream_socket
 {
-    /** Abstract base class */
-    using base = tls_socket_iface;
-    /** Concrete base class above base */
-    using stream = stream_socket;
+    using base = stream_socket;
+    using stream = stream_socket;  // alias used in BIO callbacks and .cpp
 
     mbedtls_context& ctx_;
     mbedtls_ssl_context ssl_;
@@ -165,14 +163,14 @@ public:
      * Returns the mbedTLS certificate verification result flags.
      * A return value of zero means the peer certificate was accepted.
      */
-    uint32_t peer_certificate_status() override {
+    uint32_t peer_certificate_status() {
         return mbedtls_ssl_get_verify_result(&ssl_);
     }
 
     /** Returns a human-readable description of the peer certificate verification result. */
-    string peer_certificate_status_message() override;
-    /** Returns the PEM-encoded certificate received from the peer, if any. */
-    string peer_certificate() override;
+    string peer_certificate_status_message();
+    /** Returns the DER-encoded certificate received from the peer, if any. */
+    string peer_certificate();
 
     // -------- stream_socket I/O
 
@@ -198,6 +196,11 @@ public:
      */
     result<size_t> bio_recv_timeout(void* buf, size_t n, uint32_t timeout);
 };
+
+/**
+ * For the mbedTLS backend, @c tls_socket is an alias for @ref mbedtls_socket.
+ */
+using tls_socket = mbedtls_socket;
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
