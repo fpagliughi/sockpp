@@ -34,21 +34,20 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/tls/mbedtls/mbedtls_context.h"
+#include "sockpp/tls/mbedtls_context.h"
 
-#include <mbedtls/ctr_drbg.h>
 #include <mbedtls/debug.h>
-#include <mbedtls/entropy.h>
 #include <mbedtls/error.h>
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/ssl.h>
+#include <psa/crypto.h>
 
 #include <cassert>
 #include <chrono>
 #include <mutex>
 
 #include "sockpp/connector.h"
-#include "sockpp/tls/mbedtls/mbedtls_socket.h"
+#include "sockpp/tls/mbedtls_socket.h"
 
 #ifdef __APPLE__
     #include <TargetConditionals.h>
@@ -110,46 +109,21 @@ tls_context& tls_context::default_context()
 }
 */
 
-// Returns a shared mbedTLS random-number generator context.
-static mbedtls_ctr_drbg_context* get_drbg_context() {
-    static const char* k_entropy_personalization = "sockpp";
-    static mbedtls_entropy_context s_entropy;
-    static mbedtls_ctr_drbg_context s_random_ctx;
-
+// Initializes PSA Crypto, which replaces the explicit CTR-DRBG/entropy setup
+// required by mbedTLS 3.x.  Must be called once before any TLS context is
+// constructed.  mbedTLS 4.x routes all RNG through PSA automatically once
+// psa_crypto_init() has been called; there is no mbedtls_ssl_conf_rng() call.
+static void init_psa_crypto() {
     static once_flag once;
     call_once(once, []() {
-        mbedtls_entropy_init(&s_entropy);
-
-#if defined(_MSC_VER)
-    #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-        auto uwp_entropy_poll = [](void* data, unsigned char* output, size_t len,
-                                   size_t* olen) -> int {
-            NTSTATUS status =
-                BCryptGenRandom(nullptr, output, (ULONG)len, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
-            if (status < 0) {
-                return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
-            }
-
-            *olen = len;
-            return 0;
-        };
-        mbedtls_entropy_add_source(
-            &s_entropy, uwp_entropy_poll, nullptr, 32, MBEDTLS_ENTROPY_SOURCE_STRONG
-        );
-    #endif
-#endif
-
-        mbedtls_ctr_drbg_init(&s_random_ctx);
-        int ret = mbedtls_ctr_drbg_seed(
-            &s_random_ctx, mbedtls_entropy_func, &s_entropy,
-            (const uint8_t*)k_entropy_personalization, strlen(k_entropy_personalization)
-        );
-        if (ret != 0) {
-            // FIXME: Not an errno; use different exception?
-            throw std::system_error{result<>::last_error()};
+        psa_status_t status = psa_crypto_init();
+        if (status != PSA_SUCCESS) {
+            throw std::system_error{
+                std::error_code{static_cast<int>(status), std::system_category()},
+                "psa_crypto_init failed"
+            };
         }
     });
-    return &s_random_ctx;
 }
 
 unique_ptr<mbedtls_context::cert> mbedtls_context::parse_cert(
@@ -190,8 +164,9 @@ mbedtls_x509_crt* mbedtls_context::get_system_root_certs() {
 }
 
 mbedtls_context::mbedtls_context(role_t r /*=CLIENT*/) : ssl_config_(new mbedtls_ssl_config) {
+    init_psa_crypto();
     mbedtls_ssl_config_init(ssl_config_.get());
-    mbedtls_ssl_conf_rng(ssl_config_.get(), mbedtls_ctr_drbg_random, get_drbg_context());
+    // mbedTLS 4.x: RNG is handled by PSA Crypto; no mbedtls_ssl_conf_rng() needed.
     int endpoint = (r == CLIENT) ? MBEDTLS_SSL_IS_CLIENT : MBEDTLS_SSL_IS_SERVER;
     set_status(mbedtls_ssl_config_defaults(
         ssl_config_.get(), endpoint, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT
@@ -350,8 +325,7 @@ void mbedtls_context::set_identity(
     int err = mbedtls_pk_parse_key(
         ident_key.get(), reinterpret_cast<const unsigned char*>(private_key_data.data()),
         private_key_data.size(),
-        // TODO: Is this right?
-        nullptr, 0, nullptr, 0
+        nullptr, 0
     );
     if (err != 0) {
         throw std::system_error{result<>::last_error()};
@@ -369,10 +343,12 @@ void mbedtls_context::set_identity(
 }
 
 mbedtls_context::role_t mbedtls_context::role() {
-    return (ssl_config_->private_endpoint == MBEDTLS_SSL_IS_CLIENT) ? CLIENT : SERVER;
+    return (mbedtls_ssl_conf_get_endpoint(ssl_config_.get()) == MBEDTLS_SSL_IS_CLIENT)
+               ? CLIENT
+               : SERVER;
 }
 
-unique_ptr<tls_socket> mbedtls_context::wrap_socket(
+unique_ptr<tls_socket_iface> mbedtls_context::wrap_socket(
     stream_socket&& sock, role_t /*r*/, const string& peer_name
 ) {
     // TODO: Verify supported role at runtime?

@@ -1,10 +1,16 @@
+/**
+ * @file tls/certificate.h
+ *
+ * Master include for sockpp @c tls_certificate objects.
+ *
+ * @author Frank Pagliughi
+ * @date May 2026
+ */
 
-// error.cpp
-//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,19 +40,18 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
-//
 
-#include "sockpp/tls/mbedtls_error.h"
+#ifndef __sockpp_tls_certificate_h
+#define __sockpp_tls_certificate_h
 
-namespace sockpp {
+#include "sockpp/version.h"
 
-/////////////////////////////////////////////////////////////////////////////
+#if defined(SOCKPP_OPENSSL)
+    #include "sockpp/tls/openssl_certificate.h"
+#elif defined(SOCKPP_MBEDTLS)
+    #include "sockpp/tls/mbedtls_certificate.h"
+#else
+    #error "No TLS library chosen for sockpp"
+#endif
 
-// A global function returning a static instance of the custom category
-const ::detail::tls_errc_category& tls_errc_category() {
-    static ::detail::tls_errc_category c;
-    return c;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-}  // namespace sockpp
+#endif  // __sockpp_tls_certificate_h

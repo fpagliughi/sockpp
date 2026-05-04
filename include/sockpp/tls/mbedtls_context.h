@@ -69,7 +69,7 @@ using root_cert_locator_cb = std::function<bool(string cert, string& root)>;
  * You probably don't want to use this class directly, unless you want to instantiate a
  * custom context so you can have different contexts for different sockets.
  */
-class mbedtls_context : public tls_context
+class mbedtls_context : public tls_context_iface
 {
     struct cert;
     struct key;
@@ -169,7 +169,7 @@ public:
      * @param peer_name The expected peer host name for SNI and certificate verification.
      * @return A new TLS socket wrapping the given stream socket.
      */
-    std::unique_ptr<tls_socket> wrap_socket(
+    std::unique_ptr<tls_socket_iface> wrap_socket(
         stream_socket&& sock, role_t role = UNKNOWN, const string& peer_name = string{}
     ) override;
 
@@ -190,6 +190,12 @@ public:
      */
     static constexpr int FATAL_ERROR_ALERT_BASE = -0xF000;
 };
+
+/**
+ * For the mbedTLS backend, @c tls_context is an alias for @ref mbedtls_context
+ * so that @ref tls_context_builder stores and moves the concrete type directly.
+ */
+using tls_context = mbedtls_context;
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

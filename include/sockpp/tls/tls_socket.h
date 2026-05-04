@@ -1,10 +1,16 @@
+/**
+ * @file tls/tls_socket.h
+ *
+ * Abstract base class for TLS socket implementations (mbedTLS path).
+ *
+ * @author Frank Pagliughi
+ * @date 2024
+ */
 
-// error.cpp
-//
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2023 Frank Pagliughi
+// Copyright (c) 2024 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,19 +40,68 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
-//
 
-#include "sockpp/tls/mbedtls_error.h"
+#ifndef __sockpp_tls_tls_socket_iface_h
+#define __sockpp_tls_tls_socket_iface_h
+
+#include <cstdint>
+#include <string>
+
+#include "sockpp/stream_socket.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// A global function returning a static instance of the custom category
-const ::detail::tls_errc_category& tls_errc_category() {
-    static ::detail::tls_errc_category c;
-    return c;
-}
+/**
+ * Abstract base class for TLS socket implementations.
+ *
+ * Derives from @ref stream_socket and adds the TLS-specific certificate
+ * inspection API. Concrete implementations (e.g., @ref mbedtls_socket)
+ * inherit from this class.
+ *
+ * The public @ref tls_socket name is an alias set to this class:
+ *   `using tls_socket = tls_socket_iface;`
+ */
+class tls_socket_iface : public stream_socket
+{
+public:
+    using stream_socket::stream_socket;
+
+    /** Constructs a TLS socket by taking ownership of an existing stream socket. */
+    explicit tls_socket_iface(stream_socket&& sock) noexcept
+        : stream_socket(std::move(sock)) {}
+
+    virtual ~tls_socket_iface() = default;
+
+    /**
+     * Returns the raw peer-certificate verification result flags.
+     * A return value of zero means the peer certificate was accepted.
+     */
+    virtual uint32_t peer_certificate_status() = 0;
+
+    /**
+     * Returns a human-readable description of the peer-certificate
+     * verification result, or an empty string on success.
+     */
+    virtual string peer_certificate_status_message() = 0;
+
+    /**
+     * Returns the DER-encoded certificate received from the peer, or an
+     * empty string if none is available.
+     */
+    virtual string peer_certificate() = 0;
+};
+
+/**
+ * For the mbedTLS backend, @c tls_socket is an alias for the abstract
+ * base so that @ref mbedtls_context::wrap_socket() can return
+ * `std::unique_ptr<tls_socket>` while the concrete object is a
+ * @ref mbedtls_socket.
+ */
+using tls_socket = tls_socket_iface;
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
+
+#endif  // __sockpp_tls_tls_socket_iface_h

@@ -47,9 +47,6 @@
 #ifndef __sockpp_mbedtls_socket_h
 #define __sockpp_mbedtls_socket_h
 
-#include <mbedtls/ctr_drbg.h>
-#include <mbedtls/debug.h>
-#include <mbedtls/entropy.h>
 #include <mbedtls/error.h>
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/ssl.h>
@@ -59,8 +56,8 @@
 #include <mutex>
 
 #include "sockpp/connector.h"
-#include "sockpp/tls/mbedtls/mbedtls_context.h"
-#include "sockpp/tls/mbedtls/mbedtls_error.h"
+#include "sockpp/tls/mbedtls_context.h"
+#include "sockpp/tls/mbedtls_error.h"
 
 #ifdef __APPLE__
     #include <TargetConditionals.h>
@@ -95,11 +92,11 @@ using uchar = unsigned char;
 
 /////////////////////////////////////////////////////////////////////////////
 
-/** Concrete implementation of tls_socket using mbedTLS. */
-class mbedtls_socket : public tls_socket
+/** Concrete implementation of tls_socket_iface using mbedTLS. */
+class mbedtls_socket : public tls_socket_iface
 {
     /** Abstract base class */
-    using base = tls_socket;
+    using base = tls_socket_iface;
     /** Concrete base class above base */
     using stream = stream_socket;
 

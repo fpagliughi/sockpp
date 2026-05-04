@@ -77,6 +77,7 @@ if(SOCKPP_WITH_OPENSSL)
     )
 elseif(SOCKPP_WITH_MBEDTLS)
     list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_certificate.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_context.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_socket.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_error.cpp
@@ -157,9 +158,16 @@ foreach(TARGET ${SOCKPP_TARGETS})
             OpenSSL::Crypto
         )
     elseif(SOCKPP_WITH_MBEDTLS)
+        # mbedTLS 4.x renamed MbedTLS::mbedcrypto to MbedTLS::tfpsacrypto when
+        # the crypto core was split into the tf-psa-crypto sub-project.
+        if(TARGET MbedTLS::tfpsacrypto)
+            set(_MBEDTLS_CRYPTO_TARGET MbedTLS::tfpsacrypto)
+        else()
+            set(_MBEDTLS_CRYPTO_TARGET MbedTLS::mbedcrypto)
+        endif()
         target_link_libraries(${TARGET} PUBLIC
             MbedTLS::mbedtls
-            MbedTLS::mbedcrypto
+            ${_MBEDTLS_CRYPTO_TARGET}
             MbedTLS::mbedx509
         )
     endif()

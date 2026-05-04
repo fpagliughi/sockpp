@@ -34,11 +34,9 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/tls/mbedtls/mbedtls_socket.h"
+#include "sockpp/tls/mbedtls_socket.h"
 
-#include <mbedtls/ctr_drbg.h>
 #include <mbedtls/debug.h>
-#include <mbedtls/entropy.h>
 #include <mbedtls/error.h>
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/ssl.h>
@@ -48,7 +46,7 @@
 #include <mutex>
 
 #include "sockpp/connector.h"
-#include "sockpp/tls/mbedtls/mbedtls_context.h"
+#include "sockpp/tls/mbedtls_context.h"
 
 #ifdef __APPLE__
     #include <TargetConditionals.h>

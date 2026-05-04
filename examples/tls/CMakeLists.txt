@@ -47,11 +47,12 @@ find_package(Threads REQUIRED)
 set(THREADED_EXECUTABLES
 )
 
-set(EXECUTABLES
-    tlscli
-    tlsconn
-    ${THREADED_EXECUTABLES}
-)
+# Both TLS examples use OpenSSL-specific APIs and are only built with OpenSSL.
+set(EXECUTABLES ${THREADED_EXECUTABLES})
+
+if(SOCKPP_WITH_OPENSSL)
+    list(APPEND EXECUTABLES tlscli tlsconn)
+endif()
 
 foreach(EXECUTABLE ${EXECUTABLES})
     add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
