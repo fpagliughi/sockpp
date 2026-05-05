@@ -197,15 +197,24 @@ string mbedtls_socket::peer_certificate_status_message() {
     return result;
 }
 
-string mbedtls_socket::peer_certificate() {
-    auto cert = mbedtls_ssl_get_peer_cert(&ssl_);
-    if (!cert) {
-        // This should only happen in a failed handshake scenario, or if there
-        // was no cert to begin with
-        return ctx_.get_peer_certificate();
+std::optional<tls_certificate> mbedtls_socket::peer_certificate() {
+    binary der;
+
+    if (const auto* cert = mbedtls_ssl_get_peer_cert(&ssl_)) {
+        der.assign(cert->raw.p, cert->raw.p + cert->raw.len);
+    }
+    else {
+        // Fallback: certificate data captured during the verify callback.
+        const string& data = ctx_.get_peer_certificate();
+        if (data.empty())
+            return std::nullopt;
+        const auto* p = reinterpret_cast<const uint8_t*>(data.data());
+        der.assign(p, p + data.size());
     }
 
-    return string((const char*)cert->raw.p, cert->raw.len);
+    if (auto res = tls_certificate::from_der(der); res)
+        return std::make_optional(res.release());
+    return std::nullopt;
 }
 
 // -------- stream_socket I/O

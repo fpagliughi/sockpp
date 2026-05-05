@@ -54,8 +54,10 @@
 #include <cassert>
 #include <chrono>
 #include <mutex>
+#include <optional>
 
 #include "sockpp/connector.h"
+#include "sockpp/tls/mbedtls_certificate.h"
 #include "sockpp/tls/mbedtls_context.h"
 #include "sockpp/tls/mbedtls_error.h"
 
@@ -169,8 +171,11 @@ public:
 
     /** Returns a human-readable description of the peer certificate verification result. */
     string peer_certificate_status_message();
-    /** Returns the DER-encoded certificate received from the peer, if any. */
-    string peer_certificate();
+    /**
+     * Returns the certificate presented by the peer during the TLS handshake,
+     * or @c std::nullopt if no certificate was received.
+     */
+    std::optional<tls_certificate> peer_certificate();
 
     // -------- stream_socket I/O
 
