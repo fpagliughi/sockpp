@@ -82,13 +82,48 @@ using namespace std::literals::chrono_literals;
 
 namespace sockpp {
 
+// -------- Deferred constructors (no BIO setup, no handshake)
+
+mbedtls_socket::mbedtls_socket(mbedtls_context& ctx, const string& hostname)
+    : ctx_(ctx), hostname_(hostname) {
+    mbedtls_ssl_init(&ssl_);
+    if (ctx.status() != 0)
+        throw tls_error{ctx.status()};
+    if (int ret = mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get()); ret != 0)
+        throw tls_error{ret};
+    if (!hostname.empty()) {
+        if (int ret = mbedtls_ssl_set_hostname(&ssl_, hostname.c_str()); ret != 0)
+            throw tls_error{ret};
+    }
+}
+
+mbedtls_socket::mbedtls_socket(
+    mbedtls_context& ctx, const string& hostname, error_code& ec
+) noexcept
+    : ctx_(ctx), hostname_(hostname) {
+    mbedtls_ssl_init(&ssl_);
+    if (ctx.status() != 0) {
+        ec = make_tls_error_code(ctx.status());
+        return;
+    }
+    if (int ret = mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get()); ret != 0) {
+        ec = make_tls_error_code(ret);
+        return;
+    }
+    if (!hostname.empty()) {
+        if (int ret = mbedtls_ssl_set_hostname(&ssl_, hostname.c_str()); ret != 0)
+            ec = make_tls_error_code(ret);
+    }
+}
+
+// -------- Full constructor: attach socket and run handshake immediately
+
 mbedtls_socket::mbedtls_socket(
     stream_socket&& sock, mbedtls_context& ctx, const string& hostname
 )
-    : base(std::move(sock)), ctx_(ctx) {
+    : base(std::move(sock)), ctx_(ctx), hostname_(hostname) {
     mbedtls_ssl_init(&ssl_);
     if (ctx.status() != 0)
-        // TODO: Is this the right error type?
         throw tls_error{ctx.status()};
 
     if (check_mbed_setup(mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get())) != 0)
@@ -99,12 +134,12 @@ mbedtls_socket::mbedtls_socket(
 
 #if defined(_WIN32)
     // Winsock does not allow us to tell if a socket is nonblocking, so assume it isn't
-    bool nonblocking = false;
+    nonblocking_ = false;
 #else
     int flags = fcntl(stream::handle(), F_GETFL, 0);
-    bool nonblocking = (flags >= 0 && (flags & O_NONBLOCK) != 0);
+    nonblocking_ = (flags >= 0 && (flags & O_NONBLOCK) != 0);
 #endif
-    setup_bio(nonblocking);
+    setup_bio(nonblocking_);
 
     // Run the TLS handshake:
     open_ = true;
@@ -119,10 +154,25 @@ mbedtls_socket::mbedtls_socket(
     uint32_t verify_flags = mbedtls_ssl_get_verify_result(&ssl_);
     if (verify_flags != 0 && verify_flags != uint32_t(-1) &&
         !(verify_flags & MBEDTLS_X509_BADCERT_SKIP_VERIFY)) {
-        // char vrfy_buf[512];
-        // mbedtls_x509_crt_verify_info(vrfy_buf, sizeof(vrfy_buf), "", verify_flags);
         throw tls_error{MBEDTLS_ERR_X509_CERT_VERIFY_FAILED};
     }
+}
+
+// -------- Move constructor
+
+mbedtls_socket::mbedtls_socket(mbedtls_socket&& other) noexcept
+    : base(std::move(other)),
+      ctx_(other.ctx_),
+      read_timeout_(other.read_timeout_),
+      hostname_(std::move(other.hostname_)),
+      open_(other.open_),
+      nonblocking_(other.nonblocking_),
+      shutdown_received_(other.shutdown_received_) {
+    ssl_ = other.ssl_;
+    mbedtls_ssl_init(&other.ssl_);
+    other.open_ = false;
+    if (open_)
+        setup_bio(nonblocking_);
 }
 
 mbedtls_socket::~mbedtls_socket() {
@@ -170,6 +220,58 @@ result<> mbedtls_socket::close() {
         open_ = false;
     }
     return base::close();
+}
+
+// -------- TLS handshake
+
+result<> mbedtls_socket::tls_connect() noexcept {
+    if (int ret = mbedtls_ssl_session_reset(&ssl_); ret != 0)
+        return translate_mbed_err(ret);
+
+#if defined(_WIN32)
+    nonblocking_ = false;
+#else
+    int flags = fcntl(stream::handle(), F_GETFL, 0);
+    nonblocking_ = (flags >= 0 && (flags & O_NONBLOCK) != 0);
+#endif
+    setup_bio(nonblocking_);
+
+    open_ = true;
+    int status;
+    do {
+        status = mbedtls_ssl_handshake(&ssl_);
+    } while (status == MBEDTLS_ERR_SSL_WANT_READ || status == MBEDTLS_ERR_SSL_WANT_WRITE ||
+             status == MBEDTLS_ERR_SSL_CRYPTO_IN_PROGRESS);
+
+    // On handshake error, gracefully drain and close.
+    auto handshake_fail = [this](error_code ec) -> result<> {
+        open_ = false;
+        reset();
+        stream::shutdown(SHUT_WR);
+        stream::read_timeout(2000ms);
+        char buf[512];
+        while (true) {
+            if (auto r = stream::read(buf, sizeof(buf)); !r || r.value() == 0)
+                break;
+        }
+        stream::close();
+        return ec;
+    };
+
+    if (status != 0)
+        return handshake_fail(translate_mbed_err(status));
+
+    uint32_t verify_flags = mbedtls_ssl_get_verify_result(&ssl_);
+    if (verify_flags != 0 && verify_flags != uint32_t(-1) &&
+        !(verify_flags & MBEDTLS_X509_BADCERT_SKIP_VERIFY))
+        return handshake_fail(make_tls_error_code(MBEDTLS_ERR_X509_CERT_VERIFY_FAILED));
+
+    return {};
+}
+
+result<> mbedtls_socket::tls_connect(stream_socket&& sock) noexcept {
+    base::operator=(std::move(sock));
+    return tls_connect();
 }
 
 // -------- certificate / trust API
@@ -285,6 +387,8 @@ result<size_t> mbedtls_socket::bio_recv_timeout(void* buf, size_t n, uint32_t ti
 error_code mbedtls_socket::translate_mbed_err(int mbedErr) {
     switch (mbedErr) {
         case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+            shutdown_received_ = true;
+            return std::make_error_code(std::errc::connection_reset);
         case MBEDTLS_ERR_NET_CONN_RESET:
             return std::make_error_code(std::errc::connection_reset);
         case MBEDTLS_ERR_SSL_WANT_READ:

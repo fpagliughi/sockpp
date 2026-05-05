@@ -44,30 +44,24 @@
 #ifndef __sockpp_tls_mbedtls_connector_h
 #define __sockpp_tls_mbedtls_connector_h
 
-#include <memory>
-#include <string>
-
-#include "sockpp/connector.h"
-#include "sockpp/result.h"
-#include "sockpp/tls/mbedtls_context.h"
+#include "sockpp/sock_address.h"
 #include "sockpp/tls/mbedtls_socket.h"
+#include "sockpp/types.h"
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
 /**
- * A TLS client connector for the mbedTLS backend.
+ * A TLS client socket that connects to a remote server.
  *
- * Manages the lifecycle of an @ref mbedtls_socket.  Call @ref tls_connect()
- * with an already-connected stream socket to perform the TLS handshake, then
- * use @ref read() and @ref write() for I/O.
+ * Inherits all I/O from @ref mbedtls_socket.  Constructors perform the
+ * TCP connection and TLS handshake in one step; @ref connect() and
+ * @ref tls_connect() allow deferred or two-phase connection.
  */
-class tls_connector
+class tls_connector : public mbedtls_socket
 {
-    mbedtls_context& ctx_;
-    string hostname_;
-    std::unique_ptr<mbedtls_socket> sock_;
+    using base = mbedtls_socket;
 
     // Non-copyable
     tls_connector(const tls_connector&) = delete;
@@ -76,63 +70,124 @@ class tls_connector
 public:
     /**
      * Creates an unconnected TLS connector.
+     * Call @ref connect() or @ref tls_connect() to establish a connection.
      * @param ctx The mbedTLS context.
+     * @throws tls_error on SSL context initialisation failure.
      */
-    explicit tls_connector(mbedtls_context& ctx) : ctx_{ctx} {}
+    explicit tls_connector(mbedtls_context& ctx) : base{ctx, string{}} {}
+
+    /**
+     * Creates an unconnected TLS connector (non-throwing).
+     * @param ctx The mbedTLS context.
+     * @param ec Receives the error code on failure.
+     */
+    tls_connector(mbedtls_context& ctx, error_code& ec) noexcept
+        : base{ctx, string{}, ec} {}
+
+    /**
+     * Creates a TLS connector and attempts to connect to the server.
+     * @param ctx The mbedTLS context.
+     * @param addr The address of the remote server.
+     * @throws std::system_error on TCP connection failure.
+     * @throws tls_error on TLS handshake failure.
+     */
+    tls_connector(mbedtls_context& ctx, const sock_address& addr);
+
+    /**
+     * Creates a TLS connector, connects, and presents @p hostname for SNI.
+     * @param ctx The mbedTLS context.
+     * @param addr The address of the remote server.
+     * @param hostname The SNI host name to verify against the server certificate.
+     * @throws std::system_error on TCP connection failure.
+     * @throws tls_error on TLS handshake failure.
+     */
+    tls_connector(mbedtls_context& ctx, const sock_address& addr, const string& hostname);
+
+    /**
+     * Creates a TLS connector, connects, and presents @p hostname for SNI
+     * (non-throwing).
+     * @param ctx The mbedTLS context.
+     * @param addr The address of the remote server.
+     * @param hostname The SNI host name (may be empty).
+     * @param ec Receives the error code on failure.
+     */
+    tls_connector(
+        mbedtls_context& ctx, const sock_address& addr, const string& hostname,
+        error_code& ec
+    ) noexcept;
+
+    /**
+     * Creates a TLS connector by wrapping an existing stream socket.
+     * Performs the TLS handshake immediately.
+     * @param ctx The mbedTLS context.
+     * @param sock The connected, insecure stream socket.
+     * @throws tls_error on handshake failure.
+     */
+    tls_connector(mbedtls_context& ctx, stream_socket&& sock)
+        : base{std::move(sock), ctx, string{}} {}
+
+    /**
+     * Creates a TLS connector by wrapping an existing stream socket (non-throwing).
+     * @param ctx The mbedTLS context.
+     * @param sock The connected, insecure stream socket.
+     * @param ec Receives the error code on failure.
+     */
+    tls_connector(mbedtls_context& ctx, stream_socket&& sock, error_code& ec) noexcept;
 
     /**
      * Move constructor.
      * @param other The connector to move into this one.
      */
-    tls_connector(tls_connector&& other) noexcept
-        : ctx_{other.ctx_}, hostname_{std::move(other.hostname_)},
-          sock_{std::move(other.sock_)} {}
+    tls_connector(tls_connector&& other) noexcept : base(std::move(other)) {}
 
     /**
-     * Sets the SNI host name for the TLS handshake.
-     * Must be called before @ref tls_connect().
-     * @param hostname The server's host name.
+     * Destructor.
      */
-    result<> set_host_name(const string& hostname) {
-        hostname_ = hostname;
-        return {};
-    }
+    ~tls_connector() {}
 
     /**
-     * Wraps an existing TCP stream socket in TLS.
-     * Performs the TLS handshake immediately.
-     * @param sock The connected, insecure stream socket to wrap.
-     * @return Error code on failure.
-     */
-    result<> tls_connect(stream_socket&& sock) noexcept;
-
-    /**
-     * Connects to the specified address and performs the TLS handshake.
+     * Attempts to connect to the specified server and run the TLS handshake.
+     * Uses the hostname set during construction (if any) for SNI.
      * @param addr The remote server address.
-     * @return Error code on failure.
+     * @return An error code on failure, or an empty (success) result.
      */
     result<> connect(const sock_address& addr) noexcept;
 
-    /** Returns the underlying TLS socket, if connected. */
-    mbedtls_socket* socket() { return sock_.get(); }
+    /**
+     * Attempts to connect to the specified server with a timeout, then runs
+     * the TLS handshake.
+     * @param addr The remote server address.
+     * @param timeout The duration after which to give up. Zero means never.
+     * @return An error code on failure, or an empty (success) result.
+     */
+    result<> connect(const sock_address& addr, microseconds timeout) noexcept;
 
-    /** Returns @em true if the connector has a live TLS socket. */
-    bool is_connected() const { return sock_ != nullptr && sock_->is_open(); }
-
-    // ---- I/O passthrough ----
-
-    result<size_t> read(void* buf, size_t n) {
-        return sock_ ? sock_->read(buf, n) : result<size_t>{std::errc::not_connected};
+    /**
+     * Attempts to connect with a duration timeout (template overload).
+     * @param addr The remote server address.
+     * @param relTime The duration after which to give up.
+     * @return An error code on failure, or an empty (success) result.
+     */
+    template <class Rep, class Period>
+    result<> connect(
+        const sock_address& addr, const duration<Rep, Period>& relTime
+    ) noexcept {
+        return connect(addr, microseconds(relTime));
     }
 
-    result<size_t> write(const void* buf, size_t n) {
-        return sock_ ? sock_->write(buf, n) : result<size_t>{std::errc::not_connected};
-    }
+    /**
+     * Runs the TLS handshake on the currently attached underlying socket.
+     * @return An error code on failure, or an empty (success) result.
+     */
+    result<> tls_connect() noexcept { return base::tls_connect(); }
 
-    result<> close() {
-        if (sock_)
-            return sock_->close();
-        return {};
+    /**
+     * Attaches @p sock as the underlying stream socket and runs the TLS handshake.
+     * @param sock A connected, insecure stream socket.
+     * @return An error code on failure, or an empty (success) result.
+     */
+    result<> tls_connect(stream_socket&& sock) noexcept {
+        return base::tls_connect(std::move(sock));
     }
 };
 
