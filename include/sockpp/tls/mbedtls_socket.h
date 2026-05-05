@@ -57,6 +57,8 @@
 #include <optional>
 
 #include "sockpp/connector.h"
+#include "sockpp/error.h"
+#include "sockpp/types.h"
 #include "sockpp/tls/mbedtls_certificate.h"
 #include "sockpp/tls/mbedtls_context.h"
 #include "sockpp/tls/mbedtls_error.h"
@@ -89,9 +91,6 @@
 
 namespace sockpp {
 
-/** MbedTLS uses unsigned char buffers for read/write */
-using uchar = unsigned char;
-
 /////////////////////////////////////////////////////////////////////////////
 
 /** TLS stream socket implemented with mbedTLS. */
@@ -104,13 +103,13 @@ class mbedtls_socket : public stream_socket
 
     mbedtls_context& ctx_;
     mbedtls_ssl_context ssl_;
-    std::chrono::microseconds read_timeout_{0L};
+    microseconds read_timeout_{0L};
     string hostname_;
     bool open_ = false;
     bool nonblocking_ = false;
     bool shutdown_received_ = false;
 
-    // -------- error handling
+    // --- Error handling ---
 
     // Translates MbedTLS error code to POSIX (errno), if it's a common error,
     // otherwise returns the MbedTLS-specific error
@@ -135,11 +134,11 @@ class mbedtls_socket : public stream_socket
 
         auto err = res.error();
 
-        if (err == std::errc::broken_pipe || err == std::errc::connection_reset)
+        if (err == errc::broken_pipe || err == errc::connection_reset)
             return make_tls_error_code(MBEDTLS_ERR_NET_CONN_RESET);
 
-        if (err == std::errc::interrupted || err == std::errc::operation_would_block ||
-            err == std::errc::resource_unavailable_try_again)
+        if (err == errc::interrupted || err == errc::operation_would_block ||
+            err == errc::resource_unavailable_try_again)
             return Reading ? MBEDTLS_ERR_SSL_WANT_READ : MBEDTLS_ERR_SSL_WANT_WRITE;
 
         return Reading ? MBEDTLS_ERR_NET_RECV_FAILED : MBEDTLS_ERR_NET_SEND_FAILED;

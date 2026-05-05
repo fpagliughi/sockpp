@@ -4,13 +4,13 @@
  * mbedTLS implementation of the `tls_connector` class.
  *
  * @author Frank Pagliughi
- * @date 2024
+ * @date 2026
  */
 
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2024 Frank Pagliughi
+// Copyright (c) 2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without

@@ -133,7 +133,7 @@ mbedtls_socket::~mbedtls_socket() {
 }
 
 void mbedtls_socket::setup_bio(bool nonblocking) {
-    mbedtls_ssl_send_t* f_send = [](void* ctx, const uchar* buf, size_t n) {
+    mbedtls_ssl_send_t* f_send = [](void* ctx, const uint8_t* buf, size_t n) {
         if (auto res = ((mbedtls_socket*)ctx)->bio_send(buf, n); res)
             return (int)res.value();
         else
@@ -146,7 +146,7 @@ void mbedtls_socket::setup_bio(bool nonblocking) {
     //	- non-blocking I/O, f_recv != nullptr, f_recv_timeout == nullptr
     //	- blocking I/O, f_recv == nullptr, f_recv_timeout != nullptr"
     if (nonblocking) {
-        f_recv = [](void* ctx, uchar* buf, size_t n) {
+        f_recv = [](void* ctx, uint8_t* buf, size_t n) {
             if (auto res = ((mbedtls_socket*)ctx)->bio_recv(buf, n); res)
                 return (int)res.value();
             else
@@ -154,7 +154,7 @@ void mbedtls_socket::setup_bio(bool nonblocking) {
         };
     }
     else {
-        f_recv_timeout = [](void* ctx, uchar* buf, size_t n, uint32_t timeout) {
+        f_recv_timeout = [](void* ctx, uint8_t* buf, size_t n, uint32_t timeout) {
             if (auto res = ((mbedtls_socket*)ctx)->bio_recv_timeout(buf, n, timeout); res)
                 return (int)res.value();
             else
@@ -217,10 +217,11 @@ std::optional<tls_certificate> mbedtls_socket::peer_certificate() {
     return std::nullopt;
 }
 
-// -------- stream_socket I/O
+// --------------------------------------------------------------------------
+// stream_socket I/O
 
 result<size_t> mbedtls_socket::read(void* buf, size_t n) {
-    auto ucbuf = reinterpret_cast<uchar*>(buf);
+    auto ucbuf = reinterpret_cast<uint8_t*>(buf);
     return check_mbed_io<int, size_t>(mbedtls_ssl_read(&ssl_, ucbuf, n));
 }
 
@@ -234,7 +235,7 @@ result<> mbedtls_socket::read_timeout(const microseconds& to) {
 result<size_t> mbedtls_socket::write(const void* buf, size_t n) {
     if (n == 0)
         return 0;
-    auto ucbuf = reinterpret_cast<const uchar*>(buf);
+    auto ucbuf = reinterpret_cast<const uint8_t*>(buf);
     return check_mbed_io<int, size_t>(mbedtls_ssl_write(&ssl_, ucbuf, n));
 }
 
@@ -249,7 +250,8 @@ result<> mbedtls_socket::set_non_blocking(bool nonblocking) {
     return res;
 }
 
-// -------- mbedTLS BIO callbacks
+// --------------------------------------------------------------------------
+// mbedTLS BIO callbacks
 
 result<size_t> mbedtls_socket::bio_send(const void* buf, size_t n) {
     if (!open_)
