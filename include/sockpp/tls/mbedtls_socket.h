@@ -13,7 +13,7 @@
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2014-2023 Frank Pagliughi
+// Copyright (c) 2014-2024 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -100,10 +100,15 @@ class mbedtls_socket : public stream_socket
     using base = stream_socket;
     using stream = stream_socket;  // alias used in BIO callbacks and .cpp
 
+    friend class tls_connector;
+
     mbedtls_context& ctx_;
     mbedtls_ssl_context ssl_;
     std::chrono::microseconds read_timeout_{0L};
+    string hostname_;
     bool open_ = false;
+    bool nonblocking_ = false;
+    bool shutdown_received_ = false;
 
     // -------- error handling
 
@@ -140,6 +145,29 @@ class mbedtls_socket : public stream_socket
         return Reading ? MBEDTLS_ERR_NET_RECV_FAILED : MBEDTLS_ERR_NET_SEND_FAILED;
     }
 
+protected:
+    /**
+     * Deferred constructor: sets up the mbedTLS SSL context for @p ctx and
+     * records @p hostname for SNI, but does not attach a stream socket or run
+     * the TLS handshake.  Call @ref tls_connect() once a TCP connection exists.
+     *
+     * Throws @ref tls_error on SSL-context initialisation failure.
+     *
+     * @param ctx      The mbedTLS context providing certificates and configuration.
+     * @param hostname SNI host name to present during the handshake (may be empty).
+     */
+    mbedtls_socket(mbedtls_context& ctx, const string& hostname);
+
+    /**
+     * Non-throwing deferred constructor.  On failure, sets @p ec and leaves the
+     * object in an invalid state; do not call any methods on it.
+     *
+     * @param ctx      The mbedTLS context.
+     * @param hostname SNI host name (may be empty).
+     * @param ec       Receives the error code on failure.
+     */
+    mbedtls_socket(mbedtls_context& ctx, const string& hostname, error_code& ec) noexcept;
+
 public:
     /**
      * Constructs an mbedTLS socket by wrapping an existing stream socket.
@@ -149,6 +177,16 @@ public:
      * @param hostname The expected server host name for SNI and certificate verification.
      */
     mbedtls_socket(stream_socket&& sock, mbedtls_context& ctx, const string& hostname);
+
+    /**
+     * Move constructor.  Transfers socket ownership and re-registers the BIO
+     * callbacks with the new object address.
+     */
+    mbedtls_socket(mbedtls_socket&& other) noexcept;
+
+    /** Move assignment is not supported (context is stored by reference). */
+    mbedtls_socket& operator=(mbedtls_socket&&) = delete;
+
     ~mbedtls_socket();
 
     /**
@@ -158,6 +196,28 @@ public:
     void setup_bio(bool nonblocking);
 
     result<> close() override;
+
+    // -------- TLS handshake
+
+    /**
+     * Runs the TLS handshake on the currently attached stream socket.
+     *
+     * Resets the SSL session, configures the BIO, and performs the handshake.
+     * The underlying TCP connection must already be established (i.e. the
+     * base @c stream_socket must hold a valid file descriptor).
+     *
+     * @return An error code on failure, or an empty (success) result.
+     */
+    result<> tls_connect() noexcept;
+
+    /**
+     * Attaches @p sock as the underlying stream socket and then runs the TLS
+     * handshake.  Equivalent to `base = std::move(sock); tls_connect()`.
+     *
+     * @param sock A connected, insecure stream socket.
+     * @return An error code on failure, or an empty (success) result.
+     */
+    result<> tls_connect(stream_socket&& sock) noexcept;
 
     // -------- certificate / trust API
 
@@ -171,11 +231,17 @@ public:
 
     /** Returns a human-readable description of the peer certificate verification result. */
     string peer_certificate_status_message();
+
     /**
      * Returns the certificate presented by the peer during the TLS handshake,
      * or @c std::nullopt if no certificate was received.
      */
     std::optional<tls_certificate> peer_certificate();
+
+    /**
+     * Returns @em true if the peer sent a TLS @c close_notify shutdown alert.
+     */
+    bool received_shutdown() const noexcept { return shutdown_received_; }
 
     // -------- stream_socket I/O
 
