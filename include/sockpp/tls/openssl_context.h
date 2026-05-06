@@ -79,10 +79,10 @@ class tls_context
 public:
     /** The role for which a context or connection is used. */
     enum class role_t {
-        DEFAULT = 0x00, ///< No role specified; use the context default.
-        CLIENT  = 0x01, ///< Act as a TLS client.
-        SERVER  = 0x02, ///< Act as a TLS server.
-        BOTH    = CLIENT | SERVER, ///< Support both client and server roles.
+        DEFAULT = 0x00,          ///< No role specified; use the context default.
+        CLIENT = 0x01,           ///< Act as a TLS client.
+        SERVER = 0x02,           ///< Act as a TLS server.
+        BOTH = CLIENT | SERVER,  ///< Support both client and server roles.
     };
 
     /** Options for set_verify() */

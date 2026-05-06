@@ -119,9 +119,9 @@ protected:
 public:
     /** The role for which a context or connection is used. */
     enum role_t {
-        UNKNOWN = 0, ///< No role specified; use the context default.
-        CLIENT  = 1, ///< Act as a TLS client.
-        SERVER  = 2, ///< Act as a TLS server.
+        UNKNOWN = 0,  ///< No role specified; use the context default.
+        CLIENT = 1,   ///< Act as a TLS client.
+        SERVER = 2,   ///< Act as a TLS server.
     };
 
     /** Options for set_verify(). */
@@ -182,7 +182,8 @@ public:
      * Delegates to set_default_verify_paths().
      */
     result<> set_default_trust_locations() {
-        return set_default_verify_paths() ? result<>{} : result<>{std::errc::no_such_file_or_directory};
+        return set_default_verify_paths() ? result<>{}
+                                          : result<>{std::errc::no_such_file_or_directory};
     }
 
     /**
@@ -292,7 +293,8 @@ public:
     /** Returns a pointer to the system root certificate store, or nullptr if unavailable. */
     static mbedtls_x509_crt* get_system_root_certs();
 
-    /** Returns the DER-encoded certificate received from the peer during the last handshake. */
+    /** Returns the DER-encoded certificate received from the peer during the last handshake.
+     */
     const string& get_peer_certificate() const { return received_cert_data_; }
 
     /**

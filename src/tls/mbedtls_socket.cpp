@@ -225,7 +225,10 @@ result<> mbedtls_socket::close() {
 // -------- TLS handshake
 
 result<> mbedtls_socket::tls_connect() noexcept {
-    fprintf(stderr, "[tls_connect] fd=%d hostname='%s'\n", (int)stream::handle(), hostname_.c_str());
+    fprintf(
+        stderr, "[tls_connect] fd=%d hostname='%s'\n", (int)stream::handle(),
+        hostname_.c_str()
+    );
     if (int ret = mbedtls_ssl_session_reset(&ssl_); ret != 0) {
         fprintf(stderr, "[tls_connect] session_reset failed: -0x%04X\n", -ret);
         return translate_mbed_err(ret);

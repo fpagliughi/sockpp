@@ -58,10 +58,10 @@
 
 #include "sockpp/connector.h"
 #include "sockpp/error.h"
-#include "sockpp/types.h"
 #include "sockpp/tls/mbedtls_certificate.h"
 #include "sockpp/tls/mbedtls_context.h"
 #include "sockpp/tls/mbedtls_error.h"
+#include "sockpp/types.h"
 
 #ifdef __APPLE__
     #include <TargetConditionals.h>
@@ -237,9 +237,7 @@ public:
      * Returns the mbedTLS certificate verification result flags.
      * A return value of zero means the peer certificate was accepted.
      */
-    uint32_t peer_certificate_status() {
-        return mbedtls_ssl_get_verify_result(&ssl_);
-    }
+    uint32_t peer_certificate_status() { return mbedtls_ssl_get_verify_result(&ssl_); }
 
     /** Returns a human-readable description of the peer certificate verification result. */
     string peer_certificate_status_message();

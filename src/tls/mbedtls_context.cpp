@@ -205,8 +205,9 @@ void mbedtls_context::reregister_callbacks() {
         mbedtls_ssl_conf_ca_cb(
             ssl_config_.get(),
             [](void* ctx, mbedtls_x509_crt const* child, mbedtls_x509_crt** cand) {
-                return static_cast<mbedtls_context*>(ctx)
-                    ->trusted_cert_callback(ctx, child, cand);
+                return static_cast<mbedtls_context*>(ctx)->trusted_cert_callback(
+                    ctx, child, cand
+                );
             },
             this
         );
@@ -279,10 +280,10 @@ void mbedtls_context::set_root_cert_locator(root_cert_locator_cb loc) {
     root_cert_locator_cb_ = loc;
 #if defined(MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK)
     if (loc) {
-        mbedtls_x509_crt_ca_cb_t callback =
-            [](void* ctx, mbedtls_x509_crt const* child, mbedtls_x509_crt** cand) {
-                return ((mbedtls_context*)ctx)->trusted_cert_callback(ctx, child, cand);
-            };
+        mbedtls_x509_crt_ca_cb_t callback = [](void* ctx, mbedtls_x509_crt const* child,
+                                               mbedtls_x509_crt** cand) {
+            return ((mbedtls_context*)ctx)->trusted_cert_callback(ctx, child, cand);
+        };
         mbedtls_ssl_conf_ca_cb(ssl_config_.get(), callback, this);
     }
     else {
@@ -383,8 +384,7 @@ void mbedtls_context::set_identity(
     unique_ptr<key> ident_key(new key);
     int err = mbedtls_pk_parse_key(
         ident_key.get(), reinterpret_cast<const unsigned char*>(private_key_data.data()),
-        private_key_data.size(),
-        nullptr, 0
+        private_key_data.size(), nullptr, 0
     );
     if (err != 0)
         throw std::system_error{make_tls_error_code(-err)};
@@ -401,8 +401,8 @@ void mbedtls_context::set_identity(
 }
 
 void mbedtls_context::set_verify(verify_t mode) {
-    int authMode = (mode == verify_t::PEER) ? MBEDTLS_SSL_VERIFY_REQUIRED
-                                            : MBEDTLS_SSL_VERIFY_NONE;
+    int authMode =
+        (mode == verify_t::PEER) ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_NONE;
     mbedtls_ssl_conf_authmode(ssl_config_.get(), authMode);
 }
 

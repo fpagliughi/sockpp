@@ -81,8 +81,7 @@ public:
      * @param ctx The mbedTLS context.
      * @param ec Receives the error code on failure.
      */
-    tls_connector(mbedtls_context& ctx, error_code& ec) noexcept
-        : base{ctx, string{}, ec} {}
+    tls_connector(mbedtls_context& ctx, error_code& ec) noexcept : base{ctx, string{}, ec} {}
 
     /**
      * Creates a TLS connector and attempts to connect to the server.
@@ -112,8 +111,7 @@ public:
      * @param ec Receives the error code on failure.
      */
     tls_connector(
-        mbedtls_context& ctx, const sock_address& addr, const string& hostname,
-        error_code& ec
+        mbedtls_context& ctx, const sock_address& addr, const string& hostname, error_code& ec
     ) noexcept;
 
     /**

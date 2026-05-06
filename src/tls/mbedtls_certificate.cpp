@@ -69,9 +69,7 @@ result<tls_certificate> tls_certificate::from_pem(const string& pem) {
     // mbedtls_x509_crt_parse() requires the buffer to include the NUL
     // terminator when the input is PEM-encoded.
     int ret = mbedtls_x509_crt_parse(
-        cert.get(),
-        reinterpret_cast<const unsigned char*>(pem.c_str()),
-        pem.size() + 1
+        cert.get(), reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1
     );
     if (ret != 0)
         return make_tls_error_code(ret);
@@ -83,9 +81,7 @@ result<tls_certificate> tls_certificate::from_der(const binary& der) {
     auto cert = make_cert();
 
     int ret = mbedtls_x509_crt_parse_der(
-        cert.get(),
-        reinterpret_cast<const unsigned char*>(der.data()),
-        der.size()
+        cert.get(), reinterpret_cast<const unsigned char*>(der.data()), der.size()
     );
     if (ret != 0)
         return make_tls_error_code(ret);
@@ -117,10 +113,8 @@ string tls_certificate::issuer_name() const {
 static string format_time(const mbedtls_x509_time& t) {
     char buf[16];
     std::snprintf(
-        buf, sizeof(buf),
-        "%04d%02d%02d%02d%02d%02dZ",
-        t.year, t.mon, t.day,
-        t.hour, t.min, t.sec
+        buf, sizeof(buf), "%04d%02d%02d%02d%02d%02dZ", t.year, t.mon, t.day, t.hour, t.min,
+        t.sec
     );
     return buf;
 }
@@ -153,20 +147,14 @@ string tls_certificate::to_pem() const {
     const char* footer = "-----END CERTIFICATE-----\n";
 
     size_t olen = 0;
-    mbedtls_pem_write_buffer(
-        header, footer,
-        cert_->raw.p, cert_->raw.len,
-        nullptr, 0, &olen
-    );
+    mbedtls_pem_write_buffer(header, footer, cert_->raw.p, cert_->raw.len, nullptr, 0, &olen);
 
     if (olen == 0)
         return {};
 
     std::unique_ptr<unsigned char[]> buf{new unsigned char[olen]};
     int ret = mbedtls_pem_write_buffer(
-        header, footer,
-        cert_->raw.p, cert_->raw.len,
-        buf.get(), olen, &olen
+        header, footer, cert_->raw.p, cert_->raw.len, buf.get(), olen, &olen
     );
     if (ret != 0)
         return {};

@@ -197,11 +197,11 @@
 #define MBEDTLS_THREADING_C
 
 #if defined(_WIN32) && !defined(__MINGW32__)
-/** Windows (MSVC): implement the four mutex functions with CRITICAL_SECTION,
- *  then call mbedtls_threading_set_alt() before psa_crypto_init(). */
+    /** Windows (MSVC): implement the four mutex functions with CRITICAL_SECTION,
+     *  then call mbedtls_threading_set_alt() before psa_crypto_init(). */
     #define MBEDTLS_THREADING_ALT
 #else
-/** Linux, macOS, MinGW/MSYS2: use POSIX threads. */
+    /** Linux, macOS, MinGW/MSYS2: use POSIX threads. */
     #define MBEDTLS_THREADING_PTHREAD
 #endif
 

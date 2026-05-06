@@ -50,148 +50,148 @@
  */
 
 #ifndef SOCKPP_MBEDTLS_CONFIG_H
-#define SOCKPP_MBEDTLS_CONFIG_H
+    #define SOCKPP_MBEDTLS_CONFIG_H
 
-/* =========================================================================
- * TLS protocol
- * ========================================================================= */
+    /* =========================================================================
+     * TLS protocol
+     * ========================================================================= */
 
-/** Enable the TLS protocol. */
-#define MBEDTLS_SSL_TLS_C
+    /** Enable the TLS protocol. */
+    #define MBEDTLS_SSL_TLS_C
 
-/** Enable the TLS client role. */
-#define MBEDTLS_SSL_CLI_C
+    /** Enable the TLS client role. */
+    #define MBEDTLS_SSL_CLI_C
 
-/** Enable the TLS server role. */
-#define MBEDTLS_SSL_SRV_C
+    /** Enable the TLS server role. */
+    #define MBEDTLS_SSL_SRV_C
 
-/** Enable TLS 1.2. */
-#define MBEDTLS_SSL_PROTO_TLS1_2
+    /** Enable TLS 1.2. */
+    #define MBEDTLS_SSL_PROTO_TLS1_2
 
-/**
- * Enable TLS 1.3.
- * Requires mbedTLS 4.x (PSA backend, always on).
- */
-#define MBEDTLS_SSL_PROTO_TLS1_3
+    /**
+     * Enable TLS 1.3.
+     * Requires mbedTLS 4.x (PSA backend, always on).
+     */
+    #define MBEDTLS_SSL_PROTO_TLS1_3
 
-/**
- * TLS 1.3 ephemeral key exchange mode.
- *
- * MANDATORY when MBEDTLS_SSL_PROTO_TLS1_3 is enabled and the connection uses
- * certificates (i.e. virtually all public internet servers).  Without this,
- * TLS 1.3 is compiled in but has no valid key exchange mode, causing an
- * internal error during the handshake.
- *
- * Requires: PSA_WANT_ALG_ECDH (or PSA_WANT_ALG_FFDH)
- *           MBEDTLS_X509_CRT_PARSE_C
- *           PSA_WANT_ALG_ECDSA or PSA_WANT_ALG_RSA_PSS
- */
-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+    /**
+     * TLS 1.3 ephemeral key exchange mode.
+     *
+     * MANDATORY when MBEDTLS_SSL_PROTO_TLS1_3 is enabled and the connection uses
+     * certificates (i.e. virtually all public internet servers).  Without this,
+     * TLS 1.3 is compiled in but has no valid key exchange mode, causing an
+     * internal error during the handshake.
+     *
+     * Requires: PSA_WANT_ALG_ECDH (or PSA_WANT_ALG_FFDH)
+     *           MBEDTLS_X509_CRT_PARSE_C
+     *           PSA_WANT_ALG_ECDSA or PSA_WANT_ALG_RSA_PSS
+     */
+    #define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
 
-/**
- * TLS 1.3 middlebox compatibility mode (RFC 8446 appendix D.4).
- * Recommended: makes TLS 1.3 traffic look like TLS 1.2 to legacy middle
- * boxes.  Adds a few bytes on the wire but does not affect interoperability
- * with correct TLS 1.3 peers.
- */
-#define MBEDTLS_SSL_TLS1_3_COMPATIBILITY_MODE
+    /**
+     * TLS 1.3 middlebox compatibility mode (RFC 8446 appendix D.4).
+     * Recommended: makes TLS 1.3 traffic look like TLS 1.2 to legacy middle
+     * boxes.  Adds a few bytes on the wire but does not affect interoperability
+     * with correct TLS 1.3 peers.
+     */
+    #define MBEDTLS_SSL_TLS1_3_COMPATIBILITY_MODE
 
-/**
- * Server Name Indication.
- * Required for hostname verification.  sockpp always calls
- * mbedtls_ssl_set_hostname(); in mbedTLS 4.x omitting that call causes
- * handshake failure rather than silently skipping CN/SAN verification.
- */
-#define MBEDTLS_SSL_SERVER_NAME_INDICATION
+    /**
+     * Server Name Indication.
+     * Required for hostname verification.  sockpp always calls
+     * mbedtls_ssl_set_hostname(); in mbedTLS 4.x omitting that call causes
+     * handshake failure rather than silently skipping CN/SAN verification.
+     */
+    #define MBEDTLS_SSL_SERVER_NAME_INDICATION
 
-/**
- * Keep the peer certificate in memory after the handshake.
- * Required when MBEDTLS_SSL_PROTO_TLS1_3 is enabled, and needed by
- * mbedtls_socket::peer_certificate() to retrieve the peer's certificate.
- */
-#define MBEDTLS_SSL_KEEP_PEER_CERTIFICATE
+    /**
+     * Keep the peer certificate in memory after the handshake.
+     * Required when MBEDTLS_SSL_PROTO_TLS1_3 is enabled, and needed by
+     * mbedtls_socket::peer_certificate() to retrieve the peer's certificate.
+     */
+    #define MBEDTLS_SSL_KEEP_PEER_CERTIFICATE
 
-/**
- * Encrypt-then-MAC (RFC 7366).
- * Recommended: strengthens TLS 1.2 CBC cipher suites against padding-oracle
- * and timing attacks.  No effect on AEAD suites or TLS 1.3.
- */
-#define MBEDTLS_SSL_ENCRYPT_THEN_MAC
+    /**
+     * Encrypt-then-MAC (RFC 7366).
+     * Recommended: strengthens TLS 1.2 CBC cipher suites against padding-oracle
+     * and timing attacks.  No effect on AEAD suites or TLS 1.3.
+     */
+    #define MBEDTLS_SSL_ENCRYPT_THEN_MAC
 
-/**
- * Extended Master Secret (RFC 7627).
- * Recommended: defends against the Triple Handshake attack and related
- * protocol weaknesses.  Enable even when renegotiation is disabled.
- */
-#define MBEDTLS_SSL_EXTENDED_MASTER_SECRET
+    /**
+     * Extended Master Secret (RFC 7627).
+     * Recommended: defends against the Triple Handshake attack and related
+     * protocol weaknesses.  Enable even when renegotiation is disabled.
+     */
+    #define MBEDTLS_SSL_EXTENDED_MASTER_SECRET
 
-/* =========================================================================
- * TLS 1.2 key exchange methods
- *
- * TLS 1.3 key exchange is handled automatically via the PSA layer.  TLS 1.2
- * still requires explicit selection of handshake modes here.
- * ========================================================================= */
+    /* =========================================================================
+     * TLS 1.2 key exchange methods
+     *
+     * TLS 1.3 key exchange is handled automatically via the PSA layer.  TLS 1.2
+     * still requires explicit selection of handshake modes here.
+     * ========================================================================= */
 
-/** ECDHE key exchange authenticated with an RSA certificate. */
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
+    /** ECDHE key exchange authenticated with an RSA certificate. */
+    #define MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED
 
-/** ECDHE key exchange authenticated with an ECDSA certificate. */
-#define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
+    /** ECDHE key exchange authenticated with an ECDSA certificate. */
+    #define MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED
 
-/* MBEDTLS_KEY_EXCHANGE_RSA_ENABLED was removed in mbedTLS 4.0 (no forward
- * secrecy).  RSA certificate *authentication* is still supported via
- * MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED above. */
+    /* MBEDTLS_KEY_EXCHANGE_RSA_ENABLED was removed in mbedTLS 4.0 (no forward
+     * secrecy).  RSA certificate *authentication* is still supported via
+     * MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED above. */
 
-/* =========================================================================
- * X.509 certificates and public keys
- * ========================================================================= */
+    /* =========================================================================
+     * X.509 certificates and public keys
+     * ========================================================================= */
 
-/** Enable X.509 certificate parsing. */
-#define MBEDTLS_X509_CRT_PARSE_C
+    /** Enable X.509 certificate parsing. */
+    #define MBEDTLS_X509_CRT_PARSE_C
 
-/** Enable X.509 certificate use (verification). */
-#define MBEDTLS_X509_USE_C
+    /** Enable X.509 certificate use (verification). */
+    #define MBEDTLS_X509_USE_C
 
-/** Enable public-key abstraction layer (used by X.509 and TLS). */
-#define MBEDTLS_PK_C
+    /** Enable public-key abstraction layer (used by X.509 and TLS). */
+    #define MBEDTLS_PK_C
 
-/** Enable PEM parsing (required for PEM-encoded certificates and keys). */
-#define MBEDTLS_PEM_PARSE_C
+    /** Enable PEM parsing (required for PEM-encoded certificates and keys). */
+    #define MBEDTLS_PEM_PARSE_C
 
-/** Enable PEM writing (required for tls_certificate::to_pem()). */
-#define MBEDTLS_PEM_WRITE_C
+    /** Enable PEM writing (required for tls_certificate::to_pem()). */
+    #define MBEDTLS_PEM_WRITE_C
 
-/** Enable ASN.1 DER parser (required for X.509). */
-#define MBEDTLS_ASN1_PARSE_C
+    /** Enable ASN.1 DER parser (required for X.509). */
+    #define MBEDTLS_ASN1_PARSE_C
 
-/** Enable ASN.1 DER writer. */
-#define MBEDTLS_ASN1_WRITE_C
+    /** Enable ASN.1 DER writer. */
+    #define MBEDTLS_ASN1_WRITE_C
 
-/* =========================================================================
- * Optional TLS extensions
- * ========================================================================= */
+    /* =========================================================================
+     * Optional TLS extensions
+     * ========================================================================= */
 
-/** Session tickets (client-side resumption). */
-/* #define MBEDTLS_SSL_SESSION_TICKETS */
+    /** Session tickets (client-side resumption). */
+    /* #define MBEDTLS_SSL_SESSION_TICKETS */
 
-/** ALPN — Application-Layer Protocol Negotiation (e.g. for HTTP/2). */
-/* #define MBEDTLS_SSL_ALPN */
+    /** ALPN — Application-Layer Protocol Negotiation (e.g. for HTTP/2). */
+    /* #define MBEDTLS_SSL_ALPN */
 
-/** Max fragment length negotiation. */
-/* #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH */
+    /** Max fragment length negotiation. */
+    /* #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH */
 
-/* =========================================================================
- * Utilities
- * ========================================================================= */
+    /* =========================================================================
+     * Utilities
+     * ========================================================================= */
 
-/**
- * Human-readable error strings (enables mbedtls_strerror()).
- * Disable in production builds where code size matters.
- */
-#define MBEDTLS_ERROR_C
+    /**
+     * Human-readable error strings (enables mbedtls_strerror()).
+     * Disable in production builds where code size matters.
+     */
+    #define MBEDTLS_ERROR_C
 
-/** Version information (enables mbedtls_version_get_number() etc.). */
-#define MBEDTLS_VERSION_C
+    /** Version information (enables mbedtls_version_get_number() etc.). */
+    #define MBEDTLS_VERSION_C
 
 /**
  * Debug output support.
