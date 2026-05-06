@@ -168,6 +168,7 @@ mbedtls_context::mbedtls_context(role_t r /*=CLIENT*/) : ssl_config_(new mbedtls
     set_status(mbedtls_ssl_config_defaults(
         ssl_config_.get(), endpoint, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT
     ));
+
     if (status() != 0)
         return;
 
@@ -198,6 +199,8 @@ void mbedtls_context::reregister_callbacks() {
         },
         this
     );
+
+#if defined(MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK)
     if (root_cert_locator_cb_) {
         mbedtls_ssl_conf_ca_cb(
             ssl_config_.get(),
@@ -208,6 +211,7 @@ void mbedtls_context::reregister_callbacks() {
             this
         );
     }
+#endif
 }
 
 mbedtls_context::mbedtls_context(mbedtls_context&& other) noexcept
@@ -273,11 +277,12 @@ int mbedtls_context::trusted_cert_callback(
 
 void mbedtls_context::set_root_cert_locator(root_cert_locator_cb loc) {
     root_cert_locator_cb_ = loc;
-    mbedtls_x509_crt_ca_cb_t callback = nullptr;
+#if defined(MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK)
     if (loc) {
-        callback = [](void* ctx, mbedtls_x509_crt const* child, mbedtls_x509_crt** cand) {
-            return ((mbedtls_context*)ctx)->trusted_cert_callback(ctx, child, cand);
-        };
+        mbedtls_x509_crt_ca_cb_t callback =
+            [](void* ctx, mbedtls_x509_crt const* child, mbedtls_x509_crt** cand) {
+                return ((mbedtls_context*)ctx)->trusted_cert_callback(ctx, child, cand);
+            };
         mbedtls_ssl_conf_ca_cb(ssl_config_.get(), callback, this);
     }
     else {
@@ -286,6 +291,9 @@ void mbedtls_context::set_root_cert_locator(root_cert_locator_cb loc) {
         if (roots)
             mbedtls_ssl_conf_ca_chain(ssl_config_.get(), roots, nullptr);
     }
+#else
+    (void)loc;
+#endif
 }
 
 void mbedtls_context::require_peer_cert(role_t forRole, bool require, bool sendCAList) {

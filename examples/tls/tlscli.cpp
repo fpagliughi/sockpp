@@ -38,6 +38,7 @@
 
 #include <iostream>
 #include <string>
+#include <system_error>
 
 #include "sockpp/inet_address.h"
 #include "sockpp/tls/connector.h"
@@ -106,7 +107,11 @@ int main(int argc, char* argv[]) {
         char buf[512];
 
         if (auto res = conn.read(buf, sizeof(buf)); !res) {
-            cerr << "Error: " << res.error_message() << endl;
+            // connection_reset / broken_pipe: server closed without close_notify.
+            // Normal for HTTP/1.0 — the TCP close signals end of response body.
+            auto err = res.error();
+            if (err != errc::connection_reset && err != errc::broken_pipe)
+                cerr << "Error: " << res.error_message() << endl;
             break;
         }
         else if (res.value() > 0) {

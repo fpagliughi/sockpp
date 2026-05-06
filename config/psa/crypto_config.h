@@ -166,8 +166,8 @@
 #define PSA_WANT_ALG_TLS12_PRF
 #define PSA_WANT_ALG_TLS12_PSK_TO_MS
 
-/** TLS 1.3 key schedule. */
-#define PSA_WANT_ALG_TLS12_ECJPAKE_TO_PMS
+/** ECJPAKE key exchange (J-PAKE based; used by Thread protocol). Optional. */
+/* #define PSA_WANT_ALG_TLS12_ECJPAKE_TO_PMS */
 
 /* =========================================================================
  * Random number generation

@@ -47,10 +47,9 @@ find_package(Threads REQUIRED)
 set(THREADED_EXECUTABLES
 )
 
-# Both TLS examples use OpenSSL-specific APIs and are only built with OpenSSL.
 set(EXECUTABLES ${THREADED_EXECUTABLES})
 
-if(SOCKPP_WITH_OPENSSL)
+if(SOCKPP_WITH_OPENSSL OR SOCKPP_WITH_MBEDTLS)
     list(APPEND EXECUTABLES tlscli tlsconn)
 endif()
 

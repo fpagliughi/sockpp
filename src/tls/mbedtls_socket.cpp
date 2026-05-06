@@ -225,8 +225,18 @@ result<> mbedtls_socket::close() {
 // -------- TLS handshake
 
 result<> mbedtls_socket::tls_connect() noexcept {
-    if (int ret = mbedtls_ssl_session_reset(&ssl_); ret != 0)
+    fprintf(stderr, "[tls_connect] fd=%d hostname='%s'\n", (int)stream::handle(), hostname_.c_str());
+    if (int ret = mbedtls_ssl_session_reset(&ssl_); ret != 0) {
+        fprintf(stderr, "[tls_connect] session_reset failed: -0x%04X\n", -ret);
         return translate_mbed_err(ret);
+    }
+    fprintf(stderr, "[tls_connect] session_reset OK\n");
+
+    // session_reset clears the SNI hostname; re-apply it.
+    if (!hostname_.empty()) {
+        if (int ret = mbedtls_ssl_set_hostname(&ssl_, hostname_.c_str()); ret != 0)
+            return translate_mbed_err(ret);
+    }
 
 #if defined(_WIN32)
     nonblocking_ = false;
@@ -258,8 +268,12 @@ result<> mbedtls_socket::tls_connect() noexcept {
         return ec;
     };
 
-    if (status != 0)
+    if (status != 0) {
+        char errbuf[256];
+        mbedtls_strerror(status, errbuf, sizeof(errbuf));
+        fprintf(stderr, "[tls_connect] handshake failed: -0x%04X %s\n", -status, errbuf);
         return handshake_fail(translate_mbed_err(status));
+    }
 
     uint32_t verify_flags = mbedtls_ssl_get_verify_result(&ssl_);
     if (verify_flags != 0 && verify_flags != uint32_t(-1) &&

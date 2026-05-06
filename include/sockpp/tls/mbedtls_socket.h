@@ -196,6 +196,19 @@ public:
 
     result<> close() override;
 
+    // -------- Hostname / SNI
+
+    /**
+     * Sets the SNI host name for future TLS handshakes.
+     * The new name will be used on the next call to @ref tls_connect().
+     * @param hostname The server host name for SNI and certificate verification.
+     * @return An empty (success) result.
+     */
+    result<> set_host_name(const string& hostname) {
+        hostname_ = hostname;
+        return {};
+    }
+
     // -------- TLS handshake
 
     /**
@@ -244,9 +257,11 @@ public:
 
     // -------- stream_socket I/O
 
+    using base::read;
     result<size_t> read(void* buf, size_t n) override;
     result<> read_timeout(const microseconds& to) override;
 
+    using base::write;
     result<size_t> write(const void* buf, size_t n) override;
     result<> write_timeout(const microseconds& to) override;
 

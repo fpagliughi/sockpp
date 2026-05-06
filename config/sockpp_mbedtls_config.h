@@ -75,6 +75,28 @@
 #define MBEDTLS_SSL_PROTO_TLS1_3
 
 /**
+ * TLS 1.3 ephemeral key exchange mode.
+ *
+ * MANDATORY when MBEDTLS_SSL_PROTO_TLS1_3 is enabled and the connection uses
+ * certificates (i.e. virtually all public internet servers).  Without this,
+ * TLS 1.3 is compiled in but has no valid key exchange mode, causing an
+ * internal error during the handshake.
+ *
+ * Requires: PSA_WANT_ALG_ECDH (or PSA_WANT_ALG_FFDH)
+ *           MBEDTLS_X509_CRT_PARSE_C
+ *           PSA_WANT_ALG_ECDSA or PSA_WANT_ALG_RSA_PSS
+ */
+#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+
+/**
+ * TLS 1.3 middlebox compatibility mode (RFC 8446 appendix D.4).
+ * Recommended: makes TLS 1.3 traffic look like TLS 1.2 to legacy middle
+ * boxes.  Adds a few bytes on the wire but does not affect interoperability
+ * with correct TLS 1.3 peers.
+ */
+#define MBEDTLS_SSL_TLS1_3_COMPATIBILITY_MODE
+
+/**
  * Server Name Indication.
  * Required for hostname verification.  sockpp always calls
  * mbedtls_ssl_set_hostname(); in mbedTLS 4.x omitting that call causes
@@ -88,6 +110,20 @@
  * mbedtls_socket::peer_certificate() to retrieve the peer's certificate.
  */
 #define MBEDTLS_SSL_KEEP_PEER_CERTIFICATE
+
+/**
+ * Encrypt-then-MAC (RFC 7366).
+ * Recommended: strengthens TLS 1.2 CBC cipher suites against padding-oracle
+ * and timing attacks.  No effect on AEAD suites or TLS 1.3.
+ */
+#define MBEDTLS_SSL_ENCRYPT_THEN_MAC
+
+/**
+ * Extended Master Secret (RFC 7627).
+ * Recommended: defends against the Triple Handshake attack and related
+ * protocol weaknesses.  Enable even when renegotiation is disabled.
+ */
+#define MBEDTLS_SSL_EXTENDED_MASTER_SECRET
 
 /* =========================================================================
  * TLS 1.2 key exchange methods
@@ -115,9 +151,6 @@
 
 /** Enable X.509 certificate use (verification). */
 #define MBEDTLS_X509_USE_C
-
-/** Enable the trusted-certificate callback API (mbedtls_ssl_conf_ca_cb). */
-#define MBEDTLS_X509_TRUSTED_CERTIFICATE_CALLBACK
 
 /** Enable public-key abstraction layer (used by X.509 and TLS). */
 #define MBEDTLS_PK_C
