@@ -40,7 +40,9 @@
 #include <mbedtls/oid.h>
 #include <mbedtls/pem.h>
 
-#include <cstdio>
+#include <cerrno>
+#include <fstream>
+#include <iterator>
 #include <memory>
 
 using namespace std;
@@ -87,6 +89,21 @@ result<tls_certificate> tls_certificate::from_der(const binary& der) {
         return make_tls_error_code(ret);
 
     return tls_certificate{std::move(cert)};
+}
+
+result<tls_certificate> tls_certificate::from_file(const string& path) {
+    std::ifstream f{path, std::ios::binary};
+    if (!f.is_open())
+        return error_code{errno, std::generic_category()};
+
+    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
+    if (f.bad())
+        return error_code{errno, std::generic_category()};
+
+    if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
+        return from_pem(content);
+
+    return from_der(binary{content.begin(), content.end()});
 }
 
 // --------------------------------------------------------------------------

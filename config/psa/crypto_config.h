@@ -166,7 +166,11 @@
 #define PSA_WANT_ALG_TLS12_PRF
 #define PSA_WANT_ALG_TLS12_PSK_TO_MS
 
-/** ECJPAKE key exchange (J-PAKE based; used by Thread protocol). Optional. */
+/**
+ * ECJPAKE key exchange (J-PAKE based; used by the Thread protocol over DTLS).
+ * Enable when building for Thread/OpenThread or other ECJPAKE-based DTLS
+ * deployments.  Not required for standard TLS 1.2/1.3 or plain PSK modes.
+ */
 /* #define PSA_WANT_ALG_TLS12_ECJPAKE_TO_PMS */
 
 /* =========================================================================
@@ -180,6 +184,21 @@
 /* No PSA_WANT_* macros are required to enable the default RNG.
  * The entropy source (getrandom / BCryptGenRandom) is selected by the
  * platform driver; no application-level configuration is needed. */
+
+/* =========================================================================
+ * Filesystem I/O
+ *
+ * Gates file-loading functions across multiple modules:
+ *   mbedtls_x509_crt_parse_file(), mbedtls_x509_crt_parse_path()
+ *   mbedtls_pk_parse_keyfile()
+ *   mbedtls_pk_parse_public_keyfile()
+ *
+ * Required by mbedtls_context::set_trust_file(), set_trust_path(),
+ * set_cert_file(), and set_key_file().  Disable on targets with no filesystem
+ * (e.g. bare-metal embedded) and use the in-memory parse variants instead.
+ * ========================================================================= */
+
+#define MBEDTLS_FS_IO
 
 /* =========================================================================
  * Threading

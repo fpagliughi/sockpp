@@ -120,6 +120,13 @@ public:
      */
     static result<tls_certificate> from_der(const binary& der);
     /**
+     * Loads a certificate from a PEM or DER file.
+     * The format is detected automatically from the file contents.
+     * @param path Path to the certificate file.
+     * @return The certificate, or an error code on failure.
+     */
+    static result<tls_certificate> from_file(const string& path);
+    /**
      * Checks whether this object holds a valid certificate.
      */
     bool is_valid() const { return cert_ != nullptr; }

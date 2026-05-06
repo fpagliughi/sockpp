@@ -39,6 +39,9 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 
+#include <cerrno>
+#include <fstream>
+#include <iterator>
 #include <memory>
 
 namespace sockpp {
@@ -68,6 +71,21 @@ result<tls_certificate> tls_certificate::from_der(const binary& der) {
         return tls_last_error();
 
     return tls_certificate{cert};
+}
+
+result<tls_certificate> tls_certificate::from_file(const string& path) {
+    std::ifstream f{path, std::ios::binary};
+    if (!f.is_open())
+        return error_code{errno, std::generic_category()};
+
+    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
+    if (f.bad())
+        return error_code{errno, std::generic_category()};
+
+    if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
+        return from_pem(content);
+
+    return from_der(binary{content.begin(), content.end()});
 }
 
 string tls_certificate::subject_name() const {

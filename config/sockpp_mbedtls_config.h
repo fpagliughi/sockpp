@@ -89,6 +89,25 @@
     #define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
 
     /**
+     * TLS 1.3 PSK-only key exchange mode.
+     * Used for session resumption without forward secrecy.  The PSK is derived
+     * from a prior session's master secret (session tickets) or from an external
+     * pre-shared key.  No certificate is required.
+     *
+     * Requires: PSA_WANT_ALG_TLS12_PSK_TO_MS (already enabled)
+     */
+    #define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
+
+    /**
+     * TLS 1.3 PSK + ephemeral key exchange mode.
+     * Combines a pre-shared key with an ephemeral ECDHE exchange for forward
+     * secrecy.  Preferred over PSK-only when resuming sessions.
+     *
+     * Requires: PSA_WANT_ALG_ECDH, PSA_WANT_ALG_TLS12_PSK_TO_MS
+     */
+    #define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
+
+    /**
      * TLS 1.3 middlebox compatibility mode (RFC 8446 appendix D.4).
      * Recommended: makes TLS 1.3 traffic look like TLS 1.2 to legacy middle
      * boxes.  Adds a few bytes on the wire but does not affect interoperability
@@ -142,6 +161,22 @@
      * secrecy).  RSA certificate *authentication* is still supported via
      * MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED above. */
 
+    /**
+     * TLS 1.2 PSK key exchange.
+     * Symmetric pre-shared key; no certificate required.  Useful for
+     * constrained devices and DTLS deployments.
+     */
+    #define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+
+    /**
+     * TLS 1.2 ECDHE-PSK key exchange.
+     * Adds an ephemeral ECDHE exchange to PSK for forward secrecy.
+     * Preferred over plain PSK when the device can afford the extra compute.
+     *
+     * Requires: PSA_WANT_ALG_ECDH (already enabled)
+     */
+    #define MBEDTLS_KEY_EXCHANGE_ECDHE_PSK_ENABLED
+
     /* =========================================================================
      * X.509 certificates and public keys
      * ========================================================================= */
@@ -181,6 +216,75 @@
     /* #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH */
 
     /* =========================================================================
+     * DTLS — Datagram TLS (TLS over UDP)
+     *
+     * DTLS 1.2 is defined in RFC 6347; DTLS 1.3 in RFC 9147.
+     * mbedTLS supports DTLS 1.2 (and experimentally DTLS 1.3 in 4.x).
+     * DTLS is commonly paired with PSK for constrained IoT devices.
+     * ========================================================================= */
+
+    /**
+     * Timing module.
+     * Provides mbedtls_timing_get_timer() and the delay callback used by DTLS
+     * for retransmission timeouts (mbedtls_ssl_set_timer_cb()).  Required when
+     * MBEDTLS_SSL_PROTO_DTLS is enabled.
+     */
+    #define MBEDTLS_TIMING_C
+
+    /**
+     * Enable the DTLS protocol layer.
+     * Requires MBEDTLS_SSL_PROTO_TLS1_2 (already enabled).
+     * Requires: MBEDTLS_TIMING_C
+     */
+    #define MBEDTLS_SSL_PROTO_DTLS
+
+    /**
+     * DTLS cookie module.
+     * Provides mbedtls_ssl_cookie_write() / mbedtls_ssl_cookie_check() used
+     * by the hello-verify mechanism below.  Required when
+     * MBEDTLS_SSL_DTLS_HELLO_VERIFY is enabled.
+     */
+    #define MBEDTLS_SSL_COOKIE_C
+
+    /**
+     * DTLS server hello-verify (RFC 6347 §4.2.1).
+     * Sends a HelloVerifyRequest with a cookie before the full handshake,
+     * preventing amplification attacks from spoofed client addresses.
+     * Required for DTLS servers exposed to untrusted networks.
+     * Requires: MBEDTLS_SSL_COOKIE_C
+     */
+    #define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+
+    /**
+     * DTLS anti-replay protection (RFC 6347 §4.1.2.6).
+     * Maintains a sliding window of received record sequence numbers and
+     * discards duplicates, preventing replay attacks on DTLS connections.
+     */
+    #define MBEDTLS_SSL_DTLS_ANTI_REPLAY
+
+    /**
+     * DTLS bad-MAC record limit.
+     * Closes the connection after a configurable number of records with a
+     * bad MAC, hardening against fault-injection and padding-oracle attacks.
+     * Limit is set at runtime via mbedtls_ssl_conf_dtls_badmac_limit().
+     */
+    #define MBEDTLS_SSL_DTLS_BADMAC_LIMIT
+
+    /**
+     * DTLS Connection ID extension (RFC 9146).
+     * Allows the connection to survive client address changes (e.g. NAT
+     * rebinding or mobile roaming) without a full re-handshake.
+     * Optional — disable to save a few bytes on very constrained devices.
+     */
+    /* #define MBEDTLS_SSL_DTLS_CONNECTION_ID */
+
+    /**
+     * DTLS-SRTP (RFC 5764) — key material export for Secure RTP.
+     * Required for WebRTC media encryption.  Not needed for generic DTLS.
+     */
+    /* #define MBEDTLS_SSL_DTLS_SRTP */
+
+    /* =========================================================================
      * Utilities
      * ========================================================================= */
 
@@ -210,11 +314,18 @@
  * ========================================================================= */
 
 /* =========================================================================
- * NOT needed — sockpp provides its own socket I/O layer
+ * Network socket layer
  * ========================================================================= */
 
-/* Do NOT define MBEDTLS_NET_C.  sockpp supplies bio_send/bio_recv callbacks
- * so mbedTLS never touches the socket directly. */
+/**
+ * mbedTLS built-in TCP/UDP socket layer.
+ *
+ * sockpp does not use this — it supplies its own bio_send/bio_recv callbacks
+ * so mbedTLS never touches the socket directly.  Enabled here so that the
+ * installed library is useful to other consumers that call
+ * mbedtls_net_connect() / mbedtls_net_accept() directly.
+ */
+#define MBEDTLS_NET_C
 
 #endif /* SOCKPP_MBEDTLS_CONFIG_H */
 

@@ -107,6 +107,13 @@ public:
      */
     static result<tls_certificate> from_der(const binary& der);
     /**
+     * Loads a certificate from a PEM or DER file.
+     * The format is detected automatically from the file contents.
+     * @param path Path to the certificate file.
+     * @return The certificate, or an error code on failure.
+     */
+    static result<tls_certificate> from_file(const string& path);
+    /**
      * Copy assignment. Increments the OpenSSL reference count.
      */
     tls_certificate& operator=(const tls_certificate& rhs) {

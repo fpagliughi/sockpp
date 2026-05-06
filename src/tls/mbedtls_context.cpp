@@ -406,26 +406,47 @@ void mbedtls_context::set_verify(verify_t mode) {
     mbedtls_ssl_conf_authmode(ssl_config_.get(), authMode);
 }
 
-// File-based trust/identity loading — read the file and call the PEM-string overload.
-// Full implementations are tracked in MbedTLSPlan.md §2.1.
-
-result<> mbedtls_context::set_trust_file(const string& /*caFile*/) {
-    // TODO: read file, call set_root_certs()
+result<> mbedtls_context::set_trust_file(const string& caFile) {
+    auto certs = std::make_unique<cert>();
+    int ret = mbedtls_x509_crt_parse_file(certs.get(), caFile.c_str());
+    if (ret < 0)
+        return make_tls_error_code(-ret);
+    // ret > 0: some certs in the file failed; at least one loaded — treat as success.
+    root_certs_ = std::move(certs);
+    mbedtls_ssl_conf_ca_chain(ssl_config_.get(), root_certs_.get(), nullptr);
     return {};
 }
 
-result<> mbedtls_context::set_trust_path(const string& /*caPath*/) {
-    // TODO: iterate directory, call set_root_certs() for each cert file
+result<> mbedtls_context::set_trust_path(const string& caPath) {
+    auto certs = std::make_unique<cert>();
+    int ret = mbedtls_x509_crt_parse_path(certs.get(), caPath.c_str());
+    if (ret < 0)
+        return make_tls_error_code(-ret);
+    // ret > 0: some files in the directory failed; at least one loaded — treat as success.
+    root_certs_ = std::move(certs);
+    mbedtls_ssl_conf_ca_chain(ssl_config_.get(), root_certs_.get(), nullptr);
     return {};
 }
 
-result<> mbedtls_context::set_cert_file(const string& /*certFile*/) {
-    // TODO: read file, store pending identity cert
+result<> mbedtls_context::set_cert_file(const string& certFile) {
+    auto c = std::make_unique<cert>();
+    int ret = mbedtls_x509_crt_parse_file(c.get(), certFile.c_str());
+    if (ret != 0)
+        return make_tls_error_code(-ret);
+    identity_cert_ = std::move(c);
+    if (identity_key_)
+        set_identity(identity_cert_.get(), identity_key_.get());
     return {};
 }
 
-result<> mbedtls_context::set_key_file(const string& /*keyFile*/) {
-    // TODO: read file; if identity cert already set, call set_identity()
+result<> mbedtls_context::set_key_file(const string& keyFile) {
+    auto k = std::make_unique<key>();
+    int ret = mbedtls_pk_parse_keyfile(k.get(), keyFile.c_str(), nullptr);
+    if (ret != 0)
+        return make_tls_error_code(-ret);
+    identity_key_ = std::move(k);
+    if (identity_cert_)
+        set_identity(identity_cert_.get(), identity_key_.get());
     return {};
 }
 
