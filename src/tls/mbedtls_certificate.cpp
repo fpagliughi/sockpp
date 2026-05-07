@@ -39,17 +39,35 @@
 #include <mbedtls/error.h>
 #include <mbedtls/oid.h>
 #include <mbedtls/pem.h>
+#include <psa/crypto.h>
 
 #include <cerrno>
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <mutex>
 
 using namespace std;
 
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
+
+// Ensures psa_crypto_init() has been called before any certificate parsing.
+// Certificate parsing uses the PSA algorithm table; without this call, OID
+// lookups fail with MBEDTLS_ERR_X509_UNKNOWN_SIG_ALG even for modern certs.
+static void ensure_psa_init() {
+    static once_flag once;
+    call_once(once, [] {
+        psa_status_t status = psa_crypto_init();
+        if (status != PSA_SUCCESS) {
+            throw std::system_error{
+                std::error_code{static_cast<int>(status), std::system_category()},
+                "psa_crypto_init failed"
+            };
+        }
+    });
+}
 
 // File-local helper: release and delete a cert struct (null-safe).
 static void free_cert(mbedtls_x509_crt* p) {
@@ -60,7 +78,10 @@ static void free_cert(mbedtls_x509_crt* p) {
 }
 
 // Static helper: allocate and initialise a fresh mbedtls_x509_crt on the heap.
+// Also ensures PSA Crypto is initialised, which is required before any
+// certificate parsing in mbedTLS 4.x.
 mbedtls_x509_crt* tls_certificate::make_cert() {
+    ensure_psa_init();
     auto* p = new mbedtls_x509_crt;
     mbedtls_x509_crt_init(p);
     return p;
