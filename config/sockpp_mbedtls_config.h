@@ -297,35 +297,35 @@
     /** Version information (enables mbedtls_version_get_number() etc.). */
     #define MBEDTLS_VERSION_C
 
-/**
- * Debug output support.
- * Disable for production builds.  Enable at runtime with:
- *   mbedtls_debug_set_threshold(2);  // 1=warning 2=info 3=debug 4=verbose
- *   mbedtls_ssl_conf_dbg(&conf, my_debug_cb, NULL);
- */
-/* #define MBEDTLS_DEBUG_C */
+    /**
+     * Debug output support.
+     * Disable for production builds.  Enable at runtime with:
+     *   mbedtls_debug_set_threshold(2);  // 1=warning 2=info 3=debug 4=verbose
+     *   mbedtls_ssl_conf_dbg(&conf, my_debug_cb, NULL);
+     */
+    /* #define MBEDTLS_DEBUG_C */
 
-/* =========================================================================
- * Threading
- *
- * In mbedTLS 4.x, threading configuration moved to psa/crypto_config.h.
- * See config/psa/crypto_config.h for MBEDTLS_THREADING_C and
- * MBEDTLS_THREADING_PTHREAD / MBEDTLS_THREADING_ALT.
- * ========================================================================= */
+    /* =========================================================================
+     * Threading
+     *
+     * In mbedTLS 4.x, threading configuration moved to psa/crypto_config.h.
+     * See config/psa/crypto_config.h for MBEDTLS_THREADING_C and
+     * MBEDTLS_THREADING_PTHREAD / MBEDTLS_THREADING_ALT.
+     * ========================================================================= */
 
-/* =========================================================================
- * Network socket layer
- * ========================================================================= */
+    /* =========================================================================
+     * Network socket layer
+     * ========================================================================= */
 
-/**
- * mbedTLS built-in TCP/UDP socket layer.
- *
- * sockpp does not use this — it supplies its own bio_send/bio_recv callbacks
- * so mbedTLS never touches the socket directly.  Enabled here so that the
- * installed library is useful to other consumers that call
- * mbedtls_net_connect() / mbedtls_net_accept() directly.
- */
-#define MBEDTLS_NET_C
+    /**
+     * mbedTLS built-in TCP/UDP socket layer.
+     *
+     * sockpp does not use this — it supplies its own bio_send/bio_recv callbacks
+     * so mbedTLS never touches the socket directly.  Enabled here so that the
+     * installed library is useful to other consumers that call
+     * mbedtls_net_connect() / mbedtls_net_accept() directly.
+     */
+    #define MBEDTLS_NET_C
 
 #endif /* SOCKPP_MBEDTLS_CONFIG_H */
 

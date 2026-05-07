@@ -106,14 +106,11 @@ mbedtls_x509_crt* tls_certificate::clone_cert(const mbedtls_x509_crt* src) {
 tls_certificate::tls_certificate(const tls_certificate& other)
     : cert_{clone_cert(other.cert_)} {}
 
-tls_certificate::tls_certificate(tls_certificate&& other) noexcept
-    : cert_{other.cert_} {
+tls_certificate::tls_certificate(tls_certificate&& other) noexcept : cert_{other.cert_} {
     other.cert_ = nullptr;
 }
 
-tls_certificate::~tls_certificate() {
-    free_cert(cert_);
-}
+tls_certificate::~tls_certificate() { free_cert(cert_); }
 
 tls_certificate& tls_certificate::operator=(const tls_certificate& rhs) {
     if (this != &rhs) {
