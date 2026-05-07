@@ -99,6 +99,7 @@ class mbedtls_socket : public stream_socket
     using base = stream_socket;
     using stream = stream_socket;  // alias used in BIO callbacks and .cpp
 
+    friend class mbedtls_context;
     friend class tls_connector;
 
     mbedtls_context& ctx_;
@@ -261,6 +262,7 @@ public:
 
     using base::write;
     result<size_t> write(const void* buf, size_t n) override;
+    result<size_t> write(const std::vector<iovec>& ranges) override;
     result<> write_timeout(const microseconds& to) override;
 
     result<> set_non_blocking(bool nonblocking) override;

@@ -344,6 +344,21 @@ result<size_t> mbedtls_socket::write(const void* buf, size_t n) {
     return check_mbed_io<int, size_t>(mbedtls_ssl_write(&ssl_, ucbuf, n));
 }
 
+result<size_t> mbedtls_socket::write(const std::vector<iovec>& ranges) {
+    size_t total = 0;
+    for (const auto& range : ranges) {
+        if (range.iov_len == 0)
+            continue;
+        auto res = write(range.iov_base, range.iov_len);
+        if (!res)
+            return total > 0 ? result<size_t>{total} : result<size_t>{res.error()};
+        total += res.value();
+        if (res.value() < range.iov_len)
+            break;  // short write; don't attempt remaining ranges
+    }
+    return total;
+}
+
 result<> mbedtls_socket::write_timeout(const microseconds& to) {
     return stream::write_timeout(to);
 }

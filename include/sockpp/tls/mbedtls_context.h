@@ -85,6 +85,7 @@ class mbedtls_context
     struct key;
 
     mutable int status_ = 0;
+    unsigned mode_flags_ = 0;
     std::function<bool(const string&)> auth_callback_;
 
     std::unique_ptr<mbedtls_ssl_config> ssl_config_;
@@ -128,6 +129,24 @@ public:
     enum class verify_t { NONE, PEER };
 
     /**
+     * Options for set_mode().
+     *
+     * Values are intentionally equal to the corresponding OpenSSL SSL_MODE_*
+     * constants so that code using integer literals is portable across backends.
+     *
+     * - ENABLE_PARTIAL_WRITE: mbedTLS always allows partial writes; this flag
+     *   is accepted but is effectively a no-op.
+     * - ACCEPT_MOVING_WRITE_BUFFER: not applicable to mbedTLS; no-op.
+     * - AUTO_RETRY: stored as a flag; future BIO-layer integration may consult
+     *   it to suppress WANT_READ/WANT_WRITE errors from the application.
+     */
+    enum mode_t {
+        ENABLE_PARTIAL_WRITE = 0x00000001,
+        ACCEPT_MOVING_WRITE_BUFFER = 0x00000002,
+        AUTO_RETRY = 0x00000004,
+    };
+
+    /**
      * A function called during the TLS handshake to examine the peer certificate.
      * @param certData  The DER-encoded certificate.
      * @return @em true to accept the cert, @em false to reject and abort.
@@ -140,6 +159,23 @@ public:
      */
     explicit mbedtls_context(role_t role = CLIENT);
     ~mbedtls_context();
+
+    /**
+     * Returns a shared default client context.
+     * Useful when no per-connection configuration is required.
+     * The context is initialised once and reused across calls.
+     */
+    static mbedtls_context& default_context();
+    /**
+     * Creates a new client context.
+     * @return A new client context.
+     */
+    static mbedtls_context client() { return mbedtls_context{CLIENT}; }
+    /**
+     * Creates a new server context.
+     * @return A new server context.
+     */
+    static mbedtls_context server() { return mbedtls_context{SERVER}; }
 
     // Non-copyable
     mbedtls_context(const mbedtls_context&) = delete;
@@ -215,11 +251,11 @@ public:
 
     /**
      * Configures whether a peer certificate is required and verified.
-     * @param role The role (CLIENT or SERVER) to which this requirement applies.
      * @param required Whether a certificate must be presented.
-     * @param verified Whether the presented certificate must pass verification.
+     * @param sendCAList Pass true to send the list of trusted CA names to the
+     *                   client in the TLS handshake (server only).
      */
-    void require_peer_cert(role_t role, bool required, bool sendCAList = false);
+    void require_peer_cert(bool required, bool sendCAList = false);
 
     /**
      * Restricts accepted connections to peers presenting a specific certificate.
@@ -243,6 +279,20 @@ public:
 
     /** No-op stub for API compatibility with the OpenSSL backend. */
     void set_auto_retry(bool /*on*/ = true) {}
+    /**
+     * Sets one or more mode flags.
+     *
+     * ENABLE_PARTIAL_WRITE and AUTO_RETRY are stored; see @ref mode_t for
+     * which flags have behavioural effect.  ACCEPT_MOVING_WRITE_BUFFER is
+     * silently ignored (not applicable to mbedTLS).
+     * @param mode Bitmask of @ref mode_t flags to set.
+     */
+    void set_mode(mode_t mode) noexcept { mode_flags_ |= static_cast<unsigned>(mode); }
+    /**
+     * Clears one or more mode flags.
+     * @param mode Bitmask of @ref mode_t flags to clear.
+     */
+    void clear_mode(mode_t mode) noexcept { mode_flags_ &= ~static_cast<unsigned>(mode); }
 
     // ---- Identity (local certificate + key) ----
 
@@ -275,14 +325,13 @@ public:
     // ---- Socket factory ----
 
     /**
-     * Wraps an existing stream socket in a TLS layer.
+     * Wraps an existing stream socket in a TLS layer and runs the handshake.
      * @param sock The insecure stream socket to wrap.
-     * @param role The role for this connection (CLIENT, SERVER, or UNKNOWN).
      * @param peer_name The expected peer host name for SNI and certificate verification.
-     * @return A new TLS socket wrapping the given stream socket.
+     * @return A heap-allocated TLS socket on success, or an error code on failure.
      */
-    std::unique_ptr<mbedtls_socket> wrap_socket(
-        stream_socket&& sock, role_t role = UNKNOWN, const string& peer_name = string{}
+    result<std::unique_ptr<mbedtls_socket>> wrap_socket(
+        stream_socket&& sock, const string& peer_name = string{}
     );
 
     // ---- Accessors ----

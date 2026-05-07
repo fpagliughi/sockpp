@@ -154,6 +154,10 @@ public:
      */
     tls_context& operator=(tls_context&& rhs);
     /**
+     * Returns the role for which this context was created.
+     */
+    role_t role() const noexcept { return role_; }
+    /**
      * Specify that application should use the default locations of the CA
      * certificates.
      * @return @em true on success, @em false on failure.
@@ -205,6 +209,18 @@ public:
      * @param on Turn auto retry on or off.
      */
     void set_auto_retry(bool on = true) noexcept;
+    /**
+     * Sets one or more mode flags on the context.
+     * Wraps SSL_CTX_set_mode().
+     * @param mode Bitmask of @ref mode_t flags to set.
+     */
+    void set_mode(mode_t mode) noexcept { ::SSL_CTX_set_mode(ctx_, mode); }
+    /**
+     * Clears one or more mode flags on the context.
+     * Wraps SSL_CTX_clear_mode().
+     * @param mode Bitmask of @ref mode_t flags to clear.
+     */
+    void clear_mode(mode_t mode) noexcept { ::SSL_CTX_clear_mode(ctx_, mode); }
     /**
      * Load the certificate chain from a file.
      * @param certFile The certificate chain file.
@@ -297,9 +313,11 @@ public:
      * @param peer_name  The peer's canonical hostname, or other
      *  				distinguished name, to be used for certificate
      *  				validation.
-     * @return A new \ref tls_socket to use for secure I/O.
+     * @return A heap-allocated TLS socket on success, or an error code on failure.
      */
-    result<tls_socket> wrap_socket(stream_socket&& sock, const string& peer_name = string{});
+    result<std::unique_ptr<tls_socket>> wrap_socket(
+        stream_socket&& sock, const string& peer_name = string{}
+    );
 };
 
 /////////////////////////////////////////////////////////////////////////////

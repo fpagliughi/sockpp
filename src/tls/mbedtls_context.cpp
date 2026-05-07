@@ -101,13 +101,10 @@ struct mbedtls_context::key : public mbedtls_pk_context
 
 mbedtls_context::cert* mbedtls_context::s_system_root_certs;
 
-/*
-tls_context& tls_context::default_context()
-{
-    static mbedtls_context dflt_ctx;
+mbedtls_context& mbedtls_context::default_context() {
+    static mbedtls_context dflt_ctx{CLIENT};
     return dflt_ctx;
 }
-*/
 
 // Initializes PSA Crypto, which replaces the explicit CTR-DRBG/entropy setup
 // required by mbedTLS 3.x.  Must be called once before any TLS context is
@@ -297,10 +294,8 @@ void mbedtls_context::set_root_cert_locator(root_cert_locator_cb loc) {
 #endif
 }
 
-void mbedtls_context::require_peer_cert(role_t forRole, bool require, bool sendCAList) {
-    if (forRole != role())
-        return;
-    int authMode = (require ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_OPTIONAL);
+void mbedtls_context::require_peer_cert(bool required, bool sendCAList) {
+    int authMode = required ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_OPTIONAL;
     mbedtls_ssl_conf_authmode(ssl_config_.get(), authMode);
 
     if (role() == SERVER) {
@@ -456,12 +451,16 @@ mbedtls_context::role_t mbedtls_context::role() {
                : SERVER;
 }
 
-unique_ptr<mbedtls_socket> mbedtls_context::wrap_socket(
-    stream_socket&& sock, role_t /*r*/, const string& peer_name
+result<unique_ptr<mbedtls_socket>> mbedtls_context::wrap_socket(
+    stream_socket&& sock, const string& peer_name
 ) {
-    // TODO: Verify supported role at runtime?
-    // assert(role == role());
-    return make_unique<mbedtls_socket>(std::move(sock), *this, peer_name);
+    error_code ec;
+    auto tls_sock = unique_ptr<mbedtls_socket>(new mbedtls_socket(*this, peer_name, ec));
+    if (ec)
+        return ec;
+    if (auto res = tls_sock->tls_connect(std::move(sock)); !res)
+        return res.error();
+    return tls_sock;
 }
 
 // ----- platform specific

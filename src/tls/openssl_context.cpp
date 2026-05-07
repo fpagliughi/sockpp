@@ -351,29 +351,29 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
     return tls_check_res_none(::SSL_CTX_check_private_key(ctx_));
 }
 
-result<tls_socket> tls_context::wrap_socket(
+result<unique_ptr<tls_socket>> tls_context::wrap_socket(
     stream_socket&& sock, const string& peer_name /*=string()*/
 ) {
     error_code ec;
-    tls_socket tls_sock{*this, std::move(sock), ec};
+    auto tls_sock = make_unique<tls_socket>(*this, std::move(sock), ec);
     if (ec)
         return ec;
 
     if (!peer_name.empty()) {
         // SNI: tells the server which hostname we're connecting to so it can
         // select the right certificate when it hosts multiple domains.
-        if (auto res = tls_sock.set_host_name(peer_name); !res)
+        if (auto res = tls_sock->set_host_name(peer_name); !res)
             return res.error();
 
         // Automatic hostname verification: OpenSSL will check that the
         // server's certificate actually matches the requested hostname.
-        if (::SSL_set1_host(tls_sock.ssl(), peer_name.c_str()) != 1)
+        if (::SSL_set1_host(tls_sock->ssl(), peer_name.c_str()) != 1)
             return tls_last_error();
     }
 
     // Perform the TLS handshake.
-    int ret = (role_ == role_t::SERVER) ? ::SSL_accept(tls_sock.ssl())
-                                        : ::SSL_connect(tls_sock.ssl());
+    int ret = (role_ == role_t::SERVER) ? ::SSL_accept(tls_sock->ssl())
+                                        : ::SSL_connect(tls_sock->ssl());
     if (ret != 1)
         return tls_last_error();
 
