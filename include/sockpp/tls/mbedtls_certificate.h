@@ -46,8 +46,6 @@
 
 #include <mbedtls/x509_crt.h>
 
-#include <memory>
-
 #include "sockpp/result.h"
 #include "sockpp/tls/mbedtls_error.h"
 #include "sockpp/types.h"
@@ -63,24 +61,29 @@ class mbedtls_socket;
 /**
  * An X.509 certificate implemented with mbedTLS.
  *
- * The underlying mbedTLS certificate structure is reference-counted via a
- * @c shared_ptr, so copies are cheap and the struct is freed only when the
- * last @c tls_certificate referencing it is destroyed.
+ * Each instance owns its own @c mbedtls_x509_crt struct.  Copying is done by
+ * a DER round-trip (serialize → parse into a fresh struct) so that every copy
+ * is fully independent.  Moving transfers ownership without any allocation.
  */
 class tls_certificate
 {
-    /** Shared ownership of the mbedTLS certificate structure. */
-    std::shared_ptr<mbedtls_x509_crt> cert_;
+    /** Sole owner of the mbedTLS certificate structure. */
+    mbedtls_x509_crt* cert_ = nullptr;
 
     friend class mbedtls_context;
     friend class mbedtls_socket;
 
     /** Allocates and initialises a new mbedTLS cert struct. */
-    static std::shared_ptr<mbedtls_x509_crt> make_cert();
+    static mbedtls_x509_crt* make_cert();
 
-    /** Takes shared ownership of an already-initialised certificate. */
-    explicit tls_certificate(std::shared_ptr<mbedtls_x509_crt> cert)
-        : cert_{std::move(cert)} {}
+    /**
+     * Deep-copies @p src by serialising to DER and parsing into a fresh struct.
+     * Returns @c nullptr if @p src is null, empty, or the parse fails.
+     */
+    static mbedtls_x509_crt* clone_cert(const mbedtls_x509_crt* src);
+
+    /** Takes ownership of an already-initialised certificate. */
+    explicit tls_certificate(mbedtls_x509_crt* cert) : cert_{cert} {}
 
 public:
     /**
@@ -88,25 +91,25 @@ public:
      */
     tls_certificate() = default;
     /**
-     * Copy constructor. Both objects share ownership of the underlying struct.
+     * Copy constructor.  Performs a deep copy via a DER round-trip.
      */
-    tls_certificate(const tls_certificate&) = default;
+    tls_certificate(const tls_certificate& other);
     /**
-     * Move constructor.
+     * Move constructor.  Transfers ownership; @p other becomes invalid.
      */
-    tls_certificate(tls_certificate&&) noexcept = default;
+    tls_certificate(tls_certificate&& other) noexcept;
     /**
-     * Destructor. Frees the certificate when the last owner is destroyed.
+     * Destructor.  Frees the owned certificate struct.
      */
-    ~tls_certificate() = default;
+    ~tls_certificate();
     /**
-     * Copy assignment.
+     * Copy assignment.  Performs a deep copy via a DER round-trip.
      */
-    tls_certificate& operator=(const tls_certificate&) = default;
+    tls_certificate& operator=(const tls_certificate& rhs);
     /**
-     * Move assignment.
+     * Move assignment.  Transfers ownership; @p rhs becomes invalid.
      */
-    tls_certificate& operator=(tls_certificate&&) noexcept = default;
+    tls_certificate& operator=(tls_certificate&& rhs) noexcept;
     /**
      * Parses a PEM-encoded certificate string.
      * @param pem A PEM-encoded X.509 certificate.

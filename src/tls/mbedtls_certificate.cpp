@@ -51,44 +51,96 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-// Static helper: allocate and initialise a fresh mbedtls_x509_crt on the
-// heap, wrapped in a shared_ptr with a custom deleter that calls
-// mbedtls_x509_crt_free() before releasing the memory.
-std::shared_ptr<mbedtls_x509_crt> tls_certificate::make_cert() {
+// File-local helper: release and delete a cert struct (null-safe).
+static void free_cert(mbedtls_x509_crt* p) {
+    if (p) {
+        mbedtls_x509_crt_free(p);
+        delete p;
+    }
+}
+
+// Static helper: allocate and initialise a fresh mbedtls_x509_crt on the heap.
+mbedtls_x509_crt* tls_certificate::make_cert() {
     auto* p = new mbedtls_x509_crt;
     mbedtls_x509_crt_init(p);
-    return {p, [](mbedtls_x509_crt* c) {
-                mbedtls_x509_crt_free(c);
-                delete c;
-            }};
+    return p;
+}
+
+// Deep-copy src by serialising its raw DER bytes into a fresh struct.
+mbedtls_x509_crt* tls_certificate::clone_cert(const mbedtls_x509_crt* src) {
+    if (!src || src->raw.len == 0)
+        return nullptr;
+    auto* p = make_cert();
+    int ret = mbedtls_x509_crt_parse_der(p, src->raw.p, src->raw.len);
+    if (ret != 0) {
+        free_cert(p);
+        return nullptr;
+    }
+    return p;
+}
+
+// --------------------------------------------------------------------------
+// Special members
+
+tls_certificate::tls_certificate(const tls_certificate& other)
+    : cert_{clone_cert(other.cert_)} {}
+
+tls_certificate::tls_certificate(tls_certificate&& other) noexcept
+    : cert_{other.cert_} {
+    other.cert_ = nullptr;
+}
+
+tls_certificate::~tls_certificate() {
+    free_cert(cert_);
+}
+
+tls_certificate& tls_certificate::operator=(const tls_certificate& rhs) {
+    if (this != &rhs) {
+        free_cert(cert_);
+        cert_ = clone_cert(rhs.cert_);
+    }
+    return *this;
+}
+
+tls_certificate& tls_certificate::operator=(tls_certificate&& rhs) noexcept {
+    if (this != &rhs) {
+        free_cert(cert_);
+        cert_ = rhs.cert_;
+        rhs.cert_ = nullptr;
+    }
+    return *this;
 }
 
 // --------------------------------------------------------------------------
 
 result<tls_certificate> tls_certificate::from_pem(const string& pem) {
-    auto cert = make_cert();
+    auto* cert = make_cert();
 
     // mbedtls_x509_crt_parse() requires the buffer to include the NUL
     // terminator when the input is PEM-encoded.
     int ret = mbedtls_x509_crt_parse(
-        cert.get(), reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1
+        cert, reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1
     );
-    if (ret != 0)
+    if (ret != 0) {
+        free_cert(cert);
         return make_tls_error_code(ret);
+    }
 
-    return tls_certificate{std::move(cert)};
+    return tls_certificate{cert};
 }
 
 result<tls_certificate> tls_certificate::from_der(const binary& der) {
-    auto cert = make_cert();
+    auto* cert = make_cert();
 
     int ret = mbedtls_x509_crt_parse_der(
-        cert.get(), reinterpret_cast<const unsigned char*>(der.data()), der.size()
+        cert, reinterpret_cast<const unsigned char*>(der.data()), der.size()
     );
-    if (ret != 0)
+    if (ret != 0) {
+        free_cert(cert);
         return make_tls_error_code(ret);
+    }
 
-    return tls_certificate{std::move(cert)};
+    return tls_certificate{cert};
 }
 
 result<tls_certificate> tls_certificate::from_file(const string& path) {
