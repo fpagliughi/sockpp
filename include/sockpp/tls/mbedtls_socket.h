@@ -102,8 +102,8 @@ class mbedtls_socket : public stream_socket
     friend class mbedtls_context;
     friend class tls_connector;
 
-    mbedtls_context& ctx_;
-    mbedtls_ssl_context ssl_;
+    mbedtls_context* ctx_ = nullptr;
+    mbedtls_ssl_context ssl_{};
     microseconds read_timeout_{0L};
     string hostname_;
     bool open_ = false;
@@ -169,6 +169,9 @@ protected:
     mbedtls_socket(mbedtls_context& ctx, const string& hostname, error_code& ec) noexcept;
 
 public:
+    /** Default constructor: creates an invalid, unconnected socket. */
+    mbedtls_socket() = default;
+
     /**
      * Constructs an mbedTLS socket by wrapping an existing stream socket.
      * Performs the TLS handshake immediately.
@@ -184,7 +187,7 @@ public:
      */
     mbedtls_socket(mbedtls_socket&& other) noexcept;
 
-    /** Move assignment is not supported (context is stored by reference). */
+    /** Move assignment is not supported (context is stored by pointer reference). */
     mbedtls_socket& operator=(mbedtls_socket&&) = delete;
 
     ~mbedtls_socket();

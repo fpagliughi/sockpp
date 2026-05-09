@@ -50,7 +50,7 @@ set(THREADED_EXECUTABLES
 set(EXECUTABLES ${THREADED_EXECUTABLES})
 
 if(SOCKPP_WITH_OPENSSL OR SOCKPP_WITH_MBEDTLS)
-    list(APPEND EXECUTABLES certinfo tlscli tlsconn)
+    list(APPEND EXECUTABLES certinfo tlscli tlsconn tlssvr)
 endif()
 
 foreach(EXECUTABLE ${EXECUTABLES})

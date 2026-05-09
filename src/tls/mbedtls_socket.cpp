@@ -83,11 +83,11 @@ namespace sockpp {
 // Deferred constructors (no BIO setup, no handshake)
 
 mbedtls_socket::mbedtls_socket(mbedtls_context& ctx, const string& hostname)
-    : ctx_(ctx), hostname_(hostname) {
+    : ctx_(&ctx), hostname_(hostname) {
     mbedtls_ssl_init(&ssl_);
     if (ctx.status() != 0)
         throw tls_error{ctx.status()};
-    if (int ret = mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get()); ret != 0)
+    if (int ret = mbedtls_ssl_setup(&ssl_, ctx_->ssl_config_.get()); ret != 0)
         throw tls_error{ret};
     if (!hostname.empty()) {
         if (int ret = mbedtls_ssl_set_hostname(&ssl_, hostname.c_str()); ret != 0)
@@ -98,13 +98,13 @@ mbedtls_socket::mbedtls_socket(mbedtls_context& ctx, const string& hostname)
 mbedtls_socket::mbedtls_socket(
     mbedtls_context& ctx, const string& hostname, error_code& ec
 ) noexcept
-    : ctx_(ctx), hostname_(hostname) {
+    : ctx_(&ctx), hostname_(hostname) {
     mbedtls_ssl_init(&ssl_);
     if (ctx.status() != 0) {
         ec = make_tls_error_code(ctx.status());
         return;
     }
-    if (int ret = mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get()); ret != 0) {
+    if (int ret = mbedtls_ssl_setup(&ssl_, ctx_->ssl_config_.get()); ret != 0) {
         ec = make_tls_error_code(ret);
         return;
     }
@@ -120,12 +120,12 @@ mbedtls_socket::mbedtls_socket(
 mbedtls_socket::mbedtls_socket(
     stream_socket&& sock, mbedtls_context& ctx, const string& hostname
 )
-    : base(std::move(sock)), ctx_(ctx), hostname_(hostname) {
+    : base(std::move(sock)), ctx_(&ctx), hostname_(hostname) {
     mbedtls_ssl_init(&ssl_);
     if (ctx.status() != 0)
         throw tls_error{ctx.status()};
 
-    if (check_mbed_setup(mbedtls_ssl_setup(&ssl_, ctx_.ssl_config_.get())) != 0)
+    if (check_mbed_setup(mbedtls_ssl_setup(&ssl_, ctx_->ssl_config_.get())) != 0)
         return;
     if (!hostname.empty() &&
         check_mbed_setup(mbedtls_ssl_set_hostname(&ssl_, hostname.c_str())) != 0)
@@ -324,7 +324,7 @@ std::optional<tls_certificate> mbedtls_socket::peer_certificate() {
     }
     else {
         // Fallback: certificate data captured during the verify callback.
-        const string& data = ctx_.get_peer_certificate();
+        const string& data = ctx_->get_peer_certificate();
         if (data.empty())
             return std::nullopt;
         const auto* p = reinterpret_cast<const uint8_t*>(data.data());

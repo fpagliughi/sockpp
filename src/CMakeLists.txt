@@ -69,6 +69,7 @@ endif()
 
 if(SOCKPP_WITH_OPENSSL)
     list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_acceptor.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_certificate.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_connector.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/openssl_context.cpp
@@ -77,6 +78,7 @@ if(SOCKPP_WITH_OPENSSL)
     )
 elseif(SOCKPP_WITH_MBEDTLS)
     list(APPEND SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_acceptor.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_certificate.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_connector.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/tls/mbedtls_context.cpp

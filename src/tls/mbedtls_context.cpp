@@ -371,22 +371,28 @@ int mbedtls_context::verify_callback(mbedtls_x509_crt* crt, int depth, uint32_t*
     return 0;
 }
 
-void mbedtls_context::set_identity(
+result<> mbedtls_context::set_identity(
     const string& certificate_data, const string& private_key_data
 ) {
-    auto ident_cert = parse_cert(certificate_data, false);
+    try {
+        auto ident_cert = parse_cert(certificate_data, false);
 
-    unique_ptr<key> ident_key(new key);
-    int err = mbedtls_pk_parse_key(
-        ident_key.get(), reinterpret_cast<const unsigned char*>(private_key_data.data()),
-        private_key_data.size(), nullptr, 0
-    );
-    if (err != 0)
-        throw std::system_error{make_tls_error_code(-err)};
+        unique_ptr<key> ident_key(new key);
+        int err = mbedtls_pk_parse_key(
+            ident_key.get(), reinterpret_cast<const unsigned char*>(private_key_data.data()),
+            private_key_data.size() + 1, nullptr, 0
+        );
+        if (err != 0)
+            return make_tls_error_code(-err);
 
-    set_identity(ident_cert.get(), ident_key.get());
-    identity_cert_ = move(ident_cert);
-    identity_key_ = move(ident_key);
+        set_identity(ident_cert.get(), ident_key.get());
+        identity_cert_ = std::move(ident_cert);
+        identity_key_ = std::move(ident_key);
+        return {};
+    }
+    catch (const std::system_error& e) {
+        return e.code();
+    }
 }
 
 void mbedtls_context::set_identity(

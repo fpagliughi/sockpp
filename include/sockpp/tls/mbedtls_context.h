@@ -312,8 +312,9 @@ public:
      * Sets the identity certificate and private key from PEM-encoded strings.
      * @param certificate_data PEM-encoded certificate chain.
      * @param private_key_data PEM-encoded private key.
+     * @return An empty result on success, or an error code on failure.
      */
-    void set_identity(const string& certificate_data, const string& private_key_data);
+    result<> set_identity(const string& certificate_data, const string& private_key_data);
 
     /**
      * Loads the local certificate chain from a PEM file.
