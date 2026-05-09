@@ -207,7 +207,18 @@ public:
     using base::write;
     result<size_t> write(const void* buf, size_t n) override;
     result<size_t> write(const std::vector<iovec>& ranges) override {
-        return ranges.empty() ? 0 : write(ranges[0].iov_base, ranges[0].iov_len);
+        size_t total = 0;
+        for (const auto& range : ranges) {
+            if (range.iov_len == 0)
+                continue;
+            auto res = write(range.iov_base, range.iov_len);
+            if (!res)
+                return total > 0 ? result<size_t>{total} : result<size_t>{res.error()};
+            total += res.value();
+            if (res.value() < range.iov_len)
+                break;  // short write; don't attempt remaining ranges
+        }
+        return total;
     }
     result<> write_timeout(const microseconds& to) override;
 

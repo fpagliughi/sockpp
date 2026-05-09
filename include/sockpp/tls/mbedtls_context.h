@@ -208,19 +208,24 @@ public:
     void set_root_certs(const string& certData);
 
     /**
-     * Configures the context to use the system default certificate verification paths.
-     * @return @em true on success.
+     * No-op on the mbedTLS backend.
+     *
+     * System root certificates are loaded once at construction time via
+     * get_system_root_certs().  There is nothing to do when this method is
+     * called explicitly; it always returns true.
+     *
+     * @return @em true always.
      */
     bool set_default_verify_paths() { return true; }
 
     /**
-     * Loads the system default CA trust locations.
-     * Delegates to set_default_verify_paths().
+     * No-op on the mbedTLS backend.
+     *
+     * System root certificates are loaded at construction time, so there is
+     * nothing to do here.  Provided for API compatibility with the OpenSSL
+     * backend.
      */
-    result<> set_default_trust_locations() {
-        return set_default_verify_paths() ? result<>{}
-                                          : result<>{std::errc::no_such_file_or_directory};
-    }
+    result<> set_default_trust_locations() { return {}; }
 
     /**
      * Loads a PEM CA bundle file into the trust store.
