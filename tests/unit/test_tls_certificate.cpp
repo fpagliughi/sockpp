@@ -37,6 +37,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
+#include <cstdio>
+#include <ctime>
 #include <string>
 
 #include "catch2_version.h"
@@ -291,6 +293,174 @@ TEST_CASE("tls_certificate self-move-assignment is safe", "[tls_certificate][mov
     // it must not crash or leave dangling memory.
     // (The standard permits the moved-from state to be "valid but unspecified".)
     (void)cert.is_valid();
+}
+
+// ===========================================================================
+// tls_certificate — §8 richer fields
+// ===========================================================================
+
+// These tests use the Cloudflare TEST_PEM certificate declared above.
+//
+// Known values for that cert:
+//   Serial (hex):  4def09a6c789cb70b79442 21c45abeb9
+//   SANs:          DNS:example.org, DNS:*.example.org
+//   Key Usage:     digitalSignature (0x80 per RFC 5280 / KU_DIGITAL_SIGNATURE)
+//   EKU OID:       1.3.6.1.5.5.7.3.1  (TLS Web Server Authentication)
+//   SHA-256 fp:    8c3ec68f304a7d7add4be10f0f203ffe3a94cd0958d4487f28fac7d0dd1fab22
+//   Not Before:    2026-04-02 22:18:16 UTC
+//   Not After:     2026-07-01 21:52:54 UTC
+
+TEST_CASE("tls_certificate not_before and not_after time_points", "[tls_certificate][time]") {
+    auto cert = tls_certificate::from_pem(TEST_PEM).release();
+    REQUIRE(cert.is_valid());
+
+    using namespace std::chrono;
+
+    auto nb = cert.not_before();
+    auto na = cert.not_after();
+
+    // Both must be after the Unix epoch.
+    REQUIRE(nb.time_since_epoch().count() > 0);
+    REQUIRE(na.time_since_epoch().count() > 0);
+
+    // not_before must be strictly before not_after.
+    REQUIRE(nb < na);
+
+    // Not Before: 2026-04-02 22:18:16 UTC
+    auto nb_t = system_clock::to_time_t(nb);
+    struct tm nb_tm;
+    gmtime_r(&nb_t, &nb_tm);
+    REQUIRE(nb_tm.tm_year + 1900 == 2026);
+    REQUIRE(nb_tm.tm_mon + 1 == 4);
+    REQUIRE(nb_tm.tm_mday == 2);
+    REQUIRE(nb_tm.tm_hour == 22);
+    REQUIRE(nb_tm.tm_min == 18);
+    REQUIRE(nb_tm.tm_sec == 16);
+
+    // Not After: 2026-07-01 21:52:54 UTC
+    auto na_t = system_clock::to_time_t(na);
+    struct tm na_tm;
+    gmtime_r(&na_t, &na_tm);
+    REQUIRE(na_tm.tm_year + 1900 == 2026);
+    REQUIRE(na_tm.tm_mon + 1 == 7);
+    REQUIRE(na_tm.tm_mday == 1);
+    REQUIRE(na_tm.tm_hour == 21);
+    REQUIRE(na_tm.tm_min == 52);
+    REQUIRE(na_tm.tm_sec == 54);
+}
+
+TEST_CASE(
+    "default-constructed certificate has epoch time_points", "[tls_certificate][time]"
+) {
+    tls_certificate cert;
+    using tp = std::chrono::system_clock::time_point;
+    REQUIRE(cert.not_before() == tp{});
+    REQUIRE(cert.not_after() == tp{});
+}
+
+TEST_CASE("tls_certificate serial_number", "[tls_certificate][serial]") {
+    auto cert = tls_certificate::from_pem(TEST_PEM).release();
+    REQUIRE(cert.is_valid());
+
+    auto sn = cert.serial_number();
+    REQUIRE(!sn.empty());
+
+    // Serial hex must match the known value.
+    auto hex = cert.serial_number_hex();
+    REQUIRE(hex == "4def09a6c789cb70b7944221c45abeb9");
+}
+
+TEST_CASE("default-constructed certificate has empty serial", "[tls_certificate][serial]") {
+    tls_certificate cert;
+    REQUIRE(cert.serial_number().empty());
+    REQUIRE(cert.serial_number_hex().empty());
+}
+
+TEST_CASE("tls_certificate fingerprint_sha256", "[tls_certificate][fingerprint]") {
+    auto cert = tls_certificate::from_pem(TEST_PEM).release();
+    REQUIRE(cert.is_valid());
+
+    auto fp = cert.fingerprint_sha256();
+    REQUIRE(fp.size() == 32);
+
+    // Convert to hex and compare against the known OpenSSL fingerprint.
+    string hex;
+    for (uint8_t b : fp) {
+        char buf[3];
+        snprintf(buf, sizeof(buf), "%02x", b);
+        hex += buf;
+    }
+    REQUIRE(hex == "8c3ec68f304a7d7add4be10f0f203ffe3a94cd0958d4487f28fac7d0dd1fab22");
+}
+
+TEST_CASE(
+    "default-constructed certificate has empty fingerprint", "[tls_certificate][fingerprint]"
+) {
+    tls_certificate cert;
+    REQUIRE(cert.fingerprint_sha256().empty());
+}
+
+TEST_CASE("tls_certificate subject_alt_names", "[tls_certificate][san]") {
+    auto cert = tls_certificate::from_pem(TEST_PEM).release();
+    REQUIRE(cert.is_valid());
+
+    auto sans = cert.subject_alt_names();
+
+    // The Cloudflare cert has two DNS SANs: example.org and *.example.org
+    REQUIRE(sans.size() == 2);
+
+    for (const auto& san : sans) REQUIRE(san.kind == subject_alt_name::type::DNS);
+
+    // Order as they appear in the extension: example.org first.
+    REQUIRE(sans[0].value == "example.org");
+    REQUIRE(sans[1].value == "*.example.org");
+}
+
+TEST_CASE("default-constructed certificate has empty SANs", "[tls_certificate][san]") {
+    tls_certificate cert;
+    REQUIRE(cert.subject_alt_names().empty());
+}
+
+TEST_CASE("tls_certificate key_usage", "[tls_certificate][key_usage]") {
+    auto cert = tls_certificate::from_pem(TEST_PEM).release();
+    REQUIRE(cert.is_valid());
+
+    uint32_t ku = cert.key_usage();
+
+    // The Cloudflare cert has Key Usage: Digital Signature (0x80).
+    REQUIRE(ku != 0);
+    REQUIRE((ku & 0x80) != 0);  // digitalSignature bit
+
+    // Bits that should NOT be set for a leaf TLS cert.
+    REQUIRE((ku & 0x04) == 0);  // keyCertSign must be off
+}
+
+TEST_CASE(
+    "default-constructed certificate has zero key_usage", "[tls_certificate][key_usage]"
+) {
+    tls_certificate cert;
+    REQUIRE(cert.key_usage() == 0);
+}
+
+TEST_CASE("tls_certificate extended_key_usage", "[tls_certificate][eku]") {
+    auto cert = tls_certificate::from_pem(TEST_PEM).release();
+    REQUIRE(cert.is_valid());
+
+    auto eku = cert.extended_key_usage();
+    REQUIRE(!eku.empty());
+
+    // The Cloudflare cert has id-kp-serverAuth.
+    bool found_server_auth = false;
+    for (const auto& oid : eku) {
+        if (oid == "1.3.6.1.5.5.7.3.1")
+            found_server_auth = true;
+    }
+    REQUIRE(found_server_auth);
+}
+
+TEST_CASE("default-constructed certificate has empty EKU", "[tls_certificate][eku]") {
+    tls_certificate cert;
+    REQUIRE(cert.extended_key_usage().empty());
 }
 
 // ===========================================================================

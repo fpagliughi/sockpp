@@ -36,16 +36,26 @@
 
 #include "sockpp/tls/mbedtls_certificate.h"
 
+#include <arpa/inet.h>
 #include <mbedtls/error.h>
-#include <mbedtls/oid.h>
+#include <mbedtls/md.h>
 #include <mbedtls/pem.h>
+#include <mbedtls/x509.h>
 #include <psa/crypto.h>
 
+// mbedtls/oid.h is missing extern "C" guards in mbedTLS 4.x
+extern "C" {
+#include <mbedtls/oid.h>
+}
+
 #include <cerrno>
+#include <ctime>
 #include <fstream>
+#include <iomanip>
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <sstream>
 
 using namespace std;
 
@@ -206,6 +216,167 @@ string tls_certificate::not_before_str() const {
 
 string tls_certificate::not_after_str() const {
     return cert_ ? format_time(cert_->valid_to) : string{};
+}
+
+// --------------------------------------------------------------------------
+
+// Helper: bytes to lowercase hex string
+static string bytes_to_hex(const unsigned char* data, size_t len) {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (size_t i = 0; i < len; ++i) oss << std::setw(2) << static_cast<unsigned>(data[i]);
+    return oss.str();
+}
+
+// Helper: convert mbedtls_x509_time to a UTC time_point
+static std::chrono::system_clock::time_point x509_time_to_tp(const mbedtls_x509_time& t) {
+    struct tm tm = {};
+    tm.tm_year = t.year - 1900;
+    tm.tm_mon = t.mon - 1;
+    tm.tm_mday = t.day;
+    tm.tm_hour = t.hour;
+    tm.tm_min = t.min;
+    tm.tm_sec = t.sec;
+    time_t ts = timegm(&tm);
+    if (ts == (time_t)-1)
+        return {};
+    return std::chrono::system_clock::from_time_t(ts);
+}
+
+std::chrono::system_clock::time_point tls_certificate::not_before() const {
+    return cert_ ? x509_time_to_tp(cert_->valid_from)
+                 : std::chrono::system_clock::time_point{};
+}
+
+std::chrono::system_clock::time_point tls_certificate::not_after() const {
+    return cert_ ? x509_time_to_tp(cert_->valid_to) : std::chrono::system_clock::time_point{};
+}
+
+binary tls_certificate::serial_number() const {
+    if (!cert_ || cert_->serial.len == 0)
+        return {};
+    return binary{cert_->serial.p, cert_->serial.p + cert_->serial.len};
+}
+
+string tls_certificate::serial_number_hex() const {
+    if (!cert_ || cert_->serial.len == 0)
+        return {};
+    return bytes_to_hex(cert_->serial.p, cert_->serial.len);
+}
+
+binary tls_certificate::fingerprint_sha256() const {
+    if (!cert_ || cert_->raw.len == 0)
+        return {};
+
+    binary digest(32, uint8_t{0});
+    int ret = mbedtls_md(
+        mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), cert_->raw.p, cert_->raw.len,
+        reinterpret_cast<unsigned char*>(digest.data())
+    );
+    if (ret != 0)
+        return {};
+    return digest;
+}
+
+std::vector<subject_alt_name> tls_certificate::subject_alt_names() const {
+    std::vector<subject_alt_name> result;
+    if (!cert_)
+        return result;
+    if (!mbedtls_x509_crt_has_ext_type(cert_, MBEDTLS_X509_EXT_SUBJECT_ALT_NAME))
+        return result;
+
+    const mbedtls_x509_sequence* seq = &cert_->subject_alt_names;
+    for (; seq != nullptr; seq = seq->next) {
+        if (seq->buf.len == 0)
+            continue;
+
+        mbedtls_x509_subject_alternative_name san_parsed;
+        int ret = mbedtls_x509_parse_subject_alt_name(&seq->buf, &san_parsed);
+        if (ret != 0)
+            continue;
+
+        subject_alt_name san;
+        switch (san_parsed.type) {
+            case MBEDTLS_X509_SAN_DNS_NAME:
+                san.kind = subject_alt_name::type::DNS;
+                san.value = string{
+                    reinterpret_cast<const char*>(san_parsed.san.unstructured_name.p),
+                    san_parsed.san.unstructured_name.len
+                };
+                break;
+            case MBEDTLS_X509_SAN_IP_ADDRESS: {
+                san.kind = subject_alt_name::type::IP;
+                const auto* addr = san_parsed.san.unstructured_name.p;
+                size_t addr_len = san_parsed.san.unstructured_name.len;
+                char ipbuf[INET6_ADDRSTRLEN] = {};
+                int af = (addr_len == 4) ? AF_INET : AF_INET6;
+                if (inet_ntop(af, addr, ipbuf, sizeof(ipbuf)))
+                    san.value = ipbuf;
+                break;
+            }
+            case MBEDTLS_X509_SAN_UNIFORM_RESOURCE_IDENTIFIER:
+                san.kind = subject_alt_name::type::URI;
+                san.value = string{
+                    reinterpret_cast<const char*>(san_parsed.san.unstructured_name.p),
+                    san_parsed.san.unstructured_name.len
+                };
+                break;
+            case MBEDTLS_X509_SAN_RFC822_NAME:
+                san.kind = subject_alt_name::type::EMAIL;
+                san.value = string{
+                    reinterpret_cast<const char*>(san_parsed.san.unstructured_name.p),
+                    san_parsed.san.unstructured_name.len
+                };
+                break;
+            default:
+                san.kind = subject_alt_name::type::OTHER;
+                break;
+        }
+        result.push_back(std::move(san));
+        mbedtls_x509_free_subject_alt_name(&san_parsed);
+    }
+    return result;
+}
+
+uint32_t tls_certificate::key_usage() const {
+    if (!cert_)
+        return 0;
+    if (!mbedtls_x509_crt_has_ext_type(cert_, MBEDTLS_X509_EXT_KEY_USAGE))
+        return 0;
+
+    // Build the bitmask by probing each known flag.
+    static const uint32_t all_flags[] = {
+        MBEDTLS_X509_KU_DIGITAL_SIGNATURE, MBEDTLS_X509_KU_NON_REPUDIATION,
+        MBEDTLS_X509_KU_KEY_ENCIPHERMENT,  MBEDTLS_X509_KU_DATA_ENCIPHERMENT,
+        MBEDTLS_X509_KU_KEY_AGREEMENT,     MBEDTLS_X509_KU_KEY_CERT_SIGN,
+        MBEDTLS_X509_KU_CRL_SIGN,          MBEDTLS_X509_KU_ENCIPHER_ONLY,
+        MBEDTLS_X509_KU_DECIPHER_ONLY,
+    };
+    uint32_t flags = 0;
+    for (auto f : all_flags) {
+        if (mbedtls_x509_crt_check_key_usage(cert_, f) == 0)
+            flags |= f;
+    }
+    return flags;
+}
+
+std::vector<string> tls_certificate::extended_key_usage() const {
+    std::vector<string> result;
+    if (!cert_)
+        return result;
+    if (!mbedtls_x509_crt_has_ext_type(cert_, MBEDTLS_X509_EXT_EXTENDED_KEY_USAGE))
+        return result;
+
+    const mbedtls_x509_sequence* seq = &cert_->ext_key_usage;
+    for (; seq != nullptr; seq = seq->next) {
+        if (seq->buf.len == 0)
+            continue;
+        char oidbuf[64];
+        int ret = mbedtls_oid_get_numeric_string(oidbuf, sizeof(oidbuf), &seq->buf);
+        if (ret > 0)
+            result.emplace_back(oidbuf);
+    }
+    return result;
 }
 
 // --------------------------------------------------------------------------

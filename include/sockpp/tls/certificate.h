@@ -44,7 +44,42 @@
 #ifndef __sockpp_tls_certificate_h
 #define __sockpp_tls_certificate_h
 
+#include "sockpp/types.h"
 #include "sockpp/version.h"
+
+namespace sockpp {
+
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * A single entry from an X.509 Subject Alternative Name (SAN) extension.
+ */
+struct subject_alt_name
+{
+    /** The type of SAN entry. */
+    enum class type {
+        DNS,    ///< DNS name (dNSName), e.g. "example.com"
+        IP,     ///< IP address (iPAddress), dotted-decimal or colon-hex
+        URI,    ///< Uniform Resource Identifier
+        EMAIL,  ///< RFC 822 email address
+        OTHER,  ///< Any other GeneralName type (not further decoded)
+    };
+
+    /** The type of this SAN entry. */
+    type kind;
+    /**
+     * String representation of the value.
+     * - DNS: the domain name, e.g. "example.com" or "*.example.com"
+     * - IP: dotted-decimal IPv4 (e.g. "192.0.2.1") or colon-hex IPv6
+     * - URI: the full URI string
+     * - EMAIL: the email address
+     * - OTHER: empty
+     */
+    string value;
+};
+
+/////////////////////////////////////////////////////////////////////////////
+}  // namespace sockpp
 
 #if defined(SOCKPP_OPENSSL)
     #include "sockpp/tls/openssl_certificate.h"

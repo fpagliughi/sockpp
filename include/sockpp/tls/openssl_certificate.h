@@ -46,7 +46,11 @@
 
 #include <openssl/ssl.h>
 
+#include <chrono>
+#include <vector>
+
 #include "sockpp/result.h"
+#include "sockpp/tls/certificate.h"
 #include "sockpp/tls/openssl_error.h"
 #include "sockpp/types.h"
 
@@ -160,6 +164,48 @@ public:
      * @return The certificate's "not after" date as a string.
      */
     string not_after_str() const;
+    /**
+     * Gets the certificate's "not before" date as a time_point.
+     * @return The certificate's "not before" date.
+     */
+    std::chrono::system_clock::time_point not_before() const;
+    /**
+     * Gets the certificate's "not after" date as a time_point.
+     * @return The certificate's "not after" date.
+     */
+    std::chrono::system_clock::time_point not_after() const;
+    /**
+     * Gets the DER-encoded serial number value bytes.
+     * @return The raw serial number bytes (big-endian, no tag or length).
+     */
+    binary serial_number() const;
+    /**
+     * Gets the serial number as a lowercase hexadecimal string.
+     * @return The serial number in hex, e.g. "4def09a6...".
+     */
+    string serial_number_hex() const;
+    /**
+     * Computes the SHA-256 fingerprint of the certificate.
+     * This is the SHA-256 digest of the DER-encoded certificate.
+     * @return A 32-byte binary holding the SHA-256 digest.
+     */
+    binary fingerprint_sha256() const;
+    /**
+     * Gets all Subject Alternative Name (SAN) entries.
+     * @return A vector of parsed SAN entries; empty if no SAN extension.
+     */
+    std::vector<subject_alt_name> subject_alt_names() const;
+    /**
+     * Gets the Key Usage extension bitmask.
+     * Bit values follow RFC 5280 §4.2.1.3 and the KU_* constants in OpenSSL.
+     * @return The key usage bitmask, or 0 if the extension is absent.
+     */
+    uint32_t key_usage() const;
+    /**
+     * Gets the Extended Key Usage OIDs as dotted strings.
+     * @return A vector of dotted OID strings, e.g. {"1.3.6.1.5.5.7.3.1"}.
+     */
+    std::vector<string> extended_key_usage() const;
     /**
      * Gets the certificate as a DER binary blob.
      * @return The certificate as a DER binary blob.
