@@ -88,6 +88,12 @@ if(SOCKPP_WITH_CAN)
     )
 endif()
 
+if(SOCKPP_WITH_OPENSSL OR SOCKPP_WITH_MBEDTLS)
+    target_sources(unit_tests PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_certificate.cpp
+    )
+endif()
+
 # --- Link for executables ---
 
 target_link_libraries(unit_tests

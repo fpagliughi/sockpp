@@ -91,23 +91,27 @@ public:
      */
     tls_certificate() = default;
     /**
-     * Copy constructor.  Performs a deep copy via a DER round-trip.
+     * Copy constructor.
+     * Performs a deep copy via a DER round-trip.
      */
-    tls_certificate(const tls_certificate& other);
+    tls_certificate(const tls_certificate& other) : cert_{clone_cert(other.cert_)} {}
     /**
-     * Move constructor.  Transfers ownership; @p other becomes invalid.
+     * Move constructor.
      */
-    tls_certificate(tls_certificate&& other) noexcept;
+    tls_certificate(tls_certificate&& other) noexcept : cert_{other.cert_} {
+        other.cert_ = nullptr;
+    }
     /**
-     * Destructor.  Frees the owned certificate struct.
+     * Destructor.
      */
     ~tls_certificate();
     /**
-     * Copy assignment.  Performs a deep copy via a DER round-trip.
+     * Copy assignment.
+     * Performs a deep copy via a DER round-trip.
      */
     tls_certificate& operator=(const tls_certificate& rhs);
     /**
-     * Move assignment.  Transfers ownership; @p rhs becomes invalid.
+     * Move assignment.
      */
     tls_certificate& operator=(tls_certificate&& rhs) noexcept;
     /**

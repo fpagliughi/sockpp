@@ -91,6 +91,7 @@ mbedtls_x509_crt* tls_certificate::make_cert() {
 mbedtls_x509_crt* tls_certificate::clone_cert(const mbedtls_x509_crt* src) {
     if (!src || src->raw.len == 0)
         return nullptr;
+
     auto* p = make_cert();
     int ret = mbedtls_x509_crt_parse_der(p, src->raw.p, src->raw.len);
     if (ret != 0) {
@@ -102,13 +103,6 @@ mbedtls_x509_crt* tls_certificate::clone_cert(const mbedtls_x509_crt* src) {
 
 // --------------------------------------------------------------------------
 // Special members
-
-tls_certificate::tls_certificate(const tls_certificate& other)
-    : cert_{clone_cert(other.cert_)} {}
-
-tls_certificate::tls_certificate(tls_certificate&& other) noexcept : cert_{other.cert_} {
-    other.cert_ = nullptr;
-}
 
 tls_certificate::~tls_certificate() { free_cert(cert_); }
 

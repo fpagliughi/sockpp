@@ -79,7 +79,8 @@ using namespace std::literals::chrono_literals;
 
 namespace sockpp {
 
-// -------- Deferred constructors (no BIO setup, no handshake)
+// --------------------------------------------------------------------------
+// Deferred constructors (no BIO setup, no handshake)
 
 mbedtls_socket::mbedtls_socket(mbedtls_context& ctx, const string& hostname)
     : ctx_(ctx), hostname_(hostname) {
@@ -113,7 +114,8 @@ mbedtls_socket::mbedtls_socket(
     }
 }
 
-// -------- Full constructor: attach socket and run handshake immediately
+// --------------------------------------------------------------------------
+// Full constructor: attach socket and run handshake immediately
 
 mbedtls_socket::mbedtls_socket(
     stream_socket&& sock, mbedtls_context& ctx, const string& hostname
@@ -155,7 +157,8 @@ mbedtls_socket::mbedtls_socket(
     }
 }
 
-// -------- Move constructor
+// --------------------------------------------------------------------------
+// Move constructor
 
 mbedtls_socket::mbedtls_socket(mbedtls_socket&& other) noexcept
     : base(std::move(other)),
@@ -219,7 +222,8 @@ result<> mbedtls_socket::close() {
     return base::close();
 }
 
-// -------- TLS handshake
+// --------------------------------------------------------------------------
+// TLS handshake
 
 result<> mbedtls_socket::tls_connect() noexcept {
     if (int ret = mbedtls_ssl_session_reset(&ssl_); ret != 0)
@@ -277,7 +281,8 @@ result<> mbedtls_socket::tls_connect(stream_socket&& sock) noexcept {
     return tls_connect();
 }
 
-// -------- certificate / trust API
+// --------------------------------------------------------------------------
+// certificate / trust API
 
 string mbedtls_socket::peer_certificate_status_message() {
     uint32_t verify_flags = mbedtls_ssl_get_verify_result(&ssl_);
@@ -399,7 +404,8 @@ result<size_t> mbedtls_socket::bio_recv_timeout(void* buf, size_t n, uint32_t ti
     return res;
 }
 
-// -------- error handling
+// --------------------------------------------------------------------------
+// error handling
 
 // Translates mbedTLS error code to POSIX (errno)
 error_code mbedtls_socket::translate_mbed_err(int mbedErr) {
