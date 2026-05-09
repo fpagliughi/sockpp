@@ -111,10 +111,16 @@ class mbedtls_context
      */
     std::function<binary(const string&)> psk_server_cb_;
 
+    /**
+     * Cipher suite ID array passed to mbedtls_ssl_conf_ciphersuites().
+     * Must remain alive for the lifetime of ssl_config_.
+     */
+    std::vector<int> ciphersuite_ids_;
+
     /** Thunk registered with mbedtls_ssl_conf_psk_cb(). */
     static int psk_server_cb_thunk(
-        void* p_info, mbedtls_ssl_context* ssl,
-        const unsigned char* identity, size_t identity_len
+        void* p_info, mbedtls_ssl_context* ssl, const unsigned char* identity,
+        size_t identity_len
     );
 
     static cert* s_system_root_certs;
@@ -146,6 +152,12 @@ public:
 
     /** Options for set_verify(). */
     enum class verify_t { NONE, PEER };
+
+    /** TLS protocol version selector for set_min/max_tls_version(). */
+    enum class tls_version {
+        TLS_1_2,  ///< TLS 1.2
+        TLS_1_3,  ///< TLS 1.3
+    };
 
     /**
      * Options for set_mode().
@@ -399,6 +411,40 @@ public:
      * @return An empty result always (kept as @c result<> for API symmetry).
      */
     result<> set_psk_callback(psk_server_callback cb);
+
+    // ---- Protocol version ----
+
+    /**
+     * Sets the minimum acceptable TLS protocol version.
+     * @param ver The minimum TLS version to accept.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_min_tls_version(tls_version ver);
+
+    /**
+     * Sets the maximum acceptable TLS protocol version.
+     * @param ver The maximum TLS version to accept.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_max_tls_version(tls_version ver);
+
+    // ---- Cipher suites ----
+
+    /**
+     * Restricts the set of cipher suites the context will negotiate.
+     *
+     * Accepts mbedTLS-style cipher suite names (e.g.
+     * @c "TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256").  Any unrecognised names
+     * are silently skipped; an error is returned only if the resulting list
+     * is empty.
+     *
+     * The list is stored in the context and must remain valid for its
+     * lifetime.
+     *
+     * @param suites Ordered list of cipher suite names.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_ciphersuites(const std::vector<string>& suites);
 
     // ---- Socket factory ----
 

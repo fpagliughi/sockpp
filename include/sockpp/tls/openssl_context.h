@@ -97,6 +97,12 @@ public:
         // TODO: Add the rest
     };
 
+    /** TLS protocol version selector for set_min/max_tls_version(). */
+    enum class tls_version {
+        TLS_1_2,  ///< TLS 1.2
+        TLS_1_3,  ///< TLS 1.3
+    };
+
 private:
     /** The OpenSSL context struct. */
     SSL_CTX* ctx_ = nullptr;
@@ -373,6 +379,38 @@ public:
      * @return An empty result always (kept as @c result<> for API symmetry).
      */
     result<> set_psk_callback(psk_server_callback cb);
+
+    // ---- Protocol version ----
+
+    /**
+     * Sets the minimum acceptable TLS protocol version.
+     * @param ver The minimum TLS version to accept.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_min_tls_version(tls_version ver);
+
+    /**
+     * Sets the maximum acceptable TLS protocol version.
+     * @param ver The maximum TLS version to accept.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_max_tls_version(tls_version ver);
+
+    // ---- Cipher suites ----
+
+    /**
+     * Restricts the set of cipher suites the context will negotiate.
+     *
+     * Accepts OpenSSL-style colon-separated cipher names.  The list is
+     * applied to both TLS 1.3 (via @c SSL_CTX_set_ciphersuites) and
+     * TLS 1.2 (via @c SSL_CTX_set_cipher_list).  An error is returned only
+     * if both calls fail (i.e. none of the supplied names were recognised by
+     * either API).
+     *
+     * @param suites Ordered list of cipher suite names.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_ciphersuites(const std::vector<string>& suites);
 
     /**
      * Creates a new \ref tls_socket instance that wraps the given connector

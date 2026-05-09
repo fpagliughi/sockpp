@@ -436,8 +436,7 @@ unsigned int tls_context::psk_client_cb(
     SSL* ssl, const char* /*hint*/, char* identity, unsigned int max_identity_len,
     unsigned char* psk, unsigned int max_psk_len
 ) noexcept {
-    auto* self =
-        static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
+    auto* self = static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
     if (!self || self->psk_key_.empty())
         return 0;
 
@@ -453,8 +452,7 @@ unsigned int tls_context::psk_client_cb(
 unsigned int tls_context::psk_server_cb(
     SSL* ssl, const char* identity, unsigned char* psk, unsigned int max_psk_len
 ) noexcept {
-    auto* self =
-        static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
+    auto* self = static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
     if (!self || !self->psk_server_cb_)
         return 0;
 
@@ -479,6 +477,36 @@ result<> tls_context::set_psk_callback(psk_server_callback cb) {
     psk_server_cb_ = std::move(cb);
     ::SSL_CTX_set_app_data(ctx_, this);
     ::SSL_CTX_set_psk_server_callback(ctx_, psk_server_cb_ ? psk_server_cb : nullptr);
+    return {};
+}
+
+result<> tls_context::set_min_tls_version(tls_version ver) {
+    int v = (ver == tls_version::TLS_1_3) ? TLS1_3_VERSION : TLS1_2_VERSION;
+    if (::SSL_CTX_set_min_proto_version(ctx_, v) != 1)
+        return tls_last_error();
+    return {};
+}
+
+result<> tls_context::set_max_tls_version(tls_version ver) {
+    int v = (ver == tls_version::TLS_1_3) ? TLS1_3_VERSION : TLS1_2_VERSION;
+    if (::SSL_CTX_set_max_proto_version(ctx_, v) != 1)
+        return tls_last_error();
+    return {};
+}
+
+result<> tls_context::set_ciphersuites(const std::vector<string>& suites) {
+    string colon_list;
+    for (const auto& s : suites) {
+        if (!colon_list.empty())
+            colon_list += ':';
+        colon_list += s;
+    }
+
+    // Apply to TLS 1.3 suites and TLS 1.2 suites; succeed if at least one call succeeds.
+    bool ok13 = (::SSL_CTX_set_ciphersuites(ctx_, colon_list.c_str()) == 1);
+    bool ok12 = (::SSL_CTX_set_cipher_list(ctx_, colon_list.c_str()) == 1);
+    if (!ok13 && !ok12)
+        return tls_last_error();
     return {};
 }
 

@@ -206,6 +206,39 @@ public:
         return *this;
     }
     /**
+     * Sets the minimum acceptable TLS protocol version.
+     * @param ver The minimum TLS version.
+     */
+    auto min_tls_version(tls_context::tls_version ver) -> self& {
+        if (!ec_) {
+            if (auto res = ctx_.set_min_tls_version(ver); !res)
+                ec_ = res.error();
+        }
+        return *this;
+    }
+    /**
+     * Sets the maximum acceptable TLS protocol version.
+     * @param ver The maximum TLS version.
+     */
+    auto max_tls_version(tls_context::tls_version ver) -> self& {
+        if (!ec_) {
+            if (auto res = ctx_.set_max_tls_version(ver); !res)
+                ec_ = res.error();
+        }
+        return *this;
+    }
+    /**
+     * Restricts the set of cipher suites the context will negotiate.
+     * @param suites Ordered list of cipher suite names.
+     */
+    auto ciphersuites(const std::vector<string>& suites) -> self& {
+        if (!ec_) {
+            if (auto res = ctx_.set_ciphersuites(suites); !res)
+                ec_ = res.error();
+        }
+        return *this;
+    }
+    /**
      * Set to retry read or write after non-application data handled.
      * @param on Turn auto retry on or off.
      */

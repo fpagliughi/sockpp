@@ -633,14 +633,14 @@ static string read_system_root_certs() {
 /////////////////////////////////////////////////////////////////////////////
 
 int mbedtls_context::psk_server_cb_thunk(
-    void* p_info, mbedtls_ssl_context* ssl,
-    const unsigned char* identity, size_t identity_len
+    void* p_info, mbedtls_ssl_context* ssl, const unsigned char* identity, size_t identity_len
 ) {
     auto* self = static_cast<mbedtls_context*>(p_info);
     if (!self || !self->psk_server_cb_)
         return MBEDTLS_ERR_SSL_UNKNOWN_IDENTITY;
 
-    binary key = self->psk_server_cb_(string{reinterpret_cast<const char*>(identity), identity_len});
+    binary key =
+        self->psk_server_cb_(string{reinterpret_cast<const char*>(identity), identity_len});
     if (key.empty())
         return MBEDTLS_ERR_SSL_UNKNOWN_IDENTITY;
 
@@ -651,8 +651,7 @@ int mbedtls_context::psk_server_cb_thunk(
 
 result<> mbedtls_context::set_psk(const string& identity, const binary& psk) {
     int ret = mbedtls_ssl_conf_psk(
-        ssl_config_.get(),
-        reinterpret_cast<const unsigned char*>(psk.data()), psk.size(),
+        ssl_config_.get(), reinterpret_cast<const unsigned char*>(psk.data()), psk.size(),
         reinterpret_cast<const unsigned char*>(identity.data()), identity.size()
     );
     return (ret == 0) ? result<>{} : make_tls_error_code(-ret);
@@ -664,6 +663,37 @@ result<> mbedtls_context::set_psk_callback(psk_server_callback cb) {
         mbedtls_ssl_conf_psk_cb(ssl_config_.get(), psk_server_cb_thunk, this);
     else
         mbedtls_ssl_conf_psk_cb(ssl_config_.get(), nullptr, nullptr);
+    return {};
+}
+
+result<> mbedtls_context::set_min_tls_version(tls_version ver) {
+    mbedtls_ssl_protocol_version v = (ver == tls_version::TLS_1_3)
+                                         ? MBEDTLS_SSL_VERSION_TLS1_3
+                                         : MBEDTLS_SSL_VERSION_TLS1_2;
+    mbedtls_ssl_conf_min_tls_version(ssl_config_.get(), v);
+    return {};
+}
+
+result<> mbedtls_context::set_max_tls_version(tls_version ver) {
+    mbedtls_ssl_protocol_version v = (ver == tls_version::TLS_1_3)
+                                         ? MBEDTLS_SSL_VERSION_TLS1_3
+                                         : MBEDTLS_SSL_VERSION_TLS1_2;
+    mbedtls_ssl_conf_max_tls_version(ssl_config_.get(), v);
+    return {};
+}
+
+result<> mbedtls_context::set_ciphersuites(const std::vector<string>& suites) {
+    ciphersuite_ids_.clear();
+    for (const auto& name : suites) {
+        const mbedtls_ssl_ciphersuite_t* cs =
+            mbedtls_ssl_ciphersuite_from_string(name.c_str());
+        if (cs)
+            ciphersuite_ids_.push_back(mbedtls_ssl_ciphersuite_get_id(cs));
+    }
+    if (ciphersuite_ids_.empty())
+        return make_error_code(std::errc::invalid_argument);
+    ciphersuite_ids_.push_back(0);  // null terminator
+    mbedtls_ssl_conf_ciphersuites(ssl_config_.get(), ciphersuite_ids_.data());
     return {};
 }
 

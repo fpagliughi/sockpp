@@ -53,10 +53,9 @@ using namespace sockpp;
 
 // A 32-byte PSK shared between client and server.
 static const binary TEST_PSK{
-    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-    0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
-    0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-    0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20,
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+    0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+    0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20,
 };
 
 static const string TEST_PSK_IDENTITY = "sockpp-test";
@@ -68,13 +67,11 @@ static const string TEST_PSK_IDENTITY = "sockpp-test";
 /** Creates a server context configured for PSK-only (no certificate). */
 static tls_context make_psk_server_ctx() {
     auto ctx = tls_context::server();
-    auto res = ctx.set_psk_callback(
-        [](const string& identity) -> binary {
-            if (identity == TEST_PSK_IDENTITY)
-                return TEST_PSK;
-            return {};  // unknown identity → reject
-        }
-    );
+    auto res = ctx.set_psk_callback([](const string& identity) -> binary {
+        if (identity == TEST_PSK_IDENTITY)
+            return TEST_PSK;
+        return {};  // unknown identity → reject
+    });
     REQUIRE(res);
     return ctx;
 }
@@ -102,9 +99,7 @@ TEST_CASE("tls_context set_psk does not error", "[tls_context][psk]") {
 
 TEST_CASE("tls_context set_psk_callback does not error", "[tls_context][psk]") {
     auto ctx = tls_context::server();
-    auto res = ctx.set_psk_callback(
-        [](const string&) -> binary { return TEST_PSK; }
-    );
+    auto res = ctx.set_psk_callback([](const string&) -> binary { return TEST_PSK; });
     REQUIRE(res);
 }
 
