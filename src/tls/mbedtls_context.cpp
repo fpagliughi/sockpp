@@ -210,6 +210,9 @@ void mbedtls_context::reregister_callbacks() {
         );
     }
 #endif
+
+    if (psk_server_cb_)
+        mbedtls_ssl_conf_psk_cb(ssl_config_.get(), psk_server_cb_thunk, this);
 }
 
 mbedtls_context::mbedtls_context(mbedtls_context&& other) noexcept
@@ -224,7 +227,8 @@ mbedtls_context::mbedtls_context(mbedtls_context&& other) noexcept
       identity_cert_{std::move(other.identity_cert_)},
       identity_key_{std::move(other.identity_key_)},
       alpn_protocols_{std::move(other.alpn_protocols_)},
-      alpn_proto_ptrs_{std::move(other.alpn_proto_ptrs_)} {
+      alpn_proto_ptrs_{std::move(other.alpn_proto_ptrs_)},
+      psk_server_cb_{std::move(other.psk_server_cb_)} {
     reregister_callbacks();
     // Re-point the ALPN pointer array at the strings now owned by this object.
     if (!alpn_proto_ptrs_.empty())
@@ -245,6 +249,7 @@ mbedtls_context& mbedtls_context::operator=(mbedtls_context&& other) noexcept {
         identity_key_ = std::move(other.identity_key_);
         alpn_protocols_ = std::move(other.alpn_protocols_);
         alpn_proto_ptrs_ = std::move(other.alpn_proto_ptrs_);
+        psk_server_cb_ = std::move(other.psk_server_cb_);
         reregister_callbacks();
         if (!alpn_proto_ptrs_.empty())
             mbedtls_ssl_conf_alpn_protocols(ssl_config_.get(), alpn_proto_ptrs_.data());
@@ -624,6 +629,43 @@ static string read_system_root_certs() {
 }
 
 #endif
+
+/////////////////////////////////////////////////////////////////////////////
+
+int mbedtls_context::psk_server_cb_thunk(
+    void* p_info, mbedtls_ssl_context* ssl,
+    const unsigned char* identity, size_t identity_len
+) {
+    auto* self = static_cast<mbedtls_context*>(p_info);
+    if (!self || !self->psk_server_cb_)
+        return MBEDTLS_ERR_SSL_UNKNOWN_IDENTITY;
+
+    binary key = self->psk_server_cb_(string{reinterpret_cast<const char*>(identity), identity_len});
+    if (key.empty())
+        return MBEDTLS_ERR_SSL_UNKNOWN_IDENTITY;
+
+    return mbedtls_ssl_set_hs_psk(
+        ssl, reinterpret_cast<const unsigned char*>(key.data()), key.size()
+    );
+}
+
+result<> mbedtls_context::set_psk(const string& identity, const binary& psk) {
+    int ret = mbedtls_ssl_conf_psk(
+        ssl_config_.get(),
+        reinterpret_cast<const unsigned char*>(psk.data()), psk.size(),
+        reinterpret_cast<const unsigned char*>(identity.data()), identity.size()
+    );
+    return (ret == 0) ? result<>{} : make_tls_error_code(-ret);
+}
+
+result<> mbedtls_context::set_psk_callback(psk_server_callback cb) {
+    psk_server_cb_ = std::move(cb);
+    if (psk_server_cb_)
+        mbedtls_ssl_conf_psk_cb(ssl_config_.get(), psk_server_cb_thunk, this);
+    else
+        mbedtls_ssl_conf_psk_cb(ssl_config_.get(), nullptr, nullptr);
+    return {};
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // end namespace sockpp

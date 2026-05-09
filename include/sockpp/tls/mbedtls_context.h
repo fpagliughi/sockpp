@@ -57,6 +57,7 @@
 
 struct mbedtls_pk_context;
 struct mbedtls_ssl_config;
+struct mbedtls_ssl_context;
 struct mbedtls_x509_crt;
 
 namespace sockpp {
@@ -103,6 +104,18 @@ class mbedtls_context
     std::vector<string> alpn_protocols_;
     /** Null-terminated pointer array passed to mbedtls_ssl_conf_alpn_protocols. */
     std::vector<const char*> alpn_proto_ptrs_;
+
+    /**
+     * Server-side PSK lookup callback (set by set_psk_callback()).
+     * Stored here so it survives moves; re-registered via reregister_callbacks().
+     */
+    std::function<binary(const string&)> psk_server_cb_;
+
+    /** Thunk registered with mbedtls_ssl_conf_psk_cb(). */
+    static int psk_server_cb_thunk(
+        void* p_info, mbedtls_ssl_context* ssl,
+        const unsigned char* identity, size_t identity_len
+    );
 
     static cert* s_system_root_certs;
 
@@ -351,6 +364,41 @@ public:
      * @return An error code on failure, or an empty result on success.
      */
     result<> set_alpn_protocols(const std::vector<string>& protocols);
+
+    // ---- PSK ----
+
+    /**
+     * A function called on the server side to look up the PSK for a given
+     * client identity.  Return an empty binary to reject the identity.
+     */
+    using psk_server_callback = std::function<binary(const string& identity)>;
+
+    /**
+     * Configures a TLS Pre-Shared Key (PSK) for client connections.
+     *
+     * The @p identity string is sent to the server; the server must know
+     * the corresponding key.  The PSK data is copied into the mbedTLS
+     * ssl_config and need not be kept alive after this call returns.
+     *
+     * @param identity  The PSK identity string.
+     * @param psk       The raw PSK key bytes.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_psk(const string& identity, const binary& psk);
+
+    /**
+     * Registers a server-side PSK lookup callback.
+     *
+     * When a client connects with a PSK cipher suite the callback is invoked
+     * with the client-supplied identity string.  It should return the
+     * corresponding key bytes, or an empty binary to reject the identity.
+     *
+     * Pass @c nullptr to clear a previously registered callback.
+     *
+     * @param cb  The callback, or @c nullptr to clear.
+     * @return An empty result always (kept as @c result<> for API symmetry).
+     */
+    result<> set_psk_callback(psk_server_callback cb);
 
     // ---- Socket factory ----
 

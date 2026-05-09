@@ -41,6 +41,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include <cstring>
 #include <memory>
 
 #include "sockpp/tls/openssl_socket.h"
@@ -71,6 +72,7 @@ tls_context::tls_context(role_t role /*=role_t::CLIENT*/) : role_{role} {
     if (method) {
         ctx_ = ::SSL_CTX_new(method);
         ::SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
+        ::SSL_CTX_set_app_data(ctx_, this);
     }
 }
 
@@ -79,9 +81,13 @@ tls_context::tls_context(tls_context&& ctx) noexcept
       role_{ctx.role_},
       auth_callback_{std::move(ctx.auth_callback_)},
       pinned_cert_{std::move(ctx.pinned_cert_)},
-      alpn_wire_{std::move(ctx.alpn_wire_)} {
+      alpn_wire_{std::move(ctx.alpn_wire_)},
+      psk_identity_{std::move(ctx.psk_identity_)},
+      psk_key_{std::move(ctx.psk_key_)},
+      psk_server_cb_{std::move(ctx.psk_server_cb_)} {
     ctx.ctx_ = nullptr;
-    // Re-point the ALPN select callback arg at the new object.
+    // Re-point callbacks whose arg is `this`.
+    ::SSL_CTX_set_app_data(ctx_, this);
     if (!alpn_wire_.empty())
         ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
 }
@@ -103,9 +109,15 @@ tls_context& tls_context::operator=(tls_context&& rhs) {
         auth_callback_ = std::move(rhs.auth_callback_);
         pinned_cert_ = std::move(rhs.pinned_cert_);
         alpn_wire_ = std::move(rhs.alpn_wire_);
-        // Re-point the ALPN select callback arg at the new object.
-        if (ctx_ && !alpn_wire_.empty())
-            ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
+        psk_identity_ = std::move(rhs.psk_identity_);
+        psk_key_ = std::move(rhs.psk_key_);
+        psk_server_cb_ = std::move(rhs.psk_server_cb_);
+        // Re-point callbacks whose arg is `this`.
+        if (ctx_) {
+            ::SSL_CTX_set_app_data(ctx_, this);
+            if (!alpn_wire_.empty())
+                ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
+        }
     }
     return *this;
 }
@@ -418,6 +430,56 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
 
     // Verify that the certificate and private key are consistent.
     return tls_check_res_none(::SSL_CTX_check_private_key(ctx_));
+}
+
+unsigned int tls_context::psk_client_cb(
+    SSL* ssl, const char* /*hint*/, char* identity, unsigned int max_identity_len,
+    unsigned char* psk, unsigned int max_psk_len
+) noexcept {
+    auto* self =
+        static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
+    if (!self || self->psk_key_.empty())
+        return 0;
+
+    size_t id_len = std::min(self->psk_identity_.size(), size_t{max_identity_len - 1});
+    std::memcpy(identity, self->psk_identity_.c_str(), id_len);
+    identity[id_len] = '\0';
+
+    size_t key_len = std::min(self->psk_key_.size(), size_t{max_psk_len});
+    std::memcpy(psk, self->psk_key_.data(), key_len);
+    return static_cast<unsigned int>(key_len);
+}
+
+unsigned int tls_context::psk_server_cb(
+    SSL* ssl, const char* identity, unsigned char* psk, unsigned int max_psk_len
+) noexcept {
+    auto* self =
+        static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
+    if (!self || !self->psk_server_cb_)
+        return 0;
+
+    binary key = self->psk_server_cb_(string{identity ? identity : ""});
+    if (key.empty())
+        return 0;
+
+    size_t key_len = std::min(key.size(), size_t{max_psk_len});
+    std::memcpy(psk, key.data(), key_len);
+    return static_cast<unsigned int>(key_len);
+}
+
+result<> tls_context::set_psk(const string& identity, const binary& psk) {
+    psk_identity_ = identity;
+    psk_key_ = psk;
+    ::SSL_CTX_set_app_data(ctx_, this);
+    ::SSL_CTX_set_psk_client_callback(ctx_, psk_client_cb);
+    return {};
+}
+
+result<> tls_context::set_psk_callback(psk_server_callback cb) {
+    psk_server_cb_ = std::move(cb);
+    ::SSL_CTX_set_app_data(ctx_, this);
+    ::SSL_CTX_set_psk_server_callback(ctx_, psk_server_cb_ ? psk_server_cb : nullptr);
+    return {};
 }
 
 result<unique_ptr<tls_socket>> tls_context::wrap_socket(

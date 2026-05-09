@@ -92,6 +92,7 @@ if(SOCKPP_WITH_OPENSSL OR SOCKPP_WITH_MBEDTLS)
     target_sources(unit_tests PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_certificate.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_acceptor.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_psk.cpp
     )
 endif()
 

@@ -183,6 +183,29 @@ public:
         return *this;
     }
     /**
+     * Configures a TLS Pre-Shared Key (PSK) for client connections.
+     * @param identity  The PSK identity string.
+     * @param psk       The raw PSK key bytes.
+     */
+    auto psk(const string& identity, const binary& key) -> self& {
+        if (!ec_) {
+            if (auto res = ctx_.set_psk(identity, key); !res)
+                ec_ = res.error();
+        }
+        return *this;
+    }
+    /**
+     * Registers a server-side PSK lookup callback.
+     * @param cb  The callback, or @c nullptr to clear.
+     */
+    auto psk_callback(tls_context::psk_server_callback cb) -> self& {
+        if (!ec_) {
+            if (auto res = ctx_.set_psk_callback(std::move(cb)); !res)
+                ec_ = res.error();
+        }
+        return *this;
+    }
+    /**
      * Set to retry read or write after non-application data handled.
      * @param on Turn auto retry on or off.
      */

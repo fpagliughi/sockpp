@@ -110,10 +110,28 @@ private:
     /** Wire-format ALPN protocol list (length-prefixed names).  Empty = ALPN not set. */
     std::vector<uint8_t> alpn_wire_;
 
+    /** PSK identity sent by the client (set by set_psk()). */
+    string psk_identity_;
+    /** Raw PSK key bytes (set by set_psk()). */
+    binary psk_key_;
+    /** Server-side PSK lookup callback (set by set_psk_callback()). */
+    std::function<binary(const string&)> psk_server_cb_;
+
     /** Server-side ALPN select callback: picks the first mutually supported protocol. */
     static int alpn_select_cb(
         SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in,
         unsigned int inlen, void* arg
+    ) noexcept;
+
+    /** TLS 1.2 client PSK callback: fills identity and key for the handshake. */
+    static unsigned int psk_client_cb(
+        SSL* ssl, const char* hint, char* identity, unsigned int max_identity_len,
+        unsigned char* psk, unsigned int max_psk_len
+    ) noexcept;
+
+    /** TLS 1.2 server PSK callback: looks up the key for a given client identity. */
+    static unsigned int psk_server_cb(
+        SSL* ssl, const char* identity, unsigned char* psk, unsigned int max_psk_len
     ) noexcept;
 
     // Non-copyable
@@ -322,6 +340,39 @@ public:
      * @return An error code on failure, or an empty result on success.
      */
     result<> set_alpn_protocols(const std::vector<string>& protocols);
+
+    /**
+     * A function called on the server side to look up the PSK for a given
+     * client identity.  Return an empty binary to reject the identity.
+     */
+    using psk_server_callback = std::function<binary(const string& identity)>;
+
+    /**
+     * Configures a TLS 1.2 Pre-Shared Key (PSK) for client connections.
+     *
+     * When a PSK is set, the context advertises PSK cipher suites.  The
+     * @p identity string is sent to the server in the ClientKeyExchange
+     * message; the server must know the corresponding key.
+     *
+     * @param identity  The PSK identity string.
+     * @param psk       The raw PSK key bytes.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_psk(const string& identity, const binary& psk);
+
+    /**
+     * Registers a server-side PSK lookup callback.
+     *
+     * When a client connects with a PSK cipher suite the callback is invoked
+     * with the client-supplied identity string.  It should return the
+     * corresponding key bytes, or an empty binary to reject the identity.
+     *
+     * Pass @c nullptr to clear a previously registered callback.
+     *
+     * @param cb  The callback, or @c nullptr to clear.
+     * @return An empty result always (kept as @c result<> for API symmetry).
+     */
+    result<> set_psk_callback(psk_server_callback cb);
 
     /**
      * Creates a new \ref tls_socket instance that wraps the given connector
