@@ -328,6 +328,19 @@ std::optional<tls_certificate> mbedtls_socket::peer_certificate() {
 }
 
 // --------------------------------------------------------------------------
+// Connection state
+
+string mbedtls_socket::negotiated_version() const {
+    const char* v = mbedtls_ssl_get_version(&ssl_);
+    return (v && *v && strcmp(v, "unknown") != 0) ? v : string{};
+}
+
+string mbedtls_socket::negotiated_cipher() const {
+    const char* c = mbedtls_ssl_get_ciphersuite(&ssl_);
+    return (c && *c) ? c : string{};
+}
+
+// --------------------------------------------------------------------------
 // stream_socket I/O
 
 result<size_t> mbedtls_socket::read(void* buf, size_t n) {

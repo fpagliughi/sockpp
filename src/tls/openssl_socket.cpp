@@ -36,6 +36,8 @@
 
 #include "sockpp/tls/openssl_socket.h"
 
+#include <openssl/objects.h>
+
 #include "sockpp/tls/openssl_context.h"
 #include "sockpp/tls/openssl_error.h"
 
@@ -164,6 +166,30 @@ result<> tls_socket::write_timeout(const microseconds& to) {
 
 bool tls_socket::received_shutdown() {
     return (::SSL_get_shutdown(ssl_) & SSL_RECEIVED_SHUTDOWN) == SSL_RECEIVED_SHUTDOWN;
+}
+
+string tls_socket::negotiated_version() const {
+    if (!ssl_)
+        return {};
+    const char* v = ::SSL_get_version(ssl_);
+    return (v && *v && strcmp(v, "unknown") != 0) ? v : string{};
+}
+
+string tls_socket::negotiated_cipher() const {
+    if (!ssl_)
+        return {};
+    const char* c = ::SSL_get_cipher(ssl_);
+    return (c && *c && strcmp(c, "(NONE)") != 0) ? c : string{};
+}
+
+string tls_socket::negotiated_group() const {
+    if (!ssl_)
+        return {};
+    int nid = (int)::SSL_get_negotiated_group(ssl_);
+    if (nid <= 0)
+        return {};
+    const char* name = ::OBJ_nid2sn(nid);
+    return name ? name : string{};
 }
 
 /////////////////////////////////////////////////////////////////////////////

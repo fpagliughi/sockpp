@@ -198,6 +198,26 @@ public:
      */
     result<> auto_retry(bool on = true);
 
+    // -------- Connection state (available after handshake)
+
+    /**
+     * Returns the negotiated TLS protocol version string, e.g. "TLSv1.3".
+     * Returns an empty string if the handshake has not yet completed.
+     */
+    string negotiated_version() const;
+    /**
+     * Returns the name of the negotiated cipher suite, e.g.
+     * "TLS_AES_256_GCM_SHA384".  Returns an empty string if the handshake
+     * has not yet completed.
+     */
+    string negotiated_cipher() const;
+    /**
+     * Returns the name of the negotiated key-exchange group, e.g. "X25519"
+     * or "P-256".  Returns an empty string if the handshake has not yet
+     * completed or if no named group was used (e.g. plain RSA key exchange).
+     */
+    string negotiated_group() const;
+
     // I/O primitives
 
     using base::read;
