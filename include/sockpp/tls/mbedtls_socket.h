@@ -253,6 +253,19 @@ public:
      * Returns @em true if the peer sent a TLS @c close_notify shutdown alert.
      */
     bool received_shutdown() const noexcept { return shutdown_received_; }
+    /**
+     * Sends a TLS @c close_notify alert to the peer.
+     *
+     * This does not close the underlying TCP socket; call @c close() after
+     * this if a full shutdown is desired.  The peer should respond with its
+     * own @c close_notify, after which @c received_shutdown() will return
+     * @em true.
+     *
+     * @return An error on failure; success if the alert was sent.  On a
+     *         non-blocking socket a partial send (@c WANT_WRITE) is also
+     *         treated as success.
+     */
+    result<> send_close_notify();
 
     // -------- Connection state (available after handshake)
 

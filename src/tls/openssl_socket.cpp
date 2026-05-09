@@ -168,6 +168,18 @@ bool tls_socket::received_shutdown() {
     return (::SSL_get_shutdown(ssl_) & SSL_RECEIVED_SHUTDOWN) == SSL_RECEIVED_SHUTDOWN;
 }
 
+result<> tls_socket::send_close_notify() {
+    if (!ssl_)
+        return {};
+    int ret = ::SSL_shutdown(ssl_);
+    // ret == 1: bidirectional shutdown complete
+    // ret == 0: our close_notify sent; peer's not yet received — success for us
+    // ret < 0: error
+    if (ret < 0)
+        return tls_last_error();
+    return {};
+}
+
 string tls_socket::negotiated_version() const {
     if (!ssl_)
         return {};

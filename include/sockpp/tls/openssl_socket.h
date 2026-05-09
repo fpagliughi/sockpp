@@ -244,12 +244,26 @@ public:
 
     result<> set_non_blocking(bool on) override { return base::set_non_blocking(on); }
 
+    // -------- TLS shutdown
+
     /**
      * Determines if the socket received a shutdown from the peer.
      * @return @em true if the socket received a shutdown from the peer, @em
      *         false otherwise.
      */
     bool received_shutdown();
+    /**
+     * Sends a TLS @c close_notify alert to the peer.
+     *
+     * This does not close the underlying TCP socket; call @c close() after
+     * this if a full shutdown is desired.  The peer should respond with its
+     * own @c close_notify, after which @c received_shutdown() will return
+     * @em true.
+     *
+     * @return An error on failure; success if the alert was sent (or if the
+     *         bidirectional shutdown completed immediately).
+     */
+    result<> send_close_notify();
 };
 
 /////////////////////////////////////////////////////////////////////////////

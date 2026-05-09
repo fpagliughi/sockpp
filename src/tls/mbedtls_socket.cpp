@@ -222,6 +222,15 @@ result<> mbedtls_socket::close() {
     return base::close();
 }
 
+result<> mbedtls_socket::send_close_notify() {
+    int ret = mbedtls_ssl_close_notify(&ssl_);
+    // WANT_WRITE means the alert was partially enqueued on a non-blocking
+    // socket; treat it as success since we cannot retry here.
+    if (ret == 0 || ret == MBEDTLS_ERR_SSL_WANT_WRITE)
+        return {};
+    return translate_mbed_err(ret);
+}
+
 // --------------------------------------------------------------------------
 // TLS handshake
 
