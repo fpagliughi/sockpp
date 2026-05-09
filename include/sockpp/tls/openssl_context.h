@@ -51,6 +51,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
@@ -106,6 +107,14 @@ private:
     std::function<bool(const string&)> auth_callback_;
     /** Pinned certificate for allow_only_certificate(), if set. */
     std::optional<tls_certificate> pinned_cert_;
+    /** Wire-format ALPN protocol list (length-prefixed names).  Empty = ALPN not set. */
+    std::vector<uint8_t> alpn_wire_;
+
+    /** Server-side ALPN select callback: picks the first mutually supported protocol. */
+    static int alpn_select_cb(
+        SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in,
+        unsigned int inlen, void* arg
+    ) noexcept;
 
     // Non-copyable
     tls_context(const tls_context&) = delete;
@@ -127,7 +136,7 @@ public:
      * Move constructor.
      * @param ctx The other context to move into this one.
      */
-    tls_context(tls_context&& ctx) : ctx_{ctx.ctx_}, role_{ctx.role_} { ctx.ctx_ = nullptr; }
+    tls_context(tls_context&& ctx) noexcept;
     /**
      * Destructor closes the underlying OpenSSL context.
      */
@@ -300,6 +309,20 @@ public:
      * @return Error code on failure.
      */
     result<> set_identity(const string& cert_pem, const string& key_pem);
+    /**
+     * Sets the ALPN protocol list for this context.
+     *
+     * On a client context, these protocols are advertised in the ClientHello.
+     * On a server context, a callback is registered that selects the first
+     * mutually supported protocol from the client's offer, in server preference
+     * order (i.e. the order of @p protocols).
+     *
+     * @param protocols Ordered list of protocol names (e.g. @c {"h2", "http/1.1"}).
+     *                  Pass an empty vector to disable ALPN.
+     * @return An error code on failure, or an empty result on success.
+     */
+    result<> set_alpn_protocols(const std::vector<string>& protocols);
+
     /**
      * Creates a new \ref tls_socket instance that wraps the given connector
      * socket.

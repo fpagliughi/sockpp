@@ -182,6 +182,75 @@ TEST_CASE("tls_acceptor loopback handshake", "[tls_acceptor][integration]") {
     REQUIRE(srv_ok);
 }
 
+TEST_CASE("tls_acceptor ALPN negotiation", "[tls_acceptor][alpn][integration]") {
+    auto srv_ctx = make_server_ctx();
+    auto cli_ctx = make_client_ctx();
+
+    // Server offers h2 and http/1.1; client prefers http/1.1 then h2.
+    // Server preference wins under RFC 7301, so the result should be "h2".
+    auto sres = srv_ctx.set_alpn_protocols({"h2", "http/1.1"});
+    REQUIRE(sres);
+    auto cres = cli_ctx.set_alpn_protocols({"http/1.1", "h2"});
+    REQUIRE(cres);
+
+    error_code ec;
+    tls_acceptor acc{srv_ctx, inet_address(0), acceptor::DFLT_QUE_SIZE, ec};
+    REQUIRE(!ec);
+
+    in_port_t port = inet_address(acc.address()).port();
+
+    // Server: accept one connection and report the negotiated protocol.
+    auto srv_fut = async(launch::async, [&acc]() -> string {
+        auto res = acc.accept();
+        if (!res)
+            return {};
+        return res.release().negotiated_alpn_protocol();
+    });
+
+    // Client: connect and check the negotiated protocol.
+    tls_connector conn{cli_ctx, inet_address{"127.0.0.1", port, ec}, "localhost", ec};
+    REQUIRE(!ec);
+
+    string cli_alpn = conn.negotiated_alpn_protocol();
+    conn.close();
+
+    string srv_alpn = srv_fut.get();
+
+    // Both sides must agree on the same protocol.
+    REQUIRE(cli_alpn == "h2");
+    REQUIRE(srv_alpn == "h2");
+}
+
+TEST_CASE(
+    "tls_acceptor ALPN no overlap fails handshake", "[tls_acceptor][alpn][integration]"
+) {
+    auto srv_ctx = make_server_ctx();
+    auto cli_ctx = make_client_ctx();
+
+    // No protocol in common.
+    srv_ctx.set_alpn_protocols({"h2"});
+    cli_ctx.set_alpn_protocols({"http/1.1"});
+
+    error_code ec;
+    tls_acceptor acc{srv_ctx, inet_address(0), acceptor::DFLT_QUE_SIZE, ec};
+    REQUIRE(!ec);
+
+    in_port_t port = inet_address(acc.address()).port();
+
+    // Server thread: accept() will fail once the ALPN mismatch is detected.
+    auto srv_fut = async(launch::async, [&acc]() -> bool {
+        auto res = acc.accept();
+        return !res;  // expect failure
+    });
+
+    // Client handshake must fail: server sends no_application_protocol alert.
+    tls_connector conn{cli_ctx, inet_address{"127.0.0.1", port, ec}, "localhost", ec};
+    REQUIRE(ec);  // handshake failed
+
+    bool srv_failed = srv_fut.get();
+    REQUIRE(srv_failed);
+}
+
 TEST_CASE(
     "tls_acceptor accept timeout returns timed_out when no client connects", "[tls_acceptor]"
 ) {

@@ -349,6 +349,11 @@ string mbedtls_socket::negotiated_cipher() const {
     return (c && *c) ? c : string{};
 }
 
+string mbedtls_socket::negotiated_alpn_protocol() const {
+    const char* p = mbedtls_ssl_get_alpn_protocol(&ssl_);
+    return p ? string{p} : string{};
+}
+
 // --------------------------------------------------------------------------
 // stream_socket I/O
 

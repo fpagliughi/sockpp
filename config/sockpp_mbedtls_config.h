@@ -210,7 +210,7 @@
     /* #define MBEDTLS_SSL_SESSION_TICKETS */
 
     /** ALPN — Application-Layer Protocol Negotiation (e.g. for HTTP/2). */
-    /* #define MBEDTLS_SSL_ALPN */
+    #define MBEDTLS_SSL_ALPN
 
     /** Max fragment length negotiation. */
     /* #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH */

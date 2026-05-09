@@ -50,6 +50,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "sockpp/result.h"
 #include "sockpp/types.h"
@@ -97,6 +98,11 @@ class mbedtls_context
 
     std::unique_ptr<cert> identity_cert_;
     std::unique_ptr<key> identity_key_;
+
+    /** ALPN protocol name strings (kept alive for mbedtls_ssl_conf_alpn_protocols). */
+    std::vector<string> alpn_protocols_;
+    /** Null-terminated pointer array passed to mbedtls_ssl_conf_alpn_protocols. */
+    std::vector<const char*> alpn_proto_ptrs_;
 
     static cert* s_system_root_certs;
 
@@ -327,6 +333,24 @@ public:
      * @param keyFile Path to the private key file.
      */
     result<> set_key_file(const string& keyFile);
+
+    // ---- ALPN ----
+
+    /**
+     * Sets the ALPN protocol list for this context.
+     *
+     * On a client context, these protocols are advertised in the ClientHello.
+     * On a server context, mbedTLS will select the first protocol from the
+     * client's offer that also appears in @p protocols (server preference order).
+     *
+     * The protocol names and the pointer array are stored in the context and
+     * must remain valid for as long as any socket uses this context.
+     *
+     * @param protocols Ordered list of protocol names (e.g. @c {"h2", "http/1.1"}).
+     *                  Pass an empty vector to disable ALPN.
+     * @return An error code on failure, or an empty result on success.
+     */
+    result<> set_alpn_protocols(const std::vector<string>& protocols);
 
     // ---- Socket factory ----
 

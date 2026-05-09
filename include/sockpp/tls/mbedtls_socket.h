@@ -289,6 +289,12 @@ public:
      * public API to retrieve the negotiated group after the handshake.
      */
     string negotiated_group() const { return {}; }
+    /**
+     * Returns the ALPN protocol name negotiated during the handshake,
+     * e.g. "h2" or "http/1.1".  Returns an empty string if ALPN was not
+     * negotiated or the handshake has not yet completed.
+     */
+    string negotiated_alpn_protocol() const;
 
     // -------- stream_socket I/O
 

@@ -204,5 +204,15 @@ string tls_socket::negotiated_group() const {
     return name ? name : string{};
 }
 
+string tls_socket::negotiated_alpn_protocol() const {
+    if (!ssl_)
+        return {};
+    const unsigned char* proto = nullptr;
+    unsigned int proto_len = 0;
+    ::SSL_get0_alpn_selected(ssl_, &proto, &proto_len);
+    return (proto && proto_len > 0) ? string{reinterpret_cast<const char*>(proto), proto_len}
+                                    : string{};
+}
+
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

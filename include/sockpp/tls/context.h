@@ -172,6 +172,17 @@ public:
         return *this;
     }
     /**
+     * Sets the ALPN protocol list for client advertisement and server selection.
+     * @param protocols Ordered list of protocol names, e.g. @c {"h2", "http/1.1"}.
+     */
+    auto alpn_protocols(const std::vector<string>& protocols) -> self& {
+        if (!ec_) {
+            if (auto res = ctx_.set_alpn_protocols(protocols); !res)
+                ec_ = res.error();
+        }
+        return *this;
+    }
+    /**
      * Set to retry read or write after non-application data handled.
      * @param on Turn auto retry on or off.
      */

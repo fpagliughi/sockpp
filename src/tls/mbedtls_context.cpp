@@ -222,8 +222,13 @@ mbedtls_context::mbedtls_context(mbedtls_context&& other) noexcept
       pinned_cert_validation_result_{other.pinned_cert_validation_result_},
       received_cert_data_{std::move(other.received_cert_data_)},
       identity_cert_{std::move(other.identity_cert_)},
-      identity_key_{std::move(other.identity_key_)} {
+      identity_key_{std::move(other.identity_key_)},
+      alpn_protocols_{std::move(other.alpn_protocols_)},
+      alpn_proto_ptrs_{std::move(other.alpn_proto_ptrs_)} {
     reregister_callbacks();
+    // Re-point the ALPN pointer array at the strings now owned by this object.
+    if (!alpn_proto_ptrs_.empty())
+        mbedtls_ssl_conf_alpn_protocols(ssl_config_.get(), alpn_proto_ptrs_.data());
 }
 
 mbedtls_context& mbedtls_context::operator=(mbedtls_context&& other) noexcept {
@@ -238,7 +243,11 @@ mbedtls_context& mbedtls_context::operator=(mbedtls_context&& other) noexcept {
         received_cert_data_ = std::move(other.received_cert_data_);
         identity_cert_ = std::move(other.identity_cert_);
         identity_key_ = std::move(other.identity_key_);
+        alpn_protocols_ = std::move(other.alpn_protocols_);
+        alpn_proto_ptrs_ = std::move(other.alpn_proto_ptrs_);
         reregister_callbacks();
+        if (!alpn_proto_ptrs_.empty())
+            mbedtls_ssl_conf_alpn_protocols(ssl_config_.get(), alpn_proto_ptrs_.data());
     }
     return *this;
 }
@@ -399,6 +408,27 @@ void mbedtls_context::set_identity(
     mbedtls_x509_crt* certificate, mbedtls_pk_context* private_key
 ) {
     mbedtls_ssl_conf_own_cert(ssl_config_.get(), certificate, private_key);
+}
+
+result<> mbedtls_context::set_alpn_protocols(const std::vector<string>& protocols) {
+    if (protocols.empty()) {
+        alpn_protocols_.clear();
+        alpn_proto_ptrs_.clear();
+        mbedtls_ssl_conf_alpn_protocols(ssl_config_.get(), nullptr);
+        return {};
+    }
+
+    // Store the strings (the pointers passed to mbedTLS must remain valid).
+    alpn_protocols_ = protocols;
+
+    // Build a null-terminated pointer array into the stored strings.
+    alpn_proto_ptrs_.clear();
+    alpn_proto_ptrs_.reserve(alpn_protocols_.size() + 1);
+    for (const auto& p : alpn_protocols_) alpn_proto_ptrs_.push_back(p.c_str());
+    alpn_proto_ptrs_.push_back(nullptr);
+
+    int ret = mbedtls_ssl_conf_alpn_protocols(ssl_config_.get(), alpn_proto_ptrs_.data());
+    return (ret == 0) ? result<>{} : make_tls_error_code(-ret);
 }
 
 void mbedtls_context::set_verify(verify_t mode) {

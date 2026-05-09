@@ -217,6 +217,12 @@ public:
      * completed or if no named group was used (e.g. plain RSA key exchange).
      */
     string negotiated_group() const;
+    /**
+     * Returns the ALPN protocol name negotiated during the handshake,
+     * e.g. "h2" or "http/1.1".  Returns an empty string if ALPN was not
+     * negotiated or the handshake has not yet completed.
+     */
+    string negotiated_alpn_protocol() const;
 
     // I/O primitives
 

@@ -74,6 +74,18 @@ tls_context::tls_context(role_t role /*=role_t::CLIENT*/) : role_{role} {
     }
 }
 
+tls_context::tls_context(tls_context&& ctx) noexcept
+    : ctx_{ctx.ctx_},
+      role_{ctx.role_},
+      auth_callback_{std::move(ctx.auth_callback_)},
+      pinned_cert_{std::move(ctx.pinned_cert_)},
+      alpn_wire_{std::move(ctx.alpn_wire_)} {
+    ctx.ctx_ = nullptr;
+    // Re-point the ALPN select callback arg at the new object.
+    if (!alpn_wire_.empty())
+        ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
+}
+
 tls_context::~tls_context() {
     if (ctx_)
         ::SSL_CTX_free(ctx_);
@@ -88,6 +100,12 @@ tls_context& tls_context::operator=(tls_context&& rhs) {
     if (&rhs != this) {
         std::swap(ctx_, rhs.ctx_);
         role_ = rhs.role_;
+        auth_callback_ = std::move(rhs.auth_callback_);
+        pinned_cert_ = std::move(rhs.pinned_cert_);
+        alpn_wire_ = std::move(rhs.alpn_wire_);
+        // Re-point the ALPN select callback arg at the new object.
+        if (ctx_ && !alpn_wire_.empty())
+            ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
     }
     return *this;
 }
@@ -283,6 +301,57 @@ const tls_context::auth_callback& get_auth_callback() const
 	return auth_callback_;
 }
 #endif
+
+// ---------------------------------------------------------------------------
+// ALPN
+
+// static
+int tls_context::alpn_select_cb(
+    SSL* /*ssl*/, const unsigned char** out, unsigned char* outlen, const unsigned char* in,
+    unsigned int inlen, void* arg
+) noexcept {
+    auto* self = static_cast<tls_context*>(arg);
+    // SSL_select_next_proto uses NPN/ALPN server-preference matching.
+    // OPENSSL_NPN_NEGOTIATED means a common protocol was found.
+    if (::SSL_select_next_proto(
+            const_cast<unsigned char**>(out), outlen, self->alpn_wire_.data(),
+            static_cast<unsigned>(self->alpn_wire_.size()), in, inlen
+        ) == OPENSSL_NPN_NEGOTIATED)
+        return SSL_TLSEXT_ERR_OK;
+
+    return SSL_TLSEXT_ERR_NOACK;  // no overlap — proceed without ALPN
+}
+
+result<> tls_context::set_alpn_protocols(const std::vector<string>& protocols) {
+    if (protocols.empty()) {
+        alpn_wire_.clear();
+        ::SSL_CTX_set_alpn_select_cb(ctx_, nullptr, nullptr);
+        return {};
+    }
+
+    // Build the wire-format: each protocol is <1-byte-len><name-bytes>.
+    std::vector<uint8_t> wire;
+    for (const auto& proto : protocols) {
+        if (proto.size() > 255)
+            return errc::invalid_argument;
+        wire.push_back(static_cast<uint8_t>(proto.size()));
+        wire.insert(wire.end(), proto.begin(), proto.end());
+    }
+    alpn_wire_ = std::move(wire);
+
+    // Client: advertise the protocol list in ClientHello.
+    if (::SSL_CTX_set_alpn_protos(
+            ctx_, alpn_wire_.data(), static_cast<unsigned>(alpn_wire_.size())
+        ) != 0)
+        return tls_last_error();
+
+    // Server: register a select callback that picks by server preference.
+    ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
+
+    return {};
+}
+
+// ---------------------------------------------------------------------------
 
 result<> tls_context::set_identity(const string& cert_pem, const string& key_pem) {
     auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
