@@ -94,6 +94,7 @@ if(SOCKPP_WITH_OPENSSL OR SOCKPP_WITH_MBEDTLS)
         ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_acceptor.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_psk.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_version_cipher.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_chain.cpp
     )
 endif()
 

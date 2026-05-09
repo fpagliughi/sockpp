@@ -53,6 +53,7 @@
 #include <vector>
 
 #include "sockpp/result.h"
+#include "sockpp/tls/mbedtls_certificate.h"
 #include "sockpp/types.h"
 
 struct mbedtls_pk_context;
@@ -346,6 +347,16 @@ public:
      * @return An empty result on success, or an error code on failure.
      */
     result<> set_identity(const string& certificate_data, const string& private_key_data);
+
+    /**
+     * Sets the local identity certificate chain and private key.
+     * Equivalent to concatenating the PEM of each cert in @p chain and
+     * calling the string-based overload.
+     * @param chain Certificate chain (leaf first, then intermediates).
+     * @param key_pem PEM-encoded private key.
+     * @return An empty result on success, or an error code on failure.
+     */
+    result<> set_identity(const tls_certificate_chain& chain, const string& key_pem);
 
     /**
      * Loads the local certificate chain from a PEM file.

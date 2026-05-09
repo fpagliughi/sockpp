@@ -107,6 +107,33 @@ std::optional<tls_certificate> tls_socket::peer_certificate() {
     return std::nullopt;
 }
 
+tls_certificate_chain tls_socket::peer_certificate_chain() {
+    tls_certificate_chain chain;
+
+    // Grab the leaf cert first (always correct for both client and server).
+    X509* leaf_raw = ::SSL_get1_peer_certificate(ssl_);
+    if (leaf_raw)
+        chain.push_back(tls_certificate{leaf_raw});
+
+    // SSL_get_peer_cert_chain() returns the chain as sent by the peer.
+    // On the client side it includes the leaf (sk[0] == leaf_raw pointer);
+    // on the server side it omits the leaf.  Skip any entry that matches
+    // the leaf pointer to avoid duplicates.
+    STACK_OF(X509)* sk = ::SSL_get_peer_cert_chain(ssl_);
+    if (!sk)
+        return chain;
+
+    int n = ::sk_X509_num(sk);
+    for (int i = 0; i < n; i++) {
+        X509* cert = ::sk_X509_value(sk, i);
+        if (!cert || cert == leaf_raw)
+            continue;
+        ::X509_up_ref(cert);
+        chain.push_back(tls_certificate{cert});
+    }
+    return chain;
+}
+
 #if 0
 uint32_t tls_socket::peer_certificate_status() {
     // TODO: Implement this?

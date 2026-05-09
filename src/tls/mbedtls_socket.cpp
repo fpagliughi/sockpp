@@ -336,6 +336,30 @@ std::optional<tls_certificate> mbedtls_socket::peer_certificate() {
     return std::nullopt;
 }
 
+tls_certificate_chain mbedtls_socket::peer_certificate_chain() {
+    tls_certificate_chain chain;
+
+    const mbedtls_x509_crt* crt = mbedtls_ssl_get_peer_cert(&ssl_);
+    if (crt) {
+        for (; crt != nullptr; crt = crt->next) {
+            binary der{crt->raw.p, crt->raw.p + crt->raw.len};
+            if (auto res = tls_certificate::from_der(der); res)
+                chain.push_back(res.release());
+        }
+    }
+    else {
+        // Fallback: leaf cert only, captured during the verify callback.
+        const string& data = ctx_->get_peer_certificate();
+        if (!data.empty()) {
+            const auto* p = reinterpret_cast<const uint8_t*>(data.data());
+            binary der{p, p + data.size()};
+            if (auto res = tls_certificate::from_der(der); res)
+                chain.push_back(res.release());
+        }
+    }
+    return chain;
+}
+
 // --------------------------------------------------------------------------
 // Connection state
 

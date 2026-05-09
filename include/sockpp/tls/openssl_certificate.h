@@ -118,6 +118,20 @@ public:
      */
     static result<tls_certificate> from_file(const string& path);
     /**
+     * Parses a PEM bundle containing one or more certificates.
+     * @param pem PEM-encoded string holding one or more certificates.
+     * @return A certificate chain (leaf first), or an error code on failure.
+     */
+    static result<std::vector<tls_certificate>> chain_from_pem(const string& pem);
+    /**
+     * Loads a certificate chain from a PEM or DER file.
+     * A PEM file may contain multiple concatenated certificates.
+     * A DER file holds exactly one certificate (returned as a chain of one).
+     * @param path Path to the certificate file.
+     * @return A certificate chain (leaf first), or an error code on failure.
+     */
+    static result<std::vector<tls_certificate>> chain_from_file(const string& path);
+    /**
      * Copy assignment. Increments the OpenSSL reference count.
      */
     tls_certificate& operator=(const tls_certificate& rhs) {
@@ -217,6 +231,27 @@ public:
      */
     string to_pem() const;
 };
+
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * An ordered sequence of X.509 certificates forming a certificate chain.
+ * The first element is the leaf (end-entity) certificate; subsequent
+ * elements are intermediate CAs in order toward the root.
+ */
+using tls_certificate_chain = std::vector<tls_certificate>;
+
+/**
+ * Concatenates the PEM representations of every certificate in @p chain
+ * into a single PEM string, in order.
+ * @param chain The certificate chain to encode.
+ * @return A PEM string containing each certificate in order.
+ */
+inline string to_pem(const tls_certificate_chain& chain) {
+    string result;
+    for (const auto& cert : chain) result += cert.to_pem();
+    return result;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

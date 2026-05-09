@@ -165,6 +165,12 @@ public:
      * Returns the peer's X.509 certificate.
      */
     std::optional<tls_certificate> peer_certificate();
+    /**
+     * Returns the full certificate chain presented by the peer during the
+     * TLS handshake (leaf first, then intermediates).
+     * Returns an empty chain if no certificate was presented.
+     */
+    tls_certificate_chain peer_certificate_chain();
 
     // TODO: The MbedTLS implementation returns a bitmask of MBEDTLS_X509_BADCERT_*
     // flags, where multiple bits can be set simultaneously. Here, OpenSSL returns

@@ -251,6 +251,12 @@ public:
      * or @c std::nullopt if no certificate was received.
      */
     std::optional<tls_certificate> peer_certificate();
+    /**
+     * Returns the full certificate chain presented by the peer during the
+     * TLS handshake (leaf first, then intermediates).
+     * Returns an empty chain if no certificate was presented.
+     */
+    tls_certificate_chain peer_certificate_chain();
 
     /**
      * Returns @em true if the peer sent a TLS @c close_notify shutdown alert.

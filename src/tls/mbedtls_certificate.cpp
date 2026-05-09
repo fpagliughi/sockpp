@@ -180,6 +180,53 @@ result<tls_certificate> tls_certificate::from_file(const string& path) {
     return from_der(binary{content.begin(), content.end()});
 }
 
+result<tls_certificate_chain> tls_certificate::chain_from_pem(const string& pem) {
+    auto* crt = make_cert();
+
+    // Parse the full PEM bundle into a linked list.
+    // A positive return means some certs failed (partial success);
+    // negative means total failure.
+    int ret = mbedtls_x509_crt_parse(
+        crt, reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1
+    );
+    if (ret < 0) {
+        free_cert(crt);
+        return make_tls_error_code(ret);
+    }
+
+    tls_certificate_chain chain;
+    for (const mbedtls_x509_crt* link = crt; link != nullptr; link = link->next) {
+        binary der{link->raw.p, link->raw.p + link->raw.len};
+        if (auto res = from_der(der); res)
+            chain.push_back(res.release());
+    }
+
+    free_cert(crt);
+
+    if (chain.empty())
+        return make_error_code(std::errc::invalid_argument);
+    return chain;
+}
+
+result<tls_certificate_chain> tls_certificate::chain_from_file(const string& path) {
+    std::ifstream f{path, std::ios::binary};
+    if (!f.is_open())
+        return error_code{errno, std::generic_category()};
+
+    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
+    if (f.bad())
+        return error_code{errno, std::generic_category()};
+
+    if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
+        return chain_from_pem(content);
+
+    // DER holds exactly one certificate.
+    if (auto res = from_der(binary{content.begin(), content.end()}); res)
+        return tls_certificate_chain{res.release()};
+    else
+        return res.error();
+}
+
 // --------------------------------------------------------------------------
 
 string tls_certificate::subject_name() const {

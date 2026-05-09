@@ -96,6 +96,53 @@ result<tls_certificate> tls_certificate::from_file(const string& path) {
     return from_der(binary{content.begin(), content.end()});
 }
 
+result<tls_certificate_chain> tls_certificate::chain_from_pem(const string& pem) {
+    auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
+    std::unique_ptr<BIO, decltype(bio_deleter)> bio{
+        ::BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
+    };
+    if (!bio)
+        return tls_last_error();
+
+    tls_certificate_chain chain;
+    ::ERR_clear_error();
+    for (;;) {
+        X509* cert = ::PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr);
+        if (!cert) {
+            unsigned long err = ::ERR_peek_last_error();
+            if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
+                ERR_GET_REASON(err) == PEM_R_NO_START_LINE) {
+                ::ERR_clear_error();
+                break;
+            }
+            return tls_last_error();
+        }
+        chain.push_back(tls_certificate{cert});
+    }
+    if (chain.empty())
+        return make_error_code(std::errc::invalid_argument);
+    return chain;
+}
+
+result<tls_certificate_chain> tls_certificate::chain_from_file(const string& path) {
+    std::ifstream f{path, std::ios::binary};
+    if (!f.is_open())
+        return error_code{errno, std::generic_category()};
+
+    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
+    if (f.bad())
+        return error_code{errno, std::generic_category()};
+
+    if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
+        return chain_from_pem(content);
+
+    // DER holds exactly one certificate.
+    if (auto res = from_der(binary{content.begin(), content.end()}); res)
+        return tls_certificate_chain{res.release()};
+    else
+        return res.error();
+}
+
 string tls_certificate::subject_name() const {
     auto name = X509_get_subject_name(cert_);
     if (!name)

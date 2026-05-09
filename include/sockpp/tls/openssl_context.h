@@ -334,6 +334,15 @@ public:
      */
     result<> set_identity(const string& cert_pem, const string& key_pem);
     /**
+     * Sets the local identity certificate chain and private key.
+     * The first element of @p chain is used as the leaf certificate;
+     * subsequent elements are installed as intermediate CA certificates.
+     * @param chain Certificate chain (leaf first, then intermediates).
+     * @param key_pem PEM-encoded private key.
+     * @return Error code on failure.
+     */
+    result<> set_identity(const tls_certificate_chain& chain, const string& key_pem);
+    /**
      * Sets the ALPN protocol list for this context.
      *
      * On a client context, these protocols are advertised in the ClientHello.

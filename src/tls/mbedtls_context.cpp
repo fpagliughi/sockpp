@@ -666,6 +666,15 @@ result<> mbedtls_context::set_psk_callback(psk_server_callback cb) {
     return {};
 }
 
+result<> mbedtls_context::set_identity(
+    const tls_certificate_chain& chain, const string& key_pem
+) {
+    // Concatenate the PEM of each cert and delegate to the string overload.
+    string pem_chain;
+    for (const auto& cert : chain) pem_chain += cert.to_pem();
+    return set_identity(pem_chain, key_pem);
+}
+
 result<> mbedtls_context::set_min_tls_version(tls_version ver) {
     mbedtls_ssl_protocol_version v = (ver == tls_version::TLS_1_3)
                                          ? MBEDTLS_SSL_VERSION_TLS1_3

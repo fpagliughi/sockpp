@@ -480,6 +480,47 @@ result<> tls_context::set_psk_callback(psk_server_callback cb) {
     return {};
 }
 
+result<> tls_context::set_identity(
+    const tls_certificate_chain& chain, const string& key_pem
+) {
+    if (chain.empty())
+        return make_error_code(std::errc::invalid_argument);
+
+    // Install the leaf certificate.
+    if (::SSL_CTX_use_certificate(ctx_, chain[0].cert_) != 1)
+        return tls_last_error();
+
+    // Replace any existing intermediate chain certs.
+    ::SSL_CTX_clear_extra_chain_certs(ctx_);
+    for (size_t i = 1; i < chain.size(); i++) {
+        ::X509_up_ref(chain[i].cert_);  // SSL_CTX_add_extra_chain_cert takes ownership
+        if (::SSL_CTX_add_extra_chain_cert(ctx_, chain[i].cert_) != 1) {
+            ::X509_free(chain[i].cert_);
+            return tls_last_error();
+        }
+    }
+
+    // Load the private key from PEM.
+    auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
+    std::unique_ptr<BIO, decltype(bio_deleter)> key_bio{
+        ::BIO_new_mem_buf(key_pem.data(), static_cast<int>(key_pem.size())), bio_deleter
+    };
+    if (!key_bio)
+        return tls_last_error();
+
+    auto key_deleter = [](EVP_PKEY* k) { ::EVP_PKEY_free(k); };
+    std::unique_ptr<EVP_PKEY, decltype(key_deleter)> key{
+        ::PEM_read_bio_PrivateKey(key_bio.get(), nullptr, nullptr, nullptr), key_deleter
+    };
+    if (!key)
+        return tls_last_error();
+
+    if (::SSL_CTX_use_PrivateKey(ctx_, key.get()) != 1)
+        return tls_last_error();
+
+    return tls_check_res_none(::SSL_CTX_check_private_key(ctx_));
+}
+
 result<> tls_context::set_min_tls_version(tls_version ver) {
     int v = (ver == tls_version::TLS_1_3) ? TLS1_3_VERSION : TLS1_2_VERSION;
     if (::SSL_CTX_set_min_proto_version(ctx_, v) != 1)
