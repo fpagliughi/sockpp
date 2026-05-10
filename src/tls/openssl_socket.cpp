@@ -123,9 +123,9 @@ tls_certificate_chain tls_socket::peer_certificate_chain() {
     if (!sk)
         return chain;
 
-    int n = ::sk_X509_num(sk);
+    int n = sk_X509_num(sk);
     for (int i = 0; i < n; i++) {
-        X509* cert = ::sk_X509_value(sk, i);
+        X509* cert = sk_X509_value(sk, i);
         if (!cert || cert == leaf_raw)
             continue;
         ::X509_up_ref(cert);

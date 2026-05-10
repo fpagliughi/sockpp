@@ -89,7 +89,7 @@ public:
      * @throws std::system_error If it fails to find the server
      * @throws tls_error If it fails to make a secure TLS connection
      */
-    tls_connector(const tls_context& ctx, const sock_address& addr, string& hostname);
+    tls_connector(const tls_context& ctx, const sock_address& addr, const string& hostname);
     /**
      * Creates a TLS connector, attempts to connect to the server, and
      * checks the SNI host name.
@@ -99,7 +99,7 @@ public:
      * @param ec Gets the error code on failure
      */
     tls_connector(
-        const tls_context& ctx, const sock_address& addr, string& hostname, error_code& ec
+        const tls_context& ctx, const sock_address& addr, const string& hostname, error_code& ec
     ) noexcept;
     /**
      * Creates a new TLS socket from an existing stream socket.

@@ -48,7 +48,7 @@ tls_connector::tls_connector(const tls_context& ctx, const sock_address& addr)
 }
 
 tls_connector::tls_connector(
-    const tls_context& ctx, const sock_address& addr, string& hostname
+    const tls_context& ctx, const sock_address& addr, const string& hostname
 )
     : base{ctx, connector{addr}} {
     if (auto res = set_host_name(hostname); !res)
@@ -59,7 +59,7 @@ tls_connector::tls_connector(
 }
 
 tls_connector::tls_connector(
-    const tls_context& ctx, const sock_address& addr, string& hostname, error_code& ec
+    const tls_context& ctx, const sock_address& addr, const string& hostname, error_code& ec
 ) noexcept
     : base{ctx, connector{addr}, ec} {
     if (!ec) {

@@ -438,7 +438,7 @@ public:
      */
     result<std::unique_ptr<tls_socket>> wrap_socket(
         stream_socket&& sock, const string& peer_name = string{}
-    );
+    ) const;
 };
 
 /////////////////////////////////////////////////////////////////////////////

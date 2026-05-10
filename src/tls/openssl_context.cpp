@@ -72,7 +72,7 @@ tls_context::tls_context(role_t role /*=role_t::CLIENT*/) : role_{role} {
     if (method) {
         ctx_ = ::SSL_CTX_new(method);
         ::SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
-        ::SSL_CTX_set_app_data(ctx_, this);
+        SSL_CTX_set_app_data(ctx_, this);
     }
 }
 
@@ -87,7 +87,7 @@ tls_context::tls_context(tls_context&& ctx) noexcept
       psk_server_cb_{std::move(ctx.psk_server_cb_)} {
     ctx.ctx_ = nullptr;
     // Re-point callbacks whose arg is `this`.
-    ::SSL_CTX_set_app_data(ctx_, this);
+    SSL_CTX_set_app_data(ctx_, this);
     if (!alpn_wire_.empty())
         ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
 }
@@ -114,7 +114,7 @@ tls_context& tls_context::operator=(tls_context&& rhs) {
         psk_server_cb_ = std::move(rhs.psk_server_cb_);
         // Re-point callbacks whose arg is `this`.
         if (ctx_) {
-            ::SSL_CTX_set_app_data(ctx_, this);
+            SSL_CTX_set_app_data(ctx_, this);
             if (!alpn_wire_.empty())
                 ::SSL_CTX_set_alpn_select_cb(ctx_, &tls_context::alpn_select_cb, this);
         }
@@ -436,7 +436,7 @@ unsigned int tls_context::psk_client_cb(
     SSL* ssl, const char* /*hint*/, char* identity, unsigned int max_identity_len,
     unsigned char* psk, unsigned int max_psk_len
 ) noexcept {
-    auto* self = static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
+    auto* self = static_cast<tls_context*>(SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
     if (!self || self->psk_key_.empty())
         return 0;
 
@@ -452,7 +452,7 @@ unsigned int tls_context::psk_client_cb(
 unsigned int tls_context::psk_server_cb(
     SSL* ssl, const char* identity, unsigned char* psk, unsigned int max_psk_len
 ) noexcept {
-    auto* self = static_cast<tls_context*>(::SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
+    auto* self = static_cast<tls_context*>(SSL_CTX_get_app_data(::SSL_get_SSL_CTX(ssl)));
     if (!self || !self->psk_server_cb_)
         return 0;
 
@@ -468,14 +468,14 @@ unsigned int tls_context::psk_server_cb(
 result<> tls_context::set_psk(const string& identity, const binary& psk) {
     psk_identity_ = identity;
     psk_key_ = psk;
-    ::SSL_CTX_set_app_data(ctx_, this);
+    SSL_CTX_set_app_data(ctx_, this);
     ::SSL_CTX_set_psk_client_callback(ctx_, psk_client_cb);
     return {};
 }
 
 result<> tls_context::set_psk_callback(psk_server_callback cb) {
     psk_server_cb_ = std::move(cb);
-    ::SSL_CTX_set_app_data(ctx_, this);
+    SSL_CTX_set_app_data(ctx_, this);
     ::SSL_CTX_set_psk_server_callback(ctx_, psk_server_cb_ ? psk_server_cb : nullptr);
     return {};
 }
@@ -553,7 +553,7 @@ result<> tls_context::set_ciphersuites(const std::vector<string>& suites) {
 
 result<unique_ptr<tls_socket>> tls_context::wrap_socket(
     stream_socket&& sock, const string& peer_name /*=string()*/
-) {
+) const {
     error_code ec;
     auto tls_sock = make_unique<tls_socket>(*this, std::move(sock), ec);
     if (ec)
