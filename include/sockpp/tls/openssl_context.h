@@ -436,7 +436,7 @@ public:
      *  				validation.
      * @return A heap-allocated TLS socket on success, or an error code on failure.
      */
-    result<std::unique_ptr<tls_socket>> wrap_socket(
+    result<unique_ptr<tls_socket>> wrap_socket(
         stream_socket&& sock, const string& peer_name = string{}
     ) const;
 };

@@ -454,7 +454,7 @@ string tls_certificate::to_pem() const {
     if (olen == 0)
         return {};
 
-    std::unique_ptr<unsigned char[]> buf{new unsigned char[olen]};
+    unique_ptr<unsigned char[]> buf{new unsigned char[olen]};
     int ret = mbedtls_pem_write_buffer(
         header, footer, cert_->raw.p, cert_->raw.len, buf.get(), olen, &olen
     );

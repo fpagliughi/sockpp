@@ -169,7 +169,7 @@ result<> tls_context::set_key_file(const string& keyFile) {
 
 result<> tls_context::set_root_certs(const string& certData) {
     auto bio_deleter = [](BIO* b) { BIO_free(b); };
-    std::unique_ptr<BIO, decltype(bio_deleter)> bio{
+    unique_ptr<BIO, decltype(bio_deleter)> bio{
         BIO_new_mem_buf(certData.data(), static_cast<int>(certData.size())), bio_deleter
     };
     if (!bio)
@@ -177,7 +177,7 @@ result<> tls_context::set_root_certs(const string& certData) {
 
     // Build a fresh store to replace the existing one (true "set" semantics).
     auto store_deleter = [](X509_STORE* s) { X509_STORE_free(s); };
-    std::unique_ptr<X509_STORE, decltype(store_deleter)> store{
+    unique_ptr<X509_STORE, decltype(store_deleter)> store{
         X509_STORE_new(), store_deleter
     };
     if (!store)
@@ -190,7 +190,7 @@ result<> tls_context::set_root_certs(const string& certData) {
 
     for (;;) {
         // PEM_read_bio_X509_AUX handles both CERTIFICATE and TRUSTED CERTIFICATE blocks.
-        std::unique_ptr<X509, decltype(cert_deleter)> cert{
+        unique_ptr<X509, decltype(cert_deleter)> cert{
             PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr), cert_deleter
         };
 
@@ -369,14 +369,14 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
 
     // --- Certificate chain ---
 
-    std::unique_ptr<BIO, decltype(bio_deleter)> cert_bio{
+    unique_ptr<BIO, decltype(bio_deleter)> cert_bio{
         BIO_new_mem_buf(cert_pem.data(), static_cast<int>(cert_pem.size())), bio_deleter
     };
     if (!cert_bio)
         return tls_last_error();
 
     // Load the leaf certificate.
-    std::unique_ptr<X509, decltype(cert_deleter)> leaf{
+    unique_ptr<X509, decltype(cert_deleter)> leaf{
         PEM_read_bio_X509_AUX(cert_bio.get(), nullptr, nullptr, nullptr), cert_deleter
     };
     if (!leaf)
@@ -390,7 +390,7 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
     ERR_clear_error();
 
     for (;;) {
-        std::unique_ptr<X509, decltype(cert_deleter)> ca{
+        unique_ptr<X509, decltype(cert_deleter)> ca{
             PEM_read_bio_X509(cert_bio.get(), nullptr, nullptr, nullptr), cert_deleter
         };
         if (!ca) {
@@ -410,14 +410,14 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
 
     // --- Private key ---
 
-    std::unique_ptr<BIO, decltype(bio_deleter)> key_bio{
+    unique_ptr<BIO, decltype(bio_deleter)> key_bio{
         BIO_new_mem_buf(key_pem.data(), static_cast<int>(key_pem.size())), bio_deleter
     };
     if (!key_bio)
         return tls_last_error();
 
     auto key_deleter = [](EVP_PKEY* k) { EVP_PKEY_free(k); };
-    std::unique_ptr<EVP_PKEY, decltype(key_deleter)> key{
+    unique_ptr<EVP_PKEY, decltype(key_deleter)> key{
         PEM_read_bio_PrivateKey(key_bio.get(), nullptr, nullptr, nullptr), key_deleter
     };
     if (!key)
@@ -502,14 +502,14 @@ result<> tls_context::set_identity(
 
     // Load the private key from PEM.
     auto bio_deleter = [](BIO* b) { BIO_free(b); };
-    std::unique_ptr<BIO, decltype(bio_deleter)> key_bio{
+    unique_ptr<BIO, decltype(bio_deleter)> key_bio{
         BIO_new_mem_buf(key_pem.data(), static_cast<int>(key_pem.size())), bio_deleter
     };
     if (!key_bio)
         return tls_last_error();
 
     auto key_deleter = [](EVP_PKEY* k) { EVP_PKEY_free(k); };
-    std::unique_ptr<EVP_PKEY, decltype(key_deleter)> key{
+    unique_ptr<EVP_PKEY, decltype(key_deleter)> key{
         PEM_read_bio_PrivateKey(key_bio.get(), nullptr, nullptr, nullptr), key_deleter
     };
     if (!key)

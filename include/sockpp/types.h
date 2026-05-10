@@ -49,6 +49,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -64,6 +65,9 @@ using std::string;
 
 /** A sockpp::vector is a std::vector */
 using std::vector;
+
+/** A sockpp::unique_ptr is a std::unique_ptr */
+using std::unique_ptr;
 
 /** A sockpp::duration is a std::chrono::duration */
 using std::chrono::duration;

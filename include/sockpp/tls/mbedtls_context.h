@@ -91,15 +91,15 @@ class mbedtls_context
     unsigned mode_flags_ = 0;
     std::function<bool(const string&)> auth_callback_;
 
-    std::unique_ptr<mbedtls_ssl_config> ssl_config_;
+    unique_ptr<mbedtls_ssl_config> ssl_config_;
     root_cert_locator_cb root_cert_locator_cb_;
-    std::unique_ptr<cert> root_certs_;
-    std::unique_ptr<cert> pinned_cert_;
+    unique_ptr<cert> root_certs_;
+    unique_ptr<cert> pinned_cert_;
     bool pinned_cert_validation_result_{false};
     string received_cert_data_;
 
-    std::unique_ptr<cert> identity_cert_;
-    std::unique_ptr<key> identity_key_;
+    unique_ptr<cert> identity_cert_;
+    unique_ptr<key> identity_key_;
 
     /** ALPN protocol name strings (kept alive for mbedtls_ssl_conf_alpn_protocols). */
     std::vector<string> alpn_protocols_;
@@ -137,7 +137,7 @@ class mbedtls_context
         void* context, mbedtls_x509_crt const* child, mbedtls_x509_crt** candidates
     );
 
-    static std::unique_ptr<cert> parse_cert(const string& cert_data, bool partialOk);
+    static unique_ptr<cert> parse_cert(const string& cert_data, bool partialOk);
 
 protected:
     /** Records an initialization status code (non-zero means failure). */
@@ -465,7 +465,7 @@ public:
      * @param peer_name The expected peer host name for SNI and certificate verification.
      * @return A heap-allocated TLS socket on success, or an error code on failure.
      */
-    result<std::unique_ptr<mbedtls_socket>> wrap_socket(
+    result<unique_ptr<mbedtls_socket>> wrap_socket(
         stream_socket&& sock, const string& peer_name = string{}
     );
 
