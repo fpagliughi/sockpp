@@ -48,8 +48,8 @@
 #include <string>
 #include <thread>
 
-#include "sockpp/canbus_frame.h"
-#include "sockpp/canbus_socket.h"
+#include "sockpp/canbus/canbus_frame.h"
+#include "sockpp/canbus/canbus_socket.h"
 #include "sockpp/version.h"
 
 using namespace std;

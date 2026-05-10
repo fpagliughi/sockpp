@@ -34,7 +34,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/canbus_socket.h"
+#include "sockpp/canbus/canbus_socket.h"
 
 #include <linux/sockios.h>
 #include <sys/ioctl.h>

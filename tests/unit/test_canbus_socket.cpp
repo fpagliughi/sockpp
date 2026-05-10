@@ -43,7 +43,7 @@
 #include <string>
 
 #include "catch2_version.h"
-#include "sockpp/canbus_socket.h"
+#include "sockpp/canbus/canbus_socket.h"
 
 using namespace sockpp;
 using namespace std;

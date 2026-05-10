@@ -43,7 +43,7 @@
 #include <system_error>
 
 #include "catch2_version.h"
-#include "sockpp/canbus_frame.h"
+#include "sockpp/canbus/canbus_frame.h"
 
 using namespace sockpp;
 using namespace std;

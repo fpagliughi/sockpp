@@ -34,7 +34,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/canbus_frame.h"
+#include "sockpp/canbus/canbus_frame.h"
 
 using namespace std;
 

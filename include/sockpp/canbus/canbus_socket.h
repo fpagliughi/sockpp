@@ -51,8 +51,8 @@
 
 #include <vector>
 
-#include "sockpp/canbus_address.h"
-#include "sockpp/canbus_frame.h"
+#include "sockpp/canbus/canbus_address.h"
+#include "sockpp/canbus/canbus_frame.h"
 #include "sockpp/raw_socket.h"
 
 namespace sockpp {

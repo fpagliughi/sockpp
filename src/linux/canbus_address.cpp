@@ -34,7 +34,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/canbus_address.h"
+#include "sockpp/canbus/canbus_address.h"
 
 #include <net/if.h>
 #include <sys/ioctl.h>

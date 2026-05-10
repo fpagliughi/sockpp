@@ -41,7 +41,7 @@
 #include <string>
 
 #include "catch2_version.h"
-#include "sockpp/canbus_address.h"
+#include "sockpp/canbus/canbus_address.h"
 
 using namespace sockpp;
 using namespace std;
