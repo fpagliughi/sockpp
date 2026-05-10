@@ -239,19 +239,128 @@ public:
  * The first element is the leaf (end-entity) certificate; subsequent
  * elements are intermediate CAs in order toward the root.
  */
-using tls_certificate_chain = std::vector<tls_certificate>;
+class tls_certificate_chain
+{
+    /** The certificates in the chain, leaf first. */
+    std::vector<tls_certificate> certs_;
 
-/**
- * Concatenates the PEM representations of every certificate in @p chain
- * into a single PEM string, in order.
- * @param chain The certificate chain to encode.
- * @return A PEM string containing each certificate in order.
- */
-inline string to_pem(const tls_certificate_chain& chain) {
-    string result;
-    for (const auto& cert : chain) result += cert.to_pem();
-    return result;
-}
+public:
+    /** Creates an empty chain. */
+    tls_certificate_chain() = default;
+
+    /**
+     * Constructs a chain from a vector, copying it.
+     * @param certs The certificates to copy into this chain.
+     */
+    explicit tls_certificate_chain(const std::vector<tls_certificate>& certs)
+        : certs_{certs} {}
+
+    /**
+     * Constructs a chain from a vector, moving it.
+     * @param certs The certificates to move into this chain.
+     */
+    explicit tls_certificate_chain(std::vector<tls_certificate>&& certs) noexcept
+        : certs_{std::move(certs)} {}
+
+    /**
+     * Parses a PEM bundle containing one or more certificates.
+     * @param pem PEM-encoded string holding one or more certificates.
+     * @return A chain (leaf first), or an error code on failure.
+     */
+    static result<tls_certificate_chain> from_pem(const string& pem) {
+        auto res = tls_certificate::chain_from_pem(pem);
+        if (!res)
+            return res.error();
+        return tls_certificate_chain{res.release()};
+    }
+
+    /**
+     * Loads a certificate chain from a PEM or DER file.
+     * A PEM file may contain multiple concatenated certificates.
+     * A DER file holds exactly one certificate (returned as a chain of one).
+     * @param path Path to the certificate file.
+     * @return A chain (leaf first), or an error code on failure.
+     */
+    static result<tls_certificate_chain> from_file(const string& path) {
+        auto res = tls_certificate::chain_from_file(path);
+        if (!res)
+            return res.error();
+        return tls_certificate_chain{res.release()};
+    }
+
+    // --- Read-only container interface ---
+
+    /** Returns true if the chain contains no certificates. */
+    bool empty() const noexcept { return certs_.empty(); }
+    /** Returns the number of certificates in the chain. */
+    size_t size() const noexcept { return certs_.size(); }
+
+    /** Returns the certificate at index @p i (no bounds check). */
+    const tls_certificate& operator[](size_t i) const { return certs_[i]; }
+    /** Returns the certificate at index @p i (throws std::out_of_range). */
+    const tls_certificate& at(size_t i) const { return certs_.at(i); }
+    /** Returns the leaf (end-entity) certificate. Undefined if empty. */
+    const tls_certificate& leaf() const { return certs_.front(); }
+
+    auto cbegin() const noexcept { return certs_.cbegin(); }
+    auto cend() const noexcept { return certs_.cend(); }
+    auto begin() const noexcept { return certs_.cbegin(); }
+    auto end() const noexcept { return certs_.cend(); }
+
+    /** Appends a certificate to the chain (copy). */
+    void push_back(const tls_certificate& cert) { certs_.push_back(cert); }
+    /** Appends a certificate to the chain (move). */
+    void push_back(tls_certificate&& cert) { certs_.push_back(std::move(cert)); }
+
+    // --- Certificate chain properties ---
+
+    /**
+     * Checks structural validity of the chain.
+     *
+     * - Empty chain: @em false.
+     * - Single certificate: @em true iff the certificate is non-null and
+     *   the current time falls within its validity window (not_before …
+     *   not_after).
+     * - Two or more certificates: @em true iff each certificate's issuer
+     *   name matches the subject name of the next certificate in the chain.
+     *
+     * This is a lightweight structural check only; it does not perform
+     * cryptographic signature verification.
+     */
+    bool is_valid() const {
+        if (certs_.empty())
+            return false;
+        if (certs_.size() == 1) {
+            if (!certs_.front().is_valid())
+                return false;
+            auto now = std::chrono::system_clock::now();
+            return now >= certs_.front().not_before() && now <= certs_.front().not_after();
+        }
+        for (size_t i = 0; i + 1 < certs_.size(); ++i) {
+            if (certs_[i].issuer_name() != certs_[i + 1].subject_name())
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the leaf certificate's subject and issuer names are
+     * identical (i.e. it is self-signed).
+     */
+    bool is_self_signed() const {
+        return !certs_.empty() &&
+               certs_.front().subject_name() == certs_.front().issuer_name();
+    }
+
+    /**
+     * Returns the PEM encoding of all certificates concatenated in order.
+     */
+    string to_pem() const {
+        string result;
+        for (const auto& cert : certs_) result += cert.to_pem();
+        return result;
+    }
+};
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

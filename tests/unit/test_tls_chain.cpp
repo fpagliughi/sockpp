@@ -105,13 +105,13 @@ TEST_CASE("chain_from_pem with junk returns error", "[tls_certificate][chain]") 
 TEST_CASE("chain_from_pem round-trips through to_pem", "[tls_certificate][chain]") {
     auto res = tls_certificate::chain_from_pem(TEST_CERT);
     REQUIRE(res);
-    const auto& chain = res.value();
+    tls_certificate_chain chain{res.release()};
 
-    string reconstructed = to_pem(chain);
+    string reconstructed = chain.to_pem();
     REQUIRE(!reconstructed.empty());
 
     // Re-parsing the reconstructed PEM should yield the same number of certs.
-    auto res2 = tls_certificate::chain_from_pem(reconstructed);
+    auto res2 = tls_certificate_chain::from_pem(reconstructed);
     REQUIRE(res2);
     REQUIRE(res2.value().size() == chain.size());
 }
@@ -126,12 +126,10 @@ TEST_CASE("chain_from_pem produces valid certificates", "[tls_certificate][chain
 }
 
 // ===========================================================================
-// tls_certificate_chain alias and to_pem() free function
+// tls_certificate_chain container class and to_pem()
 // ===========================================================================
 
-TEST_CASE(
-    "tls_certificate_chain is a vector of tls_certificate", "[tls_certificate][chain]"
-) {
+TEST_CASE("tls_certificate_chain holds tls_certificate objects", "[tls_certificate][chain]") {
     tls_certificate_chain chain;
     auto res = tls_certificate::from_pem(TEST_CERT);
     REQUIRE(res);
@@ -141,13 +139,13 @@ TEST_CASE(
 
 TEST_CASE("to_pem of empty chain is empty string", "[tls_certificate][chain]") {
     tls_certificate_chain chain;
-    REQUIRE(to_pem(chain).empty());
+    REQUIRE(chain.to_pem().empty());
 }
 
 TEST_CASE("to_pem of one-cert chain is non-empty PEM", "[tls_certificate][chain]") {
-    auto res = tls_certificate::chain_from_pem(TEST_CERT);
+    auto res = tls_certificate_chain::from_pem(TEST_CERT);
     REQUIRE(res);
-    string pem = to_pem(res.value());
+    string pem = res.value().to_pem();
     REQUIRE(pem.size() >= 5);
     REQUIRE(pem.substr(0, 5) == "-----");
 }
@@ -157,7 +155,7 @@ TEST_CASE("to_pem of one-cert chain is non-empty PEM", "[tls_certificate][chain]
 // ===========================================================================
 
 TEST_CASE("set_identity with chain loads identity without error", "[tls_context][chain]") {
-    auto chain_res = tls_certificate::chain_from_pem(TEST_CERT);
+    auto chain_res = tls_certificate_chain::from_pem(TEST_CERT);
     REQUIRE(chain_res);
 
     auto ctx = tls_context::server();

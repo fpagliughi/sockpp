@@ -180,7 +180,7 @@ result<tls_certificate> tls_certificate::from_file(const string& path) {
     return from_der(binary{content.begin(), content.end()});
 }
 
-result<tls_certificate_chain> tls_certificate::chain_from_pem(const string& pem) {
+result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pem) {
     auto* crt = make_cert();
 
     // Parse the full PEM bundle into a linked list.
@@ -194,7 +194,7 @@ result<tls_certificate_chain> tls_certificate::chain_from_pem(const string& pem)
         return make_tls_error_code(ret);
     }
 
-    tls_certificate_chain chain;
+    std::vector<tls_certificate> chain;
     for (const mbedtls_x509_crt* link = crt; link != nullptr; link = link->next) {
         binary der{link->raw.p, link->raw.p + link->raw.len};
         if (auto res = from_der(der); res)
@@ -208,7 +208,7 @@ result<tls_certificate_chain> tls_certificate::chain_from_pem(const string& pem)
     return chain;
 }
 
-result<tls_certificate_chain> tls_certificate::chain_from_file(const string& path) {
+result<std::vector<tls_certificate>> tls_certificate::chain_from_file(const string& path) {
     std::ifstream f{path, std::ios::binary};
     if (!f.is_open())
         return error_code{errno, std::generic_category()};
@@ -221,8 +221,11 @@ result<tls_certificate_chain> tls_certificate::chain_from_file(const string& pat
         return chain_from_pem(content);
 
     // DER holds exactly one certificate.
-    if (auto res = from_der(binary{content.begin(), content.end()}); res)
-        return tls_certificate_chain{res.release()};
+    if (auto res = from_der(binary{content.begin(), content.end()}); res) {
+        std::vector<tls_certificate> chain;
+        chain.push_back(res.release());
+        return chain;
+    }
     else
         return res.error();
 }
