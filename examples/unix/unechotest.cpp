@@ -41,7 +41,7 @@
 #include <random>
 #include <string>
 
-#include "sockpp/unix_connector.h"
+#include "sockpp/unix/unix_connector.h"
 #include "sockpp/version.h"
 
 using namespace std;

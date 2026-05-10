@@ -46,7 +46,7 @@
 #define __sockpp_unix_acceptor_h
 
 #include "sockpp/acceptor.h"
-#include "sockpp/unix_stream_socket.h"
+#include "sockpp/unix/unix_stream_socket.h"
 
 namespace sockpp {
 

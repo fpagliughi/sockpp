@@ -44,7 +44,7 @@
 #include <iostream>
 #include <thread>
 
-#include "sockpp/unix_acceptor.h"
+#include "sockpp/unix/unix_acceptor.h"
 #include "sockpp/version.h"
 
 using namespace std;

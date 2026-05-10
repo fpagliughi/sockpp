@@ -41,7 +41,7 @@
 #include <string>
 
 #include "catch2_version.h"
-#include "sockpp/unix_address.h"
+#include "sockpp/unix/unix_address.h"
 
 using namespace sockpp;
 using namespace std;

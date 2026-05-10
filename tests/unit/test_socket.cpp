@@ -45,7 +45,7 @@
 #include "sockpp/socket.h"
 
 #if !defined(_WIN32)
-    #include "sockpp/unix_stream_socket.h"
+    #include "sockpp/unix/unix_stream_socket.h"
 #endif
 
 using namespace sockpp;

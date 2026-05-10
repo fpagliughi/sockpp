@@ -52,7 +52,7 @@
 #endif
 
 #include "sockpp/datagram_socket.h"
-#include "sockpp/unix_address.h"
+#include "sockpp/unix/unix_address.h"
 
 namespace sockpp {
 

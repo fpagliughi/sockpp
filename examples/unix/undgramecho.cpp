@@ -41,7 +41,7 @@
 #include <iostream>
 #include <string>
 
-#include "sockpp/unix_dgram_socket.h"
+#include "sockpp/unix/unix_dgram_socket.h"
 
 using namespace std;
 

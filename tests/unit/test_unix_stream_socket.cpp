@@ -45,7 +45,7 @@
 #endif
 
 #include "catch2_version.h"
-#include "sockpp/unix_stream_socket.h"
+#include "sockpp/unix/unix_stream_socket.h"
 
 using namespace sockpp;
 

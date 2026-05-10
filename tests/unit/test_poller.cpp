@@ -45,7 +45,7 @@
     #include "sockpp/tcp_acceptor.h"
     #include "sockpp/tcp_connector.h"
 #else
-    #include "sockpp/unix_stream_socket.h"
+    #include "sockpp/unix/unix_stream_socket.h"
 #endif
 
 using namespace sockpp;

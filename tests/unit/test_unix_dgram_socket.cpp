@@ -45,7 +45,7 @@
 #endif
 
 #include "catch2_version.h"
-#include "sockpp/unix_dgram_socket.h"
+#include "sockpp/unix/unix_dgram_socket.h"
 
 using namespace sockpp;
 

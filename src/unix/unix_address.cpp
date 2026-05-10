@@ -34,7 +34,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include "sockpp/unix_address.h"
+#include "sockpp/unix/unix_address.h"
 
 #include <algorithm>
 #include <cstring>
