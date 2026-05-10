@@ -142,7 +142,7 @@ public:
      * @param pem PEM-encoded string holding one or more certificates.
      * @return A certificate chain (leaf first), or an error code on failure.
      */
-    static result<std::vector<tls_certificate>> chain_from_pem(const string& pem);
+    static result<vector<tls_certificate>> chain_from_pem(const string& pem);
     /**
      * Loads a certificate chain from a PEM or DER file.
      * A PEM file may contain multiple concatenated certificates.
@@ -150,7 +150,7 @@ public:
      * @param path Path to the certificate file.
      * @return A certificate chain (leaf first), or an error code on failure.
      */
-    static result<std::vector<tls_certificate>> chain_from_file(const string& path);
+    static result<vector<tls_certificate>> chain_from_file(const string& path);
     /**
      * Checks whether this object holds a valid certificate.
      */
@@ -207,7 +207,7 @@ public:
      * Gets all Subject Alternative Name (SAN) entries.
      * @return A vector of parsed SAN entries; empty if no SAN extension.
      */
-    std::vector<subject_alt_name> subject_alt_names() const;
+    vector<subject_alt_name> subject_alt_names() const;
     /**
      * Gets the Key Usage extension bitmask.
      * Bit values follow RFC 5280 §4.2.1.3 and the MBEDTLS_X509_KU_* constants.
@@ -218,7 +218,7 @@ public:
      * Gets the Extended Key Usage OIDs as dotted strings.
      * @return A vector of dotted OID strings, e.g. {"1.3.6.1.5.5.7.3.1"}.
      */
-    std::vector<string> extended_key_usage() const;
+    vector<string> extended_key_usage() const;
     /**
      * Gets the certificate as a DER binary blob.
      * @return The certificate as a DER binary blob.
@@ -241,7 +241,7 @@ public:
 class tls_certificate_chain
 {
     /** The certificates in the chain, leaf first. */
-    std::vector<tls_certificate> certs_;
+    vector<tls_certificate> certs_;
 
 public:
     /** Creates an empty chain. */
@@ -251,14 +251,14 @@ public:
      * Constructs a chain from a vector, copying it.
      * @param certs The certificates to copy into this chain.
      */
-    explicit tls_certificate_chain(const std::vector<tls_certificate>& certs)
+    explicit tls_certificate_chain(const vector<tls_certificate>& certs)
         : certs_{certs} {}
 
     /**
      * Constructs a chain from a vector, moving it.
      * @param certs The certificates to move into this chain.
      */
-    explicit tls_certificate_chain(std::vector<tls_certificate>&& certs) noexcept
+    explicit tls_certificate_chain(vector<tls_certificate>&& certs) noexcept
         : certs_{std::move(certs)} {}
 
     /**

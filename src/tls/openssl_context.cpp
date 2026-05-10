@@ -332,7 +332,7 @@ int tls_context::alpn_select_cb(
     return SSL_TLSEXT_ERR_NOACK;  // no overlap — proceed without ALPN
 }
 
-result<> tls_context::set_alpn_protocols(const std::vector<string>& protocols) {
+result<> tls_context::set_alpn_protocols(const vector<string>& protocols) {
     if (protocols.empty()) {
         alpn_wire_.clear();
         SSL_CTX_set_alpn_select_cb(ctx_, nullptr, nullptr);
@@ -340,7 +340,7 @@ result<> tls_context::set_alpn_protocols(const std::vector<string>& protocols) {
     }
 
     // Build the wire-format: each protocol is <1-byte-len><name-bytes>.
-    std::vector<uint8_t> wire;
+    vector<uint8_t> wire;
     for (const auto& proto : protocols) {
         if (proto.size() > 255)
             return errc::invalid_argument;
@@ -535,7 +535,7 @@ result<> tls_context::set_max_tls_version(tls_version ver) {
     return {};
 }
 
-result<> tls_context::set_ciphersuites(const std::vector<string>& suites) {
+result<> tls_context::set_ciphersuites(const vector<string>& suites) {
     string colon_list;
     for (const auto& s : suites) {
         if (!colon_list.empty())

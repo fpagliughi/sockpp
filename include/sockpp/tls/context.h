@@ -175,7 +175,7 @@ public:
      * Sets the ALPN protocol list for client advertisement and server selection.
      * @param protocols Ordered list of protocol names, e.g. @c {"h2", "http/1.1"}.
      */
-    auto alpn_protocols(const std::vector<string>& protocols) -> self& {
+    auto alpn_protocols(const vector<string>& protocols) -> self& {
         if (!ec_) {
             if (auto res = ctx_.set_alpn_protocols(protocols); !res)
                 ec_ = res.error();
@@ -231,7 +231,7 @@ public:
      * Restricts the set of cipher suites the context will negotiate.
      * @param suites Ordered list of cipher suite names.
      */
-    auto ciphersuites(const std::vector<string>& suites) -> self& {
+    auto ciphersuites(const vector<string>& suites) -> self& {
         if (!ec_) {
             if (auto res = ctx_.set_ciphersuites(suites); !res)
                 ec_ = res.error();

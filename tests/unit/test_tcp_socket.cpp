@@ -119,7 +119,7 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
         const size_t N_HEADER = HEADER.length(), N_FOOTER = FOOTER.length(),
                      N_TOT = N_HEADER + N + N_FOOTER;
 
-        std::vector<iovec> outv{
+        vector<iovec> outv{
             iovec{(void*)HEADER.data(), N_HEADER}, iovec{(void*)STR.data(), N},
             iovec{(void*)FOOTER.data(), N_FOOTER}
         };
@@ -128,7 +128,7 @@ TEST_CASE("tcp_socket read/write", "[stream_socket]") {
             buf[512],    // N
             fbuf[512];   // N_FOOTER
 
-        std::vector<iovec> inv{
+        vector<iovec> inv{
             iovec{(void*)hbuf, N_HEADER}, iovec{(void*)buf, N}, iovec{(void*)fbuf, N_FOOTER}
         };
 

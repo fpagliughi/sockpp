@@ -210,7 +210,7 @@ public:
      * @param filters The CAN filters
      * @return @em true if the filters were set, @em false otherwise.
      */
-    result<> set_filters(const std::vector<can_filter>& filters) {
+    result<> set_filters(const vector<can_filter>& filters) {
         return set_filters(filters.data(), filters.size());
     }
 

@@ -125,7 +125,7 @@ TEST_CASE(
 TEST_CASE("sock_address_any ec ctor oversized address", "[address]") {
     // Build a fake sockaddr buffer larger than sockaddr_storage.
     const socklen_t OVERSIZED = socklen_t(sizeof(sockaddr_storage)) + 1;
-    std::vector<char> buf(OVERSIZED, 0);
+    vector<char> buf(OVERSIZED, 0);
 
     error_code ec;
     sock_address_any addr(reinterpret_cast<const sockaddr*>(buf.data()), OVERSIZED, ec);
@@ -136,7 +136,7 @@ TEST_CASE("sock_address_any ec ctor oversized address", "[address]") {
 
 TEST_CASE("sock_address_any throwing ctor oversized address", "[address]") {
     const socklen_t OVERSIZED = socklen_t(sizeof(sockaddr_storage)) + 1;
-    std::vector<char> buf(OVERSIZED, 0);
+    vector<char> buf(OVERSIZED, 0);
 
     REQUIRE_THROWS_AS(
         sock_address_any(reinterpret_cast<const sockaddr*>(buf.data()), OVERSIZED),

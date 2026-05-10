@@ -96,7 +96,7 @@ result<tls_certificate> tls_certificate::from_file(const string& path) {
     return from_der(binary{content.begin(), content.end()});
 }
 
-result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pem) {
+result<vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pem) {
     auto bio_deleter = [](BIO* b) { BIO_free(b); };
     unique_ptr<BIO, decltype(bio_deleter)> bio{
         BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
@@ -104,7 +104,7 @@ result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const strin
     if (!bio)
         return tls_last_error();
 
-    std::vector<tls_certificate> chain;
+    vector<tls_certificate> chain;
     ERR_clear_error();
     for (;;) {
         X509* cert = PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr);
@@ -124,7 +124,7 @@ result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const strin
     return chain;
 }
 
-result<std::vector<tls_certificate>> tls_certificate::chain_from_file(const string& path) {
+result<vector<tls_certificate>> tls_certificate::chain_from_file(const string& path) {
     std::ifstream f{path, std::ios::binary};
     if (!f.is_open())
         return error_code{errno, std::generic_category()};
@@ -138,7 +138,7 @@ result<std::vector<tls_certificate>> tls_certificate::chain_from_file(const stri
 
     // DER holds exactly one certificate.
     if (auto res = from_der(binary{content.begin(), content.end()}); res) {
-        std::vector<tls_certificate> chain;
+        vector<tls_certificate> chain;
         chain.push_back(res.release());
         return chain;
     }
@@ -242,8 +242,8 @@ binary tls_certificate::fingerprint_sha256() const {
     return binary{md, md + mdlen};
 }
 
-std::vector<subject_alt_name> tls_certificate::subject_alt_names() const {
-    std::vector<subject_alt_name> result;
+vector<subject_alt_name> tls_certificate::subject_alt_names() const {
+    vector<subject_alt_name> result;
     if (!cert_)
         return result;
 
@@ -315,8 +315,8 @@ uint32_t tls_certificate::key_usage() const {
     return (ku == UINT32_MAX) ? 0 : ku;
 }
 
-std::vector<string> tls_certificate::extended_key_usage() const {
-    std::vector<string> result;
+vector<string> tls_certificate::extended_key_usage() const {
+    vector<string> result;
     if (!cert_)
         return result;
 

@@ -175,7 +175,7 @@ public:
      * @param ranges The vector of memory ranges to fill
      * @return The number of bytes read, or @em -1 on error.
      */
-    result<size_t> read(const std::vector<iovec>& ranges);
+    result<size_t> read(const vector<iovec>& ranges);
     /**
      * Writes the buffer to the socket.
      * @param buf The buffer to write
@@ -236,7 +236,7 @@ public:
      * @param ranges The vector of memory ranges to write
      * @return The number of bytes written, or @em -1 on error.
      */
-    virtual result<size_t> write(const std::vector<iovec>& ranges);
+    virtual result<size_t> write(const vector<iovec>& ranges);
 };
 
 /////////////////////////////////////////////////////////////////////////////

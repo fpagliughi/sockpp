@@ -310,7 +310,7 @@ public:
 
     using base::write;
     result<size_t> write(const void* buf, size_t n) override;
-    result<size_t> write(const std::vector<iovec>& ranges) override;
+    result<size_t> write(const vector<iovec>& ranges) override;
     result<> write_timeout(const microseconds& to) override;
 
     result<> set_non_blocking(bool nonblocking) override;

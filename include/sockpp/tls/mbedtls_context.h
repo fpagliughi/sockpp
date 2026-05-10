@@ -102,9 +102,9 @@ class mbedtls_context
     unique_ptr<key> identity_key_;
 
     /** ALPN protocol name strings (kept alive for mbedtls_ssl_conf_alpn_protocols). */
-    std::vector<string> alpn_protocols_;
+    vector<string> alpn_protocols_;
     /** Null-terminated pointer array passed to mbedtls_ssl_conf_alpn_protocols. */
-    std::vector<const char*> alpn_proto_ptrs_;
+    vector<const char*> alpn_proto_ptrs_;
 
     /**
      * Server-side PSK lookup callback (set by set_psk_callback()).
@@ -116,7 +116,7 @@ class mbedtls_context
      * Cipher suite ID array passed to mbedtls_ssl_conf_ciphersuites().
      * Must remain alive for the lifetime of ssl_config_.
      */
-    std::vector<int> ciphersuite_ids_;
+    vector<int> ciphersuite_ids_;
 
     /** Thunk registered with mbedtls_ssl_conf_psk_cb(). */
     static int psk_server_cb_thunk(
@@ -386,7 +386,7 @@ public:
      *                  Pass an empty vector to disable ALPN.
      * @return An error code on failure, or an empty result on success.
      */
-    result<> set_alpn_protocols(const std::vector<string>& protocols);
+    result<> set_alpn_protocols(const vector<string>& protocols);
 
     // ---- PSK ----
 
@@ -455,7 +455,7 @@ public:
      * @param suites Ordered list of cipher suite names.
      * @return An empty result on success, or an error code on failure.
      */
-    result<> set_ciphersuites(const std::vector<string>& suites);
+    result<> set_ciphersuites(const vector<string>& suites);
 
     // ---- Socket factory ----
 

@@ -400,7 +400,7 @@ result<size_t> mbedtls_socket::write(const void* buf, size_t n) {
     return check_mbed_io<int, size_t>(mbedtls_ssl_write(&ssl_, ucbuf, n));
 }
 
-result<size_t> mbedtls_socket::write(const std::vector<iovec>& ranges) {
+result<size_t> mbedtls_socket::write(const vector<iovec>& ranges) {
     size_t total = 0;
     for (const auto& range : ranges) {
         if (range.iov_len == 0)

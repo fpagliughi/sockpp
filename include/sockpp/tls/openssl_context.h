@@ -114,7 +114,7 @@ private:
     /** Pinned certificate for allow_only_certificate(), if set. */
     std::optional<tls_certificate> pinned_cert_;
     /** Wire-format ALPN protocol list (length-prefixed names).  Empty = ALPN not set. */
-    std::vector<uint8_t> alpn_wire_;
+    vector<uint8_t> alpn_wire_;
 
     /** PSK identity sent by the client (set by set_psk()). */
     string psk_identity_;
@@ -354,7 +354,7 @@ public:
      *                  Pass an empty vector to disable ALPN.
      * @return An error code on failure, or an empty result on success.
      */
-    result<> set_alpn_protocols(const std::vector<string>& protocols);
+    result<> set_alpn_protocols(const vector<string>& protocols);
 
     /**
      * A function called on the server side to look up the PSK for a given
@@ -419,7 +419,7 @@ public:
      * @param suites Ordered list of cipher suite names.
      * @return An empty result on success, or an error code on failure.
      */
-    result<> set_ciphersuites(const std::vector<string>& suites);
+    result<> set_ciphersuites(const vector<string>& suites);
 
     /**
      * Creates a new \ref tls_socket instance that wraps the given connector

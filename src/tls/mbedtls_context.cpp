@@ -415,7 +415,7 @@ void mbedtls_context::set_identity(
     mbedtls_ssl_conf_own_cert(ssl_config_.get(), certificate, private_key);
 }
 
-result<> mbedtls_context::set_alpn_protocols(const std::vector<string>& protocols) {
+result<> mbedtls_context::set_alpn_protocols(const vector<string>& protocols) {
     if (protocols.empty()) {
         alpn_protocols_.clear();
         alpn_proto_ptrs_.clear();
@@ -691,7 +691,7 @@ result<> mbedtls_context::set_max_tls_version(tls_version ver) {
     return {};
 }
 
-result<> mbedtls_context::set_ciphersuites(const std::vector<string>& suites) {
+result<> mbedtls_context::set_ciphersuites(const vector<string>& suites) {
     ciphersuite_ids_.clear();
     for (const auto& name : suites) {
         const mbedtls_ssl_ciphersuite_t* cs =

@@ -238,7 +238,7 @@ public:
 
     using base::write;
     result<size_t> write(const void* buf, size_t n) override;
-    result<size_t> write(const std::vector<iovec>& ranges) override {
+    result<size_t> write(const vector<iovec>& ranges) override {
         size_t total = 0;
         for (const auto& range : ranges) {
             if (range.iov_len == 0)

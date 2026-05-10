@@ -180,7 +180,7 @@ result<tls_certificate> tls_certificate::from_file(const string& path) {
     return from_der(binary{content.begin(), content.end()});
 }
 
-result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pem) {
+result<vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pem) {
     auto* crt = make_cert();
 
     // Parse the full PEM bundle into a linked list.
@@ -194,7 +194,7 @@ result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const strin
         return make_tls_error_code(ret);
     }
 
-    std::vector<tls_certificate> chain;
+    vector<tls_certificate> chain;
     for (const mbedtls_x509_crt* link = crt; link != nullptr; link = link->next) {
         binary der{link->raw.p, link->raw.p + link->raw.len};
         if (auto res = from_der(der); res)
@@ -208,7 +208,7 @@ result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const strin
     return chain;
 }
 
-result<std::vector<tls_certificate>> tls_certificate::chain_from_file(const string& path) {
+result<vector<tls_certificate>> tls_certificate::chain_from_file(const string& path) {
     std::ifstream f{path, std::ios::binary};
     if (!f.is_open())
         return error_code{errno, std::generic_category()};
@@ -222,7 +222,7 @@ result<std::vector<tls_certificate>> tls_certificate::chain_from_file(const stri
 
     // DER holds exactly one certificate.
     if (auto res = from_der(binary{content.begin(), content.end()}); res) {
-        std::vector<tls_certificate> chain;
+        vector<tls_certificate> chain;
         chain.push_back(res.release());
         return chain;
     }
@@ -328,8 +328,8 @@ binary tls_certificate::fingerprint_sha256() const {
     return digest;
 }
 
-std::vector<subject_alt_name> tls_certificate::subject_alt_names() const {
-    std::vector<subject_alt_name> result;
+vector<subject_alt_name> tls_certificate::subject_alt_names() const {
+    vector<subject_alt_name> result;
     if (!cert_)
         return result;
     if (!mbedtls_x509_crt_has_ext_type(cert_, MBEDTLS_X509_EXT_SUBJECT_ALT_NAME))
@@ -410,8 +410,8 @@ uint32_t tls_certificate::key_usage() const {
     return flags;
 }
 
-std::vector<string> tls_certificate::extended_key_usage() const {
-    std::vector<string> result;
+vector<string> tls_certificate::extended_key_usage() const {
+    vector<string> result;
     if (!cert_)
         return result;
     if (!mbedtls_x509_crt_has_ext_type(cert_, MBEDTLS_X509_EXT_EXTENDED_KEY_USAGE))
