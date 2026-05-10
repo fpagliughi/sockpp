@@ -129,12 +129,10 @@ result<> tls_context::set_default_trust_locations() {
 result<> tls_context::set_trust_locations(
     const std::optional<string>& caFile, const std::optional<string>& caPath /*=std::nullopt*/
 ) {
-    return tls_check_res_none(
-        SSL_CTX_load_verify_locations(
-            ctx_, caFile ? caFile.value().c_str() : nullptr,
-            caPath ? caPath.value().c_str() : nullptr
-        )
-    );
+    return tls_check_res_none(SSL_CTX_load_verify_locations(
+        ctx_, caFile ? caFile.value().c_str() : nullptr,
+        caPath ? caPath.value().c_str() : nullptr
+    ));
 }
 
 void tls_context::set_verify(verify_t mode) noexcept {
@@ -440,6 +438,8 @@ unsigned int tls_context::psk_client_cb(
     if (!self || self->psk_key_.empty())
         return 0;
 
+    if (max_identity_len == 0)
+        return 0;
     size_t id_len = std::min(self->psk_identity_.size(), size_t{max_identity_len - 1});
     std::memcpy(identity, self->psk_identity_.c_str(), id_len);
     identity[id_len] = '\0';

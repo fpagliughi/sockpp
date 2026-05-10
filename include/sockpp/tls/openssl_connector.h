@@ -99,7 +99,8 @@ public:
      * @param ec Gets the error code on failure
      */
     tls_connector(
-        const tls_context& ctx, const sock_address& addr, const string& hostname, error_code& ec
+        const tls_context& ctx, const sock_address& addr, const string& hostname,
+        error_code& ec
     ) noexcept;
     /**
      * Creates a new TLS socket from an existing stream socket.
@@ -169,7 +170,7 @@ public:
      * completes successfully, the TLS socket is ready for communication.
      * @return The error code on failure.
      */
-    result<> tls_connect() noexcept { return tls_check_res_none(::SSL_connect(ssl())); }
+    result<> tls_connect() noexcept { return tls_check_res_none(SSL_connect(ssl())); }
     /**
      * Connect the TLS session.
      * This assumes that the underlying, insecure, connection has already

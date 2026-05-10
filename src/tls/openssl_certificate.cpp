@@ -74,7 +74,7 @@ result<tls_certificate> tls_certificate::from_pem(const string& pem) {
 
 result<tls_certificate> tls_certificate::from_der(const binary& der) {
     const uint8_t* p = der.data();
-    X509* cert = ::d2i_X509(nullptr, &p, static_cast<long>(der.size()));
+    X509* cert = d2i_X509(nullptr, &p, static_cast<long>(der.size()));
     if (!cert)
         return tls_last_error();
 
@@ -150,8 +150,12 @@ string tls_certificate::subject_name() const {
     auto name = X509_get_subject_name(cert_);
     if (!name)
         return string{};
-    const char* name_str = X509_NAME_oneline(name, NULL, 0);
-    return (name_str) ? string{name_str} : string{};
+    char* name_str = X509_NAME_oneline(name, nullptr, 0);
+    if (!name_str)
+        return string{};
+    string result{name_str};
+    OPENSSL_free(name_str);
+    return result;
 }
 
 // int X509_set_subject_name(X509 *x, const X509_NAME *name);
@@ -160,8 +164,12 @@ string tls_certificate::issuer_name() const {
     auto name = X509_get_issuer_name(cert_);
     if (!name)
         return string{};
-    const char* name_str = X509_NAME_oneline(name, NULL, 0);
-    return (name_str) ? string{name_str} : string{};
+    char* name_str = X509_NAME_oneline(name, nullptr, 0);
+    if (!name_str)
+        return string{};
+    string result{name_str};
+    OPENSSL_free(name_str);
+    return result;
 }
 
 // int X509_set_issuer_name(X509 *x, const X509_NAME *name);
@@ -346,7 +354,7 @@ binary tls_certificate::to_der() const {
         return binary{};
 
     binary certBin{buf, size_t(len)};
-    ::OPENSSL_free(buf);
+    OPENSSL_free(buf);
 
     return certBin;
 }

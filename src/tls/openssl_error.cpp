@@ -45,7 +45,6 @@ namespace detail {
 
 std::string tls_errc_category::message(int c) const {
     char buf[128];
-    std::cout << "OpenSSL error: " << c << std::endl;
     ERR_error_string_n((unsigned long)c, buf, sizeof(buf));
     return std::string(buf);
 }
