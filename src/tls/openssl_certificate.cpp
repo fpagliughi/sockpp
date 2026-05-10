@@ -57,15 +57,15 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 result<tls_certificate> tls_certificate::from_pem(const string& pem) {
-    auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
+    auto bio_deleter = [](BIO* b) { BIO_free(b); };
     std::unique_ptr<BIO, decltype(bio_deleter)> bio{
-        ::BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
+        BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
     };
     if (!bio)
         return tls_last_error();
 
-    ::ERR_clear_error();
-    X509* cert = ::PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr);
+    ERR_clear_error();
+    X509* cert = PEM_read_bio_X509_AUX(bio.get(), nullptr, nullptr, nullptr);
     if (!cert)
         return tls_last_error();
 
@@ -97,22 +97,22 @@ result<tls_certificate> tls_certificate::from_file(const string& path) {
 }
 
 result<std::vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pem) {
-    auto bio_deleter = [](BIO* b) { ::BIO_free(b); };
+    auto bio_deleter = [](BIO* b) { BIO_free(b); };
     std::unique_ptr<BIO, decltype(bio_deleter)> bio{
-        ::BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
+        BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
     };
     if (!bio)
         return tls_last_error();
 
     std::vector<tls_certificate> chain;
-    ::ERR_clear_error();
+    ERR_clear_error();
     for (;;) {
-        X509* cert = ::PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr);
+        X509* cert = PEM_read_bio_X509(bio.get(), nullptr, nullptr, nullptr);
         if (!cert) {
-            unsigned long err = ::ERR_peek_last_error();
+            unsigned long err = ERR_peek_last_error();
             if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
                 ERR_GET_REASON(err) == PEM_R_NO_START_LINE) {
-                ::ERR_clear_error();
+                ERR_clear_error();
                 break;
             }
             return tls_last_error();
@@ -352,17 +352,17 @@ binary tls_certificate::to_der() const {
 }
 
 string tls_certificate::to_pem() const {
-    BIO* bio = ::BIO_new(BIO_s_mem());
-    if (!bio || !::PEM_write_bio_X509(bio, cert_)) {
-        ::BIO_vfree(bio);
+    BIO* bio = BIO_new(BIO_s_mem());
+    if (!bio || !PEM_write_bio_X509(bio, cert_)) {
+        BIO_vfree(bio);
         return string{};
     }
 
     size_t keylen = BIO_pending(bio);
     std::unique_ptr<char[]> key(new char[keylen]);
 
-    int len = ::BIO_read(bio, key.get(), (int)keylen);
-    ::BIO_vfree(bio);
+    int len = BIO_read(bio, key.get(), (int)keylen);
+    BIO_vfree(bio);
 
     return (len > 0) ? string{key.get(), (size_t)len} : string{};
 }

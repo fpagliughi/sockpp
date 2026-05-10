@@ -45,45 +45,45 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-tls_socket::tls_socket(const tls_context& ctx) : ssl_{::SSL_new(ctx.ctx_)} {
+tls_socket::tls_socket(const tls_context& ctx) : ssl_{SSL_new(ctx.ctx_)} {
     if (!ssl_)
         throw tls_error::from_last_error();
 }
 
 tls_socket::tls_socket(const tls_context& ctx, error_code& ec) noexcept
-    : ssl_{::SSL_new(ctx.ctx_)} {
+    : ssl_{SSL_new(ctx.ctx_)} {
     if (!ssl_)
         ec = tls_last_error();
 }
 
 tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock)
-    : base{std::move(sock)}, ssl_{::SSL_new(ctx.ctx_)} {
+    : base{std::move(sock)}, ssl_{SSL_new(ctx.ctx_)} {
     if (!ssl_)
         throw tls_error::from_last_error();
 
-    if (::SSL_set_fd(ssl_, handle()) <= 0) {
+    if (SSL_set_fd(ssl_, handle()) <= 0) {
         auto err = tls_error::from_last_error();
-        ::SSL_free(ssl_);
+        SSL_free(ssl_);
         ssl_ = nullptr;
         throw err;
     }
 }
 
 tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock, error_code& ec) noexcept
-    : base{std::move(sock)}, ssl_{::SSL_new(ctx.ctx_)} {
+    : base{std::move(sock)}, ssl_{SSL_new(ctx.ctx_)} {
     if (!ssl_) {
         ec = tls_last_error();
     }
-    else if (::SSL_set_fd(ssl_, handle()) <= 0) {
+    else if (SSL_set_fd(ssl_, handle()) <= 0) {
         ec = tls_last_error();
-        ::SSL_free(ssl_);
+        SSL_free(ssl_);
         ssl_ = nullptr;
     }
 }
 
 tls_socket::~tls_socket() {
     if (ssl_)
-        ::SSL_free(ssl_);
+        SSL_free(ssl_);
 }
 
 tls_socket& tls_socket::operator=(tls_socket&& rhs) {
@@ -98,7 +98,7 @@ tls_socket& tls_socket::operator=(tls_socket&& rhs) {
 
 result<> tls_socket::attach(stream_socket&& sock) noexcept {
     base::operator=(std::move(sock));
-    return tls_check_res_none(::SSL_set_fd(ssl_, handle()));
+    return tls_check_res_none(SSL_set_fd(ssl_, handle()));
 }
 
 std::optional<tls_certificate> tls_socket::peer_certificate() {
@@ -111,7 +111,7 @@ tls_certificate_chain tls_socket::peer_certificate_chain() {
     tls_certificate_chain chain;
 
     // Grab the leaf cert first (always correct for both client and server).
-    X509* leaf_raw = ::SSL_get1_peer_certificate(ssl_);
+    X509* leaf_raw = SSL_get1_peer_certificate(ssl_);
     if (leaf_raw)
         chain.push_back(tls_certificate{leaf_raw});
 
@@ -119,7 +119,7 @@ tls_certificate_chain tls_socket::peer_certificate_chain() {
     // On the client side it includes the leaf (sk[0] == leaf_raw pointer);
     // on the server side it omits the leaf.  Skip any entry that matches
     // the leaf pointer to avoid duplicates.
-    STACK_OF(X509)* sk = ::SSL_get_peer_cert_chain(ssl_);
+    STACK_OF(X509)* sk = SSL_get_peer_cert_chain(ssl_);
     if (!sk)
         return chain;
 
@@ -128,7 +128,7 @@ tls_certificate_chain tls_socket::peer_certificate_chain() {
         X509* cert = sk_X509_value(sk, i);
         if (!cert || cert == leaf_raw)
             continue;
-        ::X509_up_ref(cert);
+        X509_up_ref(cert);
         chain.push_back(tls_certificate{cert});
     }
     return chain;
@@ -149,31 +149,31 @@ string tls_socket::peer_certificate_status_message() {
 #endif
 
 uint32_t tls_socket::peer_certificate_status() {
-    return (uint32_t)::SSL_get_verify_result(ssl_);
+    return (uint32_t)SSL_get_verify_result(ssl_);
 }
 
 string tls_socket::peer_certificate_status_message() {
-    return string{::X509_verify_cert_error_string(::SSL_get_verify_result(ssl_))};
+    return string{X509_verify_cert_error_string(SSL_get_verify_result(ssl_))};
 }
 
 result<> tls_socket::set_host_name(const string& hostname) {
-    return tls_check_res_none(::SSL_set_tlsext_host_name(ssl_, hostname.c_str()));
+    return tls_check_res_none(SSL_set_tlsext_host_name(ssl_, hostname.c_str()));
 }
 
 result<> tls_socket::auto_retry(bool on /*=true*/) {
     long ret;
     if (on) {
-        ret = ::SSL_set_mode(ssl_, SSL_MODE_AUTO_RETRY);
+        ret = SSL_set_mode(ssl_, SSL_MODE_AUTO_RETRY);
     }
     else {
-        ret = ::SSL_clear_mode(ssl_, SSL_MODE_AUTO_RETRY);
+        ret = SSL_clear_mode(ssl_, SSL_MODE_AUTO_RETRY);
     }
     return tls_check_res_none(ret);
 }
 
 result<size_t> tls_socket::read(void* buf, size_t n) {
     size_t nx;
-    int ret = ::SSL_read_ex(ssl_, buf, n, &nx);
+    int ret = SSL_read_ex(ssl_, buf, n, &nx);
     return tls_check_io(ret, nx);
 }
 
@@ -183,7 +183,7 @@ result<> tls_socket::read_timeout(const microseconds& to) {
 
 result<size_t> tls_socket::write(const void* buf, size_t n) {
     size_t nx;
-    int ret = ::SSL_write_ex(ssl_, buf, n, &nx);
+    int ret = SSL_write_ex(ssl_, buf, n, &nx);
     return tls_check_io(ret, nx);
 }
 
@@ -192,13 +192,13 @@ result<> tls_socket::write_timeout(const microseconds& to) {
 }
 
 bool tls_socket::received_shutdown() {
-    return (::SSL_get_shutdown(ssl_) & SSL_RECEIVED_SHUTDOWN) == SSL_RECEIVED_SHUTDOWN;
+    return (SSL_get_shutdown(ssl_) & SSL_RECEIVED_SHUTDOWN) == SSL_RECEIVED_SHUTDOWN;
 }
 
 result<> tls_socket::send_close_notify() {
     if (!ssl_)
         return {};
-    int ret = ::SSL_shutdown(ssl_);
+    int ret = SSL_shutdown(ssl_);
     // ret == 1: bidirectional shutdown complete
     // ret == 0: our close_notify sent; peer's not yet received — success for us
     // ret < 0: error
@@ -210,24 +210,24 @@ result<> tls_socket::send_close_notify() {
 string tls_socket::negotiated_version() const {
     if (!ssl_)
         return {};
-    const char* v = ::SSL_get_version(ssl_);
+    const char* v = SSL_get_version(ssl_);
     return (v && *v && strcmp(v, "unknown") != 0) ? v : string{};
 }
 
 string tls_socket::negotiated_cipher() const {
     if (!ssl_)
         return {};
-    const char* c = ::SSL_get_cipher(ssl_);
+    const char* c = SSL_get_cipher(ssl_);
     return (c && *c && strcmp(c, "(NONE)") != 0) ? c : string{};
 }
 
 string tls_socket::negotiated_group() const {
     if (!ssl_)
         return {};
-    int nid = (int)::SSL_get_negotiated_group(ssl_);
+    int nid = (int)SSL_get_negotiated_group(ssl_);
     if (nid <= 0)
         return {};
-    const char* name = ::OBJ_nid2sn(nid);
+    const char* name = OBJ_nid2sn(nid);
     return name ? name : string{};
 }
 
@@ -236,7 +236,7 @@ string tls_socket::negotiated_alpn_protocol() const {
         return {};
     const unsigned char* proto = nullptr;
     unsigned int proto_len = 0;
-    ::SSL_get0_alpn_selected(ssl_, &proto, &proto_len);
+    SSL_get0_alpn_selected(ssl_, &proto, &proto_len);
     return (proto && proto_len > 0) ? string{reinterpret_cast<const char*>(proto), proto_len}
                                     : string{};
 }

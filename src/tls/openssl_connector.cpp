@@ -96,7 +96,7 @@ result<> tls_connector::connect(const sock_address& addr, microseconds timeout) 
 result<> tls_connector::tls_connect(stream_socket&& sock) noexcept {
     if (auto res = attach(std::move(sock)); !res)
         return res;
-    return tls_check_res_none(::SSL_connect(ssl()));
+    return tls_check_res_none(SSL_connect(ssl()));
 }
 
 /////////////////////////////////////////////////////////////////////////////
