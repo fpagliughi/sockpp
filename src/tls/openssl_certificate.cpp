@@ -147,6 +147,8 @@ result<vector<tls_certificate>> tls_certificate::chain_from_file(const string& p
 }
 
 string tls_certificate::subject_name() const {
+    if (!cert_)
+        return string{};
     auto name = X509_get_subject_name(cert_);
     if (!name)
         return string{};
@@ -161,6 +163,8 @@ string tls_certificate::subject_name() const {
 // int X509_set_subject_name(X509 *x, const X509_NAME *name);
 
 string tls_certificate::issuer_name() const {
+    if (!cert_)
+        return string{};
     auto name = X509_get_issuer_name(cert_);
     if (!name)
         return string{};
@@ -175,11 +179,15 @@ string tls_certificate::issuer_name() const {
 // int X509_set_issuer_name(X509 *x, const X509_NAME *name);
 
 string tls_certificate::not_before_str() const {
+    if (!cert_)
+        return string{};
     auto tm = X509_get0_notBefore(cert_);
     return (tm && tm->data) ? string{(const char*)tm->data} : string{};
 }
 
 string tls_certificate::not_after_str() const {
+    if (!cert_)
+        return string{};
     auto tm = X509_get0_notAfter(cert_);
     return (tm && tm->data) ? string{(const char*)tm->data} : string{};
 }
@@ -360,6 +368,8 @@ binary tls_certificate::to_der() const {
 }
 
 string tls_certificate::to_pem() const {
+    if (!cert_)
+        return string{};
     BIO* bio = BIO_new(BIO_s_mem());
     if (!bio || !PEM_write_bio_X509(bio, cert_)) {
         BIO_vfree(bio);
