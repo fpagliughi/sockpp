@@ -131,9 +131,9 @@ public:
     const tls_certificate& leaf() const { return certs_.front(); }
 
     auto cbegin() const noexcept { return certs_.cbegin(); }
-    auto cend()   const noexcept { return certs_.cend(); }
-    auto begin()  const noexcept { return certs_.cbegin(); }
-    auto end()    const noexcept { return certs_.cend(); }
+    auto cend() const noexcept { return certs_.cend(); }
+    auto begin() const noexcept { return certs_.cbegin(); }
+    auto end() const noexcept { return certs_.cend(); }
 
     /** Appends a certificate to the chain (copy). */
     void push_back(const tls_certificate& cert) { certs_.push_back(cert); }
@@ -185,8 +185,7 @@ public:
      */
     string to_pem() const {
         string result;
-        for (const auto& cert : certs_)
-            result += cert.to_pem();
+        for (const auto& cert : certs_) result += cert.to_pem();
         return result;
     }
 };

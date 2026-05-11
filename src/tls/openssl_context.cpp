@@ -177,9 +177,7 @@ result<> tls_context::set_root_certs(const string& certData) {
 
     // Build a fresh store to replace the existing one (true "set" semantics).
     auto store_deleter = [](X509_STORE* s) { X509_STORE_free(s); };
-    unique_ptr<X509_STORE, decltype(store_deleter)> store{
-        X509_STORE_new(), store_deleter
-    };
+    unique_ptr<X509_STORE, decltype(store_deleter)> store{X509_STORE_new(), store_deleter};
     if (!store)
         return tls_last_error();
 
