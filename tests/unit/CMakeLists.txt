@@ -88,6 +88,14 @@ if(SOCKPP_WITH_CAN)
     )
 endif()
 
+target_include_directories(unit_tests
+    PUBLIC
+        ${SOCKPP_INCLUDE_DIR}
+    PRIVATE
+        ${SOCKPP_GENERATED_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 if(SOCKPP_WITH_OPENSSL OR SOCKPP_WITH_MBEDTLS)
     target_sources(unit_tests PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/test_tls_certificate.cpp

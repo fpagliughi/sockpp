@@ -85,15 +85,22 @@
 
 ---
 
+## [Version 1.0.0](https://github.com/fpagliughi/sockpp/compare/v0.8.3..v1.0.0) - (2023-12-17)
+
+This is a release of the previous 0.8.x line as the initial, stable API.
+
+## [Version 0.8.3](https://github.com/fpagliughi/sockpp/compare/v0.8.2..v0.8.3) - (2023-12-11)
+
+- [#64](https://github.com/fpagliughi/sockpp/pull/84) Added support for Catch2 v3.x for unit tests. (v2.x still supported)
+
+
 ## [Version 0.8.2](https://github.com/fpagliughi/sockpp/compare/v0.8.1..v0.8.2) - (2023-12-05)
 
 - [#89](https://github.com/fpagliughi/sockpp/issue/89) Fixed generator expression for older CMake
 - [#91](https://github.com/fpagliughi/sockpp/issue/91) Fixed uniform_int_distribution<> in UNIX socket example
 
 
-## [Version 0.8.1](https://github.com/fpagliughi/sockpp/compare/v0.8.0..v0.8.1)
-
-Released: 2023-01-30
+## [Version 0.8.1](https://github.com/fpagliughi/sockpp/compare/v0.8.0..v0.8.1) - (2023-01-30)
 
 - Cherry picked most of the non-TLS commits in PR [#17](https://github.com/fpagliughi/sockpp/pull/17)
     - Connector timeouts
@@ -106,9 +113,7 @@ Released: 2023-01-30
 - [#56](https://github.com/fpagliughi/sockpp/issue/56) handling unix paths with maximum length (no NUL term)
 - Fixed outstanding build warnings on Windows when using MSVC
 
-## [Version 0.8.0](https://github.com/fpagliughi/sockpp/compare/v0.7.1..v0.8.0)
-
-Released: 2023-01-17
+## [Version 0.8.0](https://github.com/fpagliughi/sockpp/compare/v0.7.1..v0.8.0) - (2023-01-17)
 
 - [Breaking] Library initializer now uses a static singleton created via `socket_initializer::initialize()` call, which can be called repeatedly with no ill effect. Also added global `socketpp::initialize()` function as shortcut.
 - Improvements to CMake to better follow modern standards.
