@@ -1,5 +1,90 @@
 # Change Log for _sockpp_
 
+## Version 2.0  - Unreleased
+
+### Breaking Changes
+
+- Minimum C++ standard is now **C++17**. C++20 required for `span<byte>` I/O overloads.
+- `socket::last_error()` removed; all socket operations now return `result<>` instead of setting a cached error code.
+- Exception support removed (`SOCKPP_WITH_EXCEPTIONS` gone). A small number of functions may still throw, but every throwing function now has a `noexcept` overload returning `result<>`.
+- CAN bus classes renamed from `can_*` to `canbus_*` (e.g. `can_socket` → `canbus_socket`) to avoid collisions with C struct names.
+- CAN `send_to()` / `recv_from()` removed — they are not meaningful for CAN sockets.
+- `trust_store` renamed to `trust_locations` in TLS context.
+- `sock_address` hierarchy: `remove exception from unix_address` ([#72](https://github.com/fpagliughi/sockpp/issues/72)) and `can_address` ([#72](https://github.com/fpagliughi/sockpp/issues/72)); `system_error` with `error_code` is used instead.
+- UNIX-domain and CAN bus headers moved into `unix/` and `canbus/` subdirectories respectively.
+
+### New Features
+
+#### TLS / Secure Sockets (OpenSSL and mbedTLS backends)
+
+- Full TLS client and server support via two compile-time-selectable backends: **OpenSSL** and **mbedTLS**.
+- `tls_context` — configures certificates, private keys, trust locations, and TLS parameters.
+- `tls_connector` / `tls_acceptor` — TLS-wrapped stream connector and acceptor.
+- `tls_socket` — TLS stream socket with graceful shutdown, state queries, and peer certificate retrieval (`peer_certificate()`).
+- `tls_certificate` — X.509 certificate wrapper with queries for subject/issuer names, SANs, serial number, fingerprint, validity window, and PEM export.
+- `tls_certificate_chain` — ordered collection of `tls_certificate` objects (leaf first), with PEM import/export and structural validity checking.
+- TLS connector can be constructed without an immediate connect, allowing TLS options to be configured before calling `connect()`.
+- Added ALPN (Application-Layer Protocol Negotiation) support.
+- Added PSK (Pre-Shared Key) support.
+- Added TLS cipher suite control.
+- Added `certinfo` example program to display peer certificate information.
+- Added TLS certificate unit tests.
+
+#### C++20 `span<byte>` I/O
+
+- [#87](https://github.com/fpagliughi/sockpp/issues/87) Overloaded `read()`, `write()`, `send()`, `recv()`, etc. with `std::span<byte>` variants for zero-copy, bounds-safe I/O.
+- Added unit tests for span I/O functions.
+
+#### CAN FD Support
+
+- Added initial CAN FD (flexible data-rate) support on Linux.
+- CAN frames can be converted between classic CAN and CAN FD formats.
+- `canbus_socket::recv()` now validates the received frame size and fails if an FD frame arrives on a classic socket.
+
+#### Acceptor / Connector Improvements
+
+- [#88](https://github.com/fpagliughi/sockpp/issues/88) Optional timeout for `acceptor::accept()`.
+- [#97](https://github.com/fpagliughi/sockpp/issues/97) Acceptors can choose the socket reuse option (`SO_REUSEADDR` / `SO_REUSEPORT`) in the constructor.
+- [#100](https://github.com/fpagliughi/sockpp/issues/100) `set_read_timeout()` / `set_write_timeout()` moved to the base `socket` class so all socket types (UDP, raw, etc.) can use them.
+- [#108](https://github.com/fpagliughi/sockpp/issues/108) Protocol value is now customizable in `connector` and `acceptor` constructors.
+- `connector::connect()` now closes the socket handle on connection failure.
+- Added `connector::connect()` overloads taking host/port strings and returning `result<>`.
+- Added cross-platform `poller` class; `connector::connect()` with timeout uses it on non-Windows systems.
+- Added new socket constructors.
+
+#### UNIX-Domain Sockets
+
+- Added UNIX-domain socket support on **Windows**.
+- UNIX-domain sockets are now a CMake option on all platforms.
+
+#### `result<>` / Error Handling
+
+- `result<>` type significantly improved: generic template base, `std::error_code` for the error variant, `!=` comparison against error types, `release()` member.
+- `ioresult` rebuilt on top of the same generic template.
+- `socket::clone()` now returns `result<>`.
+- `create_handle()` for stream sockets now returns `result<>`.
+- `result::last_error()` on Windows manually converts WinSock error codes.
+- `error_code` support added for `getaddrinfo()` failures.
+- `unique_ptr<>` and `vector<>` brought into the `sockpp` namespace.
+
+### Bug Fixes
+
+- [#106](https://github.com/fpagliughi/sockpp/pull/106) `inet6_address::resolve_name()` now correctly captures `getaddrinfo()`'s error code (previously always reported success).
+- [#112](https://github.com/fpagliughi/sockpp/pull/112) Fixed MinGW-64 support; CI updated for MinGW. Minimum Windows target bumped to Windows 7.
+- Fixed OpenSSL build issue caused by `::` qualifiers on library macros.
+- Fixed copy semantics for mbedTLS certificate objects.
+- Resolved compatibility issues between mbedTLS and OpenSSL implementations.
+
+### Build / CI
+
+- CMake minimum required version updated; C++ standard version is now configurable (`SOCKPP_CXX_STANDARD`).
+- Added namespace CMake targets for subdirectory builds.
+- GitHub Actions CI updated: added macOS builds, Debug and shared-library configurations, and CI for pushes/PRs to the `develop` branch.
+- Removed Travis CI configuration.
+- Doxygen warnings cleaned up.
+
+---
+
 ## [Version 0.8.2](https://github.com/fpagliughi/sockpp/compare/v0.8.1..v0.8.2) - (2023-12-05)
 
 - [#89](https://github.com/fpagliughi/sockpp/issue/89) Fixed generator expression for older CMake
