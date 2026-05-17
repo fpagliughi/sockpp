@@ -561,15 +561,14 @@ static string read_system_root_certs() {
             )) {
             return "";
         }
-        LPSTR pCertPEM = (LPSTR)malloc(pCertPEMSize);
+        std::vector<char> pCertPEM(pCertPEMSize);
         if (!CryptBinaryToStringA(
                 pContext->pbCertEncoded, pContext->cbCertEncoded, CRYPT_STRING_BASE64HEADER,
-                pCertPEM, &pCertPEMSize
+                pCertPEM.data(), &pCertPEMSize
             )) {
             return "";
         }
-        certs.write(pCertPEM, pCertPEMSize);
-        free(pCertPEM);
+        certs.write(pCertPEM.data(), pCertPEMSize);
     }
 
     CertCloseStore(hStore, CERT_CLOSE_STORE_FORCE_FLAG);

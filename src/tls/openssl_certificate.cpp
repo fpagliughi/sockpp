@@ -79,6 +79,9 @@ result<tls_certificate> tls_certificate::from_pem(const string& pem) {
 }
 
 result<tls_certificate> tls_certificate::from_der(const binary& der) {
+    if (der.size() > static_cast<size_t>(std::numeric_limits<long>::max()))
+        return make_error_code(std::errc::value_too_large);
+
     const uint8_t* p = der.data();
     X509* cert = d2i_X509(nullptr, &p, static_cast<long>(der.size()));
     if (!cert)
