@@ -52,6 +52,8 @@
 #include <memory>
 #include <sstream>
 
+using namespace std::chrono;
+
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
@@ -82,12 +84,12 @@ result<tls_certificate> tls_certificate::from_der(const binary& der) {
 }
 
 result<tls_certificate> tls_certificate::from_file(const string& path) {
-    std::ifstream f{path, std::ios::binary};
-    if (!f.is_open())
+    std::ifstream fil{path, std::ios::binary};
+    if (!fil.is_open())
         return error_code{errno, std::generic_category()};
 
-    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
-    if (f.bad())
+    string content{std::istreambuf_iterator<char>{fil}, std::istreambuf_iterator<char>{}};
+    if (fil.bad())
         return error_code{errno, std::generic_category()};
 
     if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
@@ -125,12 +127,12 @@ result<vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pe
 }
 
 result<vector<tls_certificate>> tls_certificate::chain_from_file(const string& path) {
-    std::ifstream f{path, std::ios::binary};
-    if (!f.is_open())
+    std::ifstream fil{path, std::ios::binary};
+    if (!fil.is_open())
         return error_code{errno, std::generic_category()};
 
-    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
-    if (f.bad())
+    string content{std::istreambuf_iterator<char>{fil}, std::istreambuf_iterator<char>{}};
+    if (fil.bad())
         return error_code{errno, std::generic_category()};
 
     if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
@@ -201,7 +203,7 @@ static string bytes_to_hex(const uint8_t* data, size_t len) {
 }
 
 // Helper: convert an ASN1_TIME to a UTC time_point (epoch on error)
-static std::chrono::system_clock::time_point asn1_time_to_tp(const ASN1_TIME* tm) {
+static system_clock::time_point asn1_time_to_tp(const ASN1_TIME* tm) {
     if (!tm)
         return {};
     struct tm t = {};
@@ -210,17 +212,17 @@ static std::chrono::system_clock::time_point asn1_time_to_tp(const ASN1_TIME* tm
     time_t ts = timegm(&t);
     if (ts == (time_t)-1)
         return {};
-    return std::chrono::system_clock::from_time_t(ts);
+    return system_clock::from_time_t(ts);
 }
 
-std::chrono::system_clock::time_point tls_certificate::not_before() const {
+system_clock::time_point tls_certificate::not_before() const {
     return cert_ ? asn1_time_to_tp(X509_get0_notBefore(cert_))
-                 : std::chrono::system_clock::time_point{};
+                 : system_clock::time_point{};
 }
 
-std::chrono::system_clock::time_point tls_certificate::not_after() const {
+system_clock::time_point tls_certificate::not_after() const {
     return cert_ ? asn1_time_to_tp(X509_get0_notAfter(cert_))
-                 : std::chrono::system_clock::time_point{};
+                 : system_clock::time_point{};
 }
 
 binary tls_certificate::serial_number() const {

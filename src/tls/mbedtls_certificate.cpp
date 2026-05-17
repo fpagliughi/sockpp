@@ -58,6 +58,7 @@ extern "C" {
 #include <sstream>
 
 using namespace std;
+using namespace std::chrono;
 
 namespace sockpp {
 
@@ -166,12 +167,12 @@ result<tls_certificate> tls_certificate::from_der(const binary& der) {
 }
 
 result<tls_certificate> tls_certificate::from_file(const string& path) {
-    std::ifstream f{path, std::ios::binary};
-    if (!f.is_open())
+    std::ifstream fil{path, std::ios::binary};
+    if (!fil.is_open())
         return error_code{errno, std::generic_category()};
 
-    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
-    if (f.bad())
+    string content{std::istreambuf_iterator<char>{fil}, std::istreambuf_iterator<char>{}};
+    if (fil.bad())
         return error_code{errno, std::generic_category()};
 
     if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
@@ -209,12 +210,12 @@ result<vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pe
 }
 
 result<vector<tls_certificate>> tls_certificate::chain_from_file(const string& path) {
-    std::ifstream f{path, std::ios::binary};
-    if (!f.is_open())
+    std::ifstream fil{path, std::ios::binary};
+    if (!fil.is_open())
         return error_code{errno, std::generic_category()};
 
-    string content{std::istreambuf_iterator<char>{f}, std::istreambuf_iterator<char>{}};
-    if (f.bad())
+    string content{std::istreambuf_iterator<char>{fil}, std::istreambuf_iterator<char>{}};
+    if (fil.bad())
         return error_code{errno, std::generic_category()};
 
     if (content.size() >= 5 && content.compare(0, 5, "-----") == 0)
@@ -279,7 +280,7 @@ static string bytes_to_hex(const unsigned char* data, size_t len) {
 }
 
 // Helper: convert mbedtls_x509_time to a UTC time_point
-static std::chrono::system_clock::time_point x509_time_to_tp(const mbedtls_x509_time& t) {
+static system_clock::time_point x509_time_to_tp(const mbedtls_x509_time& t) {
     struct tm tm = {};
     tm.tm_year = t.year - 1900;
     tm.tm_mon = t.mon - 1;
@@ -290,16 +291,16 @@ static std::chrono::system_clock::time_point x509_time_to_tp(const mbedtls_x509_
     time_t ts = timegm(&tm);
     if (ts == (time_t)-1)
         return {};
-    return std::chrono::system_clock::from_time_t(ts);
+    return system_clock::from_time_t(ts);
 }
 
-std::chrono::system_clock::time_point tls_certificate::not_before() const {
+system_clock::time_point tls_certificate::not_before() const {
     return cert_ ? x509_time_to_tp(cert_->valid_from)
-                 : std::chrono::system_clock::time_point{};
+                 : system_clock::time_point{};
 }
 
-std::chrono::system_clock::time_point tls_certificate::not_after() const {
-    return cert_ ? x509_time_to_tp(cert_->valid_to) : std::chrono::system_clock::time_point{};
+system_clock::time_point tls_certificate::not_after() const {
+    return cert_ ? x509_time_to_tp(cert_->valid_to) : system_clock::time_point{};
 }
 
 binary tls_certificate::serial_number() const {

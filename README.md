@@ -10,21 +10,63 @@ The library currently supports: IPv4 and IPv6 on Linux, Mac, and Windows. Other 
 
 Unix-Domain Sockets are available on *nix systems that have an OS implementation for them. There's experimental support for them on recent versions of Windows, although only UNIX stream sockets are supported on that platform.
 
-Experimental support for secure sockets using either the OpenSSL or MbedTLS libraries was started with basic coverage. This will continue to be expanded in the near future.
+Experimental support for secure sockets has begun with implementations for either the OpenSSL or MbedTLS backends. This will continue to be expanded in the near future.
 
-There is also some experimental support for CAN bus programming on Linux using the SocketCAN package. This gives CAN bus adapters a network interface, with limitations dictated by the CAN message protocol.
+There is also some experimental support for CAN bus programming on Linux using the _SocketCAN_ package. This gives CAN bus adapters a network interface, with limitations dictated by the CAN message protocol.
 
 All code in the library lives within the `sockpp` C++ namespace.
 
 **The 'master' branch is moving toward the v2.0 API, and is particularly unstable at the moment. You're advised to download the latest release for production use.**
 
+## Features
+
+- **C++ Network Sockets** - Wrappers for C++ network sockets.
+- **Modern C++ API** - C++17 and some C++20 features, with move semantics for transfering ownership of socket objects.
+- **Platform Independence** - Portable features on Linux, macOS, and Windows.
+- **TCP/UDP sockets** — IPv4 and IPv6 on supported platforms
+    - Typed *connector* and *acceptor* templates (`tcp_connector`, `tcp6_acceptor`, etc.) built on a common base.
+    - `udp_socket`, `udp6_socket` for datagram use.
+    - Stateless read()/write() variants that don't cache error state.
+- **UNIX-domain sockets** — stream and datagram on all UNIX-like systems, plus experimental support on recent Windows.
+    - Pairs, abstract-namespace addresses, and max-length path handling.                                                                                                           
+- **Connector / acceptor options** — optional connect and accept timeouts (cross-platform via poller)
+    - configurable SO_REUSEADDR/SO_REUSEPORT, customizable protocol value, and socket handle cleanup on failed connect.
+- **Raw sockets** - for low-level protocols or control
+- **Portable socket polling** - a platform-independent `poller` class
+    - Wait for events on a collection of `socket` objects
+    - Optional timeout
+- **RAII lifetime management** — each socket object owns its file descriptor; closed automatically on destruction.
+    - Sockets are moveable but not copyable
+    - clone() produces an independent duplicate
+- **Network addresses** - C++ classes for IPv4, IPv6, UNIX-domain, SocketCAN (Linux), and generic network addresses.
+- **`result<T>` error handling** — API calls returns a result<> instead of throwing or setting a cached error code.
+    - Carries either a success value or a std::error_code.
+    - Supports != comparison against error constants and a release() move accessor.
+    - No exception dependency.
+- **span<byte> I/O** — read(), write(), send(), and recv() overloads accepting std::span<byte> for bounds-safe, zero-copy buffer passing (C++20).
+
+### Experimental Features
+
+- **TLS / secure sockets** — TLS suport with platform and backend independence
+    - Compile-time choice of _OpenSSL_ or _mbedTLS_ implementations with a common interface.
+    - `tls_context` configures trust locations, certificates, and private keys.
+    - `tls_connector` / `tls_acceptor` wrap standard stream sockets.
+    - Supports ALPN, PSK, cipher suite control, graceful shutdown, and peer certificate inspection.
+- **X.509 certificates** — `tls_certificate` exposes subject/issuer names, SANs, serial number, fingerprint, validity window, and PEM export.
+    - `tls_certificate_chain` is an ordered collection (leaf first) with structural validity checking and PEM import/export.                               
+- **CAN bus on Linux (SocketCAN)** — classic CAN and CAN FD on Linux.
+    - Frame conversion between the two formats, address validation, and a canbus_socket::recv() that rejects FD frames on a classic socket.
+- **UNIX-domain sockets on Windows** — support on Windows 11 and later versionf of Windows 10.
+    - Note that Windows only supports UNIX stream sockets. No datagram support.
+
+
 ## Latest News
 
 Work is proceeding toward Version 2.0 with the following goals:
 
-- Move the library to C++17
+- Move the library to C++17 with some optionsl C++20 support (spans for I/O)
 - Do a major refactor of error handling, to allow apps to use the library without exceptions.
-- Achieve better thread safety.
+- Achieve better/easier thread safety.
 - Add a portable socket `poller` class
 - MinGW-w64 support on Windows
 - Fix a number of known bugs and build issues.
