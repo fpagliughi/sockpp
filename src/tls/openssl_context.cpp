@@ -74,6 +74,10 @@ tls_context::tls_context(role_t role /*=role_t::CLIENT*/) : role_{role} {
         ctx_ = SSL_CTX_new(method);
         SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
         SSL_CTX_set_app_data(ctx_, this);
+
+        // Client contexts verify the peer certificate by default.
+        if (role == role_t::CLIENT || role == role_t::DEFAULT)
+            SSL_CTX_set_verify(ctx_, SSL_VERIFY_PEER, nullptr);
     }
 }
 
@@ -579,15 +583,9 @@ result<unique_ptr<tls_socket>> tls_context::wrap_socket(
         return ec;
 
     if (!peer_name.empty()) {
-        // SNI: tells the server which hostname we're connecting to so it can
-        // select the right certificate when it hosts multiple domains.
+        // Sets SNI and arms hostname verification in one call.
         if (auto res = tls_sock->set_host_name(peer_name); !res)
             return res.error();
-
-        // Automatic hostname verification: OpenSSL will check that the
-        // server's certificate actually matches the requested hostname.
-        if (SSL_set1_host(tls_sock->ssl(), peer_name.c_str()) != 1)
-            return tls_last_error();
     }
 
     // Perform the TLS handshake.

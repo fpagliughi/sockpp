@@ -159,7 +159,15 @@ string tls_socket::peer_certificate_status_message() {
 result<> tls_socket::set_host_name(const string& hostname) {
     if (hostname.empty())
         return {};
-    return tls_check_res_none(SSL_set_tlsext_host_name(ssl_, hostname.c_str()));
+    // Set SNI: tells the server which hostname we are connecting to.
+    if (auto res = tls_check_res_none(SSL_set_tlsext_host_name(ssl_, hostname.c_str())); !res)
+        return res;
+    // Set the expected hostname for certificate verification.  This is a
+    // no-op when the SSL verify mode is NONE but is required for PEER mode
+    // so that OpenSSL checks the cert's CN / SAN against the hostname.
+    if (SSL_set1_host(ssl_, hostname.c_str()) != 1)
+        return tls_last_error();
+    return {};
 }
 
 result<> tls_socket::auto_retry(bool on /*=true*/) {

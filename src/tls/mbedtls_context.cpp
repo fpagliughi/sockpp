@@ -48,6 +48,7 @@
 
 #include "sockpp/connector.h"
 #include "sockpp/tls/mbedtls_socket.h"
+#include "sockpp/types.h"
 
 #ifdef __APPLE__
     #include <TargetConditionals.h>
@@ -272,21 +273,29 @@ int mbedtls_context::trusted_cert_callback(
         *candidates = nullptr;
     }
     else {
-        // (can't use parse_cert() here because its return value uses RAII and will free
-        // itself)
-        auto root = (mbedtls_x509_crt*)malloc(sizeof(mbedtls_x509_crt));
-        mbedtls_x509_crt_init(root);
+        // Allocate with a custom deleter so the error path is leak-free.
+        // On success, release() transfers ownership to mbedTLS, which will
+        // call mbedtls_x509_crt_free() + mbedtls_free() on the pointer.
+        struct CrtDeleter {
+            void operator()(mbedtls_x509_crt* p) const {
+                mbedtls_x509_crt_free(p);
+                free(p);
+            }
+        };
+        unique_ptr<mbedtls_x509_crt, CrtDeleter> root{
+            static_cast<mbedtls_x509_crt*>(malloc(sizeof(mbedtls_x509_crt)))
+        };
+        if (!root)
+            return MBEDTLS_ERR_X509_ALLOC_FAILED;
+        mbedtls_x509_crt_init(root.get());
         // mbedtls_x509_crt_parse() requires buflen to include the NUL terminator
         // for PEM input.  c_str() makes the null byte explicit; size() + 1 counts it.
         int err = mbedtls_x509_crt_parse(
-            root, (const uint8_t*)rootData.c_str(), rootData.size() + 1
+            root.get(), (const uint8_t*)rootData.c_str(), rootData.size() + 1
         );
-        if (err != 0) {
-            mbedtls_x509_crt_free(root);
-            free(root);
+        if (err != 0)
             return err;
-        }
-        *candidates = root;
+        *candidates = root.release();
     }
     return 0;
 }
