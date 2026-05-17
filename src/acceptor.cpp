@@ -106,6 +106,12 @@ result<stream_socket> acceptor::accept(
 // --------------------------------------------------------------------------
 
 result<stream_socket> acceptor::accept(sock_address* clientAddr /*=nullptr*/) noexcept {
+    if (clientAddr) {
+        sa_family_t af = clientAddr->family();
+        if (af != AF_UNSPEC && af != family())
+            return make_error_code(errc::address_family_not_supported);
+    }
+
     sockaddr* p = clientAddr ? clientAddr->sockaddr_ptr() : nullptr;
     socklen_t len = clientAddr ? clientAddr->size() : 0;
 
