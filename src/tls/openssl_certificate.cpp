@@ -49,6 +49,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <sstream>
 
@@ -59,6 +60,9 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 result<tls_certificate> tls_certificate::from_pem(const string& pem) {
+    if (pem.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
+        return make_error_code(std::errc::value_too_large);
+
     auto bio_deleter = [](BIO* b) { BIO_free(b); };
     unique_ptr<BIO, decltype(bio_deleter)> bio{
         BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter
@@ -99,6 +103,9 @@ result<tls_certificate> tls_certificate::from_file(const string& path) {
 }
 
 result<vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pem) {
+    if (pem.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
+        return make_error_code(std::errc::value_too_large);
+
     auto bio_deleter = [](BIO* b) { BIO_free(b); };
     unique_ptr<BIO, decltype(bio_deleter)> bio{
         BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size())), bio_deleter

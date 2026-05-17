@@ -42,6 +42,7 @@
 #include <openssl/x509.h>
 
 #include <cstring>
+#include <limits>
 #include <memory>
 
 #include "sockpp/tls/openssl_socket.h"
@@ -168,6 +169,9 @@ result<> tls_context::set_key_file(const string& keyFile) {
 }
 
 result<> tls_context::set_root_certs(const string& certData) {
+    if (certData.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
+        return make_error_code(std::errc::value_too_large);
+
     auto bio_deleter = [](BIO* b) { BIO_free(b); };
     unique_ptr<BIO, decltype(bio_deleter)> bio{
         BIO_new_mem_buf(certData.data(), static_cast<int>(certData.size())), bio_deleter
@@ -362,6 +366,10 @@ result<> tls_context::set_alpn_protocols(const vector<string>& protocols) {
 // ---------------------------------------------------------------------------
 
 result<> tls_context::set_identity(const string& cert_pem, const string& key_pem) {
+    static constexpr size_t INT_MAX_SZ = static_cast<size_t>(std::numeric_limits<int>::max());
+    if (cert_pem.size() > INT_MAX_SZ || key_pem.size() > INT_MAX_SZ)
+        return make_error_code(std::errc::value_too_large);
+
     auto bio_deleter = [](BIO* b) { BIO_free(b); };
     auto cert_deleter = [](X509* c) { X509_free(c); };
 
@@ -491,6 +499,9 @@ result<> tls_context::set_psk_callback(psk_server_callback cb) {
 result<> tls_context::set_identity(
     const tls_certificate_chain& chain, const string& key_pem
 ) {
+    if (key_pem.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
+        return make_error_code(std::errc::value_too_large);
+
     if (chain.empty())
         return make_error_code(std::errc::invalid_argument);
 
