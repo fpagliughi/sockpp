@@ -327,7 +327,7 @@ int tls_context::alpn_select_cb(
         ) == OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_OK;
 
-    return SSL_TLSEXT_ERR_NOACK;  // no overlap — proceed without ALPN
+    return SSL_TLSEXT_ERR_ALERT_FATAL;  // no overlap — abort handshake
 }
 
 result<> tls_context::set_alpn_protocols(const vector<string>& protocols) {
@@ -468,6 +468,10 @@ result<> tls_context::set_psk(const string& identity, const binary& psk) {
     psk_key_ = psk;
     SSL_CTX_set_app_data(ctx_, this);
     SSL_CTX_set_psk_client_callback(ctx_, psk_client_cb);
+    // The old-style PSK callbacks are TLS 1.2-only; cap the version and
+    // restrict to PSK cipher suites so the handshake can succeed.
+    SSL_CTX_set_max_proto_version(ctx_, TLS1_2_VERSION);
+    SSL_CTX_set_cipher_list(ctx_, "PSK");
     return {};
 }
 
@@ -475,6 +479,12 @@ result<> tls_context::set_psk_callback(psk_server_callback cb) {
     psk_server_cb_ = std::move(cb);
     SSL_CTX_set_app_data(ctx_, this);
     SSL_CTX_set_psk_server_callback(ctx_, psk_server_cb_ ? psk_server_cb : nullptr);
+    if (psk_server_cb_) {
+        // The old-style PSK callbacks are TLS 1.2-only; cap the version and
+        // restrict to PSK cipher suites so the handshake can succeed.
+        SSL_CTX_set_max_proto_version(ctx_, TLS1_2_VERSION);
+        SSL_CTX_set_cipher_list(ctx_, "PSK");
+    }
     return {};
 }
 

@@ -59,6 +59,10 @@ All code in the library lives within the `sockpp` C++ namespace.
 - **UNIX-domain sockets on Windows** — support on Windows 11 and later versionf of Windows 10.
     - Note that Windows only supports UNIX stream sockets. No datagram support.
 
+Experimental features are incomplete and not fully tested. Their APIs are not final and could change in updates for the same major version (i.e. are not held to the constraints of semantic versioning).
+
+Experimental features are not production-ready.
+
 
 ## Latest News
 

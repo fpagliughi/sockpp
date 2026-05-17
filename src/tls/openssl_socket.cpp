@@ -157,6 +157,8 @@ string tls_socket::peer_certificate_status_message() {
 }
 
 result<> tls_socket::set_host_name(const string& hostname) {
+    if (hostname.empty())
+        return {};
     return tls_check_res_none(SSL_set_tlsext_host_name(ssl_, hostname.c_str()));
 }
 
