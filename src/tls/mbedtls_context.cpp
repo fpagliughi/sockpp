@@ -127,8 +127,10 @@ unique_ptr<mbedtls_context::cert> mbedtls_context::parse_cert(
     const string& cert_data, bool partialOk
 ) {
     unique_ptr<cert> c(new cert);
+    // mbedtls_x509_crt_parse() requires buflen to include the NUL terminator
+    // for PEM input.  c_str() makes the null byte explicit; size() + 1 counts it.
     int ret = mbedtls_x509_crt_parse(
-        c.get(), (const uint8_t*)cert_data.data(), cert_data.size() + 1
+        c.get(), (const uint8_t*)cert_data.c_str(), cert_data.size() + 1
     );
     if (ret != 0) {
         if (ret < 0 || !partialOk) {
@@ -274,8 +276,10 @@ int mbedtls_context::trusted_cert_callback(
         // itself)
         auto root = (mbedtls_x509_crt*)malloc(sizeof(mbedtls_x509_crt));
         mbedtls_x509_crt_init(root);
+        // mbedtls_x509_crt_parse() requires buflen to include the NUL terminator
+        // for PEM input.  c_str() makes the null byte explicit; size() + 1 counts it.
         int err = mbedtls_x509_crt_parse(
-            root, (const uint8_t*)rootData.data(), rootData.size() + 1
+            root, (const uint8_t*)rootData.c_str(), rootData.size() + 1
         );
         if (err != 0) {
             mbedtls_x509_crt_free(root);
@@ -392,8 +396,10 @@ result<> mbedtls_context::set_identity(
         auto ident_cert = parse_cert(certificate_data, false);
 
         unique_ptr<key> ident_key(new key);
+        // mbedtls_pk_parse_key() requires keylen to include the NUL terminator
+        // for PEM input.  c_str() makes the null byte explicit; size() + 1 counts it.
         int err = mbedtls_pk_parse_key(
-            ident_key.get(), reinterpret_cast<const unsigned char*>(private_key_data.data()),
+            ident_key.get(), reinterpret_cast<const unsigned char*>(private_key_data.c_str()),
             private_key_data.size() + 1, nullptr, 0
         );
         if (err != 0)
