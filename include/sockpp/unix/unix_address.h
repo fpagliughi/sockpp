@@ -150,7 +150,6 @@ public:
      * @return The path to which this address refers.
      */
     string path() const {
-        // Remember, if len==MAX, there's no NUL terminator
         return string(addr_.sun_path, strnlen(addr_.sun_path, MAX_PATH_NAME));
     }
     /**

@@ -43,10 +43,27 @@ namespace sockpp {
 /////////////////////////////////////////////////////////////////////////////
 
 canbus_frame::canbus_frame(canid_t canID, const void* data, size_t n) : base{} {
+    if (n != 0 && !data)
+        throw system_error{make_error_code(errc::invalid_argument)};
     this->can_id = canID;
-    if (data && n != 0) {
+    if (n != 0) {
         n = std::min(n, size_t(CAN_MAX_DLEN));
-        this->can_dlc = n;
+        this->can_dlc = uint8_t(n);
+        std::memcpy(&this->data, data, n);
+    }
+}
+
+canbus_frame::canbus_frame(canid_t canID, const void* data, size_t n, error_code& ec) noexcept
+    : base{} {
+    if (n != 0 && !data) {
+        ec = make_error_code(errc::invalid_argument);
+        return;
+    }
+    ec = error_code{};
+    this->can_id = canID;
+    if (n != 0) {
+        n = std::min(n, size_t(CAN_MAX_DLEN));
+        this->can_dlc = uint8_t(n);
         std::memcpy(&this->data, data, n);
     }
 }

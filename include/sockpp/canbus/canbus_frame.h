@@ -95,11 +95,29 @@ public:
         : canbus_frame{canID, data.data(), data.length()} {}
     /**
      * Constructs a frame with the specified ID and data.
+     *
+     * Data is silently clamped to CAN_MAX_DLEN bytes if @p n exceeds it.
+     * Passing a null @p data pointer with a non-zero @p n is a caller error
+     * and throws invalid_argument.
+     *
      * @param canID The CAN identifier for the frame
-     * @param data The data field for the frame
+     * @param data Pointer to the data bytes; may be nullptr only when @p n is 0.
      * @param n The number of bytes in the data field
+     * @throws invalid_argument if @p data is null and @p n is non-zero.
      */
     canbus_frame(canid_t canID, const void* data, size_t n);
+    /**
+     * Constructs a frame with the specified ID and data.
+     *
+     * Data is silently clamped to CAN_MAX_DLEN bytes if @p n exceeds it.
+     * Sets @p ec to invalid_argument if @p data is null and @p n is non-zero.
+     *
+     * @param canID The CAN identifier for the frame
+     * @param data Pointer to the data bytes; may be nullptr only when @p n is 0.
+     * @param n The number of bytes in the data field
+     * @param ec Gets the error code on failure.
+     */
+    canbus_frame(canid_t canID, const void* data, size_t n, error_code& ec) noexcept;
     /**
      * Construct a frame from a C library CAN frame.
      * @param frame A C lib CAN frame.

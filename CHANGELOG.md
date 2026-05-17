@@ -12,6 +12,7 @@
 - `trust_store` renamed to `trust_locations` in TLS context.
 - `sock_address` hierarchy: `remove exception from unix_address` ([#72](https://github.com/fpagliughi/sockpp/issues/72)) and `can_address` ([#72](https://github.com/fpagliughi/sockpp/issues/72)); `system_error` with `error_code` is used instead.
 - UNIX-domain and CAN bus headers moved into `unix/` and `canbus/` subdirectories respectively.
+- `unix_address` string constructors now reject paths of `MAX_PATH_NAME` or more characters (previously accepted paths that exactly filled `sun_path`, leaving no room for a null terminator).
 
 ### New Features
 

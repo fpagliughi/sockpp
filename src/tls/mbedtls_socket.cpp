@@ -151,8 +151,15 @@ mbedtls_socket::mbedtls_socket(
         return;
 
     uint32_t verify_flags = mbedtls_ssl_get_verify_result(&ssl_);
-    if (verify_flags != 0 && verify_flags != uint32_t(-1) &&
-        !(verify_flags & MBEDTLS_X509_BADCERT_SKIP_VERIFY)) {
+    if (verify_flags == uint32_t(-1)) {
+        // mbedTLS returns all-ones when no peer certificate was presented.
+        // For a server performing mutual TLS this is always a failure; for a
+        // client it means the server skipped verification (VERIFY_NONE), which
+        // is permitted when explicitly configured.
+        if (ctx_->role() == tls_context::SERVER)
+            throw tls_error{MBEDTLS_ERR_SSL_NO_CLIENT_CERTIFICATE};
+    }
+    else if (verify_flags != 0 && !(verify_flags & MBEDTLS_X509_BADCERT_SKIP_VERIFY)) {
         throw tls_error{MBEDTLS_ERR_X509_CERT_VERIFY_FAILED};
     }
 }

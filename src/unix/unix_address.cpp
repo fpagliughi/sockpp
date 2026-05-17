@@ -52,25 +52,24 @@ constexpr size_t unix_address::MAX_PATH_NAME;
 // --------------------------------------------------------------------------
 
 unix_address::unix_address(const string& path) {
-    if (path.length() > MAX_PATH_NAME)
+    // Reject paths that would fill sun_path entirely: the kernel requires a
+    // null terminator for filesystem-namespace sockets, so the usable length
+    // is MAX_PATH_NAME - 1.
+    if (path.length() >= MAX_PATH_NAME)
         throw system_error{make_error_code(errc::invalid_argument)};
 
     addr_.sun_family = ADDRESS_FAMILY;
-    // Remember, if len==MAX, there's no NUL terminator
-    const size_t n = std::min(path.length() + 1, MAX_PATH_NAME);
-    std::memcpy(addr_.sun_path, path.c_str(), n);
+    std::memcpy(addr_.sun_path, path.c_str(), path.length() + 1);
 }
 
 unix_address::unix_address(const string& path, error_code& ec) noexcept {
-    if (path.length() > MAX_PATH_NAME) {
+    if (path.length() >= MAX_PATH_NAME) {
         ec = make_error_code(errc::invalid_argument);
     }
     else {
         ec = error_code{};
         addr_.sun_family = ADDRESS_FAMILY;
-        // Remember, if len==MAX, there's no NUL terminator
-        const size_t n = std::min(path.length() + 1, MAX_PATH_NAME);
-        std::memcpy(addr_.sun_path, path.c_str(), n);
+        std::memcpy(addr_.sun_path, path.c_str(), path.length() + 1);
     }
 }
 
@@ -111,7 +110,7 @@ unix_address::unix_address(const sock_address& addr, error_code& ec) noexcept {
 // --------------------------------------------------------------------------
 
 result<unix_address> unix_address::create(const string& path) {
-    if (path.length() > MAX_PATH_NAME)
+    if (path.length() >= MAX_PATH_NAME)
         return errc::invalid_argument;
 
     return unix_address{path};

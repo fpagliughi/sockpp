@@ -121,30 +121,30 @@ TEST_CASE("unix_address path constructor", "[address]") {
         );
     }
 
-    SECTION("full path") {
-        string path;
-        path.insert(0, unix_address::MAX_PATH_NAME, 'x');
+    SECTION("full path via sockaddr_un") {
+        // A raw sockaddr_un with a fully-packed sun_path (no NUL) can arrive
+        // from the kernel (e.g. abstract-namespace sockets).  The sockaddr_un
+        // constructor must accept it; path() uses strnlen to recover the bytes.
+        string path(unix_address::MAX_PATH_NAME, 'x');
 
-        // Test what happens if 'sun_path' is full, with no NUL termination
         sockaddr_un unaddr;
         unaddr.sun_family = AF_UNIX;
         memcpy(unaddr.sun_path, path.data(), unix_address::MAX_PATH_NAME);
 
-        // sockaddr_un constructor
         unix_address addr(unaddr);
         REQUIRE(unix_address::MAX_PATH_NAME == addr.path().size());
         REQUIRE(path == addr.path());
+    }
 
-        // path (string) constructor
-        unix_address addr2(path);
-        REQUIRE(unix_address::MAX_PATH_NAME == addr2.path().size());
-        REQUIRE(path == addr2.path());
+    SECTION("full path via string rejected") {
+        // A filesystem-namespace path of exactly MAX_PATH_NAME has no room
+        // for a NUL terminator, so the string constructor must reject it.
+        string path(unix_address::MAX_PATH_NAME, 'x');
+        REQUIRE_THROWS(unix_address{path});
     }
 
     SECTION("too long path") {
-        string path;
-        path.insert(0, unix_address::MAX_PATH_NAME + 5, 'x');
-
+        string path(unix_address::MAX_PATH_NAME + 5, 'x');
         REQUIRE_THROWS(unix_address{path});
     }
 }
