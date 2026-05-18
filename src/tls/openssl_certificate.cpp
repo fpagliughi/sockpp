@@ -53,8 +53,6 @@
 #include <memory>
 #include <sstream>
 
-using namespace std::chrono;
-
 namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
@@ -226,13 +224,11 @@ static system_clock::time_point asn1_time_to_tp(const ASN1_TIME* tm) {
 }
 
 system_clock::time_point tls_certificate::not_before() const {
-    return cert_ ? asn1_time_to_tp(X509_get0_notBefore(cert_))
-                 : system_clock::time_point{};
+    return cert_ ? asn1_time_to_tp(X509_get0_notBefore(cert_)) : system_clock::time_point{};
 }
 
 system_clock::time_point tls_certificate::not_after() const {
-    return cert_ ? asn1_time_to_tp(X509_get0_notAfter(cert_))
-                 : system_clock::time_point{};
+    return cert_ ? asn1_time_to_tp(X509_get0_notAfter(cert_)) : system_clock::time_point{};
 }
 
 binary tls_certificate::serial_number() const {
@@ -255,8 +251,8 @@ binary tls_certificate::fingerprint_sha256() const {
     const auto der = to_der();
     if (der.empty())
         return {};
-    unsigned char md[EVP_MAX_MD_SIZE];
-    unsigned int mdlen = 0;
+    uchar md[EVP_MAX_MD_SIZE];
+    unsigned mdlen = 0;
     if (!EVP_Digest(der.data(), der.size(), md, &mdlen, EVP_sha256(), nullptr))
         return {};
     return binary{md, md + mdlen};

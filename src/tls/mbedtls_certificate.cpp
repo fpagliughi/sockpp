@@ -58,7 +58,6 @@ extern "C" {
 #include <sstream>
 
 using namespace std;
-using namespace std::chrono;
 
 namespace sockpp {
 
@@ -142,7 +141,7 @@ result<tls_certificate> tls_certificate::from_pem(const string& pem) {
     // mbedtls_x509_crt_parse() requires the buffer to include the NUL
     // terminator when the input is PEM-encoded.
     int ret = mbedtls_x509_crt_parse(
-        cert, reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1
+        cert, reinterpret_cast<const uchar*>(pem.c_str()), pem.size() + 1
     );
     if (ret != 0) {
         free_cert(cert);
@@ -156,7 +155,7 @@ result<tls_certificate> tls_certificate::from_der(const binary& der) {
     auto* cert = make_cert();
 
     int ret = mbedtls_x509_crt_parse_der(
-        cert, reinterpret_cast<const unsigned char*>(der.data()), der.size()
+        cert, reinterpret_cast<const uchar*>(der.data()), der.size()
     );
     if (ret != 0) {
         free_cert(cert);
@@ -188,7 +187,7 @@ result<vector<tls_certificate>> tls_certificate::chain_from_pem(const string& pe
     // A positive return means some certs failed (partial success);
     // negative means total failure.
     int ret = mbedtls_x509_crt_parse(
-        crt, reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1
+        crt, reinterpret_cast<const uchar*>(pem.c_str()), pem.size() + 1
     );
     if (ret < 0) {
         free_cert(crt);
@@ -272,7 +271,7 @@ string tls_certificate::not_after_str() const {
 // --------------------------------------------------------------------------
 
 // Helper: bytes to lowercase hex string
-static string bytes_to_hex(const unsigned char* data, size_t len) {
+static string bytes_to_hex(const uchar* data, size_t len) {
     std::ostringstream oss;
     oss << std::hex << std::setfill('0');
     for (size_t i = 0; i < len; ++i) oss << std::setw(2) << static_cast<unsigned>(data[i]);
@@ -295,8 +294,7 @@ static system_clock::time_point x509_time_to_tp(const mbedtls_x509_time& t) {
 }
 
 system_clock::time_point tls_certificate::not_before() const {
-    return cert_ ? x509_time_to_tp(cert_->valid_from)
-                 : system_clock::time_point{};
+    return cert_ ? x509_time_to_tp(cert_->valid_from) : system_clock::time_point{};
 }
 
 system_clock::time_point tls_certificate::not_after() const {
@@ -322,7 +320,7 @@ binary tls_certificate::fingerprint_sha256() const {
     binary digest(32, uint8_t{0});
     int ret = mbedtls_md(
         mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), cert_->raw.p, cert_->raw.len,
-        reinterpret_cast<unsigned char*>(digest.data())
+        reinterpret_cast<uchar*>(digest.data())
     );
     if (ret != 0)
         return {};
@@ -455,7 +453,7 @@ string tls_certificate::to_pem() const {
     if (olen == 0)
         return {};
 
-    unique_ptr<unsigned char[]> buf{new unsigned char[olen]};
+    unique_ptr<uchar[]> buf{new uchar[olen]};
     int ret = mbedtls_pem_write_buffer(
         header, footer, cert_->raw.p, cert_->raw.len, buf.get(), olen, &olen
     );

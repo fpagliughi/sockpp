@@ -323,14 +323,13 @@ const tls_context::auth_callback& get_auth_callback() const
 
 // static
 int tls_context::alpn_select_cb(
-    SSL* /*ssl*/, const unsigned char** out, unsigned char* outlen, const unsigned char* in,
-    unsigned int inlen, void* arg
+    SSL* /*ssl*/, const uchar** out, uchar* outlen, const uchar* in, unsigned inlen, void* arg
 ) noexcept {
     auto* self = static_cast<tls_context*>(arg);
     // SSL_select_next_proto uses NPN/ALPN server-preference matching.
     // OPENSSL_NPN_NEGOTIATED means a common protocol was found.
     if (SSL_select_next_proto(
-            const_cast<unsigned char**>(out), outlen, self->alpn_wire_.data(),
+            const_cast<uchar**>(out), outlen, self->alpn_wire_.data(),
             static_cast<unsigned>(self->alpn_wire_.size()), in, inlen
         ) == OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_OK;
@@ -440,9 +439,9 @@ result<> tls_context::set_identity(const string& cert_pem, const string& key_pem
     return tls_check_res_none(SSL_CTX_check_private_key(ctx_));
 }
 
-unsigned int tls_context::psk_client_cb(
-    SSL* ssl, const char* /*hint*/, char* identity, unsigned int max_identity_len,
-    unsigned char* psk, unsigned int max_psk_len
+unsigned tls_context::psk_client_cb(
+    SSL* ssl, const char* /*hint*/, char* identity, unsigned max_identity_len, uchar* psk,
+    unsigned max_psk_len
 ) noexcept {
     auto* self = static_cast<tls_context*>(SSL_CTX_get_app_data(SSL_get_SSL_CTX(ssl)));
     if (!self || self->psk_key_.empty())
@@ -456,11 +455,11 @@ unsigned int tls_context::psk_client_cb(
 
     size_t key_len = std::min(self->psk_key_.size(), size_t{max_psk_len});
     std::memcpy(psk, self->psk_key_.data(), key_len);
-    return static_cast<unsigned int>(key_len);
+    return static_cast<unsigned>(key_len);
 }
 
-unsigned int tls_context::psk_server_cb(
-    SSL* ssl, const char* identity, unsigned char* psk, unsigned int max_psk_len
+unsigned tls_context::psk_server_cb(
+    SSL* ssl, const char* identity, uchar* psk, unsigned max_psk_len
 ) noexcept {
     auto* self = static_cast<tls_context*>(SSL_CTX_get_app_data(SSL_get_SSL_CTX(ssl)));
     if (!self || !self->psk_server_cb_)
@@ -472,7 +471,7 @@ unsigned int tls_context::psk_server_cb(
 
     size_t key_len = std::min(key.size(), size_t{max_psk_len});
     std::memcpy(psk, key.data(), key_len);
-    return static_cast<unsigned int>(key_len);
+    return static_cast<unsigned>(key_len);
 }
 
 result<> tls_context::set_psk(const string& identity, const binary& psk) {

@@ -125,19 +125,18 @@ private:
 
     /** Server-side ALPN select callback: picks the first mutually supported protocol. */
     static int alpn_select_cb(
-        SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in,
-        unsigned int inlen, void* arg
+        SSL* ssl, const uchar** out, uchar* outlen, const uchar* in, unsigned inlen, void* arg
     ) noexcept;
 
     /** TLS 1.2 client PSK callback: fills identity and key for the handshake. */
-    static unsigned int psk_client_cb(
-        SSL* ssl, const char* hint, char* identity, unsigned int max_identity_len,
-        unsigned char* psk, unsigned int max_psk_len
+    static unsigned psk_client_cb(
+        SSL* ssl, const char* hint, char* identity, unsigned max_identity_len, uchar* psk,
+        unsigned max_psk_len
     ) noexcept;
 
     /** TLS 1.2 server PSK callback: looks up the key for a given client identity. */
-    static unsigned int psk_server_cb(
-        SSL* ssl, const char* identity, unsigned char* psk, unsigned int max_psk_len
+    static unsigned psk_server_cb(
+        SSL* ssl, const char* identity, uchar* psk, unsigned max_psk_len
     ) noexcept;
 
     // Non-copyable

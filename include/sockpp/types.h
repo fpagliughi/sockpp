@@ -55,10 +55,10 @@
 
 namespace sockpp {
 
-/** Port used for example apps and unit tests */
-// constexpr in_port_t TEST_PORT = 12345;
-
 /////////////////////////////////////////////////////////////////////////////
+
+/** Unsigned character */
+using uchar = unsigned char;
 
 /** A sockpp::string is a std::string */
 using std::string;
@@ -71,6 +71,12 @@ using std::unique_ptr;
 
 /** A sockpp::duration is a std::chrono::duration */
 using std::chrono::duration;
+
+/** A sockpp::system_clock is a std::chrono::system_clock */
+using std::chrono::system_clock;
+
+/** A sockpp::steady_clock is a std::chrono::steady_clock */
+using std::chrono::steady_clock;
 
 /** A binary blob as a basic string/collection of uint8_t */
 using binary = std::basic_string<uint8_t>;

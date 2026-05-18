@@ -276,7 +276,8 @@ int mbedtls_context::trusted_cert_callback(
         // Allocate with a custom deleter so the error path is leak-free.
         // On success, release() transfers ownership to mbedTLS, which will
         // call mbedtls_x509_crt_free() + mbedtls_free() on the pointer.
-        struct CrtDeleter {
+        struct CrtDeleter
+        {
             void operator()(mbedtls_x509_crt* p) const {
                 mbedtls_x509_crt_free(p);
                 free(p);
@@ -408,7 +409,7 @@ result<> mbedtls_context::set_identity(
         // mbedtls_pk_parse_key() requires keylen to include the NUL terminator
         // for PEM input.  c_str() makes the null byte explicit; size() + 1 counts it.
         int err = mbedtls_pk_parse_key(
-            ident_key.get(), reinterpret_cast<const unsigned char*>(private_key_data.c_str()),
+            ident_key.get(), reinterpret_cast<const uchar*>(private_key_data.c_str()),
             private_key_data.size() + 1, nullptr, 0
         );
         if (err != 0)
@@ -647,7 +648,7 @@ static string read_system_root_certs() {
 /////////////////////////////////////////////////////////////////////////////
 
 int mbedtls_context::psk_server_cb_thunk(
-    void* p_info, mbedtls_ssl_context* ssl, const unsigned char* identity, size_t identity_len
+    void* p_info, mbedtls_ssl_context* ssl, const uchar* identity, size_t identity_len
 ) {
     auto* self = static_cast<mbedtls_context*>(p_info);
     if (!self || !self->psk_server_cb_)
@@ -659,14 +660,14 @@ int mbedtls_context::psk_server_cb_thunk(
         return MBEDTLS_ERR_SSL_UNKNOWN_IDENTITY;
 
     return mbedtls_ssl_set_hs_psk(
-        ssl, reinterpret_cast<const unsigned char*>(key.data()), key.size()
+        ssl, reinterpret_cast<const uchar*>(key.data()), key.size()
     );
 }
 
 result<> mbedtls_context::set_psk(const string& identity, const binary& psk) {
     int ret = mbedtls_ssl_conf_psk(
-        ssl_config_.get(), reinterpret_cast<const unsigned char*>(psk.data()), psk.size(),
-        reinterpret_cast<const unsigned char*>(identity.data()), identity.size()
+        ssl_config_.get(), reinterpret_cast<const uchar*>(psk.data()), psk.size(),
+        reinterpret_cast<const uchar*>(identity.data()), identity.size()
     );
     return (ret == 0) ? result<>{} : make_tls_error_code(-ret);
 }

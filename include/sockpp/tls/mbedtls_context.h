@@ -120,8 +120,7 @@ class mbedtls_context
 
     /** Thunk registered with mbedtls_ssl_conf_psk_cb(). */
     static int psk_server_cb_thunk(
-        void* p_info, mbedtls_ssl_context* ssl, const unsigned char* identity,
-        size_t identity_len
+        void* p_info, mbedtls_ssl_context* ssl, const uchar* identity, size_t identity_len
     );
 
     static cert* s_system_root_certs;
