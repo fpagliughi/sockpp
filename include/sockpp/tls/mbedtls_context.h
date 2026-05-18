@@ -268,7 +268,7 @@ public:
      * Loads all PEM CA certificate files from a directory into the trust store.
      * @param caPath Directory containing PEM CA certificate files.
      */
-    result<> set_trust_path(const string& caPath);
+    result<> set_trust_dir(const string& caPath);
 
     /**
      * Callback function that looks up the trusted root certificate that

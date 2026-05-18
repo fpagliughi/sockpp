@@ -213,7 +213,7 @@ public:
      *               trust store.
      * @return The error code on failure.
      */
-    result<> set_trust_path(const string& caPath) {
+    result<> set_trust_dir(const string& caPath) {
         return tls_check_res_none(
             ::SSL_CTX_load_verify_locations(ctx_, nullptr, caPath.c_str())
         );

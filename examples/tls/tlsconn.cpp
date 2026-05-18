@@ -188,23 +188,24 @@ int main(int argc, char* argv[]) {
         cout << "No peer certificate" << endl;
     }
     else {
+        // Get the certificate from the returned result.
         const auto& cert = opt_cert.value();
 
-        cout << "\nCertificate info:\n"
+        cout << "\nServer certificate info:\n"
              << "  Subject: " << cert.subject_name() << '\n'
              << "  Issuer: " << cert.issuer_name() << '\n'
-             << "  Valid dates: " << cert.not_before_str() << " - " << cert.not_after_str()
-             << endl;
+             << "  Valid from: " << cert.not_before_str() << '\n'
+             << "  Valid to: " << cert.not_after_str() << endl;
 
-        ofstream derfil("peer.cer", ios::binary);
+        ofstream derfil("peer.der", ios::binary);
         auto der = cert.to_der();
         derfil.write(reinterpret_cast<const char*>(der.data()), der.size());
-        cout << "\nWrote peer certificate to peer.cer" << endl;
+        cout << "\nWrote DER peer certificate to 'peer.der'" << endl;
 
         ofstream pemfil("peer.pem");
         auto pem = cert.to_pem();
         pemfil.write(pem.data(), pem.size());
-        cout << "Wrote peer certificate to peer.pem" << endl;
+        cout << "Wrote PEM peer certificate to 'peer.pem'" << endl;
     }
 
     if (auto res = conn.write("HELO"); !res) {
@@ -214,14 +215,5 @@ int main(int argc, char* argv[]) {
     }
 
     cout << "\nSuccessfully wrote to server." << endl;
-
-    /*
-    char buf[512];
-    if (auto res = conn.read(buf, sizeof(buf)); !res) {
-        cerr << "Error: " << res.error_message() << endl;
-        return 1;
-    }
-    */
-
     return 0;
 }

@@ -141,7 +141,7 @@ public:
      */
     auto trust_path(const string& caPath) -> self& {
         if (!ec_) {
-            if (auto res = ctx_.set_trust_path(caPath); !res)
+            if (auto res = ctx_.set_trust_dir(caPath); !res)
                 ec_ = res.error();
         }
         return *this;

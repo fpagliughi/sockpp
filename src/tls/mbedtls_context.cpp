@@ -469,7 +469,7 @@ result<> mbedtls_context::set_trust_file(const string& caFile) {
     return {};
 }
 
-result<> mbedtls_context::set_trust_path(const string& caPath) {
+result<> mbedtls_context::set_trust_dir(const string& caPath) {
     auto certs = std::make_unique<cert>();
     int ret = mbedtls_x509_crt_parse_path(certs.get(), caPath.c_str());
     if (ret < 0)
