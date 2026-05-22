@@ -71,14 +71,15 @@ int main(int argc, char* argv[]) {
     while (getline(cin, s) && !s.empty()) {
         size_t N = s.length();
 
-        if (auto res = sock.send(s); res != N) {
+        if (auto res = sock.send(s); !res) {
             cerr << "Error sending to the UDP socket: " << res.error_message() << endl;
             break;
         }
 
         sret.resize(N);
-        if (auto res = sock.recv(&sret[0], N); res != N) {
-            cerr << "Error receiving from UDP socket: " << res.error_message() << endl;
+        if (auto res = sock.recv(sret.data(), N); !res || res.value() != N) {
+            cerr << "Error receiving from UDP socket: "
+                 << (!res ? res.error_message() : "short recv") << endl;
             break;
         }
 

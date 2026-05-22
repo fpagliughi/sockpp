@@ -75,15 +75,15 @@ int main(int argc, char* argv[]) {
     while (getline(cin, s) && !s.empty()) {
         const size_t N = s.length();
 
-        // TODO: Do we need to check length (res.value()) for write or read?
-        if (auto res = conn.write(s); res != N) {
+        if (auto res = conn.write(s); !res) {
             cerr << "Error writing to the TCP stream: " << res.error_message() << endl;
             break;
         }
 
         sret.resize(N);
-        if (auto res = conn.read_n(&sret[0], N); res != N) {
-            cerr << "Error reading from TCP stream: " << res.error_message() << endl;
+        if (auto res = conn.read_n(sret.data(), N); !res || res.value() != N) {
+            cerr << "Error reading from TCP stream: "
+                 << (!res ? res.error_message() : "connection closed") << endl;
             break;
         }
 

@@ -73,14 +73,15 @@ int main(int argc, char* argv[]) {
     while (getline(cin, s) && !s.empty()) {
         const size_t N = s.length();
 
-        if (auto res = conn.write(s); !res || res != N) {
-            cerr << "Error writing to the UNIX stream" << endl;
+        if (auto res = conn.write(s); !res) {
+            cerr << "Error writing to the UNIX stream: " << res.error_message() << endl;
             break;
         }
 
         sret.resize(N);
-        if (auto res = conn.read_n(&sret[0], N); !res || res != N) {
-            cerr << "Error reading from UNIX stream" << endl;
+        if (auto res = conn.read_n(sret.data(), N); !res || res.value() != N) {
+            cerr << "Error reading from UNIX stream: "
+                 << (!res ? res.error_message() : "connection closed") << endl;
             break;
         }
 
