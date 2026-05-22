@@ -61,9 +61,9 @@ endif()
 
 if(SOCKPP_WITH_CAN)
     list(APPEND SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/linux/canbus_address.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/linux/canbus_frame.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/linux/canbus_socket.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/canbus/canbus_address.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/canbus/canbus_frame.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/canbus/canbus_socket.cpp
     )
 endif()
 
