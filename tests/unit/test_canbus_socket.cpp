@@ -84,26 +84,17 @@ TEST_CASE("canbus_socket classic send/recv", "[canbus][socket]") {
     REQUIRE(rxFrame.len == DATA.size());
     REQUIRE(memcmp(rxFrame.data, DATA.data(), DATA.size()) == 0);
 
-    // Sending an FD frame on a non-FD socket should fail because the kernel
-    // rejects the larger frame size when FD mode is not enabled.
-    canbusfd_frame txFdFrame{CAN_ID, DATA};
-    auto res2 = sock1.send(txFdFrame);
-    REQUIRE(!res2);
-    REQUIRE(res2.error() == errc::invalid_argument);
 }
 
-TEST_CASE("canbus_socket FD send/recv", "[canbus][socket]") {
+TEST_CASE("canbusfd_socket FD send/recv", "[canbus][socket]") {
     canbus_address addr{IFACE};
     REQUIRE(addr);
 
-    canbus_socket sock1{addr};
+    canbusfd_socket sock1{addr};
     REQUIRE(sock1);
 
-    canbus_socket sock2{addr};
+    canbusfd_socket sock2{addr};
     REQUIRE(sock2);
-
-    REQUIRE(sock1.set_fd_mode());
-    REQUIRE(sock2.set_fd_mode());
 
     // Use a short read timeout so the test fails cleanly if recv blocks.
     REQUIRE(sock2.read_timeout(250ms));
@@ -114,20 +105,68 @@ TEST_CASE("canbus_socket FD send/recv", "[canbus][socket]") {
     canbusfd_frame txFrame{CAN_ID, DATA};
     REQUIRE(sock1.send(txFrame));
 
-    auto res = sock2.recv_fd();
+    auto res = sock2.recv();
     REQUIRE(res);
 
     const auto& rxFrame = res.value();
     REQUIRE(rxFrame.id_value() == CAN_ID);
     REQUIRE(rxFrame.len == DATA.size());
     REQUIRE(memcmp(rxFrame.data, DATA.data(), DATA.size()) == 0);
+}
 
-    // Send a second FD frame, but receive it into a classic frame buffer.
-    // This should fail because the FD frame is too large to fit.
+TEST_CASE("canbusfd_socket classic send via base", "[canbus][socket]") {
+    canbus_address addr{IFACE};
+    REQUIRE(addr);
+
+    canbusfd_socket sock1{addr};
+    REQUIRE(sock1);
+
+    canbusfd_socket sock2{addr};
+    REQUIRE(sock2);
+
+    REQUIRE(sock2.read_timeout(250ms));
+
+    const canid_t CAN_ID = 0x789;
+    const string DATA{"Hi!"s};
+
+    canbus_frame txFrame{CAN_ID, DATA};
     REQUIRE(sock1.send(txFrame));
 
-    canbus_frame classicFrame;
-    auto res2 = sock2.recv(&classicFrame);
-    REQUIRE(!res2);
-    REQUIRE(res2.error() == errc::message_size);
+    auto res = sock2.recv();
+    REQUIRE(res);
+
+    const auto& rxFrame = res.value();
+    REQUIRE(rxFrame.id_value() == CAN_ID);
+    REQUIRE(rxFrame.len == DATA.size());
+    REQUIRE(memcmp(rxFrame.data, DATA.data(), DATA.size()) == 0);
+}
+
+TEST_CASE("canbusfd_socket move from canbus_socket", "[canbus][socket]") {
+    canbus_address addr{IFACE};
+    REQUIRE(addr);
+
+    canbus_socket base_sock{addr};
+    REQUIRE(base_sock);
+
+    canbusfd_socket fd_sock{std::move(base_sock)};
+    REQUIRE(fd_sock);
+    REQUIRE(!base_sock);
+
+    REQUIRE(fd_sock.read_timeout(250ms));
+
+    const canid_t CAN_ID = 0xABC;
+    const string DATA{"FD move!"s};
+
+    canbusfd_socket sender{addr};
+    REQUIRE(sender);
+    canbusfd_frame txFrame{CAN_ID, DATA};
+    REQUIRE(sender.send(txFrame));
+
+    auto res = fd_sock.recv();
+    REQUIRE(res);
+
+    const auto& rxFrame = res.value();
+    REQUIRE(rxFrame.id_value() == CAN_ID);
+    REQUIRE(rxFrame.len == DATA.size());
+    REQUIRE(memcmp(rxFrame.data, DATA.data(), DATA.size()) == 0);
 }

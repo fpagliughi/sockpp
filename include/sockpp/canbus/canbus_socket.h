@@ -214,7 +214,7 @@ public:
         return set_filters(filters.data(), filters.size());
     }
 
-    // ----- I/O (classic) -----
+    // ----- I/O -----
 
     /**
      * Sends a frame to the CAN bus.
@@ -227,32 +227,111 @@ public:
         return base::send(frame.frame_ptr(), sizeof(canbus_frame), flags);
     }
     /**
-     * Receives a frame on the socket.
+     * Receives a classic CAN frame on the socket.
      *
-     * Don't call this function if the socket is in FD mode; call recv_fd
-     * instead. If this is used and an FD frame arrives, an error is
-     * returned and the FD frame is lost.
+     * Do not call this function if the socket is in FD mode; use
+     * canbusfd_socket instead. If an FD frame arrives, an error is returned
+     * and the frame is lost.
      *
      * @param frame CAN frame to get the incoming data.
-     * @param flags The option bit flags. See send(2).
+     * @param flags The option bit flags. See recv(2).
      * @return The number of bytes read on success, or the error code on
      *         failure.
      */
     result<size_t> recv(canbus_frame* frame, int flags = 0);
     /**
-     * Receives a frame on the socket.
+     * Receives a classic CAN frame on the socket.
      *
-     * Don't call this function if the socket is in FD mode; call recv_fd
-     * instead. If this is used and an FD frame arrives, an error is
-     * returned and the FD frame is lost.
+     * Do not call this function if the socket is in FD mode; use
+     * canbusfd_socket instead. If an FD frame arrives, an error is returned
+     * and the frame is lost.
      *
-     * @param flags The option bit flags. See send(2).
+     * @param flags The option bit flags. See recv(2).
      * @return The frame read on success, or the error code on failure.
      */
     result<canbus_frame> recv(int flags = 0);
+};
 
-    // ----- I/O (FD) -----
+/////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Linux CANbus FD (SocketCAN) socket.
+ *
+ * Extends canbus_socket with FD mode, allowing reception and transmission of
+ * the larger CAN FD frames. The socket is placed in FD mode during open(),
+ * so recv() is replaced with versions that return canbusfd_frame. Sending
+ * classic canbus_frame is still supported via the inherited send().
+ */
+class canbusfd_socket : public canbus_socket
+{
+    /** The base class */
+    using base = canbus_socket;
+
+    // Non-copyable
+    canbusfd_socket(const canbusfd_socket&) = delete;
+    canbusfd_socket& operator=(const canbusfd_socket&) = delete;
+
+public:
+    /**
+     * Creates an uninitialized CAN FD socket.
+     */
+    canbusfd_socket() noexcept {}
+    /**
+     * Creates a CAN FD socket and binds it to the address.
+     * The socket is put into FD mode after binding.
+     * @param addr The address to bind.
+     * @throws std::system_error on failure
+     */
+    explicit canbusfd_socket(const canbus_address& addr) {
+        if (auto res = open(addr); !res)
+            throw std::system_error{res.error()};
+    }
+    /**
+     * Creates a CAN FD socket and binds it to the address.
+     * The socket is put into FD mode after binding.
+     * @param addr The address to bind.
+     * @param ec The error code, on failure
+     */
+    explicit canbusfd_socket(const canbus_address& addr, error_code& ec) noexcept {
+        ec = open(addr).error();
+    }
+    /**
+     * Move constructor.
+     * @param other The other FD socket to move to this one.
+     */
+    canbusfd_socket(canbusfd_socket&& other) noexcept : base(std::move(other)) {}
+    /**
+     * Move constructor from a base canbus_socket.
+     * If the incoming socket is open, it is put into FD mode. Throws if the
+     * socket is open but cannot be set to FD mode.
+     * @param other The canbus_socket to move into this one.
+     * @throws std::system_error if the open socket cannot enter FD mode.
+     */
+    explicit canbusfd_socket(canbus_socket&& other);
+    /**
+     * Move assignment.
+     * @param rhs The other socket to move into this one.
+     * @return A reference to this object.
+     */
+    canbusfd_socket& operator=(canbusfd_socket&& rhs) noexcept {
+        base::operator=(std::move(rhs));
+        return *this;
+    }
+    /**
+     * Opens the CANbus FD socket and binds it to the address.
+     * After binding, the socket is put into FD mode.
+     * @param addr The address to bind the socket.
+     * @return The error code, on failure.
+     */
+    result<> open(const canbus_address& addr) noexcept;
+
+    // ----- I/O -----
+
+    /**
+     * Sends a classic CAN frame to the CAN bus.
+     * An FD socket can still send classic frames.
+     */
+    using base::send;
     /**
      * Sends an FD frame to the CAN bus.
      * @param frame The CAN FD frame to send.
@@ -261,24 +340,22 @@ public:
      *         failure.
      */
     result<size_t> send(const canbusfd_frame& frame, int flags = 0) {
-        return base::send(frame.frame_ptr(), sizeof(canbusfd_frame), flags);
+        return socket::send(frame.frame_ptr(), sizeof(canbusfd_frame), flags);
     }
     /**
-     * Receives an FD frame on the socket.
+     * Receives a CAN FD frame on the socket.
      * @param frame CAN FD frame to get the incoming data.
-     * @param flags The option bit flags. See send(2).
+     * @param flags The option bit flags. See recv(2).
      * @return The number of bytes read on success, or the error code on
      *         failure.
      */
-    result<size_t> recv(canbusfd_frame* frame, int flags = 0) {
-        return base::recv(frame->frame_ptr(), sizeof(canbusfd_frame), flags);
-    }
+    result<size_t> recv(canbusfd_frame* frame, int flags = 0);
     /**
-     * Receives an FD frame on the socket.
-     * @param flags The option bit flags. See send(2).
+     * Receives a CAN FD frame on the socket.
+     * @param flags The option bit flags. See recv(2).
      * @return The frame read on success, or the error code on failure.
      */
-    result<canbusfd_frame> recv_fd(int flags = 0);
+    result<canbusfd_frame> recv(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////

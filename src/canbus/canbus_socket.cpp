@@ -94,7 +94,35 @@ result<canbus_frame> canbus_socket::recv(int flags /*=0*/) {
     return frame;
 }
 
-result<canbusfd_frame> canbus_socket::recv_fd(int flags /*=0*/) {
+/////////////////////////////////////////////////////////////////////////////
+
+canbusfd_socket::canbusfd_socket(canbus_socket&& other) : base(std::move(other)) {
+    if (is_open()) {
+        if (auto res = set_fd_mode(true); !res)
+            throw std::system_error{res.error()};
+    }
+}
+
+result<> canbusfd_socket::open(const canbus_address& addr) noexcept {
+    if (auto res = base::open(addr); !res)
+        return res;
+    if (auto res = set_fd_mode(true); !res) {
+        close();
+        return res;
+    }
+    return none{};
+}
+
+result<size_t> canbusfd_socket::recv(canbusfd_frame* frame, int flags /*=0*/) {
+    auto res = socket::recv(frame->frame_ptr(), sizeof(canbusfd_frame), flags | MSG_TRUNC);
+    if (!res)
+        return res.error();
+    if (res.value() > sizeof(canbusfd_frame))
+        return errc::message_size;
+    return res;
+}
+
+result<canbusfd_frame> canbusfd_socket::recv(int flags /*=0*/) {
     canbusfd_frame frame;
     if (auto res = recv(&frame, flags); !res)
         return res.error();
