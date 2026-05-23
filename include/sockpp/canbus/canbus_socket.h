@@ -168,16 +168,6 @@ public:
      * @return A floating-point timestamp with microsecond precision.
      */
     result<double> last_frame_timestamp();
-    /**
-     * Turn FD mode for the socket on or off.
-     *
-     * When enabled, it allows the socket to read or write the larger CAN FD
-     * frames.
-     */
-    result<> set_fd_mode(bool on = true) {
-        int val = (on) ? 1 : 0;
-        return set_option(SOL_CAN_RAW, CAN_RAW_FD_FRAMES, val);
-    }
 
     // ----- Filters -----
 
@@ -270,6 +260,17 @@ class canbusfd_socket : public canbus_socket
     // Non-copyable
     canbusfd_socket(const canbusfd_socket&) = delete;
     canbusfd_socket& operator=(const canbusfd_socket&) = delete;
+
+
+    /**
+     * Turn on FD mode for the socket on or off.
+     *
+     * This allows the socket to read or write CAN FD frames.
+     */
+    result<> set_fd_mode() {
+        int val = 1;
+        return set_option(SOL_CAN_RAW, CAN_RAW_FD_FRAMES, val);
+    }
 
 public:
     /**

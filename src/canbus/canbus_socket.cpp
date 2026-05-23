@@ -98,7 +98,7 @@ result<canbus_frame> canbus_socket::recv(int flags /*=0*/) {
 
 canbusfd_socket::canbusfd_socket(canbus_socket&& other) : base(std::move(other)) {
     if (is_open()) {
-        if (auto res = set_fd_mode(true); !res)
+        if (auto res = set_fd_mode(); !res)
             throw std::system_error{res.error()};
     }
 }
@@ -106,7 +106,7 @@ canbusfd_socket::canbusfd_socket(canbus_socket&& other) : base(std::move(other))
 result<> canbusfd_socket::open(const canbus_address& addr) noexcept {
     if (auto res = base::open(addr); !res)
         return res;
-    if (auto res = set_fd_mode(true); !res) {
+    if (auto res = set_fd_mode(); !res) {
         close();
         return res;
     }
