@@ -79,13 +79,11 @@ result<double> canbus_socket::last_frame_timestamp() {
 }
 
 result<size_t> canbus_socket::recv(canbus_frame* frame, int flags /*=0*/) {
-    canbusfd_frame tmp;
-    auto res = base::recv(tmp.frame_ptr(), sizeof(canbusfd_frame), flags);
+    auto res = base::recv(frame->frame_ptr(), sizeof(canbus_frame), flags | MSG_TRUNC);
     if (!res)
         return res.error();
     if (res.value() > sizeof(canbus_frame))
         return errc::message_size;
-    *frame = canbus_frame{tmp};
     return res;
 }
 

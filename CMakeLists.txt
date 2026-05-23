@@ -55,7 +55,7 @@ option(SOCKPP_WITH_OPENSSL "[EXPERIMENTAL] TLS Secure Sockets with OpenSSL" OFF)
 option(SOCKPP_WITH_MBEDTLS "[EXPERIMENTAL] TLS Secure Sockets with MbedTLS" OFF)
 
 if(WIN32)
-    option(SOCKPP_WITH_UNIX_SOCKETS "[EXPERIMENTAL] Support for UNIX-domain sockets" OFF)
+    option(SOCKPP_WITH_UNIX_SOCKETS "[EXPERIMENTAL] Support for UNIX-domain sockets on Win32" OFF)
 else()
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         option(SOCKPP_WITH_CAN "[EXPERIMENTAL] Support for Linux SocketCAN" OFF)
