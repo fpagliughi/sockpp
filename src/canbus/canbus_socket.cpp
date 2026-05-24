@@ -148,5 +148,21 @@ result<canbusfd_frame> canbusfd_socket::recv(int flags /*=0*/) {
     return frame;
 }
 
+result<canbus_any_frame> canbusfd_socket::recv_any(int flags /*=0*/) {
+    canbusfd_frame fdframe{};
+    auto res = socket::recv(fdframe.frame_ptr(), sizeof(canbusfd_frame), flags | MSG_TRUNC);
+    if (!res)
+        return res.error();
+    const auto n = res.value();
+    if (n == sizeof(canbus_frame)) {
+        canbus_frame classic;
+        std::memcpy(classic.frame_ptr(), fdframe.frame_ptr(), sizeof(canbus_frame));
+        return canbus_any_frame{classic};
+    }
+    if (n == sizeof(canbusfd_frame))
+        return canbus_any_frame{fdframe};
+    return errc::message_size;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

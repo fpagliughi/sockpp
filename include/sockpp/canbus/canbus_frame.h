@@ -51,6 +51,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <variant>
 
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
@@ -310,6 +311,13 @@ public:
         can_id |= CAN_EFF_FLAG | (canID & CAN_EFF_MASK);
     }
 };
+
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * A variant type that can hold either a classic CAN frame or a CAN FD frame.
+ */
+using canbus_any_frame = std::variant<canbus_frame, canbusfd_frame>;
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

@@ -357,6 +357,16 @@ public:
         return socket::send(frame.frame_ptr(), sizeof(canbusfd_frame), flags);
     }
     /**
+     * Sends either a classic or FD frame to the CAN bus.
+     * @param frame The frame to send (classic or FD).
+     * @param flags The option bit flags. See send(2).
+     * @return The number of bytes sent on success, or the error code on
+     *         failure.
+     */
+    result<size_t> send(const canbus_any_frame& frame, int flags = 0) {
+        return std::visit([&](const auto& f) { return send(f, flags); }, frame);
+    }
+    /**
      * Receives a CAN FD frame on the socket.
      * @param frame CAN FD frame to get the incoming data.
      * @param flags The option bit flags. See recv(2).
@@ -370,6 +380,13 @@ public:
      * @return The frame read on success, or the error code on failure.
      */
     result<canbusfd_frame> recv(int flags = 0);
+    /**
+     * Receives either a classic or FD frame from the socket.
+     * The frame type is determined by the size of the received packet.
+     * @param flags The option bit flags. See recv(2).
+     * @return The frame read on success, or the error code on failure.
+     */
+    result<canbus_any_frame> recv_any(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
