@@ -169,6 +169,52 @@ public:
      */
     result<double> last_frame_timestamp();
 
+    // ----- Options -----
+
+    /**
+     * Sets whether sent frames are looped back to other SocketCAN sockets on
+     * the same host. Loopback is enabled by default.
+     * @param on Whether to enable loopback.
+     * @return The error code on failure.
+     */
+    result<> set_loopback(bool on = true) {
+        int val = on ? 1 : 0;
+        return set_option(SOL_CAN_RAW, CAN_RAW_LOOPBACK, val);
+    }
+    /**
+     * Sets whether the socket receives frames that it sent itself (only
+     * meaningful when loopback is enabled).
+     * @param on Whether to receive own messages.
+     * @return The error code on failure.
+     */
+    result<> set_recv_own_msgs(bool on = true) {
+        int val = on ? 1 : 0;
+        return set_option(SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, val);
+    }
+    /**
+     * Sets the error frame filter for the socket.
+     *
+     * By default, no error frames are received. Pass @p CAN_ERR_MASK to
+     * receive all error frames, or OR together specific @p CAN_ERR_* bits
+     * from @p <linux/can/error.h> to filter for particular conditions.
+     *
+     * @param mask Bitmask of the error types to receive.
+     * @return The error code on failure.
+     */
+    result<> set_error_filter(can_err_mask_t mask) {
+        return set_option(SOL_CAN_RAW, CAN_RAW_ERR_FILTER, mask);
+    }
+
+    /**
+     * Sets whether multiple filters are ANDed together rather than ORed.
+     * @param on Whether to join (AND) filters.
+     * @return The error code on failure.
+     */
+    result<> set_join_filters(bool on = true) {
+        int val = on ? 1 : 0;
+        return set_option(SOL_CAN_RAW, CAN_RAW_JOIN_FILTERS, val);
+    }
+
     // ----- Filters -----
 
     /**

@@ -1,11 +1,14 @@
-// canbusrecv.cpp
+// canbusfdrecv.cpp
 //
-// Linux SocketCAN reader example.
+// Linux SocketCAN FD reader example.
+//
+// Receives both classic CAN and CAN FD frames using a canbusfd_socket.
+// Usage: canbusfdrecv [interface [can_id]]
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021-2026 Frank Pagliughi
+// Copyright (c) 2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,6 +42,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <variant>
 
 #include "sockpp/canbus/canbus_socket.h"
 #include "sockpp/version.h"
@@ -48,7 +52,7 @@ using namespace std;
 // --------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
-    cout << "Sample SocketCAN reader for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
+    cout << "Sample SocketCAN FD reader for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
 
     string canIface = (argc > 1) ? argv[1] : "can0";
     bool hasFilter = (argc > 2);
@@ -65,9 +69,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    sockpp::canbus_socket sock(addr, ec);
+    sockpp::canbusfd_socket sock(addr, ec);
     if (ec) {
-        cerr << "Error binding to the CAN interface '" << canIface << "': " << ec.message()
+        cerr << "Error opening CAN FD socket on '" << canIface << "': " << ec.message()
              << endl;
         return 1;
     }
@@ -84,26 +88,39 @@ int main(int argc, char* argv[]) {
     if (hasFilter)
         cout << " for CAN ID 0x" << hex << uppercase << canID;
     cout << endl;
+
     cout << hex << uppercase << setfill('0');
     cout.setf(ios::fixed, ios::floatfield);
     cout << setprecision(6);
 
     while (true) {
-        auto res = sock.recv();
+        auto res = sock.recv_any();
         if (!res) {
             cerr << "Error receiving frame: " << res.error().message() << endl;
             break;
         }
 
-        const auto& frame = res.value();
         auto t = 0.0;
         if (auto ts = sock.last_frame_timestamp(); ts)
             t = ts.value();
 
-        cout << t << "  " << setw(3) << frame.id_value()
-             << "  [" << dec << unsigned(frame.len) << "]  " << hex;
-        for (uint8_t i = 0; i < frame.len; ++i)
-            cout << setw(2) << unsigned(frame.data[i]) << " ";
+        cout << t << "  ";
+
+        visit(
+            [](const auto& frame) {
+                using T = decay_t<decltype(frame)>;
+                if constexpr (is_same_v<T, sockpp::canbus_frame>)
+                    cout << "CAN   ";
+                else
+                    cout << "CAN FD";
+                cout << "  " << setw(3) << frame.id_value()
+                     << "  [" << dec << unsigned(frame.len) << "]  " << hex;
+                for (uint8_t i = 0; i < frame.len; ++i)
+                    cout << setw(2) << unsigned(frame.data[i]) << " ";
+            },
+            res.value()
+        );
+
         cout << "\n";
     }
 
