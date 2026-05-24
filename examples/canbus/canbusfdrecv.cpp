@@ -113,8 +113,8 @@ int main(int argc, char* argv[]) {
                     cout << "CAN   ";
                 else
                     cout << "CAN FD";
-                cout << "  " << setw(3) << frame.id_value()
-                     << "  [" << dec << unsigned(frame.len) << "]  " << hex;
+                cout << "  " << setw(3) << frame.id_value() << "  [" << dec
+                     << unsigned(frame.len) << "]  " << hex;
                 for (uint8_t i = 0; i < frame.len; ++i)
                     cout << setw(2) << unsigned(frame.data[i]) << " ";
             },

@@ -48,7 +48,7 @@ canbus_frame::canbus_frame(canid_t canID, const void* data, size_t n) : base{} {
     this->can_id = canID;
     if (n != 0) {
         n = std::min(n, size_t(CAN_MAX_DLEN));
-        this->can_dlc = uint8_t(n);
+        this->len = uint8_t(n);
         std::memcpy(&this->data, data, n);
     }
 }
@@ -63,7 +63,7 @@ canbus_frame::canbus_frame(canid_t canID, const void* data, size_t n, error_code
     this->can_id = canID;
     if (n != 0) {
         n = std::min(n, size_t(CAN_MAX_DLEN));
-        this->can_dlc = uint8_t(n);
+        this->len = uint8_t(n);
         std::memcpy(&this->data, data, n);
     }
 }

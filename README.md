@@ -370,6 +370,8 @@ Note that the options in the config file should already be present in the file b
 
 The Controller Area Network (CAN bus) is a relatively simple protocol typically used by microcontrollers to communicate inside an automobile or industrial machine over a twisted pair of wires. Linux has the _SocketCAN_ package which allows processes to share access to a physical CAN bus interface using raw sockets in user space. See: [Linux SocketCAN](https://www.kernel.org/doc/html/latest/networking/can.html)
 
+**Requires Linux kernel 5.11 or later** (released February 2021), which introduced the `len` field in `can_frame`, replacing the deprecated `can_dlc`.
+
 At the lowest level, CAN devices write individual packets, called "frames", to a specific numeric ID (addresses) for each frame. There is no master on the bus; all nodes can read and write at will. In the event that multiple nodes transmit at the same time, the collision is won by the frame with the highest priority, determined as the one with the lowest ID. The other nodes back-off and can retry later.
 
 As an example, consider a device with a temperature sensor. The device might read the temperature periodically and write it to the bus as a raw 32-bit integer, like:

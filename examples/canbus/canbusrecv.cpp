@@ -100,8 +100,8 @@ int main(int argc, char* argv[]) {
         if (auto ts = sock.last_frame_timestamp(); ts)
             t = ts.value();
 
-        cout << t << "  " << setw(3) << frame.id_value()
-             << "  [" << dec << unsigned(frame.len) << "]  " << hex;
+        cout << t << "  " << setw(3) << frame.id_value() << "  [" << dec
+             << unsigned(frame.len) << "]  " << hex;
         for (uint8_t i = 0; i < frame.len; ++i)
             cout << setw(2) << unsigned(frame.data[i]) << " ";
         cout << "\n";

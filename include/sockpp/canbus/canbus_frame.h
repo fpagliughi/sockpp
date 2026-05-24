@@ -52,6 +52,9 @@
 #include <algorithm>
 #include <cstring>
 #include <variant>
+#if __cplusplus >= 202002L
+    #include <span>
+#endif
 
 #include "sockpp/platform.h"
 #include "sockpp/result.h"
@@ -66,7 +69,12 @@ class canbusfd_frame;
 /**
  * Class that represents a Linux SocketCAN frame.
  * This inherits from the Linux CAN frame struct, just providing easier
-   construction.
+ * construction.
+ *
+ * The underlying @p can_frame struct uses the field name @p len for the
+ * payload length. The old name @p can_dlc was deprecated in Linux 5.11
+ * (February 2021) and is kept only as a compatibility alias in the kernel
+ * headers.
  */
 class canbus_frame : public ::can_frame
 {
@@ -149,6 +157,15 @@ public:
      * @return A const pointer to the underlying C frame.
      */
     const ::can_frame* frame_ptr() const { return static_cast<const ::can_frame*>(this); }
+#if __cplusplus >= 202002L
+    /**
+     * Returns the payload as a span of bytes.
+     * @return A span covering the valid data bytes in this frame.
+     */
+    std::span<uint8_t> payload() noexcept { return {this->data, len}; }
+    /** @overload */
+    std::span<const uint8_t> payload() const noexcept { return {this->data, len}; }
+#endif
     /**
      * Determines if this frame has an extended (29-bit) CAN ID.
      * @return @em true if this frame has an extended ID, @em false if not
@@ -280,6 +297,15 @@ public:
      * @return A const pointer to the underlying C frame.
      */
     const ::canfd_frame* frame_ptr() const { return static_cast<const ::canfd_frame*>(this); }
+#if __cplusplus >= 202002L
+    /**
+     * Returns the payload as a span of bytes.
+     * @return A span covering the valid data bytes in this frame.
+     */
+    std::span<uint8_t> payload() noexcept { return {this->data, len}; }
+    /** @overload */
+    std::span<const uint8_t> payload() const noexcept { return {this->data, len}; }
+#endif
     /**
      * Determines if this frame has an extended (29-bit) CAN ID.
      * @return @em true if this frame has an extended ID, @em false if not
@@ -318,6 +344,37 @@ public:
  * A variant type that can hold either a classic CAN frame or a CAN FD frame.
  */
 using canbus_any_frame = std::variant<canbus_frame, canbusfd_frame>;
+
+// ----- Free-function accessors for canbus_any_frame -----
+
+/**
+ * Gets the numeric CAN ID from any frame type.
+ * @param frame A classic or FD frame variant.
+ * @return The CAN ID with flag bits stripped.
+ */
+inline canid_t id_value(const canbus_any_frame& frame) noexcept {
+    return std::visit([](const auto& f) { return f.id_value(); }, frame);
+}
+/**
+ * Gets the payload length from any frame type.
+ * @param frame A classic or FD frame variant.
+ * @return The number of valid data bytes.
+ */
+inline uint8_t len(const canbus_any_frame& frame) noexcept {
+    return std::visit([](const auto& f) { return f.len; }, frame);
+}
+#if __cplusplus >= 202002L
+/**
+ * Gets the payload as a span of bytes from any frame type.
+ * @param frame A classic or FD frame variant.
+ * @return A span covering the valid data bytes.
+ */
+inline std::span<const uint8_t> payload(const canbus_any_frame& frame) noexcept {
+    return std::visit(
+        [](const auto& f) -> std::span<const uint8_t> { return f.payload(); }, frame
+    );
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

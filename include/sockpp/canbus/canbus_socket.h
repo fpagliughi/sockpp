@@ -138,13 +138,13 @@ public:
      * Move constructor.
      * @param other The other socket to move to this one
      */
-    canbus_socket(canbus_socket&& other) : base(std::move(other)) {}
+    canbus_socket(canbus_socket&& other) noexcept : base(std::move(other)) {}
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.
      * @return A reference to this object.
      */
-    canbus_socket& operator=(canbus_socket&& rhs) {
+    canbus_socket& operator=(canbus_socket&& rhs) noexcept {
         base::operator=(std::move(rhs));
         return *this;
     }

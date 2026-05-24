@@ -153,7 +153,7 @@ TEST_CASE("canbusfd_socket move from canbus_socket", "[canbus][socket]") {
 
     REQUIRE(fd_sock.read_timeout(250ms));
 
-    const canid_t CAN_ID = 0xABC;
+    const canid_t CAN_ID = 0x1AB;
     const string DATA{"FD move!"s};
 
     canbusfd_socket sender{addr};
