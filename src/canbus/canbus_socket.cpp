@@ -42,7 +42,6 @@
 #include "sockpp/socket.h"
 
 using namespace std;
-using namespace std::chrono;
 
 namespace sockpp {
 
@@ -101,6 +100,26 @@ canbusfd_socket::canbusfd_socket(canbus_socket&& other) : base(std::move(other))
         if (auto res = set_fd_mode(); !res)
             throw std::system_error{res.error()};
     }
+}
+
+canbusfd_socket::canbusfd_socket(canbus_socket&& other, error_code& ec) noexcept
+    : base(std::move(other)) {
+    if (is_open()) {
+        if (auto res = set_fd_mode(); !res) {
+            ec = res.error();
+            close();
+        }
+    }
+}
+
+result<canbusfd_socket> canbusfd_socket::try_from(canbus_socket&& sock) noexcept {
+    canbusfd_socket fd_sock;
+    static_cast<canbus_socket&>(fd_sock) = std::move(sock);
+    if (fd_sock.is_open()) {
+        if (auto res = fd_sock.set_fd_mode(); !res)
+            return res.error();
+    }
+    return fd_sock;
 }
 
 result<> canbusfd_socket::open(const canbus_address& addr) noexcept {

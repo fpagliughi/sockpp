@@ -261,7 +261,6 @@ class canbusfd_socket : public canbus_socket
     canbusfd_socket(const canbusfd_socket&) = delete;
     canbusfd_socket& operator=(const canbusfd_socket&) = delete;
 
-
     /**
      * Turn on FD mode for the socket on or off.
      *
@@ -309,6 +308,20 @@ public:
      * @throws std::system_error if the open socket cannot enter FD mode.
      */
     explicit canbusfd_socket(canbus_socket&& other);
+    /**
+     * Move constructor from a base canbus_socket.
+     * If the incoming socket is open, it is put into FD mode.
+     * @param other The canbus_socket to move into this one.
+     * @param ec Gets the error code on failure; the socket is closed on error.
+     */
+    explicit canbusfd_socket(canbus_socket&& other, error_code& ec) noexcept;
+    /**
+     * Attempts to create a CAN FD socket from an existing canbus_socket.
+     * If the incoming socket is open, it is put into FD mode.
+     * @param sock The canbus_socket to convert.
+     * @return The new FD socket on success, or the error code on failure.
+     */
+    static result<canbusfd_socket> try_from(canbus_socket&& sock) noexcept;
     /**
      * Move assignment.
      * @param rhs The other socket to move into this one.

@@ -83,7 +83,6 @@ TEST_CASE("canbus_socket classic send/recv", "[canbus][socket]") {
     REQUIRE(rxFrame.id_value() == CAN_ID);
     REQUIRE(rxFrame.len == DATA.size());
     REQUIRE(memcmp(rxFrame.data, DATA.data(), DATA.size()) == 0);
-
 }
 
 TEST_CASE("canbusfd_socket FD send/recv", "[canbus][socket]") {

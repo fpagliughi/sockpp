@@ -1,7 +1,6 @@
 # CMakeLists.txt
 #
-# CMake file for the Linux SocketCAN sample applications in the
-# 'sockpp' library.
+# CMake file for the CANbus sample applications in the 'sockpp' library.
 #
 # ---------------------------------------------------------------------------
 # This file is part of the "sockpp" C++ socket library.
@@ -37,22 +36,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-# --- Optional Linux SocketCAN support ---
+set(EXECUTABLES
+    canbustime
+    canbusrecv
+)
 
-if(SOCKPP_WITH_CAN)
-    # --- Executables ---
+foreach(EXECUTABLE ${EXECUTABLES})
+    add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
+    target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
+endforeach()
 
-    set(EXECUTABLES
-    	canbustime
-    	canbusrecv
-    )
-
-    foreach(EXECUTABLE ${EXECUTABLES})
-        add_executable(${EXECUTABLE} ${EXECUTABLE}.cpp)
-        target_link_libraries(${EXECUTABLE} Sockpp::sockpp)
-    endforeach()
-
-    # --- Install examples ---
-
-    install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)
-endif()
+install(TARGETS ${EXECUTABLES} RUNTIME DESTINATION bin)

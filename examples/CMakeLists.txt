@@ -54,10 +54,10 @@ if(SOCKPP_WITH_UNIX_SOCKETS)
 	add_subdirectory(unix)
 endif()
 
-# --- Anything that is Linux-specific ---
+# --- Optional CANbus (SocketCAN) examples ---
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    add_subdirectory(linux)
+if(SOCKPP_WITH_CAN)
+    add_subdirectory(canbus)
 endif()
 
 # --- Optional secure sockets ---
