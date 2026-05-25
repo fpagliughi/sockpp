@@ -36,7 +36,10 @@
 
 #include "sockpp/canbus/canbus_socket.h"
 
+#include <linux/ethtool.h>
+#include <linux/net_tstamp.h>
 #include <linux/sockios.h>
+#include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
@@ -48,6 +51,24 @@
 
 using namespace std;
 using namespace std::chrono;
+
+namespace {
+
+// Converts a timespec to a system_clock time_point (wall-clock).
+system_clock::time_point ts_to_tp(const timespec& ts) {
+    auto dur = seconds{ts.tv_sec} + nanoseconds{ts.tv_nsec};
+    return system_clock::time_point{duration_cast<system_clock::duration>(dur)};
+}
+
+// Converts a timespec to a nanoseconds duration (for hardware clock values).
+nanoseconds ts_to_ns(const timespec& ts) {
+    return seconds{ts.tv_sec} + nanoseconds{ts.tv_nsec};
+}
+
+// Returns true if the timespec is non-zero (i.e. the timestamp was filled in).
+bool ts_nonzero(const timespec& ts) { return ts.tv_sec != 0 || ts.tv_nsec != 0; }
+
+}  // namespace
 
 namespace sockpp {
 
@@ -65,6 +86,23 @@ result<> canbus_socket::open(const canbus_address& addr) noexcept {
         }
     }
     return none{};
+}
+
+bool canbus_socket::has_hw_timestamps() const noexcept {
+    error_code ec{};
+    canbus_address addr{base::address(), ec};
+    if (ec)
+        return false;
+
+    ethtool_ts_info info{};
+    info.cmd = ETHTOOL_GET_TS_INFO;
+    ifreq ifr{};
+    const string iface = addr.iface();
+    std::strncpy(ifr.ifr_name, iface.c_str(), IF_NAMESIZE - 1);
+    ifr.ifr_data = reinterpret_cast<char*>(&info);
+
+    return ::ioctl(handle(), SIOCETHTOOL, &ifr) >= 0 &&
+           (info.so_timestamping & SOF_TIMESTAMPING_RX_HARDWARE) != 0;
 }
 
 result<system_clock::time_point> canbus_socket::last_frame_time() {
@@ -124,13 +162,88 @@ canbus_socket::recv_with_timestamp(int flags /*=0*/) {
         if (cm->cmsg_level == SOL_SOCKET && cm->cmsg_type == SO_TIMESTAMPNS) {
             timespec stamp{};
             std::memcpy(&stamp, CMSG_DATA(cm), sizeof(stamp));
-            auto dur = seconds(stamp.tv_sec) + nanoseconds(stamp.tv_nsec);
-            ts = system_clock::time_point{duration_cast<system_clock::duration>(dur)};
+            ts = ts_to_tp(stamp);
             break;
         }
     }
 
     return make_pair(frame, ts);
+}
+
+result<canbus_timed_frame<canbus_frame>>
+canbus_socket::recv_with_timestamps(int flags /*=0*/) {
+    canbus_timed_frame<canbus_frame> timed{};
+    iovec iov{};
+    iov.iov_base = timed.frame.frame_ptr();
+    iov.iov_len = sizeof(canbus_frame);
+
+    alignas(
+        cmsghdr
+    ) char ctrl[CMSG_SPACE(sizeof(timespec)) + CMSG_SPACE(3 * sizeof(timespec))]{};
+    msghdr msg{};
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = ctrl;
+    msg.msg_controllen = sizeof(ctrl);
+
+    auto res = check_res<size_t>(::recvmsg(handle(), &msg, flags | MSG_TRUNC));
+    if (!res)
+        return res.error();
+    if (res.value() > sizeof(canbus_frame))
+        return errc::message_size;
+
+    for (cmsghdr* cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm)) {
+        if (cm->cmsg_level != SOL_SOCKET)
+            continue;
+        if (cm->cmsg_type == SO_TIMESTAMPNS) {
+            timespec stamp{};
+            std::memcpy(&stamp, CMSG_DATA(cm), sizeof(stamp));
+            timed.timestamps.socket = ts_to_tp(stamp);
+        }
+        else if (cm->cmsg_type == SO_TIMESTAMPING) {
+            timespec ts[3]{};
+            std::memcpy(ts, CMSG_DATA(cm), sizeof(ts));
+            if (ts_nonzero(ts[0]))
+                timed.timestamps.sw = ts_to_tp(ts[0]);
+            if (ts_nonzero(ts[2]))
+                timed.timestamps.hw = ts_to_ns(ts[2]);
+        }
+    }
+
+    return timed;
+}
+
+result<pair<canbus_frame, nanoseconds>>
+canbus_socket::recv_with_hw_timestamp(int flags /*=0*/) {
+    canbus_frame frame{};
+    iovec iov{};
+    iov.iov_base = frame.frame_ptr();
+    iov.iov_len = sizeof(canbus_frame);
+
+    alignas(cmsghdr) char ctrl[CMSG_SPACE(3 * sizeof(timespec))]{};
+    msghdr msg{};
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = ctrl;
+    msg.msg_controllen = sizeof(ctrl);
+
+    auto res = check_res<size_t>(::recvmsg(handle(), &msg, flags | MSG_TRUNC));
+    if (!res)
+        return res.error();
+    if (res.value() > sizeof(canbus_frame))
+        return errc::message_size;
+
+    nanoseconds hw{};
+    for (cmsghdr* cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm)) {
+        if (cm->cmsg_level == SOL_SOCKET && cm->cmsg_type == SO_TIMESTAMPING) {
+            timespec ts[3]{};
+            std::memcpy(ts, CMSG_DATA(cm), sizeof(ts));
+            hw = ts_to_ns(ts[2]);
+            break;
+        }
+    }
+
+    return make_pair(frame, hw);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -232,13 +345,88 @@ canbusfd_socket::recv_with_timestamp(int flags /*=0*/) {
         if (cm->cmsg_level == SOL_SOCKET && cm->cmsg_type == SO_TIMESTAMPNS) {
             timespec stamp{};
             std::memcpy(&stamp, CMSG_DATA(cm), sizeof(stamp));
-            auto dur = seconds(stamp.tv_sec) + nanoseconds(stamp.tv_nsec);
-            ts = system_clock::time_point{duration_cast<system_clock::duration>(dur)};
+            ts = ts_to_tp(stamp);
             break;
         }
     }
 
     return make_pair(frame, ts);
+}
+
+result<canbus_timed_frame<canbusfd_frame>>
+canbusfd_socket::recv_with_timestamps(int flags /*=0*/) {
+    canbus_timed_frame<canbusfd_frame> timed{};
+    iovec iov{};
+    iov.iov_base = timed.frame.frame_ptr();
+    iov.iov_len = sizeof(canbusfd_frame);
+
+    alignas(
+        cmsghdr
+    ) char ctrl[CMSG_SPACE(sizeof(timespec)) + CMSG_SPACE(3 * sizeof(timespec))]{};
+    msghdr msg{};
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = ctrl;
+    msg.msg_controllen = sizeof(ctrl);
+
+    auto res = check_res<size_t>(::recvmsg(handle(), &msg, flags | MSG_TRUNC));
+    if (!res)
+        return res.error();
+    if (res.value() > sizeof(canbusfd_frame))
+        return errc::message_size;
+
+    for (cmsghdr* cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm)) {
+        if (cm->cmsg_level != SOL_SOCKET)
+            continue;
+        if (cm->cmsg_type == SO_TIMESTAMPNS) {
+            timespec stamp{};
+            std::memcpy(&stamp, CMSG_DATA(cm), sizeof(stamp));
+            timed.timestamps.socket = ts_to_tp(stamp);
+        }
+        else if (cm->cmsg_type == SO_TIMESTAMPING) {
+            timespec ts[3]{};
+            std::memcpy(ts, CMSG_DATA(cm), sizeof(ts));
+            if (ts_nonzero(ts[0]))
+                timed.timestamps.sw = ts_to_tp(ts[0]);
+            if (ts_nonzero(ts[2]))
+                timed.timestamps.hw = ts_to_ns(ts[2]);
+        }
+    }
+
+    return timed;
+}
+
+result<pair<canbusfd_frame, nanoseconds>>
+canbusfd_socket::recv_with_hw_timestamp(int flags /*=0*/) {
+    canbusfd_frame frame{};
+    iovec iov{};
+    iov.iov_base = frame.frame_ptr();
+    iov.iov_len = sizeof(canbusfd_frame);
+
+    alignas(cmsghdr) char ctrl[CMSG_SPACE(3 * sizeof(timespec))]{};
+    msghdr msg{};
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = ctrl;
+    msg.msg_controllen = sizeof(ctrl);
+
+    auto res = check_res<size_t>(::recvmsg(handle(), &msg, flags | MSG_TRUNC));
+    if (!res)
+        return res.error();
+    if (res.value() > sizeof(canbusfd_frame))
+        return errc::message_size;
+
+    nanoseconds hw{};
+    for (cmsghdr* cm = CMSG_FIRSTHDR(&msg); cm; cm = CMSG_NXTHDR(&msg, cm)) {
+        if (cm->cmsg_level == SOL_SOCKET && cm->cmsg_type == SO_TIMESTAMPING) {
+            timespec ts[3]{};
+            std::memcpy(ts, CMSG_DATA(cm), sizeof(ts));
+            hw = ts_to_ns(ts[2]);
+            break;
+        }
+    }
+
+    return make_pair(frame, hw);
 }
 
 /////////////////////////////////////////////////////////////////////////////

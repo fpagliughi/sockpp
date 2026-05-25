@@ -369,8 +369,7 @@ TEST_CASE("canbusfd_frame set_extended_id", "[canbus][fdframe]") {
 // --------------------------------------------------------------------------
 
 TEST_CASE("canbusfd_frame dlc_to_len classic range", "[canbus][fdframe][dlc]") {
-    for (uint8_t dlc = 0; dlc <= 8; ++dlc)
-        REQUIRE(canbusfd_frame::dlc_to_len(dlc) == dlc);
+    for (uint8_t dlc = 0; dlc <= 8; ++dlc) REQUIRE(canbusfd_frame::dlc_to_len(dlc) == dlc);
 }
 
 TEST_CASE("canbusfd_frame dlc_to_len extended range", "[canbus][fdframe][dlc]") {
@@ -384,8 +383,7 @@ TEST_CASE("canbusfd_frame dlc_to_len extended range", "[canbus][fdframe][dlc]") 
 }
 
 TEST_CASE("canbusfd_frame len_to_dlc classic range", "[canbus][fdframe][dlc]") {
-    for (uint8_t len = 0; len <= 8; ++len)
-        REQUIRE(canbusfd_frame::len_to_dlc(len) == len);
+    for (uint8_t len = 0; len <= 8; ++len) REQUIRE(canbusfd_frame::len_to_dlc(len) == len);
 }
 
 TEST_CASE("canbusfd_frame len_to_dlc extended range", "[canbus][fdframe][dlc]") {

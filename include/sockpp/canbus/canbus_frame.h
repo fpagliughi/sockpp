@@ -51,6 +51,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <optional>
 #include <variant>
 #if __cplusplus >= 202002L
     #include <span>
@@ -413,6 +414,47 @@ inline std::span<const uint8_t> payload(const canbus_any_frame& frame) noexcept 
     );
 }
 #endif
+
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Kernel timestamps associated with a received CAN frame.
+ *
+ * Fields are populated according to which socket options were enabled before
+ * the receive call:
+ *  - @p socket — from @p SO_TIMESTAMPNS; enabled via set_recv_timestamp()
+ *  - @p sw     — from @p SOF_TIMESTAMPING_RX_SOFTWARE; enabled via set_timestamping()
+ *  - @p hw     — from @p SOF_TIMESTAMPING_RX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE;
+ *                enabled via set_timestamping(). Reported in the hardware clock's
+ *                domain, not wall-clock time.
+ */
+struct canbus_timestamps
+{
+    /** Socket-layer arrival time (SO_TIMESTAMPNS), wall clock. */
+    std::optional<system_clock::time_point> socket;
+    /** Network-stack entry time (SOF_TIMESTAMPING_RX_SOFTWARE), wall clock. */
+    std::optional<system_clock::time_point> sw;
+    /** Raw hardware clock value (SOF_TIMESTAMPING_RX_HARDWARE). Not wall-clock time. */
+    std::optional<nanoseconds> hw;
+};
+
+/**
+ * A received CAN frame bundled with its kernel timestamps.
+ *
+ * Returned by canbus_socket::recv_with_timestamps() and
+ * canbusfd_socket::recv_with_timestamps(). Fields in @p timestamps are set
+ * only for the timestamp types that were enabled on the socket before the call.
+ *
+ * @tparam FrameT  canbus_frame or canbusfd_frame
+ */
+template <typename FrameT>
+struct canbus_timed_frame
+{
+    /** The received frame. */
+    FrameT frame;
+    /** Timestamps captured alongside the frame. */
+    canbus_timestamps timestamps;
+};
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

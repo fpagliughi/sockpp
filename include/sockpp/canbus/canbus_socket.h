@@ -157,6 +157,17 @@ public:
      */
     result<> open(const canbus_address& addr) noexcept;
     /**
+     * Queries the bound CAN interface for hardware timestamp support.
+     *
+     * Uses SIOCETHTOOL / ETHTOOL_GET_TS_INFO to read the adapter's reported
+     * SO_TIMESTAMPING capability bitmask and checks for
+     * SOF_TIMESTAMPING_RX_HARDWARE.  Returns false if the socket is not
+     * bound, the ioctl fails, or the adapter does not report the capability.
+     *
+     * @return @em true if the interface supports hardware RX timestamps.
+     */
+    bool has_hw_timestamps() const noexcept;
+    /**
      * Gets the system time of the last frame read from the socket.
      * @return The system time of the last frame read from the socket with
      *  	   microsecond precision.
@@ -228,6 +239,23 @@ public:
     result<> set_recv_timestamp(bool on = true) {
         int val = on ? 1 : 0;
         return set_option(SOL_SOCKET, SO_TIMESTAMPNS, val);
+    }
+    /**
+     * Sets SO_TIMESTAMPING options on the socket.
+     *
+     * Pass a bitmask of @p SOF_TIMESTAMPING_* flags from
+     * @p <linux/net_tstamp.h>. Relevant flags for receive:
+     * @li @p SOF_TIMESTAMPING_RX_SOFTWARE — timestamp at network-stack entry
+     * @li @p SOF_TIMESTAMPING_SOFTWARE    — required alongside RX_SOFTWARE
+     * @li @p SOF_TIMESTAMPING_RX_HARDWARE — hardware clock timestamp (adapter
+     *     must support it)
+     * @li @p SOF_TIMESTAMPING_RAW_HARDWARE — report hardware value as-is
+     *
+     * @param flags Bitmask of @p SOF_TIMESTAMPING_* flags.
+     * @return The error code on failure.
+     */
+    result<> set_timestamping(int flags) {
+        return set_option(SOL_SOCKET, SO_TIMESTAMPING, flags);
     }
 
     // ----- Filters -----
@@ -306,15 +334,43 @@ public:
      *
      * Uses a single recvmsg() call to receive both the frame and the
      * SO_TIMESTAMPNS ancillary data atomically.  The timestamp is
-     * set to the epoch if the socket has not had set_recv_timestamp(true)
-     * called first.
+     * set to the epoch if set_recv_timestamp(true) was not called first.
      *
      * @param flags The option bit flags. See recv(2).
      * @return A pair of (frame, timestamp) on success, or the error code on
      *         failure.
      */
-    result<std::pair<canbus_frame, std::chrono::system_clock::time_point>>
-    recv_with_timestamp(int flags = 0);
+    result<std::pair<canbus_frame, system_clock::time_point>> recv_with_timestamp(
+        int flags = 0
+    );
+    /**
+     * Receives a classic CAN frame with all enabled kernel timestamps.
+     *
+     * Enable desired timestamps before calling:
+     * @li set_recv_timestamp(true) for the @p socket field
+     * @li set_timestamping(SOF_TIMESTAMPING_RX_SOFTWARE|SOF_TIMESTAMPING_SOFTWARE)
+     *     for the @p sw field
+     * @li set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE|SOF_TIMESTAMPING_RAW_HARDWARE)
+     *     for the @p hw field
+     *
+     * Fields not enabled are left as @p nullopt.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return The timed frame on success, or the error code on failure.
+     */
+    result<canbus_timed_frame<canbus_frame>> recv_with_timestamps(int flags = 0);
+    /**
+     * Receives a classic CAN frame with its raw hardware timestamp.
+     *
+     * Requires set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE |
+     * SOF_TIMESTAMPING_RAW_HARDWARE) to have been called first. The
+     * returned nanoseconds value is in the hardware clock's domain, not
+     * wall-clock time.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return A pair of (frame, hw_ns) on success, or the error code on failure.
+     */
+    result<std::pair<canbus_frame, nanoseconds>> recv_with_hw_timestamp(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -470,15 +526,43 @@ public:
      *
      * Uses a single recvmsg() call to receive both the frame and the
      * SO_TIMESTAMPNS ancillary data atomically.  The timestamp is
-     * set to the epoch if the socket has not had set_recv_timestamp(true)
-     * called first.
+     * set to the epoch if set_recv_timestamp(true) was not called first.
      *
      * @param flags The option bit flags. See recv(2).
      * @return A pair of (frame, timestamp) on success, or the error code on
      *         failure.
      */
-    result<std::pair<canbusfd_frame, std::chrono::system_clock::time_point>>
-    recv_with_timestamp(int flags = 0);
+    result<std::pair<canbusfd_frame, system_clock::time_point>> recv_with_timestamp(
+        int flags = 0
+    );
+    /**
+     * Receives a CAN FD frame with all enabled kernel timestamps.
+     *
+     * Enable desired timestamps before calling:
+     * @li set_recv_timestamp(true) for the @p socket field
+     * @li set_timestamping(SOF_TIMESTAMPING_RX_SOFTWARE|SOF_TIMESTAMPING_SOFTWARE)
+     *     for the @p sw field
+     * @li set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE|SOF_TIMESTAMPING_RAW_HARDWARE)
+     *     for the @p hw field
+     *
+     * Fields not enabled are left as @p nullopt.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return The timed frame on success, or the error code on failure.
+     */
+    result<canbus_timed_frame<canbusfd_frame>> recv_with_timestamps(int flags = 0);
+    /**
+     * Receives a CAN FD frame with its raw hardware timestamp.
+     *
+     * Requires set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE |
+     * SOF_TIMESTAMPING_RAW_HARDWARE) to have been called first. The
+     * returned nanoseconds value is in the hardware clock's domain, not
+     * wall-clock time.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return A pair of (frame, hw_ns) on success, or the error code on failure.
+     */
+    result<std::pair<canbusfd_frame, nanoseconds>> recv_with_hw_timestamp(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
