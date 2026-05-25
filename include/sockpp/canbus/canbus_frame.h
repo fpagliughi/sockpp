@@ -336,6 +336,44 @@ public:
         can_id &= ~CAN_EFF_MASK;
         can_id |= CAN_EFF_FLAG | (canID & CAN_EFF_MASK);
     }
+    /**
+     * Converts a CAN FD DLC code (0–15) to the corresponding payload length
+     * in bytes.
+     *
+     * CAN FD DLC codes 0–8 map one-to-one; codes 9–15 map to the
+     * non-contiguous lengths 12, 16, 20, 24, 32, 48, 64.
+     *
+     * @param dlc A DLC code in the range 0–15.
+     * @return The payload length in bytes.
+     */
+    static constexpr uint8_t dlc_to_len(uint8_t dlc) noexcept {
+        constexpr uint8_t tbl[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
+        return tbl[dlc < 16 ? dlc : 15];
+    }
+    /**
+     * Converts a payload byte count to the smallest CAN FD DLC code that
+     * accommodates it.
+     *
+     * @param len A payload length in bytes (0–64).
+     * @return The DLC code (0–15).
+     */
+    static constexpr uint8_t len_to_dlc(uint8_t len) noexcept {
+        if (len <= 8)
+            return len;
+        if (len <= 12)
+            return 9;
+        if (len <= 16)
+            return 10;
+        if (len <= 20)
+            return 11;
+        if (len <= 24)
+            return 12;
+        if (len <= 32)
+            return 13;
+        if (len <= 48)
+            return 14;
+        return 15;
+    }
 };
 
 /////////////////////////////////////////////////////////////////////////////

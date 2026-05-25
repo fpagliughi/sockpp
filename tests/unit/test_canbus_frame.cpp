@@ -363,3 +363,50 @@ TEST_CASE("canbusfd_frame set_extended_id", "[canbus][fdframe]") {
     REQUIRE(frame.has_extended_id());
     REQUIRE(frame.id_value() == NEW_ID);
 }
+
+// --------------------------------------------------------------------------
+// canbusfd_frame DLC helpers
+// --------------------------------------------------------------------------
+
+TEST_CASE("canbusfd_frame dlc_to_len classic range", "[canbus][fdframe][dlc]") {
+    for (uint8_t dlc = 0; dlc <= 8; ++dlc)
+        REQUIRE(canbusfd_frame::dlc_to_len(dlc) == dlc);
+}
+
+TEST_CASE("canbusfd_frame dlc_to_len extended range", "[canbus][fdframe][dlc]") {
+    REQUIRE(canbusfd_frame::dlc_to_len(9) == 12);
+    REQUIRE(canbusfd_frame::dlc_to_len(10) == 16);
+    REQUIRE(canbusfd_frame::dlc_to_len(11) == 20);
+    REQUIRE(canbusfd_frame::dlc_to_len(12) == 24);
+    REQUIRE(canbusfd_frame::dlc_to_len(13) == 32);
+    REQUIRE(canbusfd_frame::dlc_to_len(14) == 48);
+    REQUIRE(canbusfd_frame::dlc_to_len(15) == 64);
+}
+
+TEST_CASE("canbusfd_frame len_to_dlc classic range", "[canbus][fdframe][dlc]") {
+    for (uint8_t len = 0; len <= 8; ++len)
+        REQUIRE(canbusfd_frame::len_to_dlc(len) == len);
+}
+
+TEST_CASE("canbusfd_frame len_to_dlc extended range", "[canbus][fdframe][dlc]") {
+    REQUIRE(canbusfd_frame::len_to_dlc(9) == 9);
+    REQUIRE(canbusfd_frame::len_to_dlc(12) == 9);
+    REQUIRE(canbusfd_frame::len_to_dlc(13) == 10);
+    REQUIRE(canbusfd_frame::len_to_dlc(16) == 10);
+    REQUIRE(canbusfd_frame::len_to_dlc(17) == 11);
+    REQUIRE(canbusfd_frame::len_to_dlc(20) == 11);
+    REQUIRE(canbusfd_frame::len_to_dlc(21) == 12);
+    REQUIRE(canbusfd_frame::len_to_dlc(24) == 12);
+    REQUIRE(canbusfd_frame::len_to_dlc(25) == 13);
+    REQUIRE(canbusfd_frame::len_to_dlc(32) == 13);
+    REQUIRE(canbusfd_frame::len_to_dlc(33) == 14);
+    REQUIRE(canbusfd_frame::len_to_dlc(48) == 14);
+    REQUIRE(canbusfd_frame::len_to_dlc(49) == 15);
+    REQUIRE(canbusfd_frame::len_to_dlc(64) == 15);
+}
+
+TEST_CASE("canbusfd_frame dlc round-trip", "[canbus][fdframe][dlc]") {
+    // Every valid DLC code survives a round-trip through len_to_dlc(dlc_to_len())
+    for (uint8_t dlc = 0; dlc <= 15; ++dlc)
+        REQUIRE(canbusfd_frame::len_to_dlc(canbusfd_frame::dlc_to_len(dlc)) == dlc);
+}

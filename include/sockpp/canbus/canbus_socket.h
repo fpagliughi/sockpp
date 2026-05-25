@@ -49,6 +49,8 @@
 
 #include <linux/can/raw.h>
 
+#include <chrono>
+#include <utility>
 #include <vector>
 
 #include "sockpp/canbus/canbus_address.h"
@@ -214,6 +216,19 @@ public:
         int val = on ? 1 : 0;
         return set_option(SOL_CAN_RAW, CAN_RAW_JOIN_FILTERS, val);
     }
+    /**
+     * Enables or disables kernel receive timestamps on this socket.
+     *
+     * When enabled, recv_with_timestamp() returns the nanosecond-precision
+     * time at which each frame was received by the kernel.
+     *
+     * @param on Whether to enable receive timestamps.
+     * @return The error code on failure.
+     */
+    result<> set_recv_timestamp(bool on = true) {
+        int val = on ? 1 : 0;
+        return set_option(SOL_SOCKET, SO_TIMESTAMPNS, val);
+    }
 
     // ----- Filters -----
 
@@ -286,6 +301,20 @@ public:
      * @return The frame read on success, or the error code on failure.
      */
     result<canbus_frame> recv(int flags = 0);
+    /**
+     * Receives a classic CAN frame together with its kernel arrival timestamp.
+     *
+     * Uses a single recvmsg() call to receive both the frame and the
+     * SO_TIMESTAMPNS ancillary data atomically.  The timestamp is
+     * set to the epoch if the socket has not had set_recv_timestamp(true)
+     * called first.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return A pair of (frame, timestamp) on success, or the error code on
+     *         failure.
+     */
+    result<std::pair<canbus_frame, std::chrono::system_clock::time_point>>
+    recv_with_timestamp(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -429,10 +458,27 @@ public:
     /**
      * Receives either a classic or FD frame from the socket.
      * The frame type is determined by the size of the received packet.
+     * Error frames (CAN_ERR_FLAG set) arrive as canbus_frame-sized packets
+     * and are returned as canbus_frame; use canbus_frame::is_error() to
+     * distinguish them.
      * @param flags The option bit flags. See recv(2).
      * @return The frame read on success, or the error code on failure.
      */
     result<canbus_any_frame> recv_any(int flags = 0);
+    /**
+     * Receives a CAN FD frame together with its kernel arrival timestamp.
+     *
+     * Uses a single recvmsg() call to receive both the frame and the
+     * SO_TIMESTAMPNS ancillary data atomically.  The timestamp is
+     * set to the epoch if the socket has not had set_recv_timestamp(true)
+     * called first.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return A pair of (frame, timestamp) on success, or the error code on
+     *         failure.
+     */
+    result<std::pair<canbusfd_frame, std::chrono::system_clock::time_point>>
+    recv_with_timestamp(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
