@@ -2,7 +2,8 @@
 //
 // Linux SocketCAN reader with kernel timestamps example.
 //
-// If the adapter supports hardware timestamps, outputs each received frame as:
+// If the adapter supports hardware timestamps, outputs each received
+// frame as:
 //   <sw_timestamp>,  (<hw_timestamp>),  <id>  [<len>]  <data bytes>
 //
 // Otherwise, falls back to software-only timestamps:
@@ -71,7 +72,9 @@ static double to_secs(system_clock::time_point tp) {
 static void print_frame(const sockpp::canbus_frame& frame) {
     cout << setw(3) << frame.id_value() << "  [" << dec << unsigned(frame.len) << "]  "
          << hex;
-    for (uint8_t i = 0; i < frame.len; ++i) cout << setw(2) << unsigned(frame.data[i]) << " ";
+    for (uint8_t i = 0; i < frame.len; ++i) {
+        cout << setw(2) << unsigned(frame.data[i]) << " ";
+    }
     cout << "\n";
 }
 
@@ -103,6 +106,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    cout << "Listening on " << sock.address();
+
     if (hasFilter) {
         can_filter filter{canID, CAN_SFF_MASK};
         if (auto res = sock.set_filters(&filter, 1); !res) {
@@ -111,20 +116,17 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // Enable software SO_TIMESTAMPNS
+
+    if (auto res = sock.set_recv_timestamp(); !res) {
+        cerr << "Error enabling SO_TIMESTAMPNS: " << res.error().message() << "\n";
+        return 1;
+    }
+
+    // Check if the interface supports hardware timestamps
     const bool hwTs = sock.has_hw_timestamps();
 
-    if (!hwTs) {
-        cout << "HW timestamps not supported\n";
-        if (auto res = sock.set_recv_timestamp(true); !res) {
-            cerr << "Error enabling SO_TIMESTAMPNS: " << res.error().message() << "\n";
-            return 1;
-        }
-    }
-    else {
-        if (auto res = sock.set_recv_timestamp(true); !res) {
-            cerr << "Error enabling SO_TIMESTAMPNS: " << res.error().message() << "\n";
-            return 1;
-        }
+    if (hwTs) {
         if (auto res = sock.set_timestamping(
                 SOF_TIMESTAMPING_RX_SOFTWARE | SOF_TIMESTAMPING_SOFTWARE |
                 SOF_TIMESTAMPING_RX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE
@@ -134,23 +136,28 @@ int main(int argc, char* argv[]) {
             return 1;
         }
     }
+    else {
+        cout << "HW timestamps not supported\n";
+    }
 
-    cout << "Listening on " << sock.address();
     if (hasFilter)
         cout << " for CAN ID 0x" << hex << uppercase << canID;
     cout << "\n";
+
+    // Display timestamps as time_t w/ usec resolution
     cout.setf(ios::fixed, ios::floatfield);
     cout << setprecision(6);
 
     if (hwTs) {
+        // Retrieve frames with hardware and software timestamps
         while (true) {
             auto res = sock.recv_with_timestamps();
             if (!res) {
                 cerr << "Error receiving frame: " << res.error().message() << "\n";
                 break;
             }
-            const auto& frame = res.value().frame;
-            const auto& ts = res.value().timestamps;
+            // Here ts is a `canbus_timestamps` struct.
+            const auto& [frame, ts] = res.value();
 
             double sw = ts.sw ? to_secs(*ts.sw) : ts.socket ? to_secs(*ts.socket) : 0.0;
 
@@ -160,6 +167,7 @@ int main(int argc, char* argv[]) {
         }
     }
     else {
+        // HW timestamps not supported; just grab SW timestamp.
         while (true) {
             auto res = sock.recv_with_timestamp();
             if (!res) {
