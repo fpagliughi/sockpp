@@ -3,6 +3,8 @@ build/
 obj/
 lib/
 book/
+doc/html
+fmp-doc/
 
 # Compiled Object files
 *.slo
