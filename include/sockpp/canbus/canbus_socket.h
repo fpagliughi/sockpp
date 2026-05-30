@@ -344,6 +344,18 @@ public:
         int flags = 0
     );
     /**
+     * Receives a classic CAN frame with its raw hardware timestamp.
+     *
+     * Requires set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE |
+     * SOF_TIMESTAMPING_RAW_HARDWARE) to have been called first. The
+     * returned nanoseconds value is in the hardware clock's domain, not
+     * wall-clock time.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return A pair of (frame, hw_ns) on success, or the error code on failure.
+     */
+    result<std::pair<canbus_frame, nanoseconds>> recv_with_hw_timestamp(int flags = 0);
+    /**
      * Receives a classic CAN frame with all enabled kernel timestamps.
      *
      * Enable desired timestamps before calling:
@@ -358,19 +370,7 @@ public:
      * @param flags The option bit flags. See recv(2).
      * @return The timed frame on success, or the error code on failure.
      */
-    result<canbus_timed_frame<canbus_frame>> recv_with_timestamps(int flags = 0);
-    /**
-     * Receives a classic CAN frame with its raw hardware timestamp.
-     *
-     * Requires set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE |
-     * SOF_TIMESTAMPING_RAW_HARDWARE) to have been called first. The
-     * returned nanoseconds value is in the hardware clock's domain, not
-     * wall-clock time.
-     *
-     * @param flags The option bit flags. See recv(2).
-     * @return A pair of (frame, hw_ns) on success, or the error code on failure.
-     */
-    result<std::pair<canbus_frame, nanoseconds>> recv_with_hw_timestamp(int flags = 0);
+    result<std::pair<canbus_frame, canbus_timestamps>> recv_with_timestamps(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -536,6 +536,18 @@ public:
         int flags = 0
     );
     /**
+     * Receives a CAN FD frame with its raw hardware timestamp.
+     *
+     * Requires set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE |
+     * SOF_TIMESTAMPING_RAW_HARDWARE) to have been called first. The
+     * returned nanoseconds value is in the hardware clock's domain, not
+     * wall-clock time.
+     *
+     * @param flags The option bit flags. See recv(2).
+     * @return A pair of (frame, hw_ns) on success, or the error code on failure.
+     */
+    result<std::pair<canbusfd_frame, nanoseconds>> recv_with_hw_timestamp(int flags = 0);
+    /**
      * Receives a CAN FD frame with all enabled kernel timestamps.
      *
      * Enable desired timestamps before calling:
@@ -550,19 +562,7 @@ public:
      * @param flags The option bit flags. See recv(2).
      * @return The timed frame on success, or the error code on failure.
      */
-    result<canbus_timed_frame<canbusfd_frame>> recv_with_timestamps(int flags = 0);
-    /**
-     * Receives a CAN FD frame with its raw hardware timestamp.
-     *
-     * Requires set_timestamping(SOF_TIMESTAMPING_RX_HARDWARE |
-     * SOF_TIMESTAMPING_RAW_HARDWARE) to have been called first. The
-     * returned nanoseconds value is in the hardware clock's domain, not
-     * wall-clock time.
-     *
-     * @param flags The option bit flags. See recv(2).
-     * @return A pair of (frame, hw_ns) on success, or the error code on failure.
-     */
-    result<std::pair<canbusfd_frame, nanoseconds>> recv_with_hw_timestamp(int flags = 0);
+    result<std::pair<canbusfd_frame, canbus_timestamps>> recv_with_timestamps(int flags = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////

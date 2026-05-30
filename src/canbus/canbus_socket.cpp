@@ -170,11 +170,11 @@ canbus_socket::recv_with_timestamp(int flags /*=0*/) {
     return make_pair(frame, ts);
 }
 
-result<canbus_timed_frame<canbus_frame>>
+result<pair<canbus_frame, canbus_timestamps>>
 canbus_socket::recv_with_timestamps(int flags /*=0*/) {
-    canbus_timed_frame<canbus_frame> timed{};
+    std::pair<canbus_frame, canbus_timestamps> timed{};
     iovec iov{};
-    iov.iov_base = timed.frame.frame_ptr();
+    iov.iov_base = timed.first.frame_ptr();
     iov.iov_len = sizeof(canbus_frame);
 
     alignas(
@@ -198,15 +198,15 @@ canbus_socket::recv_with_timestamps(int flags /*=0*/) {
         if (cm->cmsg_type == SO_TIMESTAMPNS) {
             timespec stamp{};
             std::memcpy(&stamp, CMSG_DATA(cm), sizeof(stamp));
-            timed.timestamps.socket = ts_to_tp(stamp);
+            timed.second.socket = ts_to_tp(stamp);
         }
         else if (cm->cmsg_type == SO_TIMESTAMPING) {
             timespec ts[3]{};
             std::memcpy(ts, CMSG_DATA(cm), sizeof(ts));
             if (ts_nonzero(ts[0]))
-                timed.timestamps.sw = ts_to_tp(ts[0]);
+                timed.second.sw = ts_to_tp(ts[0]);
             if (ts_nonzero(ts[2]))
-                timed.timestamps.hw = ts_to_ns(ts[2]);
+                timed.second.hw = ts_to_ns(ts[2]);
         }
     }
 
@@ -353,11 +353,11 @@ canbusfd_socket::recv_with_timestamp(int flags /*=0*/) {
     return make_pair(frame, ts);
 }
 
-result<canbus_timed_frame<canbusfd_frame>>
+result<pair<canbusfd_frame, canbus_timestamps>>
 canbusfd_socket::recv_with_timestamps(int flags /*=0*/) {
-    canbus_timed_frame<canbusfd_frame> timed{};
+    std::pair<canbusfd_frame, canbus_timestamps> timed{};
     iovec iov{};
-    iov.iov_base = timed.frame.frame_ptr();
+    iov.iov_base = timed.first.frame_ptr();
     iov.iov_len = sizeof(canbusfd_frame);
 
     alignas(
@@ -381,15 +381,15 @@ canbusfd_socket::recv_with_timestamps(int flags /*=0*/) {
         if (cm->cmsg_type == SO_TIMESTAMPNS) {
             timespec stamp{};
             std::memcpy(&stamp, CMSG_DATA(cm), sizeof(stamp));
-            timed.timestamps.socket = ts_to_tp(stamp);
+            timed.second.socket = ts_to_tp(stamp);
         }
         else if (cm->cmsg_type == SO_TIMESTAMPING) {
             timespec ts[3]{};
             std::memcpy(ts, CMSG_DATA(cm), sizeof(ts));
             if (ts_nonzero(ts[0]))
-                timed.timestamps.sw = ts_to_tp(ts[0]);
+                timed.second.sw = ts_to_tp(ts[0]);
             if (ts_nonzero(ts[2]))
-                timed.timestamps.hw = ts_to_ns(ts[2]);
+                timed.second.hw = ts_to_ns(ts[2]);
         }
     }
 

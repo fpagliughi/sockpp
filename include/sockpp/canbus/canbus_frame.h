@@ -443,23 +443,6 @@ struct canbus_timestamps
     std::optional<nanoseconds> hw;
 };
 
-/**
- * A received CAN frame bundled with its kernel timestamps.
- *
- * Returned by canbus_socket::recv_with_timestamps() and
- * canbusfd_socket::recv_with_timestamps(). Fields in @p timestamps are set
- * only for the timestamp types that were enabled on the socket before the call.
- *
- * @tparam FrameT  canbus_frame or canbusfd_frame
- */
-template <typename FrameT>
-struct canbus_timed_frame
-{
-    /** The received frame. */
-    FrameT frame;
-    /** Timestamps captured alongside the frame. */
-    canbus_timestamps timestamps;
-};
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp
