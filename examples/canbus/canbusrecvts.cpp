@@ -70,7 +70,7 @@ static double to_secs(system_clock::time_point tp) {
 // Prints the frame ID, length, and data bytes to stdout.
 // Assumes hex/uppercase/setfill('0') are already set on cout.
 static void print_frame(const sockpp::canbus_frame& frame) {
-    cout << setw(3) << frame.id_value() << "  [" << dec << unsigned(frame.len) << "]  "
+    cout << setw(3) << frame.id_value() << "  [" << dec << frame.length() << "]  "
          << hex;
     for (uint8_t i = 0; i < frame.len; ++i) {
         cout << setw(2) << unsigned(frame.data[i]) << " ";
@@ -106,15 +106,18 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    cout << "Listening on " << sock.address();
+    cout << "Listening on " << sock.address() << "..." << endl;
 
     if (hasFilter) {
         can_filter filter{canID, CAN_SFF_MASK};
         if (auto res = sock.set_filters(&filter, 1); !res) {
-            cerr << "Error setting filter: " << res.error().message() << "\n";
+            cerr << "\nError setting filter: " << res.error().message() << endl;
             return 1;
         }
+        cout << " for CAN ID 0x" << hex << uppercase << canID;
     }
+
+    cout << "\n";
 
     // Enable software SO_TIMESTAMPNS
 
@@ -137,12 +140,8 @@ int main(int argc, char* argv[]) {
         }
     }
     else {
-        cout << "HW timestamps not supported\n";
+        cout << "HW timestamps not supported" << endl;
     }
-
-    if (hasFilter)
-        cout << " for CAN ID 0x" << hex << uppercase << canID;
-    cout << "\n";
 
     // Display timestamps as time_t w/ usec resolution
     cout.setf(ios::fixed, ios::floatfield);

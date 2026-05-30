@@ -158,6 +158,13 @@ public:
      * @return A const pointer to the underlying C frame.
      */
     const ::can_frame* frame_ptr() const { return static_cast<const ::can_frame*>(this); }
+    /**
+     * Gets the length of data (number of bytes) as a size_t.
+     * @return The number of valid data bytes.
+     */
+    size_t length() const {
+        return size_t(this->len);
+    }
 #if __cplusplus >= 202002L
     /**
      * Returns the payload as a span of bytes.
