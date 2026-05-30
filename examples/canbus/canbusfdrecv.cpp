@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     if (hasFilter) {
         can_filter filter{canID, CAN_SFF_MASK};
         if (auto res = sock.set_filters(&filter, 1); !res) {
-            cerr << "Error setting filter: " << res.error().message() << endl;
+            cerr << "Error setting filter: " << res << endl;
             return 1;
         }
     }
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     while (true) {
         auto res = sock.recv_any();
         if (!res) {
-            cerr << "Error receiving frame: " << res.error().message() << endl;
+            cerr << "Error receiving frame: " << res << endl;
             break;
         }
 

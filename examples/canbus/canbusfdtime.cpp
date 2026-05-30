@@ -1,11 +1,20 @@
-// canbusrecv.cpp
+// canbusfdtime.cpp
 //
-// Linux SocketCAN reader example.
+// Linux SocketCAN FD writer example.
+//
+// This writes the current time to the CAN bus 10 times per second as a
+// 12-byte CAN FD frame with nanosecond resolution. The payload format is:
+//
+//   Bytes 0-7:  int64_t  seconds since the Unix epoch (big-endian host order)
+//   Bytes 8-11: uint32_t nanosecond fraction
+//
+// This is a simple (though not overly precise) way to synchronize the time
+// for nodes on the CAN bus.
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021-2026 Frank Pagliughi
+// Copyright (c) 2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,23 +45,30 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------
 
-#include <iomanip>
+#include <time.h>
+
+#include <chrono>
+#include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include "sockpp/canbus/canbus_socket.h"
 #include "sockpp/version.h"
 
 using namespace std;
 
+// The clock to use to pace the app.
+using sysclock = chrono::system_clock;
+
 // --------------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
-    cout << "Sample SocketCAN reader for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
+    cout << "Sample SocketCAN FD time writer for 'sockpp' " << sockpp::SOCKPP_VERSION << endl;
 
     string canIface = (argc > 1) ? argv[1] : "can0";
-    bool hasFilter = (argc > 2);
-    canid_t canID = hasFilter ? canid_t(strtoul(argv[2], nullptr, 0)) : 0;
+    canid_t canID = (argc > 2) ? canid_t(strtoul(argv[2], nullptr, 0)) : 0x20;
 
     sockpp::initialize();
 
@@ -60,51 +76,44 @@ int main(int argc, char* argv[]) {
     sockpp::canbus_address addr(canIface, ec);
 
     if (ec) {
-        cerr << "Error finding the CAN interface '" << canIface << "': " << ec.message()
+        cerr << "Error finding the CAN interface: " << canIface << "\n\t" << ec.message()
              << endl;
         return 1;
     }
 
-    sockpp::canbus_socket sock(addr, ec);
+    sockpp::canbusfd_socket sock(addr, ec);
     if (ec) {
-        cerr << "Error binding to the CAN interface '" << canIface << "': " << ec.message()
+        cerr << "Error opening CAN FD socket on " << canIface << "\n\t" << ec.message()
              << endl;
         return 1;
     }
 
-    if (hasFilter) {
-        can_filter filter{canID, CAN_SFF_MASK};
-        if (auto res = sock.set_filters(&filter, 1); !res) {
-            cerr << "Error setting filter: " << res << endl;
-            return 1;
-        }
-    }
+    cout << "Created CAN FD socket on " << sock.address() << endl;
 
-    cout << "Listening on " << sock.address();
-    if (hasFilter)
-        cout << " for CAN ID 0x" << hex << uppercase << canID;
-    cout << endl;
-    cout << hex << uppercase << setfill('0');
-    cout.setf(ios::fixed, ios::floatfield);
-    cout << setprecision(6);
+    // Schedule the first send at the next 100ms boundary.
+    auto next = sysclock::now();
 
     while (true) {
-        auto res = sock.recv();
-        if (!res) {
-            cerr << "Error receiving frame: " << res << endl;
-            break;
+        next += chrono::milliseconds(100);
+        this_thread::sleep_until(next);
+
+        // Get the current time with nanosecond resolution
+        timespec ts{};
+        clock_gettime(CLOCK_REALTIME, &ts);
+
+        // Pack into a 12-byte payload: 8-byte int64_t seconds + 4-byte uint32_t ns
+        int64_t secs = int64_t(ts.tv_sec);
+        uint32_t nsec = uint32_t(ts.tv_nsec);
+
+        uint8_t payload[12];
+		memcpy(payload, &secs, sizeof(secs));
+        memcpy(payload + sizeof(secs), &nsec, sizeof(nsec));
+
+        sockpp::canbusfd_frame frame{canID, payload, sizeof(payload)};
+        if (auto res = sock.send(frame); !res) {
+            cerr << "Error sending frame: " << res << endl;
+            return 1;
         }
-
-        const auto& frame = res.value();
-        auto t = 0.0;
-        if (auto ts = sock.last_frame_timestamp(); ts)
-            t = ts.value();
-
-        cout << t << "  " << setw(3) << frame.id_value() << "  [" << dec
-             << unsigned(frame.len) << "]  " << hex;
-        for (uint8_t i = 0; i < frame.len; ++i)
-            cout << setw(2) << unsigned(frame.data[i]) << " ";
-        cout << "\n";
     }
 
     return 0;

@@ -70,8 +70,7 @@ static double to_secs(system_clock::time_point tp) {
 // Prints the frame ID, length, and data bytes to stdout.
 // Assumes hex/uppercase/setfill('0') are already set on cout.
 static void print_frame(const sockpp::canbus_frame& frame) {
-    cout << setw(3) << frame.id_value() << "  [" << dec << frame.length() << "]  "
-         << hex;
+    cout << setw(3) << frame.id_value() << "  [" << dec << frame.length() << "]  " << hex;
     for (uint8_t i = 0; i < frame.len; ++i) {
         cout << setw(2) << unsigned(frame.data[i]) << " ";
     }
@@ -111,7 +110,7 @@ int main(int argc, char* argv[]) {
     if (hasFilter) {
         can_filter filter{canID, CAN_SFF_MASK};
         if (auto res = sock.set_filters(&filter, 1); !res) {
-            cerr << "\nError setting filter: " << res.error().message() << endl;
+            cerr << "\nError setting filter: " << res << endl;
             return 1;
         }
         cout << " for CAN ID 0x" << hex << uppercase << canID;
@@ -122,7 +121,7 @@ int main(int argc, char* argv[]) {
     // Enable software SO_TIMESTAMPNS
 
     if (auto res = sock.set_recv_timestamp(); !res) {
-        cerr << "Error enabling SO_TIMESTAMPNS: " << res.error().message() << "\n";
+        cerr << "Error enabling SO_TIMESTAMPNS: " << res << "\n";
         return 1;
     }
 
@@ -135,7 +134,7 @@ int main(int argc, char* argv[]) {
                 SOF_TIMESTAMPING_RX_HARDWARE | SOF_TIMESTAMPING_RAW_HARDWARE
             );
             !res) {
-            cerr << "Error enabling SO_TIMESTAMPING: " << res.error().message() << "\n";
+            cerr << "Error enabling SO_TIMESTAMPING: " << res << "\n";
             return 1;
         }
     }
@@ -152,7 +151,7 @@ int main(int argc, char* argv[]) {
         while (true) {
             auto res = sock.recv_with_timestamps();
             if (!res) {
-                cerr << "Error receiving frame: " << res.error().message() << "\n";
+                cerr << "Error receiving frame: " << res << "\n";
                 break;
             }
             // Here ts is a `canbus_timestamps` struct.
@@ -170,7 +169,7 @@ int main(int argc, char* argv[]) {
         while (true) {
             auto res = sock.recv_with_timestamp();
             if (!res) {
-                cerr << "Error receiving frame: " << res.error().message() << "\n";
+                cerr << "Error receiving frame: " << res << "\n";
                 break;
             }
             const auto& [frame, ts] = res.value();

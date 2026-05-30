@@ -38,6 +38,7 @@
 
 set(EXECUTABLES
     canbustime
+    canbusfdtime
     canbusrecv
     canbusrecvts
     canbusfdrecv

@@ -56,7 +56,6 @@ struct none
 {
 };
 
-#if 0
 /**
  * Writes out a none value.
  * @param os The output stream.
@@ -66,7 +65,6 @@ inline std::ostream& operator<<(std::ostream& os, const none&) {
     os << "<none>";
     return os;
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -566,14 +564,26 @@ bool operator!=(const errc& err, const result<T>& res) noexcept {
     return res.error() != err;
 }
 
-#if 0
+namespace detail {
+/// @cond INTERNAL
+// Detects whether T supports `ostream << T`.
+template <typename T, typename = void>
+struct is_ostream_insertable : std::false_type {};
+
+template <typename T>
+struct is_ostream_insertable<
+    T,
+    std::void_t<decltype(std::declval<std::ostream&>() << std::declval<const T&>())>>
+    : std::true_type {};
+/// @endcond
+}  // namespace detail
+
 /**
  * Writes out the result.
  *
- * For a successful operation, writes out the result value. For a failed
- * operation, writes out the error message.
- *
- * This requires type T to have a stream inserter.
+ * For a successful operation whose value type supports `operator<<`, writes
+ * the value; otherwise writes `<ok>`. For a failed operation, writes the
+ * error message.
  *
  * @param os The output stream.
  * @param res The result to output.
@@ -582,14 +592,16 @@ bool operator!=(const errc& err, const result<T>& res) noexcept {
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const result<T>& res) {
     if (res.is_ok()) {
-        os << res.value();
+        if constexpr (detail::is_ostream_insertable<T>::value)
+            os << res.value();
+        else
+            os << "<ok>";
     }
     else {
         os << res.error_message();
     }
     return os;
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 }  // namespace sockpp

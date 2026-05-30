@@ -162,9 +162,7 @@ public:
      * Gets the length of data (number of bytes) as a size_t.
      * @return The number of valid data bytes.
      */
-    size_t length() const {
-        return size_t(this->len);
-    }
+    size_t length() const { return size_t(this->len); }
 #if __cplusplus >= 202002L
     /**
      * Returns the payload as a span of bytes.

@@ -1,15 +1,15 @@
-// cantime.cpp
+// canbustime.cpp
 //
-// Linux SoxketCAN writer example.
+// Linux SocketCAN writer example.
 //
-// This writes the 1-sec, 32-bit, Linux time_t value to the CAN bus each
+// This writes the 1-sec, 64-bit, Linux time_t value to the CAN bus each
 // time it ticks. This is a simple (though not overly precise) way to
-// synchronize the time for nodes on the bus
+// synchronize the time for nodes on the bus.
 //
 // --------------------------------------------------------------------------
 // This file is part of the "sockpp" C++ socket library.
 //
-// Copyright (c) 2021 Frank Pagliughi
+// Copyright (c) 2021-2026 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@
 #include <sys/ioctl.h>
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -93,8 +94,8 @@ int main(int argc, char* argv[]) {
         // Re-read the time in case we fell behind
         t = sysclock::to_time_t(sysclock::now());
 
-        // Write the time to the CAN bus as a 32-bit int
-        auto nt = uint32_t(t);
+        // Write the time to the CAN bus as a 64-bit int
+        auto nt = int64_t(t);
 
         sockpp::canbus_frame frame{canID, &nt, sizeof(nt)};
         sock.send(frame);

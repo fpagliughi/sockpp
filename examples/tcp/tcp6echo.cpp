@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 
     if (!addrRes) {
         cerr << "Error resolving address for '" << host << "':\n\t"
-             << addrRes.error().message() << endl;
+             << addrRes << endl;
         return 1;
     }
 
