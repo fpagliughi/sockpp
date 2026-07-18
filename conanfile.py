@@ -1,66 +1,113 @@
-from conans import ConanFile, CMake, tools
+import os
+import re
 
-class Sockpp(ConanFile):
+from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
+from conan.tools.build import check_min_cppstd
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
+from conan.tools.files import copy, load
+
+
+class SockppConan(ConanFile):
     name = "sockpp"
-    description = """Modern C++ socket library."""
-    license = "BSD-3-Clause License"
-    author = "fpagliughi"
+    description = "Modern C++ socket library, wrapping the BSD/POSIX/Winsock socket API."
+    license = "BSD-3-Clause"
+    author = "Frank Pagliughi"
+    url = "https://github.com/fpagliughi/sockpp"
+    homepage = "https://github.com/fpagliughi/sockpp"
+    topics = ("sockets", "tcp", "udp", "unix", "network", "tls", "ssl")
+
+    package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
-    exports = "CMakeLists.txt", "src/*", "include/*", "doc/*", "tests/*", "examples/*", "Doxyfile", "version.h.in"
+
     options = {
-        "shared" : [True, False, None],
-        "examples" : [True, False, None],
-        "tests" : [True, False, None],
-        "docs" : [True, False, None]
+        "shared": [True, False],
+        "fPIC": [True, False],
+        "with_openssl": [True, False],
+        "with_mbedtls": [True, False],
+        "unix_sockets": [True, False],
     }
-    # If specified None the default values from CMakeLists will be used
     default_options = {
-        "shared" : None,
-        "examples" : None,
-        "tests" : None,
-        "docs" : None
+        "shared": False,
+        "fPIC": True,
+        "with_openssl": False,
+        "with_mbedtls": False,
+        "unix_sockets": True,
     }
+
+    exports_sources = "CMakeLists.txt", "cmake/*", "src/*", "include/*", "LICENSE"
 
     def set_version(self):
-        git = tools.Git(folder=self.recipe_folder)
-        self.version = git.get_branch()
+        cmakelists = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
+        match = re.search(r'project\(\s*sockpp\s+VERSION\s+"?([\d.]+)"?', cmakelists)
+        if not match:
+            raise ConanInvalidConfiguration(
+                "Could not determine the sockpp version from CMakeLists.txt"
+            )
+        self.version = match.group(1)
 
-    def configure_cmake(self):
-        cmake = CMake(self)
-        # TODO: This might be removed from CMakeLists and BUILD_SHARED_LIBS might be used instead https://docs.conan.io/en/latest/reference/build_helpers/cmake.html#definitions
-        if self.options.shared != None:
-            if self.options.shared:
-                cmake.definitions["SOCKPP_BUILD_SHARED"] = "ON"
-                cmake.definitions["SOCKPP_BUILD_STATIC"] = "OFF"
-            else:
-                cmake.definitions["SOCKPP_BUILD_SHARED"] = "OFF"
-                cmake.definitions["SOCKPP_BUILD_STATIC"] = "ON"
+    def config_options(self):
+        if self.settings.os == "Windows":
+            self.options.rm_safe("fPIC")
 
-        if self.options.examples != None:
-            cmake.definitions["SOCKPP_BUILD_EXAMPLES"] = "ON" if self.options.examples else "OFF"
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
 
-        if self.options.tests != None:
-            cmake.definitions["SOCKPP_BUILD_TESTS"] = "ON" if self.options.tests else "OFF"
+    def validate(self):
+        check_min_cppstd(self, 17)
+        if self.options.with_openssl and self.options.with_mbedtls:
+            raise ConanInvalidConfiguration(
+                "sockpp: 'with_openssl' and 'with_mbedtls' are mutually exclusive"
+            )
 
-        if self.options.docs != None:
-            cmake.definitions["SOCKPP_BUILD_DOCUMENTATION"] = "ON" if self.options.docs else "OFF"
+    def layout(self):
+        cmake_layout(self)
 
-        cmake.configure()
-        return cmake
+    def requirements(self):
+        if self.options.with_openssl:
+            self.requires("openssl/[>=3.0 <4]")
+        elif self.options.with_mbedtls:
+            self.requires("mbedtls/[>=3.5 <4]")
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.variables["SOCKPP_BUILD_SHARED"] = bool(self.options.shared)
+        tc.variables["SOCKPP_BUILD_STATIC"] = not bool(self.options.shared)
+        tc.variables["SOCKPP_BUILD_EXAMPLES"] = False
+        tc.variables["SOCKPP_BUILD_TESTS"] = False
+        tc.variables["SOCKPP_BUILD_DOCUMENTATION"] = False
+        tc.variables["SOCKPP_WITH_OPENSSL"] = bool(self.options.with_openssl)
+        tc.variables["SOCKPP_WITH_MBEDTLS"] = bool(self.options.with_mbedtls)
+        if self.settings.os != "Windows":
+            tc.variables["SOCKPP_WITH_UNIX_SOCKETS"] = bool(self.options.unix_sockets)
+        fpic = self.options.get_safe("fPIC")
+        if fpic is not None:
+            tc.variables["CMAKE_POSITION_INDEPENDENT_CODE"] = bool(fpic)
+        tc.generate()
+
+        deps = CMakeDeps(self)
+        deps.generate()
 
     def build(self):
-        cmake = self.configure_cmake()
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
 
     def package(self):
-        cmake = self.configure_cmake()
+        copy(
+            self,
+            "LICENSE",
+            src=self.source_folder,
+            dst=os.path.join(self.package_folder, "licenses"),
+        )
+        cmake = CMake(self)
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.includedirs = ["include"]
-        self.cpp_info.libdirs = ["lib"]
+        self.cpp_info.set_property("cmake_file_name", "sockpp")
+        self.cpp_info.set_property("cmake_target_name", "Sockpp::sockpp")
+        self.cpp_info.libs = ["sockpp"]
+
         if self.settings.os == "Windows":
-            self.cpp_info.libs = ["sockpp-static"]
             self.cpp_info.system_libs = ["ws2_32"]
-        if self.settings.os == "Linux":
-            self.cpp_info.libs = ["sockpp"]
