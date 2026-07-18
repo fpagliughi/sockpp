@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: sockpp
+Description: Modern C++ socket library
+URL: https://github.com/fpagliughi/sockpp
+Version: @PROJECT_VERSION@
+@SOCKPP_PC_REQUIRES@
+Libs: -L${libdir} -lsockpp@SOCKPP_PC_LIBS_EXTRA@
+Cflags: -I${includedir}@SOCKPP_PC_CFLAGS_EXTRA@

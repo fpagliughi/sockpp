@@ -37,12 +37,22 @@
 # ---------------------------------------------------------------------------
 
 if(UNIX AND SOCKPP_BUILD_SHARED)
+    include(GNUInstallDirs)
+
     # Look for the shared lib in the build path first before install path.
     set(CMAKE_BUILD_RPATH $<TARGET_FILE_DIR:sockpp-shared>)
         set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
     if(NOT APPLE)
         # Force DT_RPATH over DT_RUNPATH so $ORIGIN-relative rpath is honored (ELF-only; not applicable on Mach-O)
         add_link_options(-Wl,--disable-new-dtags)
+    endif()
+
+    # So installed examples (in bin/) can find the installed shared lib
+    # (in lib/) without needing LD_LIBRARY_PATH / DYLD_LIBRARY_PATH set.
+    if(APPLE)
+        set(CMAKE_INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+    else()
+        set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
     endif()
 endif()
 

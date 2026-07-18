@@ -133,6 +133,12 @@ configure_file(
 add_subdirectory(src)
 
 # --- Install Targets ---
+#
+# Skipped when sockpp is consumed via add_subdirectory() from a parent
+# project - the parent's own install()/package shouldn't be polluted with
+# sockpp's headers, libs, and CMake package config files.
+
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
 
 include(GNUInstallDirs)
 
@@ -157,7 +163,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
     ${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
     VERSION ${PROJECT_VERSION}
-    COMPATIBILITY AnyNewerVersion
+    COMPATIBILITY SameMajorVersion
 )
 
 configure_file(
@@ -183,6 +189,45 @@ install(
 		${CMAKE_INSTALL_LIBDIR}/cmake/sockpp
 )
 
+# --- pkg-config file (for non-CMake consumers) ---
+
+set(SOCKPP_PC_REQUIRES "")
+set(SOCKPP_PC_LIBS_EXTRA "")
+set(SOCKPP_PC_CFLAGS_EXTRA "")
+
+if(SOCKPP_WITH_OPENSSL)
+    # OpenSSL ships its own .pc file almost everywhere.
+    set(SOCKPP_PC_REQUIRES "Requires: openssl")
+elseif(SOCKPP_WITH_MBEDTLS)
+    # MbedTLS doesn't reliably ship a .pc file, so bake in the flags directly.
+    get_target_property(_sockpp_mbedtls_incs MbedTLS::mbedtls INTERFACE_INCLUDE_DIRECTORIES)
+    if(_sockpp_mbedtls_incs)
+        foreach(_sockpp_inc ${_sockpp_mbedtls_incs})
+            string(APPEND SOCKPP_PC_CFLAGS_EXTRA " -I${_sockpp_inc}")
+        endforeach()
+    endif()
+    set(SOCKPP_PC_LIBS_EXTRA " -lmbedtls -lmbedx509 -lmbedcrypto")
+endif()
+
+if(WIN32)
+    string(APPEND SOCKPP_PC_LIBS_EXTRA " -lws2_32")
+endif()
+
+configure_file(
+	${PROJECT_SOURCE_DIR}/cmake/sockpp.pc.in
+	${SOCKPP_GENERATED_DIR}/cmake/sockpp.pc
+	@ONLY
+)
+
+install(
+	FILES
+		${SOCKPP_GENERATED_DIR}/cmake/sockpp.pc
+	DESTINATION
+		${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
+
+endif()
+
 # --- Documentation ---
 
 if(SOCKPP_BUILD_DOCUMENTATION)
@@ -203,6 +248,11 @@ if(SOCKPP_BUILD_TESTS)
 endif()
 
 # --- Packaging (CPack) ---
+#
+# Skipped when sockpp is consumed via add_subdirectory() from a parent
+# project - packaging is a top-level-project concern.
+
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
 
 set(CPACK_PACKAGE_NAME "sockpp")
 set(CPACK_PACKAGE_VENDOR "Frank Pagliughi")
@@ -230,3 +280,5 @@ set(CPACK_DEBIAN_PACKAGE_SECTION "libdevel")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
 include(CPack)
+
+endif()

@@ -36,8 +36,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ---------------------------------------------------------------------------
 
-include(GenerateExportHeader)
-
 # The common sources.
 # Additional files are added below, as configured.
 set(SOURCES
@@ -102,11 +100,6 @@ if(${SOCKPP_BUILD_SHARED})
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
     )
-
-    generate_export_header(sockpp-shared
-        BASE_NAME sockpp
-        EXPORT_FILE_NAME ${SOCKPP_GENERATED_DIR}/include/sockpp/export.h
-    )
 endif()
 
 # -- The static library (if configured) ---
@@ -118,16 +111,12 @@ if(${SOCKPP_BUILD_STATIC})
 
     add_library(Sockpp::sockpp-static ALIAS sockpp-static)
 
-    if(${SOCKPP_BUILD_SHARED})
-        target_compile_definitions(sockpp-static PRIVATE SOCKPP_STATIC_DEFINE)
-    else()
+    if(NOT ${SOCKPP_BUILD_SHARED})
         add_library(Sockpp::sockpp ALIAS sockpp-static)
-
-        generate_export_header(sockpp-static
-            BASE_NAME sockpp
-            EXPORT_FILE_NAME ${SOCKPP_GENERATED_DIR}/include/sockpp/export.h
-        )
     endif()
+
+    # So the static lib can be linked into a consumer's own shared library.
+    set_target_properties(sockpp-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # On *nix systems, the static library can have the same base filename
     # as the shared library, thus 'libsockpp.a' for the static lib.
