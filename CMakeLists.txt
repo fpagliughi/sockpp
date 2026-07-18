@@ -202,3 +202,31 @@ if(SOCKPP_BUILD_TESTS)
 	add_subdirectory(tests/unit)
 endif()
 
+# --- Packaging (CPack) ---
+
+set(CPACK_PACKAGE_NAME "sockpp")
+set(CPACK_PACKAGE_VENDOR "Frank Pagliughi")
+set(CPACK_PACKAGE_CONTACT "Frank Pagliughi <fpagliughi@mindspring.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Modern C++ socket library")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/fpagliughi/sockpp")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+
+# Plain archives - no extra tooling required, work on every platform.
+set(CPACK_GENERATOR "TGZ;ZIP")
+
+# DEB requires dpkg-deb, so only offer it where that's realistically present.
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    list(APPEND CPACK_GENERATOR "DEB")
+endif()
+
+# Auto-compute the Debian "Depends:" line (e.g. libssl3) from the actual
+# linked shared libraries, rather than hand-maintaining it here.
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_CONTACT}")
+set(CPACK_DEBIAN_PACKAGE_SECTION "libdevel")
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+
+include(CPack)
