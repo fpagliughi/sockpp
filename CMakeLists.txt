@@ -160,6 +160,12 @@ write_basic_package_version_file(
     COMPATIBILITY AnyNewerVersion
 )
 
+configure_file(
+	${PROJECT_SOURCE_DIR}/cmake/sockppConfigTLS.cmake.in
+	${SOCKPP_GENERATED_DIR}/cmake/sockppConfigTLS.cmake
+	@ONLY
+)
+
 install(
     DIRECTORY
         include/
@@ -172,6 +178,7 @@ install(
 	FILES
 		${PROJECT_SOURCE_DIR}/cmake/sockppConfig.cmake
 		${SOCKPP_GENERATED_DIR}/cmake/sockppConfigVersion.cmake
+		${SOCKPP_GENERATED_DIR}/cmake/sockppConfigTLS.cmake
 	DESTINATION
 		${CMAKE_INSTALL_LIBDIR}/cmake/sockpp
 )

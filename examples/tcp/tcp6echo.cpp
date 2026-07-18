@@ -64,8 +64,7 @@ int main(int argc, char* argv[]) {
     auto addrRes = sockpp::inet6_address::create(host, port);
 
     if (!addrRes) {
-        cerr << "Error resolving address for '" << host << "':\n\t"
-             << addrRes << endl;
+        cerr << "Error resolving address for '" << host << "':\n\t" << addrRes << endl;
         return 1;
     }
 

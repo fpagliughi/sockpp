@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
         uint32_t nsec = uint32_t(ts.tv_nsec);
 
         uint8_t payload[12];
-		memcpy(payload, &secs, sizeof(secs));
+        memcpy(payload, &secs, sizeof(secs));
         memcpy(payload + sizeof(secs), &nsec, sizeof(nsec));
 
         sockpp::canbusfd_frame frame{canID, payload, sizeof(payload)};

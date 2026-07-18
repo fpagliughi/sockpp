@@ -16,6 +16,15 @@
 
 include(CMakeFindDependencyMacro)
 
+# Records which TLS backend (if any) this package was built with.
+include("${CMAKE_CURRENT_LIST_DIR}/sockppConfigTLS.cmake")
+
+if(SOCKPP_WITH_OPENSSL)
+    find_dependency(OpenSSL)
+elseif(SOCKPP_WITH_MBEDTLS)
+    find_dependency(MbedTLS)
+endif()
+
 if(NOT TARGET Sockpp::sockpp-shared AND NOT TARGET Sockpp::sockpp-static)
 	include("${CMAKE_CURRENT_LIST_DIR}/sockppTargets.cmake")
 

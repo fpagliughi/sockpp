@@ -568,13 +568,16 @@ namespace detail {
 /// @cond INTERNAL
 // Detects whether T supports `ostream << T`.
 template <typename T, typename = void>
-struct is_ostream_insertable : std::false_type {};
+struct is_ostream_insertable : std::false_type
+{
+};
 
 template <typename T>
 struct is_ostream_insertable<
-    T,
-    std::void_t<decltype(std::declval<std::ostream&>() << std::declval<const T&>())>>
-    : std::true_type {};
+    T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<const T&>())>>
+    : std::true_type
+{
+};
 /// @endcond
 }  // namespace detail
 
