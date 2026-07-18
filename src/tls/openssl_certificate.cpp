@@ -369,7 +369,7 @@ binary tls_certificate::to_der() const {
     if (len <= 0)
         return binary{};
 
-    binary certBin{buf, size_t(len)};
+    binary certBin{buf, buf + size_t(len)};
     OPENSSL_free(buf);
 
     return certBin;

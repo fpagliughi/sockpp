@@ -120,9 +120,12 @@ if(UNIX AND SOCKPP_BUILD_SHARED)
     BUILD_RPATH $<TARGET_FILE_DIR:sockpp-shared>
         BUILD_RPATH_USE_ORIGIN TRUE
     )
-    target_link_options(unit_tests PRIVATE
-        -Wl,--disable-new-dtags
-    )
+    if(NOT APPLE)
+        # Force DT_RPATH over DT_RUNPATH so $ORIGIN-relative rpath is honored (ELF-only; not applicable on Mach-O)
+        target_link_options(unit_tests PRIVATE
+            -Wl,--disable-new-dtags
+        )
+    endif()
 endif()
 
 include(CTest)

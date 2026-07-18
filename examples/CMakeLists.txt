@@ -40,7 +40,10 @@ if(UNIX AND SOCKPP_BUILD_SHARED)
     # Look for the shared lib in the build path first before install path.
     set(CMAKE_BUILD_RPATH $<TARGET_FILE_DIR:sockpp-shared>)
         set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
-    add_link_options(-Wl,--disable-new-dtags)
+    if(NOT APPLE)
+        # Force DT_RPATH over DT_RUNPATH so $ORIGIN-relative rpath is honored (ELF-only; not applicable on Mach-O)
+        add_link_options(-Wl,--disable-new-dtags)
+    endif()
 endif()
 
 # --- General TCP/IP examples ---

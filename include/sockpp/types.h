@@ -78,8 +78,8 @@ using std::chrono::system_clock;
 /** A sockpp::steady_clock is a std::chrono::steady_clock */
 using std::chrono::steady_clock;
 
-/** A binary blob as a basic string/collection of uint8_t */
-using binary = std::basic_string<uint8_t>;
+/** A binary blob as a collection of uint8_t */
+using binary = std::vector<uint8_t>;
 
 // Time units are std::chrono time unite.
 using std::chrono::microseconds;
