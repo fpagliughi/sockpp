@@ -40,17 +40,33 @@ namespace sockpp {
 
 /////////////////////////////////////////////////////////////////////////////
 
-tls_acceptor::tls_acceptor(const tls_context& ctx, const sock_address& addr, int backlog)
+tls_acceptor::tls_acceptor(const tls_context& ctx, const sock_address& addr, int queSize)
     : ctx_{&ctx} {
-    if (auto res = base::open(addr, backlog); !res)
+    if (auto res = base::open(addr, queSize); !res)
         throw std::system_error{res.error()};
 }
 
 tls_acceptor::tls_acceptor(
-    const tls_context& ctx, const sock_address& addr, int backlog, error_code& ec
+    const tls_context& ctx, const sock_address& addr, int queSize, error_code& ec
 ) noexcept
     : ctx_{&ctx} {
-    if (auto res = base::open(addr, backlog); !res)
+    if (auto res = base::open(addr, queSize); !res)
+        ec = res.error();
+}
+
+tls_acceptor::tls_acceptor(
+    const tls_context& ctx, const sock_address& addr, int queSize, int reuse
+)
+    : ctx_{&ctx} {
+    if (auto res = base::open(addr, queSize, reuse); !res)
+        throw std::system_error{res.error()};
+}
+
+tls_acceptor::tls_acceptor(
+    const tls_context& ctx, const sock_address& addr, int queSize, int reuse, error_code& ec
+) noexcept
+    : ctx_{&ctx} {
+    if (auto res = base::open(addr, queSize, reuse); !res)
         ec = res.error();
 }
 

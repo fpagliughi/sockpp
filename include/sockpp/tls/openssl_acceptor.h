@@ -89,7 +89,7 @@ public:
      * @throws std::system_error on bind or listen failure.
      */
     tls_acceptor(
-        const tls_context& ctx, const sock_address& addr, int backlog = DFLT_QUE_SIZE
+        const tls_context& ctx, const sock_address& addr, int queSize = DFLT_QUE_SIZE
     );
 
     /**
@@ -101,9 +101,30 @@ public:
      * @param ec Receives the error code on failure.
      */
     tls_acceptor(
-        const tls_context& ctx, const sock_address& addr, int backlog, error_code& ec
+        const tls_context& ctx, const sock_address& addr, int queSize, error_code& ec
     ) noexcept;
 
+    /**
+     * Creates an acceptor socket and starts it listening to the specified
+     * address.
+     * @param addr The address to which this server should be bound.
+     * @param queSize The listener queue size.
+     */
+    tls_acceptor(const tls_context& ctx, const sock_address& addr, int queSize, int reuse);
+    /**
+     * Creates an acceptor socket and starts it listening to the specified
+     * address.
+     * @param addr The address to which this server should be bound.
+     * @param queSize The listener queue size.
+     * @param reuse A reuse option for the socket. This can be SO_REUSEADDR
+     *              or SO_REUSEPORT, and is set before it tries to bind. A
+     *              value of zero doesn't set an option.
+     * @param ec The error code, on failure
+     */
+    tls_acceptor(
+        const tls_context& ctx, const sock_address& addr, int queSize, int reuse,
+        error_code& ec
+    ) noexcept;
     /**
      * Move constructor.
      * @param other The acceptor to move into this one.

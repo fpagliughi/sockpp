@@ -554,11 +554,20 @@ result<> tls_context::set_identity(
 void tls_context::set_session_cache_mode(session_cache_mode mode) noexcept {
     int m;
     switch (mode) {
-        case session_cache_mode::OFF:    m = SSL_SESS_CACHE_OFF;    break;
-        case session_cache_mode::CLIENT: m = SSL_SESS_CACHE_CLIENT; break;
-        case session_cache_mode::SERVER: m = SSL_SESS_CACHE_SERVER; break;
-        case session_cache_mode::BOTH:   m = SSL_SESS_CACHE_BOTH;   break;
-        default: return;
+        case session_cache_mode::OFF:
+            m = SSL_SESS_CACHE_OFF;
+            break;
+        case session_cache_mode::CLIENT:
+            m = SSL_SESS_CACHE_CLIENT;
+            break;
+        case session_cache_mode::SERVER:
+            m = SSL_SESS_CACHE_SERVER;
+            break;
+        case session_cache_mode::BOTH:
+            m = SSL_SESS_CACHE_BOTH;
+            break;
+        default:
+            return;
     }
     SSL_CTX_set_session_cache_mode(ctx_, m);
 }
