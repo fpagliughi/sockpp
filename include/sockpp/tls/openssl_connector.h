@@ -43,7 +43,10 @@
 #ifndef __sockpp_tls_openssl_connector_h
 #define __sockpp_tls_openssl_connector_h
 
+#include <optional>
+
 #include "sockpp/connector.h"
+#include "sockpp/tls/openssl_session.h"
 #include "sockpp/tls/socket.h"
 
 namespace sockpp {
@@ -56,6 +59,12 @@ namespace sockpp {
 class tls_connector : public tls_socket
 {
     using base = tls_socket;
+
+    /**
+     * Session to offer for resumption on the next handshake.
+     * Set by set_session(); applied in tls_connect() after SSL_set_fd().
+     */
+    std::optional<tls_session> pending_session_;
 
 public:
     /**
@@ -163,6 +172,18 @@ public:
     result<> connect(const sock_address& addr, const duration<Rep, Period>& relTime) {
         return connect(addr, microseconds(relTime));
     }
+    /**
+     * Offers a previously saved session for resumption on the next handshake.
+     *
+     * Call this after creating the connector but before calling @c connect().
+     * The server may or may not honour the offer; call
+     * @c tls_socket::session_reused() after the handshake to confirm.
+     *
+     * @param session A session token obtained from @c tls_socket::get_session().
+     * @return An error code on failure.
+     */
+    result<> set_session(const tls_session& session);
+
     /**
      * Connect the TLS session.
      * This assumes that the underlying, insecure connection has already

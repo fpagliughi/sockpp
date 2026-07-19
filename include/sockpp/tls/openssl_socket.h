@@ -52,6 +52,7 @@
 #include "sockpp/tls/openssl_certificate.h"
 #include "sockpp/tls/openssl_context.h"
 #include "sockpp/tls/openssl_error.h"
+#include "sockpp/tls/openssl_session.h"
 #include "sockpp/types.h"
 
 namespace sockpp {
@@ -255,6 +256,29 @@ public:
     result<> write_timeout(const microseconds& to) override;
 
     result<> set_non_blocking(bool on) override { return base::set_non_blocking(on); }
+
+    // -------- Session resumption
+
+    /**
+     * Returns the TLS session token after a successful handshake.
+     *
+     * Pass the returned token to @c tls_connector::set_session() before the
+     * next connection to attempt resumption.
+     *
+     * For TLS 1.3, the server sends the session ticket asynchronously after
+     * the handshake completes; at least one application-data read or write
+     * must have occurred before a valid ticket is available.
+     *
+     * @return The session token on success, or an error code on failure.
+     */
+    result<tls_session> get_session() const;
+
+    /**
+     * Returns true if the current connection reused a previous TLS session.
+     *
+     * Call after the handshake completes.
+     */
+    bool session_reused() const { return ssl_ && SSL_session_reused(ssl_) == 1; }
 
     // -------- TLS shutdown
 

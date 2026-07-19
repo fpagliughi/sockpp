@@ -78,6 +78,14 @@ tls_context::tls_context(role_t role /*=role_t::CLIENT*/) : role_{role} {
         // Client contexts verify the peer certificate by default.
         if (role == role_t::CLIENT || role == role_t::DEFAULT)
             SSL_CTX_set_verify(ctx_, SSL_VERIFY_PEER, nullptr);
+
+        // A session_id_context is required for server-side session caching
+        // (both TLS 1.2 and TLS 1.3).  Without it OpenSSL treats every session
+        // as non-cacheable and resumption silently never happens.
+        if (role == role_t::SERVER || role == role_t::BOTH) {
+            static const uchar sid_ctx[] = "sockpp";
+            SSL_CTX_set_session_id_context(ctx_, sid_ctx, sizeof(sid_ctx) - 1);
+        }
     }
 }
 
@@ -541,6 +549,18 @@ result<> tls_context::set_identity(
         return tls_last_error();
 
     return tls_check_res_none(SSL_CTX_check_private_key(ctx_));
+}
+
+void tls_context::set_session_cache_mode(session_cache_mode mode) noexcept {
+    int m;
+    switch (mode) {
+        case session_cache_mode::OFF:    m = SSL_SESS_CACHE_OFF;    break;
+        case session_cache_mode::CLIENT: m = SSL_SESS_CACHE_CLIENT; break;
+        case session_cache_mode::SERVER: m = SSL_SESS_CACHE_SERVER; break;
+        case session_cache_mode::BOTH:   m = SSL_SESS_CACHE_BOTH;   break;
+        default: return;
+    }
+    SSL_CTX_set_session_cache_mode(ctx_, m);
 }
 
 result<> tls_context::set_min_tls_version(tls_version ver) {

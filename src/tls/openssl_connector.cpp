@@ -36,6 +36,8 @@
 #include "sockpp/tls/openssl_connector.h"
 
 #include "sockpp/tls/openssl_context.h"
+#include "sockpp/tls/openssl_error.h"
+#include "sockpp/tls/openssl_session.h"
 
 namespace sockpp {
 
@@ -72,6 +74,11 @@ tls_connector::tls_connector(
     }
 }
 
+result<> tls_connector::set_session(const tls_session& session) {
+    pending_session_ = session;
+    return {};
+}
+
 tls_connector& tls_connector::operator=(tls_connector&& rhs) {
     if (&rhs != this) {
         base::operator=(std::move(rhs));
@@ -96,6 +103,13 @@ result<> tls_connector::connect(const sock_address& addr, microseconds timeout) 
 result<> tls_connector::tls_connect(stream_socket&& sock) noexcept {
     if (auto res = attach(std::move(sock)); !res)
         return res;
+    // SSL_set_session() must be called after SSL_set_fd() (done inside attach())
+    // but before SSL_connect().
+    if (pending_session_ && pending_session_->is_valid()) {
+        if (SSL_set_session(ssl(), pending_session_->sess_.get()) != 1)
+            return tls_last_error();
+        pending_session_.reset();
+    }
     return tls_check_res_none(SSL_connect(ssl()));
 }
 

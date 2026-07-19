@@ -82,8 +82,15 @@ tls_socket::tls_socket(const tls_context& ctx, stream_socket&& sock, error_code&
 }
 
 tls_socket::~tls_socket() {
-    if (ssl_)
+    if (ssl_) {
+        // Send close_notify if the handshake has completed; required so the
+        // peer can mark the session resumable.  Call once (non-blocking
+        // intent): ret==0 means our alert was sent, ret==1 means bidirectional
+        // shutdown already done.  Errors are ignored in a destructor.
+        if (is_open() && SSL_is_init_finished(ssl_))
+            SSL_shutdown(ssl_);
         SSL_free(ssl_);
+    }
 }
 
 tls_socket& tls_socket::operator=(tls_socket&& rhs) {
@@ -199,6 +206,16 @@ result<size_t> tls_socket::write(const void* buf, size_t n) {
 
 result<> tls_socket::write_timeout(const microseconds& to) {
     return stream_socket::write_timeout(to);
+}
+
+result<tls_session> tls_socket::get_session() const {
+    if (!ssl_)
+        return errc::bad_file_descriptor;
+    // SSL_get1_session() increments the reference count; tls_session owns it.
+    SSL_SESSION* s = SSL_get1_session(ssl_);
+    if (!s)
+        return tls_last_error();
+    return tls_session{s};
 }
 
 bool tls_socket::received_shutdown() {

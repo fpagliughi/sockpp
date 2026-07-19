@@ -228,6 +228,24 @@ public:
         return *this;
     }
     /**
+     * Sets the session cache mode.
+     * @param mode The desired cache mode.
+     */
+    auto session_cache_mode(tls_context::session_cache_mode mode) -> self& {
+        if (!ec_)
+            ctx_.set_session_cache_mode(mode);
+        return *this;
+    }
+    /**
+     * Sets the maximum number of entries in the server-side session cache.
+     * @param max_entries Maximum number of sessions to cache.
+     */
+    auto session_cache_size(size_t max_entries) -> self& {
+        if (!ec_)
+            ctx_.set_session_cache_size(max_entries);
+        return *this;
+    }
+    /**
      * Restricts the set of cipher suites the context will negotiate.
      * @param suites Ordered list of cipher suite names.
      */

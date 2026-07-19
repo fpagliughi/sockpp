@@ -103,6 +103,14 @@ public:
         TLS_1_3,  ///< TLS 1.3
     };
 
+    /** Session cache mode selector for set_session_cache_mode(). */
+    enum class session_cache_mode {
+        OFF,     ///< Disable the session cache entirely.
+        CLIENT,  ///< Cache sessions on the client side only.
+        SERVER,  ///< Cache sessions on the server side only (OpenSSL default).
+        BOTH,    ///< Cache sessions on both client and server sides.
+    };
+
 private:
     /** The OpenSSL context struct. */
     SSL_CTX* ctx_ = nullptr;
@@ -403,6 +411,47 @@ public:
      * @return An empty result on success, or an error code on failure.
      */
     result<> set_max_tls_version(tls_version ver);
+
+    // ---- Session cache ----
+
+    /**
+     * Sets the session cache mode.
+     *
+     * Controls which sides cache TLS sessions for resumption.
+     * The OpenSSL default is @c SERVER.
+     *
+     * @param mode The desired cache mode.
+     */
+    void set_session_cache_mode(session_cache_mode mode) noexcept;
+
+    /**
+     * Sets the maximum number of entries in the server-side session cache.
+     *
+     * Has no effect when the cache mode is @c OFF or @c CLIENT.
+     * OpenSSL's built-in default is 20 480 entries.
+     *
+     * @param max_entries Maximum number of sessions to cache.
+     */
+    void set_session_cache_size(size_t max_entries) noexcept {
+        SSL_CTX_sess_set_cache_size(ctx_, static_cast<long>(max_entries));
+    }
+
+    /**
+     * Enables or disables TLS session tickets.
+     *
+     * When disabled (default: enabled), session resumption falls back to
+     * session-ID-based caching, which is simpler to reason about and works
+     * with both TLS 1.2 and TLS 1.3 (via PSK-from-ticket).  Setting this
+     * to @c false adds @c SSL_OP_NO_TICKET to the context options.
+     *
+     * @param enabled Pass @c false to disable session tickets.
+     */
+    void set_session_tickets(bool enabled = true) noexcept {
+        if (enabled)
+            SSL_CTX_clear_options(ctx_, SSL_OP_NO_TICKET);
+        else
+            SSL_CTX_set_options(ctx_, SSL_OP_NO_TICKET);
+    }
 
     // ---- Cipher suites ----
 
