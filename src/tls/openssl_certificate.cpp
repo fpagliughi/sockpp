@@ -35,8 +35,8 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/tls/openssl_certificate.h"
+#include "sockpp/platform.h"
 
-#include <arpa/inet.h>
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>

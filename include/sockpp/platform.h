@@ -104,6 +104,7 @@ struct iovec
     size_t iov_len;
 };
 
+    #define timegm _mkgmtime
 #else
     #include <arpa/inet.h>
     #include <sys/socket.h>

@@ -35,8 +35,8 @@
 // --------------------------------------------------------------------------
 
 #include "sockpp/tls/mbedtls_certificate.h"
+#include "sockpp/platform.h"
 
-#include <arpa/inet.h>
 #include <mbedtls/error.h>
 #include <mbedtls/md.h>
 #include <mbedtls/pem.h>
